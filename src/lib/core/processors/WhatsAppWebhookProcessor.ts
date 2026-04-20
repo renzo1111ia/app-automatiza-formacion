@@ -31,9 +31,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const supabase = getAdminSupabase();
 
         // 1. Identify Tenant by WABA ID (phone_number_id)
-        // We use a safe cast or properly typed search
-        const { data: tenants, error: tenantError } = await supabase
-            .from("tenants")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: tenants, error: tenantError } = await (supabase.from("tenants") as any)
             .select("id")
             .filter("config->whatsapp->>phoneNumberId", "eq", wabaId);
 
@@ -42,15 +41,15 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             return;
         }
 
-        const tenantId = tenants[0].id;
+        const tenantId = (tenants as any[])[0].id;
 
         // 2. Normalize Phone Number
         let searchPhone = fromNumber;
         if (searchPhone.startsWith("+")) searchPhone = searchPhone.slice(1);
 
         // 3. Find or Create Lead
-        const { data: leadFound, error: leadError } = await supabase
-            .from("lead")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: leadFound, error: leadError } = await (supabase.from("lead") as any)
             .select("*")
             .eq("tenant_id", tenantId)
             .ilike("telefono", `%${searchPhone}%`)
@@ -60,8 +59,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         if (leadError || !lead) {
             console.log(`[WHATSAPP PROCESSOR] Lead not found for ${fromNumber}. Creating anonymous lead.`);
-            const { data: newLead, error: createError } = await supabase
-                .from("lead")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
                     tenant_id: tenantId,
                     telefono: fromNumber,
@@ -96,8 +95,10 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             
             if (mediaId) {
                 try {
-                    const { data: tenantData } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
-                    const config = tenantData?.config as any;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const { data: tenantData } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const config = (tenantData as any)?.config;
                     const token = config?.whatsapp?.accessToken;
 
                     if (token) {
@@ -128,15 +129,15 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         // 5. Log Message in chat_messages
         // Use READ status as RECEIVED is not allowed by DB constraint
-        const { error: logError } = await supabase
-            .from("chat_messages")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: logError } = await (supabase.from("chat_messages") as any)
             .insert({
                 tenant_id: tenantId,
-                lead_id: lead.id,
+                lead_id: (lead as any).id,
                 direction: "INBOUND",
                 message_type: "TEXT",
                 content: content,
-                status: "READ", // Must match DB constraint
+                status: "READ",
                 metadata: { 
                     meta_id: message.id, 
                     raw: message as any,
@@ -147,9 +148,11 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         if (logError) console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
 
         // 6. Trigger AI Response
-        if (lead.is_ai_enabled) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((lead as any).is_ai_enabled) {
             const { generateAIWhatsAppResponse } = await import("./WhatsAppAIProcessor");
-            await generateAIWhatsAppResponse(tenantId, lead.id, content);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await generateAIWhatsAppResponse(tenantId, (lead as any).id, content);
         }
 
     } catch (err: unknown) {
