@@ -11,13 +11,20 @@ export interface WhatsAppConfig {
     wabaId?: string;
 }
 
+export interface WhatsAppTemplateComponent {
+    type: string;
+    text?: string;
+    format?: string;
+    buttons?: Record<string, unknown>[];
+}
+
 export interface WhatsAppTemplate {
     name: string;
     status: string;
     category: string;
     language: string;
     id: string;
-    components?: Record<string, unknown>[];
+    components?: WhatsAppTemplateComponent[];
 }
 
 export class WhatsAppBridge {
