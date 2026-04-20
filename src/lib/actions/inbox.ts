@@ -42,10 +42,9 @@ export interface InboxLead {
 
 export async function updateLeadSegment(leadId: string, segment: InboxLead['segmentacion']): Promise<{ success: boolean; error?: string }> {
     const supabase = await getAdminSupabaseClient();
-    const { error } = await (supabase
+    const { error } = await supabase
         .from('lead')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .update({ segmentacion: segment } as never) as any)
+        .update({ segmentacion: segment } as never)
         .eq('id', leadId);
     
     if (error) return { success: false, error: error.message };
@@ -64,12 +63,12 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
         const supabase = await getAdminSupabaseClient();
         
         // 1. Fetch ALL leads for this tenant (Limit to 50 most recent for performance)
-        const { data: leads, error: leadError } = await (supabase
+        const { data: leads, error: leadError } = await supabase
             .from("lead")
             .select("*")
             .eq("tenant_id", tenant.id)
             .order("fecha_creacion", { ascending: false })
-            .limit(50) as any);
+            .limit(50);
 
         if (leadError) throw leadError;
         const leadList = (leads as LeadRow[]) || [];
@@ -88,7 +87,9 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
 
         // 3. Map latest messages to their leads
         const latestMsgByLead = new Map<string, { content: string; time: string }>();
-        (messages as any[] || []).forEach(m => {
+        const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
+        
+        msgList.forEach(m => {
             if (m.lead_id && !latestMsgByLead.has(m.lead_id)) {
                 latestMsgByLead.set(m.lead_id, { content: m.content, time: m.created_at });
             }
@@ -97,12 +98,19 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
         // 4. Transform into InboxLead objects
         const results: InboxLead[] = leadList.map(l => {
             const msg = latestMsgByLead.get(l.id);
+            
+            // Normalize phone for UI (always show +)
+            let phone = l.telefono || null;
+            if (phone && !phone.startsWith("+")) {
+                phone = "+" + phone;
+            }
+
             return {
                 id: l.id,
                 nombre: l.nombre || null,
                 apellido: l.apellido || null,
-                telefono: l.telefono || null,
-                foto_url: (l as any).foto_url || null,
+                telefono: phone,
+                foto_url: (l as LeadRow & { foto_url?: string }).foto_url || null,
                 is_ai_enabled: l.is_ai_enabled ?? true,
                 last_message: msg?.content || "Nueva conversación (sin mensajes)",
                 last_message_time: msg?.time || l.fecha_creacion || null, 
@@ -111,7 +119,7 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
                 pais: l.pais || 'Identificando...',
                 origen: l.origen || 'Manual / CRM',
                 campana: l.campana || 'General',
-                segmentacion: (l as any).segmentacion || null,
+                segmentacion: (l as LeadRow & { segmentacion?: InboxLead['segmentacion'] }).segmentacion || null,
                 unread_count: 0
             };
         });
@@ -120,9 +128,10 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
         results.sort((a, b) => new Date(b.last_message_time || 0).getTime() - new Date(a.last_message_time || 0).getTime());
 
         return { success: true, data: results };
-    } catch (e: any) {
-        console.error("[INBOX_LEADS] Error:", e.message);
-        return { success: false, error: e.message };
+    } catch (e: unknown) {
+        const error = e as Error;
+        console.error("[INBOX_LEADS] Error:", error.message);
+        return { success: false, error: error.message };
     }
 }
 
@@ -156,9 +165,15 @@ export async function getChatHistory(leadId: string): Promise<{ success: boolean
     // Combine and sort
     const chronological: ChatMessage[] = (messages as ChatMessage[] || []).map(m => ({ ...m }));
 
-    if (calls && (calls as any[]).length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (calls as any[]).forEach((call: any) => {
+    interface CallTimelineItem {
+        id: string;
+        estado_llamada: string | null;
+        fecha_inicio: string | null;
+        duracion_segundos: number | null;
+    }
+
+    if (calls && calls.length > 0) {
+        (calls as unknown as CallTimelineItem[]).forEach((call) => {
             chronological.push({
                 id: `call-${call.id}`,
                 tenant_id: tenant.id,
@@ -168,7 +183,7 @@ export async function getChatHistory(leadId: string): Promise<{ success: boolean
                 content: `Llamada ${call.estado_llamada === 'completed' ? 'Realizada' : 'Intento'}: ${call.duracion_segundos ? Math.floor(call.duracion_segundos / 60) + 'm ' + (call.duracion_segundos % 60) + 's' : 'Sin respuesta'}`,
                 sent_by: 'Voice AI Agent',
                 status: 'READ',
-                created_at: call.fecha_inicio,
+                created_at: call.fecha_inicio || new Date().toISOString(),
                 metadata: { call_id: call.id }
             });
         });

@@ -155,7 +155,8 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
     const NavLink = ({ item, depth = 0 }: { item: NavItem, depth?: number }) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const isExpanded = expandedItems.includes(item.label);
-        const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+        const safePathname = pathname || "";
+        const isActive = safePathname === item.href || (item.href !== "/dashboard" && safePathname.startsWith(item.href + "/"));
         
         return (
             <div key={item.label} className="space-y-1">
@@ -286,7 +287,8 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                     ...(NAV_ITEMS[0].subItems?.slice(0, 3) || []), // Minutos, WhatsApp, Campañas
                     NAV_ITEMS[1] // Config
                 ].filter(Boolean).map((item) => {
-                    const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+                    const safePathname = pathname || "";
+                    const active = safePathname === item.href || (item.href !== "/dashboard" && safePathname.startsWith(item.href + "/"));
                     return (
                         <Link
                             key={`${item.href}-${item.label}`}

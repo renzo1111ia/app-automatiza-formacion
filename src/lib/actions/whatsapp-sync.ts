@@ -41,12 +41,12 @@ export async function syncWhatsAppTemplates(tenantId: string, waConfig: WhatsApp
             message: `Sincronización exitosa. Se detectaron ${templates.length} plantillas.` 
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-        console.error("[WHATSAPP SYNC] Error crítico:", err);
+    } catch (err: unknown) {
+        const error = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+        console.error("[WHATSAPP SYNC] Error crítico:", error);
         return { 
             success: false, 
-            error: err.response?.data?.error?.message || err.message || "Error desconocido al conectar con Meta." 
+            error: error.response?.data?.error?.message || error.message || "Error desconocido al conectar con Meta." 
         };
     }
 }

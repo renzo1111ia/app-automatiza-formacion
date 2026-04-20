@@ -35,10 +35,10 @@ export async function getWhatsAppTemplates() {
 
         const templates = await whatsappBridge.getAvailableTemplates(waConfig);
         return { success: true, data: templates };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        console.error("[ACTIONS] Error fetching WhatsApp templates:", error.message);
-        return { error: error.message };
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error("[ACTIONS] Error fetching WhatsApp templates:", err.message);
+        return { error: err.message };
     }
 }
 
@@ -51,8 +51,7 @@ export async function getRecentLeads(limit = 20) {
         const tenant = await getActiveTenantConfig();
         if (!tenant) return { error: "No active tenant" };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.from("lead" as any) as any)
+        const { data, error } = await supabase.from("lead")
             .select("id, nombre, apellido, telefono, origen, fecha_creacion")
             .eq("tenant_id", tenant.id)
             .order("fecha_creacion", { ascending: false })
@@ -60,9 +59,8 @@ export async function getRecentLeads(limit = 20) {
 
         if (error) return { error: error.message };
         return { success: true, data };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        return { error: e.message };
+    } catch (e: unknown) {
+        return { error: (e as Error).message };
     }
 }
 
@@ -75,17 +73,15 @@ export async function getTenantWorkflows() {
         const tenant = await getActiveTenantConfig();
         if (!tenant) return { error: "No active tenant" };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.from("workflows" as any) as any)
+        const { data, error } = await supabase.from("workflows")
             .select("id, name, is_primary, is_active")
             .eq("tenant_id", tenant.id)
             .order("created_at", { ascending: false });
 
         if (error) return { error: error.message };
         return { success: true, data };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        return { error: e.message };
+    } catch (e: unknown) {
+        return { error: (e as Error).message };
     }
 }
 
@@ -95,8 +91,7 @@ export async function getTenantWorkflows() {
 export async function getWorkflowRules(workflowId: string) {
     try {
         const supabase = await getSupabaseServerClient();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.from("orchestration_rules" as any) as any)
+        const { data, error } = await supabase.from("orchestration_rules")
             .select("*")
             .eq("workflow_id", workflowId)
             .eq("is_active", true)
@@ -104,9 +99,8 @@ export async function getWorkflowRules(workflowId: string) {
 
         if (error) return { error: error.message };
         return { success: true, data };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        return { error: e.message };
+    } catch (e: unknown) {
+        return { error: (e as Error).message };
     }
 }
 
@@ -120,8 +114,7 @@ export async function triggerOrchestratorForLead(leadId: string, workflowId: str
         if (!tenant) return { error: "No active tenant" };
 
         // Fetch lead
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lead, error: leadError } = await (supabase.from("lead" as any) as any)
+        const { data: lead, error: leadError } = await supabase.from("lead")
             .select("*")
             .eq("id", leadId)
             .single();
@@ -132,21 +125,19 @@ export async function triggerOrchestratorForLead(leadId: string, workflowId: str
         const originalLog = console.log;
 
         // Capture logs
-        console.log = (...args) => {
+        console.log = (...args: unknown[]) => {
             const line = args.map(String).join(" ");
             if (line.includes("[ORCHESTRATOR]")) logs.push(line);
             originalLog(...args);
         };
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await orchestrator.executeWorkflow(workflowId, lead as any, tenant.id, {});
 
         console.log = originalLog;
 
         return { success: true, logs, leadId, workflowId };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-        return { error: e.message };
+    } catch (e: unknown) {
+        return { error: (e as Error).message };
     }
 }
 
@@ -159,7 +150,7 @@ export async function getSystemLogs(limit = 100) {
         const tenant = await getActiveTenantConfig();
         if (!tenant) return { error: "No active tenant" };
 
-        const { data, error } = await (supabase.from("system_logs" as any) as any)
+        const { data, error } = await supabase.from("system_logs")
             .select("*")
             .eq("tenant_id", tenant.id)
             .order("created_at", { ascending: false })
@@ -167,7 +158,7 @@ export async function getSystemLogs(limit = 100) {
 
         if (error) return { error: error.message };
         return { success: true, data };
-    } catch (e: any) {
-        return { error: e.message };
+    } catch (e: unknown) {
+        return { error: (e as Error).message };
     }
 }

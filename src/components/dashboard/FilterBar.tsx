@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Search, Calendar, ChevronDown, RotateCcw, Filter } from "lucide-react";
+import { Search, ChevronDown, RotateCcw, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DATE_PRESETS = [
@@ -17,8 +17,8 @@ const DATE_PRESETS = [
 
 export function FilterBar({ availableCampaigns = [] }: { availableCampaigns?: string[] }) {
     const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const pathname = usePathname() ?? "";
+    const searchParams = useSearchParams() ?? new URLSearchParams();
 
     // Local states for inputs
     const [draftPreset, setDraftPreset] = useState(searchParams.get("preset") || "30d");

@@ -8,7 +8,7 @@ import { Settings, AlertTriangle } from "lucide-react";
 export function TenantSetupBanner() {
     const isConfigured = useTenantStore((s) => s.isConfigured);
 
-    const pathname = usePathname();
+    const pathname = usePathname() || "";
     const configHref = pathname.startsWith("/dashboardadmin") ? "/dashboardadmin/settings" : "/dashboard/settings";
 
     if (isConfigured) return null;

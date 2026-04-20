@@ -17,7 +17,7 @@ export interface WhatsAppTemplate {
     category: string;
     language: string;
     id: string;
-    components?: any[];
+    components?: Record<string, unknown>[];
 }
 
 export class WhatsAppBridge {
@@ -30,16 +30,17 @@ export class WhatsAppBridge {
         to: string,
         templateName: string,
         languageCode: string = "es",
-        components: any[] = [],
+        components: Record<string, unknown>[] = [],
         config: WhatsAppConfig
     ) {
         try {
+            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             const response = await axios.post(
                 url,
                 {
                     messaging_product: "whatsapp",
-                    to: to,
+                    to: normalizedTo,
                     type: "template",
                     template: {
                         name: templateName,
@@ -57,8 +58,9 @@ export class WhatsAppBridge {
 
             console.log(`[WHATSAPP BRIDGE] Template ${templateName} sent to ${to}. ID: ${response.data.messages[0].id}`);
             return response.data;
-        } catch (error: any) {
-            console.error("[WHATSAPP BRIDGE] Error sending template:", error.response?.data || error.message);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: unknown }; message?: string };
+            console.error("[WHATSAPP BRIDGE] Error sending template:", err.response?.data || err.message);
             throw error;
         }
     }
@@ -68,12 +70,13 @@ export class WhatsAppBridge {
      */
     public async sendTextMessage(to: string, body: string, config: WhatsAppConfig) {
         try {
+            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             const response = await axios.post(
                 url,
                 {
                     messaging_product: "whatsapp",
-                    to: to,
+                    to: normalizedTo,
                     type: "text",
                     text: { body: body },
                 },
@@ -87,8 +90,9 @@ export class WhatsAppBridge {
 
             console.log(`[WHATSAPP BRIDGE] Text message sent to ${to}.`);
             return response.data;
-        } catch (error: any) {
-            console.error("[WHATSAPP BRIDGE] Error sending text:", error.response?.data || error.message);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: unknown }; message?: string };
+            console.error("[WHATSAPP BRIDGE] Error sending text:", err.response?.data || err.message);
             throw error;
         }
     }
@@ -110,8 +114,9 @@ export class WhatsAppBridge {
             });
 
             return response.data.data as WhatsAppTemplate[];
-        } catch (error: any) {
-            console.error("[WHATSAPP BRIDGE] Error fetching templates:", error.response?.data || error.message);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: unknown }; message?: string };
+            console.error("[WHATSAPP BRIDGE] Error fetching templates:", err.response?.data || err.message);
             return [];
         }
     }
