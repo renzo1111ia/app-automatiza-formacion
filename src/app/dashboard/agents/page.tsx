@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent } from "@/lib/actions/agents";
 import { AIAgent, AIAgentVariant } from "@/types/database";
 import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
+import { useTenantStore } from "@/store/tenant";
 import { Cpu, Brain, Database as DbIcon } from "lucide-react";
 
 const AI_MODELS = {
