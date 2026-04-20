@@ -238,16 +238,23 @@ export async function sendManualMessage(
                 // For manual template sends, we resolve {{1}} to name automatically
                 const components = lead.nombre ? [
                     {
-                        type: "body",
+                        type: "BODY",
                         parameters: [{ type: "text", text: lead.nombre }]
                     }
                 ] : [];
                 await whatsappBridge.sendTemplateMessage(lead.telefono || "", content, "es", components, waConfig);
             }
         } catch (waError) {
+            const err = waError as any;
+            console.error("[INBOX] WhatsApp Send Error:", err.message);
+            // Log to system_logs for the user to see
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            console.error("[INBOX] WhatsApp Send Error:", (waError as any).message);
-            // We continue to persist in DB anyway as requested for visibility
+            await (supabase.from("system_logs" as any) as any).insert({
+                tenant_id: tenant.id,
+                event_type: "WHATSAPP_SEND_ERROR",
+                message: `Error enviando ${type}: ${err.message}`,
+                metadata: { leadId, error: err.response?.data || err.message }
+            });
         }
     } else {
         console.warn("[INBOX] No WhatsApp credentials - Persisting as MOCK message locally.");
