@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database";
 
 /**
  * WHATSAPP WEBHOOK (META CLOUD API)
@@ -49,6 +48,19 @@ export async function POST(req: Request) {
 
         const body = JSON.parse(rawBody);
 
+        // --- DEBUG LOG: Capturar cuerpo completo ---
+        try {
+            const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+            await supabase.from("system_logs").insert({
+                tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70", // Usamos el ID del tenant principal para debug
+                event_type: "WHATSAPP_WEBHOOK_RAW",
+                message: "Cuerpo recibido de Meta",
+                metadata: body
+            });
+        } catch (e) {
+            console.error("Error logging raw webhook:", e);
+        }
+
         // 1. Basic Structure check
         if (body.object !== "whatsapp_business_account") {
             return NextResponse.json({ error: "Invalid object type" }, { status: 400 });
@@ -87,8 +99,9 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true });
 
-    } catch (error: any) {
-        console.error("[WHATSAPP WEBHOOK POST] Error:", error.message);
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error("[WHATSAPP WEBHOOK POST] Error:", err.message);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
