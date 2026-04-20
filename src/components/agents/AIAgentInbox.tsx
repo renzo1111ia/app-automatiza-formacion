@@ -6,15 +6,17 @@ import {
     Paperclip, Send, Bot, User,
     Check, CheckCheck, Loader2, Zap,
     Archive, Star, PlusCircle, Filter, 
-    Settings, GitBranch, X
+    Settings, GitBranch, X, ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { 
     getInboxLeads, getChatHistory, sendManualMessage, 
-    toggleLeadAI, updateLeadSegment, type InboxLead, type ChatMessage 
+    toggleLeadAI, updateLeadSegment, assignAgentToLead, type InboxLead, type ChatMessage 
 } from "@/lib/actions/inbox";
+import { getAIAgents } from "@/lib/actions/agents";
+import { AIAgent } from "@/types/database";
 import { getOrchestratorConfig, saveOrchestratorConfig } from '@/lib/actions/orchestrator-config';
 import { getWhatsAppTemplates } from "@/lib/actions/orchestration";
 import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
@@ -55,6 +57,8 @@ export default function AIAgentInbox() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [templates, setTemplates] = useState<any[]>([]);
     const [loadingTemplates, setLoadingTemplates] = useState(false);
+    const [availableAgents, setAvailableAgents] = useState<AIAgent[]>([]);
+    const [isAssigningAgent, setIsAssigningAgent] = useState(false);
     
     // Refs
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -100,14 +104,22 @@ export default function AIAgentInbox() {
         setLoadingTemplates(false);
     }, []);
     
+    const loadAvailableAgents = useCallback(async () => {
+        const res = await getAIAgents();
+        if (res.success && res.data) {
+            setAvailableAgents(res.data);
+        }
+    }, []);
+    
     // Initial Load
     useEffect(() => {
         const timer = setTimeout(() => {
             loadLeads();
             loadTemplates(); // Load templates early for mapping in history
+            loadAvailableAgents();
         }, 0);
         return () => clearTimeout(timer);
-    }, [loadLeads, loadTemplates]);
+    }, [loadLeads, loadTemplates, loadAvailableAgents]);
 
     useEffect(() => {
         if (activeView === 'LOGIC') {
@@ -219,7 +231,23 @@ export default function AIAgentInbox() {
             const updated = { ...selectedLead, is_ai_enabled: newState };
             setSelectedLead(updated);
             setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? updated : l));
+        } else {
+            alert(res.error);
         }
+    };
+
+    const handleAssignAgent = async (agentId: string | null) => {
+        if (!selectedLead) return;
+        setIsAssigningAgent(true);
+        const res = await assignAgentToLead(selectedLead.id, agentId);
+        if (res.success) {
+            const updated = { ...selectedLead, ai_agent_id: agentId };
+            setSelectedLead(updated);
+            setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? updated : l));
+        } else {
+            alert(res.error);
+        }
+        setIsAssigningAgent(false);
     };
 
     // --- Render Helpers ---
@@ -545,6 +573,23 @@ export default function AIAgentInbox() {
                                 <Zap className="h-3.5 w-3.5" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">{selectedLead?.is_ai_enabled ? "Agente IA: ON" : "Agente IA: PAUSA"}</span>
                             </button>
+
+                            {/* AGENT SELECTOR */}
+                            <div className="relative group/agent">
+                                <select 
+                                    value={selectedLead?.ai_agent_id || ""}
+                                    disabled={isAssigningAgent}
+                                    onChange={(e) => handleAssignAgent(e.target.value || null)}
+                                    title="Vincular este lead a un agente específico"
+                                    className="h-10 bg-black/40 border border-white/5 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-primary/20 appearance-none pr-8 cursor-pointer disabled:opacity-50"
+                                >
+                                    <option value="" className="bg-slate-900">Agente por Defecto</option>
+                                    {availableAgents.map(agent => (
+                                        <option key={agent.id} value={agent.id} className="bg-slate-900">{agent.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="h-3 w-3 absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none group-hover/agent:scale-110 transition-transform" />
+                            </div>
 
                             <button 
                                 onClick={() => setShowDetails(!showDetails)}

@@ -31,6 +31,7 @@ export interface InboxLead {
     last_message?: string;
     last_message_time?: string | null;
     unread_count?: number;
+    ai_agent_id?: string | null;
     // Fields for detailed view
     tipo_lead?: string | null;
     pais?: string | null;
@@ -112,6 +113,7 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
                 telefono: phone,
                 foto_url: (l as LeadRow & { foto_url?: string }).foto_url || null,
                 is_ai_enabled: l.is_ai_enabled ?? true,
+                ai_agent_id: (l as any).ai_agent_id || null,
                 last_message: msg?.content || "Nueva conversación (sin mensajes)",
                 last_message_time: msg?.time || l.fecha_creacion || null, 
                 created_at: l.fecha_creacion || null,
@@ -325,6 +327,25 @@ export async function toggleLeadAI(leadId: string, enabled: boolean): Promise<{ 
         if (error.message.includes('column')) {
             console.error("[INBOX] Cannot toggle AI: column 'is_ai_enabled' missing in DB.");
             return { success: false, error: "La base de datos aún no tiene habilitada la función de pausa. Por favor, ejecuta la migración SQL." };
+        }
+        return { success: false, error: error.message };
+    }
+    return { success: true };
+}
+
+/**
+ * Assigns a specific agent to a lead.
+ */
+export async function assignAgentToLead(leadId: string, agentId: string | null) {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await supabase
+        .from('lead')
+        .update({ ai_agent_id: agentId } as never)
+        .eq('id', leadId);
+    
+    if (error) {
+        if (error.message.includes('column')) {
+             return { success: false, error: "Columna 'ai_agent_id' no encontrada. Por favor, ejecuta la migración SQL." };
         }
         return { success: false, error: error.message };
     }
