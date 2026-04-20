@@ -21,7 +21,7 @@ interface WebhookMessage {
     image?: { id: string };
     audio?: { id: string };
     document?: { id: string };
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export async function processIncomingWhatsApp(fromNumber: string, message: WebhookMessage, wabaId: string) {
@@ -31,6 +31,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const supabase = getAdminSupabase();
 
         // 1. Identify Tenant by WABA ID (phone_number_id)
+        // We use a safe cast or properly typed search
         const { data: tenants, error: tenantError } = await supabase
             .from("tenants")
             .select("id")
@@ -53,7 +54,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             .select("*")
             .eq("tenant_id", tenantId)
             .ilike("telefono", `%${searchPhone}%`)
-            .single();
+            .maybeSingle();
 
         let lead = leadFound;
 
@@ -80,7 +81,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         // 4. Extract content
         let content = "";
-        let mediaUrl = null;
+        let mediaUrl: string | null = null;
 
         if (message.type === "text") {
             content = message.text?.body || "";
@@ -89,34 +90,37 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         } else if (message.type === "interactive") {
             content = message.interactive?.button_reply?.title || message.interactive?.list_reply?.title || "Interacción Botón";
         } else if (message.type === "image" || message.type === "audio" || message.type === "document") {
-            const mediaId = (message[message.type] as { id: string }).id;
+            const mediaObj = message[message.type] as { id: string } | undefined;
+            const mediaId = mediaObj?.id;
             content = `[Archivo ${message.type} recibido]`;
             
-            try {
-                const { data: tenantData } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
-                const config = (tenantData as any)?.config;
-                const token = config?.whatsapp?.accessToken;
+            if (mediaId) {
+                try {
+                    const { data: tenantData } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
+                    const config = tenantData?.config as any;
+                    const token = config?.whatsapp?.accessToken;
 
-                if (token) {
-                    console.log(`[WHATSAPP PROCESSOR] Downloading media ${mediaId} from Meta...`);
-                    const metaRes = await axios.get(`https://graph.facebook.com/v20.0/${mediaId}`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    
-                    const downloadUrl = metaRes.data.url;
-                    const fileRes = await axios.get(downloadUrl, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        responseType: 'arraybuffer'
-                    });
+                    if (token) {
+                        console.log(`[WHATSAPP PROCESSOR] Downloading media ${mediaId} from Meta...`);
+                        const metaRes = await axios.get(`https://graph.facebook.com/v20.0/${mediaId}`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        
+                        const downloadUrl = metaRes.data.url;
+                        const fileRes = await axios.get(downloadUrl, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            responseType: 'arraybuffer'
+                        });
 
-                    const fileName = `whatsapp/${tenantId}/${message.id}.${message.type === 'audio' ? 'ogg' : 'jpg'}`;
-                    mediaUrl = await uploadToS3(fileName, Buffer.from(fileRes.data), fileRes.headers['content-type']);
-                    content = `[${message.type.toUpperCase()}]: ${mediaUrl}`;
-                    console.log(`[WHATSAPP PROCESSOR] Media uploaded to S3: ${mediaUrl}`);
+                        const fileName = `whatsapp/${tenantId}/${message.id}.${message.type === 'audio' ? 'ogg' : 'jpg'}`;
+                        mediaUrl = await uploadToS3(fileName, Buffer.from(fileRes.data), fileRes.headers['content-type']);
+                        content = `[${message.type.toUpperCase()}]: ${mediaUrl}`;
+                        console.log(`[WHATSAPP PROCESSOR] Media uploaded to S3: ${mediaUrl}`);
+                    }
+                } catch (mediaErr) {
+                    console.error("[WHATSAPP PROCESSOR] Failed to process media:", mediaErr);
+                    content = `[Error al procesar ${message.type}]`;
                 }
-            } catch (mediaErr) {
-                console.error("[WHATSAPP PROCESSOR] Failed to process media:", mediaErr);
-                content = `[Error al procesar ${message.type}]`;
             }
         } else {
             content = `[Mensaje tipo: ${message.type}]`;
@@ -132,13 +136,13 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                 direction: "INBOUND",
                 message_type: "TEXT",
                 content: content,
-                status: "READ",
+                status: "READ", // Must match DB constraint
                 metadata: { 
                     meta_id: message.id, 
-                    raw: message,
+                    raw: message as any,
                     media_url: mediaUrl
                 }
-            } as any);
+            });
 
         if (logError) console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
 
