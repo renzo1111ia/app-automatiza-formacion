@@ -245,7 +245,7 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                             if (!selectedTemplate) return null;
 
                             const bodyComponent = selectedTemplate.components?.find(c => c.type === 'BODY');
-                            const bodyText = bodyComponent?.text || "";
+                            const bodyText = (bodyComponent?.text as string) || "";
                             
                             // Find variables like {{1}}, {{2}}...
                             const variableMatches = bodyText.match(/\{\{\d+\}\}/g) || [];
