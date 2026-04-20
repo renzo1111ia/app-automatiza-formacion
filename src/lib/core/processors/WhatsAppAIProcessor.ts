@@ -113,7 +113,7 @@ ${conversationHistory}
         let usage = null;
 
         if (modelName.includes("claude") || modelName.includes("anthropic")) {
-            console.log(`[AI PROCESSOR] Using AWS Bedrock (Claude) for response`);
+            console.log(`[AI PROCESSOR] Using AWS Bedrock (${modelName}) for response`);
             aiResponse = await invokeClaude(systemPrompt, incomingMessage, modelName) || "";
         } else {
             console.log(`[AI PROCESSOR] Using OpenAI (${modelName}) for response`);

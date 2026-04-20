@@ -16,8 +16,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent } from "@/lib/actions/agents";
 import { AIAgent, AIAgentVariant } from "@/types/database";
 import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
-import { useTenantStore } from "@/store/tenant";
-import { Cpu, Brain } from "lucide-react";
+import { Cpu, Brain, Database as DbIcon } from "lucide-react";
 
 const AI_MODELS = {
     OPENAI: {
@@ -158,15 +157,24 @@ export default function AgentsPage() {
         if (!selectedAgent) return;
         setSaving(true);
         try {
-            const resA = await saveAgentVariant(variantA);
-            const resB = await saveAgentVariant(variantB);
+            const resA = await saveAgentVariant({
+                ...variantA,
+                agent_id: selectedAgent.id,
+                is_active: true
+            });
+            const resB = await saveAgentVariant({
+                ...variantB,
+                agent_id: selectedAgent.id,
+                is_active: true
+            });
             
             if (resA.success && resA.data) setVariantA(resA.data);
             if (resB.success && resB.data) setVariantB(resB.data);
 
-            alert("Cambios de prompts publicados correctamente.");
-        } catch (err: any) {
-            alert("Error al guardar: " + err.message);
+            alert("Configuración de agente y prompts guardada.");
+        } catch (err: unknown) {
+            const error = err as Error;
+            alert("Error al guardar: " + error.message);
         } finally {
             setSaving(false);
         }
@@ -405,11 +413,38 @@ export default function AgentsPage() {
                                         <div className="pt-4 border-t border-white/5 space-y-4">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <Brain className="h-4 w-4 text-emerald-400" />
+                                                    <DbIcon className="h-4 w-4 text-emerald-400" />
                                                     <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Memoria de la IA (AWS Bedrock)</p>
                                                 </div>
                                             </div>
-                                            <div className="relative">
+                                            
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    { id: 'G9P0FC3S29', name: 'Automatiza Formación v1', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                                                    { id: 'NONE', name: 'Sin Base de Conocimiento', color: 'bg-white/5 text-white/40 border-white/10' }
+                                                ].map((kb) => {
+                                                    const isActive = ((activeTab === 'A' ? variantA : variantB).knowledge_base_id || 'NONE') === kb.id;
+                                                    return (
+                                                        <button
+                                                            key={kb.id}
+                                                            onClick={() => {
+                                                                const val = kb.id === 'NONE' ? null : kb.id;
+                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
+                                                                else setVariantB(prev => ({...prev, knowledge_base_id: val}));
+                                                            }}
+                                                            className={cn(
+                                                                "p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center gap-3",
+                                                                isActive ? kb.color : "bg-white/[0.01] border-white/5 text-white/20 hover:border-white/10"
+                                                            )}
+                                                        >
+                                                            <div className={cn("h-2 w-2 rounded-full", isActive ? "bg-current animate-pulse" : "bg-white/10")} />
+                                                            {kb.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="relative group">
                                                 <input 
                                                     type="text"
                                                     value={(activeTab === 'A' ? variantA : variantB).knowledge_base_id || ""}
@@ -418,12 +453,12 @@ export default function AgentsPage() {
                                                         if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
                                                         else setVariantB(prev => ({...prev, knowledge_base_id: val}));
                                                     }}
-                                                    placeholder="Introduce el ID de tu Knowledge Base (ej: G9P0FC3S29)..."
+                                                    placeholder="O introduce un ID personalizado..."
                                                     className="w-full h-12 bg-black/40 border border-white/5 rounded-xl px-4 text-xs font-mono text-white/80 placeholder:text-white/10 focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all outline-none"
                                                 />
                                             </div>
                                             <p className="text-[9px] text-white/20 italic">
-                                                * Al proporcionar un ID, el agente consultará automáticamente tus documentos en S3 antes de responder por WhatsApp.
+                                                * Al seleccionar una base, el agente usará Inteligencia RAG para responder con tus documentos.
                                             </p>
                                         </div>
 
