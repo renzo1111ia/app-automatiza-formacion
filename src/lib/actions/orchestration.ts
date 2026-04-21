@@ -4,7 +4,7 @@ import { Lead } from "@/types/database";
 
 import { getActiveTenantConfig } from "./tenant";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { whatsappBridge, WhatsAppConfig } from "../integrations/whatsapp";
+import { whatsappBridge, WhatsAppConfig, WhatsAppTemplate } from "../integrations/whatsapp";
 import { orchestrator } from "@/lib/core/orchestrator";
 
 /**
@@ -17,7 +17,7 @@ export async function getWhatsAppTemplates() {
 
         interface TenantConfigStructure {
             whatsapp?: {
-                templates?: unknown[];
+                templates?: WhatsAppTemplate[];
                 accessToken?: string;
                 phoneNumberId?: string;
                 wabaId?: string;
