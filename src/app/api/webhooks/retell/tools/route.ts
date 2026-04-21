@@ -78,6 +78,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         .limit(1)
         .single();
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const advisor = advisorData as any;
 
     if (!advisor) {
