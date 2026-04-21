@@ -18,25 +18,19 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         const supabase = getAdminSupabase();
 
         // 1. Get Lead & Tenant Context
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: lead } = await (supabase.from("lead" as any) as any).select("*").eq("id", leadId).single();
         if (!lead) return;
 
         // 2. Get Course Info (Programas)
         // We look for the programs linked to this lead
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: leadPrograms } = await (supabase.from("lead_programas" as any) as any).select("id_programa").eq("id_lead", leadId);
         let courseContext = "";
         
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (leadPrograms && (leadPrograms as any[]).length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const firstProgramId = (leadPrograms as any[])[0].id_programa;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: program } = await (supabase.from("programas" as any) as any).select("*").eq("id", firstProgramId).single();
+                const firstProgramId = (leadPrograms as any[])[0].id_programa;
+                const { data: program } = await (supabase.from("programas" as any) as any).select("*").eq("id", firstProgramId).single();
             if (program) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const p = program as any;
+                        const p = program as any;
                 courseContext = `
 INFORMACIÓN DEL CURSO:
 - Nombre: ${p.nombre}
@@ -52,14 +46,12 @@ INFORMACIÓN DEL CURSO:
 
         // 3. Get Conversation History
         const { data: history } = await (supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from("chat_messages" as any) as any)
+                .from("chat_messages" as any) as any)
             .select("direction, content")
             .eq("lead_id", leadId)
             .order("created_at", { ascending: false })
             .limit(10);
         
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const conversationHistory = (history || []).reverse().map((m: any) => 
             `${m.direction === "INBOUND" ? "Usuario" : "Asistente"}: ${m.content}`
         ).join("\n") || "";
@@ -77,13 +69,11 @@ INFORMACIÓN DEL CURSO:
 
         const { data: variants } = await variantQuery.limit(1);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (!variants || (variants as any[]).length === 0) {
             console.warn(`[AI PROCESSOR] No active AI agent found for lead ${leadId}`);
             return;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const activeVariant = (variants as any[])[0];
         const apiKey = activeVariant.api_key;
         if (!apiKey) {
@@ -138,10 +128,8 @@ ${conversationHistory}
 
         if (aiResponse) {
             // 8. Send via WhatsApp
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: tenant } = await (supabase.from("tenants" as any) as any).select("config").eq("id", tenantId).single();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const waConfig = (tenant as any)?.config?.whatsapp;
+                const { data: tenant } = await (supabase.from("tenants" as any) as any).select("config").eq("id", tenantId).single();
+                const waConfig = (tenant as any)?.config?.whatsapp;
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
                 await whatsappBridge.sendTextMessage(lead.telefono!, aiResponse, {
@@ -150,8 +138,7 @@ ${conversationHistory}
                 });
 
                 // 9. Log Outbound Message (Supabase)
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                await (supabase.from("chat_messages" as any) as any).insert({
+                        await (supabase.from("chat_messages" as any) as any).insert({
                     tenant_id: tenantId,
                     lead_id: leadId,
                     direction: "OUTBOUND",
@@ -168,8 +155,7 @@ ${conversationHistory}
 
                 // 12. Update Lead Memory & Stage (Autonomous Logic)
                 try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const recentHistory = (history || []).map((m: any) => m.content);
+                                const recentHistory = (history || []).map((m: any) => m.content);
                     recentHistory.push(incomingMessage);
                     recentHistory.push(aiResponse);
                     
