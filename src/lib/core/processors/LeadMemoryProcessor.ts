@@ -33,18 +33,20 @@ Responde ÚNICAMENTE en formato JSON plano. Ejemplo:
             const facts = JSON.parse(rawJson || "{}");
 
             // 2. Load current lead metadata
-            const { data: lead } = await supabase.from("lead" as string).select("metadata, current_stage").eq("id", leadId).single();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: lead } = await (supabase as any).from("lead").select("metadata, current_stage").eq("id", leadId).single();
             const currentMetadata = (lead as unknown as Lead)?.metadata || {};
 
             // 3. Merge and update
             const newMetadata = { ...currentMetadata, ...facts };
             const newStage = facts.etapa_sugerida || (lead as unknown as Lead)?.current_stage || 'QUALIFICATION';
 
-            await supabase.from("lead" as string).update({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any).from("lead").update({
                 metadata: newMetadata,
                 current_stage: newStage,
                 last_interaction_at: new Date().toISOString()
-            } as unknown).eq("id", leadId);
+            }).eq("id", leadId);
 
             console.log(`[MEMORY] Lead ${leadId} updated. Stage: ${newStage}`);
             return { success: true, stage: newStage, facts };
