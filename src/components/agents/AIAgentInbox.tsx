@@ -219,11 +219,13 @@ export default function AIAgentInbox() {
         const lang = tpl?.language || "es";
         
         // Detect if the template expects parameters in BODY
-        const hasVariables = tpl?.components?.some(c => 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const hasVariables = tpl?.components?.some((c: any) => 
             c.type === "BODY" && c.text?.includes("{{1}}")
         );
 
         // If no variables detected, send an empty array for components to avoid Meta error #132000
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const components: any[] = hasVariables ? (selectedLead.nombre ? [
             {
                 type: "BODY",
