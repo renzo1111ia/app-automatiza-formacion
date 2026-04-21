@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import { orchestrator } from "@/lib/core/orchestrator";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
-import { SupabaseClient } from "@supabase/supabase-js";
-import { Workflow, OrchestrationRule, Lead } from "@/types/database";
+import { Workflow, Lead } from "@/types/database";
 
 export async function GET() {
+    try {
         const supabase = await getAdminSupabaseClient();
         const tenantId = "test-tenant-123";
 
         // 1. Ensure a Baseline Workflow exists
-        const { data: workflows } = await supabase.from("workflows").select("*").eq("tenant_id", tenantId).limit(1);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: workflows } = await (supabase as any).from("workflows").select("*").eq("tenant_id", tenantId).limit(1);
         let workflow = workflows && workflows.length > 0 ? workflows[0] : null;
 
         if (!workflow) {
             console.log("[PLAYGROUND] Creating Baseline Workflow...");
-            const { data: newWf, error: wfE } = await supabase.from("workflows").insert({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: newWf, error: wfE } = await (supabase as any).from("workflows").insert({
                 tenant_id: tenantId,
                 name: "Workflow de Prueba A/B",
                 is_active: true,
@@ -25,7 +27,8 @@ export async function GET() {
             workflow = newWf;
 
             // Add a Rule
-            const { error: ruleE } = await supabase.from("orchestration_rules").insert({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: ruleE } = await (supabase as any).from("orchestration_rules").insert({
                 tenant_id: tenantId,
                 workflow_id: (workflow as unknown as Workflow).id,
                 step_name: "AI Qualification",
@@ -37,7 +40,8 @@ export async function GET() {
         }
 
         // 2. Create Mock Lead
-        const { data: lead, error: leadE } = await supabase.from("lead").insert({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: lead, error: leadE } = await (supabase as any).from("lead").insert({
             tenant_id: tenantId,
             nombre: "Test",
             apellido: "Orchestrator",
