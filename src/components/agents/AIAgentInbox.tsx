@@ -214,11 +214,24 @@ export default function AIAgentInbox() {
         if (!selectedLead) return;
         setSending(true);
 
-        // Find template to get its language
+        // Find template to get its language and variables
         const tpl = templates.find(t => t.name === templateName);
         const lang = tpl?.language || "es";
+        
+        // Detect if the template expects parameters in BODY
+        const hasVariables = tpl?.components?.some(c => 
+            c.type === "BODY" && c.text?.includes("{{1}}")
+        );
 
-        const res = await sendManualMessage(selectedLead.id, templateName, "TEMPLATE", lang);
+        // If no variables detected, send an empty array for components to avoid Meta error #132000
+        const components: any[] = hasVariables ? (selectedLead.nombre ? [
+            {
+                type: "BODY",
+                parameters: [{ type: "text", text: selectedLead.nombre }]
+            }
+        ] : []) : [];
+
+        const res = await sendManualMessage(selectedLead.id, templateName, "TEMPLATE", lang, components);
         if (res.success && res.data) {
             const newMessage = res.data;
             setMessages((prev: ChatMessage[]) => {
