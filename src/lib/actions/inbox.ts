@@ -3,7 +3,7 @@
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { getActiveTenantConfig } from "./tenant";
 import { whatsappBridge, WhatsAppConfig } from "../integrations/whatsapp";
-import type { Database } from "@/types/database";
+import type { Database, Lead } from "@/types/database";
 
 type LeadRow = Database['public']['Tables']['lead']['Row'];
 
@@ -113,7 +113,7 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
                 telefono: phone,
                 foto_url: (l as LeadRow & { foto_url?: string }).foto_url || null,
                 is_ai_enabled: l.is_ai_enabled ?? true,
-                ai_agent_id: (l as any).ai_agent_id || null,
+                ai_agent_id: (l as unknown as Lead).ai_agent_id || null,
                 last_message: msg?.content || "Nueva conversación (sin mensajes)",
                 last_message_time: msg?.time || l.fecha_creacion || null, 
                 created_at: l.fecha_creacion || null,
@@ -204,7 +204,10 @@ export async function getChatHistory(leadId: string): Promise<{ success: boolean
 export async function sendManualMessage(
     leadId: string, 
     content: string, 
-    type: "TEXT" | "TEMPLATE" = "TEXT"
+    type: "TEXT" | "TEMPLATE" = "TEXT",
+    languageCode: string = "es",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    templateComponents?: any[]
 ): Promise<{ success: boolean; data?: ChatMessage; error?: string }> {
     const tenant = await getActiveTenantConfig();
     if (!tenant) return { success: false, error: "No tenant" };
@@ -237,26 +240,38 @@ export async function sendManualMessage(
             if (type === "TEXT") {
                 await whatsappBridge.sendTextMessage(lead.telefono || "", content, waConfig);
             } else {
-                // For manual template sends, we resolve {{1}} to name automatically
-                const components = lead.nombre ? [
+                // If templateComponents is provided from frontend, use it.
+                // Otherwise, try to auto-resolve {{1}} to name as fallback.
+                const finalComponents = templateComponents || (lead.nombre ? [
                     {
                         type: "BODY",
                         parameters: [{ type: "text", text: lead.nombre }]
                     }
-                ] : [];
-                await whatsappBridge.sendTemplateMessage(lead.telefono || "", content, "es", components, waConfig);
+                ] : []);
+
+                await whatsappBridge.sendTemplateMessage(
+                    lead.telefono || "", 
+                    content, 
+                    languageCode, 
+                    finalComponents, 
+                    waConfig
+                );
             }
         } catch (waError) {
-            const err = waError as any;
-            console.error("[INBOX] WhatsApp Send Error:", err.message);
+            const err = waError as { message: string, response?: { data: any } };
+            const errorMsg = err.response?.data?.error?.message || err.message;
+            console.error("[INBOX] WhatsApp Send Error:", errorMsg);
+            
             // Log to system_logs for the user to see
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (supabase.from("system_logs" as any) as any).insert({
                 tenant_id: tenant.id,
                 event_type: "WHATSAPP_SEND_ERROR",
-                message: `Error enviando ${type}: ${err.message}`,
+                message: `Error enviando ${type}: ${errorMsg}`,
                 metadata: { leadId, error: err.response?.data || err.message }
             });
+
+            return { success: false, error: `Error de Meta: ${errorMsg}` };
         }
     } else {
         console.warn("[INBOX] No WhatsApp credentials - Persisting as MOCK message locally.");
@@ -338,8 +353,9 @@ export async function toggleLeadAI(leadId: string, enabled: boolean): Promise<{ 
  */
 export async function assignAgentToLead(leadId: string, agentId: string | null) {
     const supabase = await getAdminSupabaseClient();
-    const { error } = await supabase
-        .from('lead')
+    const { error } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('lead' as any) as any)
         .update({ ai_agent_id: agentId } as never)
         .eq('id', leadId);
     
@@ -349,5 +365,50 @@ export async function assignAgentToLead(leadId: string, agentId: string | null) 
         }
         return { success: false, error: error.message };
     }
+    return { success: true };
+}
+
+/**
+ * Deletes a lead and all associated data (cascading).
+ */
+export async function deleteLead(leadId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await getAdminSupabaseClient();
+    
+    // 1. Delete associated chat messages first (manual cascading if not in DB)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from("chat_messages" as any) as any).delete().eq("lead_id", leadId);
+    
+    // 2. Delete the lead
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("lead" as any) as any).delete().eq("id", leadId);
+    
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+}
+
+/**
+ * Clears the chat history for a specific lead without deleting the lead itself.
+ */
+export async function deleteChatHistory(leadId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await getAdminSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("chat_messages" as any) as any).delete().eq("lead_id", leadId);
+    
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+}
+
+/**
+ * Updates a lead's basic info.
+ */
+export async function updateLeadInfo(leadId: string, updates: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("lead" as any) as any)
+        .update(updates)
+        .eq("id", leadId);
+    
+    if (error) return { success: false, error: error.message };
     return { success: true };
 }

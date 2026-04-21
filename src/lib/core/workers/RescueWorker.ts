@@ -31,8 +31,8 @@ export async function runRescueCheck() {
     // - Not paused
     const { data: leads, error } = await (supabase
         .from("lead" as unknown as string) as unknown as { select: (s: string) => { not: (f: string, o: string, v: null) => { eq: (f: string, v: boolean) => Promise<{ data: unknown[], error: unknown }> } } })
-        .select("*, ai_agents!lead_active_agent_id_fkey(*)")
-        .not("active_agent_id", "is", null)
+        .select("*, ai_agents!lead_ai_agent_id_fkey(*)")
+        .not("ai_agent_id", "is", null)
         .eq("is_ai_paused", false);
 
     if (error || !leads) return;

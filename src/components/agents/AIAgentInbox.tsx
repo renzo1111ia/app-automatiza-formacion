@@ -6,14 +6,17 @@ import {
     Paperclip, Send, Bot, User,
     Check, CheckCheck, Loader2, Zap,
     Archive, Star, PlusCircle, Filter, 
-    Settings, GitBranch, X, ChevronDown
+    Settings, GitBranch, X, ChevronDown,
+    Trash2, Save
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { 
     getInboxLeads, getChatHistory, sendManualMessage, 
-    toggleLeadAI, updateLeadSegment, assignAgentToLead, type InboxLead, type ChatMessage 
+    toggleLeadAI, updateLeadSegment, assignAgentToLead,
+    deleteLead, deleteChatHistory, updateLeadInfo,
+    type InboxLead, type ChatMessage 
 } from "@/lib/actions/inbox";
 import { getAIAgents } from "@/lib/actions/agents";
 import { AIAgent } from "@/types/database";
@@ -210,7 +213,12 @@ export default function AIAgentInbox() {
     const handleSendTemplate = async (templateName: string) => {
         if (!selectedLead) return;
         setSending(true);
-        const res = await sendManualMessage(selectedLead.id, templateName, "TEMPLATE");
+
+        // Find template to get its language
+        const tpl = templates.find(t => t.name === templateName);
+        const lang = tpl?.language || "es";
+
+        const res = await sendManualMessage(selectedLead.id, templateName, "TEMPLATE", lang);
         if (res.success && res.data) {
             const newMessage = res.data;
             setMessages((prev: ChatMessage[]) => {
@@ -219,6 +227,8 @@ export default function AIAgentInbox() {
             });
             setIsTemplateModalOpen(false);
             setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+        } else if (res.error) {
+            alert(res.error);
         }
         setSending(false);
     };
@@ -248,6 +258,31 @@ export default function AIAgentInbox() {
             alert(res.error);
         }
         setIsAssigningAgent(false);
+    };
+
+    const handleDeleteLead = async () => {
+        if (!selectedLead) return;
+        if (!confirm("¿Estás seguro de que deseas eliminar este lead completamente? Esta acción no se puede deshacer.")) return;
+        
+        const res = await deleteLead(selectedLead.id);
+        if (res.success) {
+            setLeads((prev) => prev.filter(l => l.id !== selectedLead.id));
+            setSelectedLead(null);
+        } else {
+            alert("Error al eliminar lead: " + res.error);
+        }
+    };
+
+    const handleDeleteChat = async () => {
+        if (!selectedLead) return;
+        if (!confirm("¿Estás seguro de que deseas vaciar la conversación de este lead? los datos del lead se mantendrán.")) return;
+        
+        const res = await deleteChatHistory(selectedLead.id);
+        if (res.success) {
+            setMessages([]);
+        } else {
+            alert("Error al vaciar chat: " + res.error);
+        }
     };
 
     // --- Render Helpers ---
@@ -502,28 +537,29 @@ export default function AIAgentInbox() {
 
             {/* ─── COLUMN 2: MAIN CHAT AREA (Flexible Container) ───────────────────────── */}
             <div className="flex-1 flex flex-col bg-[#0b0e14] relative border-r border-white/5 shadow-2xl z-10 min-w-0">
-                
-                {/* Chat Header (Standard 64px) */}
-                <div className="h-16 px-8 border-b border-white/10 flex items-center justify-between bg-black/60 backdrop-blur-3xl">
-                    <div className="flex items-center gap-6">
+                <div className={cn(
+                    "h-16 border-b border-white/10 flex items-center justify-between bg-black/60 backdrop-blur-3xl transition-all duration-300",
+                    showDetails ? "px-4" : "px-8"
+                )}>
+                    <div className={cn("flex items-center", showDetails ? "gap-3" : "gap-6")}>
                         {selectedLead ? (
                             <>
-                                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center flex-shrink-0 border border-white/10 shadow-2xl overflow-hidden group">
+                                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center flex-shrink-0 border border-white/10 shadow-2xl overflow-hidden group">
                                      {selectedLead.foto_url ? (
-                                        <Image src={selectedLead.foto_url} alt="" width={44} height={44} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" unoptimized />
+                                        <Image src={selectedLead.foto_url} alt="" width={40} height={40} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" unoptimized />
                                     ) : (
-                                        <User className="h-6 w-6 text-white/20" />
+                                        <User className="h-5 w-5 text-white/20" />
                                     )}
                                 </div>
                                 
-                                <div className="flex flex-col gap-1 min-w-0">
-                                    <div className="flex items-center gap-3">
-                                        <h2 className="text-[16px] font-black text-white leading-tight truncate tracking-tight">
+                                <div className="flex flex-col gap-0 min-w-0">
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <h2 className="text-[15px] font-black text-white leading-tight truncate tracking-tight shrink">
                                             {selectedLead.nombre ? `${selectedLead.nombre} ${selectedLead.apellido || ''}` : selectedLead.telefono}
                                         </h2>
                                         {selectedLead.segmentacion && (
                                             <div className={cn(
-                                                "px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-[0.1em] border",
+                                                "px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-[0.1em] border flex-shrink-0",
                                                 selectedLead.segmentacion === 'CUALIFICADO' ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-500" :
                                                 selectedLead.segmentacion === 'REVISADO' ? "bg-blue-500/20 border-blue-500/40 text-blue-500" :
                                                 selectedLead.segmentacion === 'PUESTO 1' ? "bg-primary/20 border-primary/40 text-primary" :
@@ -534,44 +570,44 @@ export default function AIAgentInbox() {
                                         )}
                                     </div>
 
-                                    <div className="flex items-center gap-4 text-white/40">
-                                        <span className="text-[10px] font-bold tracking-wider">{selectedLead.telefono}</span>
-                                        <div className="h-1 w-1 rounded-full bg-white/10" />
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-2 w-2 rounded-full bg-emerald-500/40 p-[2px]">
-                                                <div className="h-full w-full rounded-full bg-emerald-500" />
+                                    <div className="flex items-center gap-2 text-white/40">
+                                        <span className="text-[9px] font-bold tracking-wider truncate">{selectedLead.telefono}</span>
+                                        {!showDetails && (
+                                            <div className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
+                                                <div className="h-1 w-1 rounded-full bg-emerald-500" />
+                                                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500/70 truncate">WhatsApp Cloud API</span>
                                             </div>
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70">WhatsApp Cloud API</span>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex items-center gap-6 opacity-10">
-                                <div className="h-11 w-11 border border-dashed border-white/20 rounded-2xl" />
-                                <div className="space-y-2">
-                                    <div className="h-4 w-40 bg-white/10 rounded-full" />
-                                    <div className="h-2 w-32 bg-white/5 rounded-full" />
+                            <div className="flex items-center gap-4 opacity-10">
+                                <div className="h-10 w-10 border border-dashed border-white/20 rounded-2xl" />
+                                <div className="space-y-1.5">
+                                    <div className="h-3 w-32 bg-white/10 rounded-full" />
+                                    <div className="h-2 w-24 bg-white/5 rounded-full" />
                                 </div>
                             </div>
                         )}
                     </div>
 
                     {selectedLead && (
-                        <div className="flex items-center gap-4">
+                        <div className={cn("flex items-center", showDetails ? "gap-2" : "gap-4")}>
                             {/* AGENT TOGGLE */}
                             <button 
                                 onClick={handleToggleAI}
                                 title={selectedLead?.is_ai_enabled ? "Pausar Agente IA" : "Activar Agente IA"}
                                 className={cn(
-                                    "h-10 px-4 rounded-xl transition-all flex items-center gap-3 border shadow-lg",
+                                    "h-9 transition-all flex items-center justify-center border shadow-lg overflow-hidden",
+                                    showDetails ? "w-9 rounded-xl px-0" : "px-3 rounded-xl gap-2",
                                     selectedLead?.is_ai_enabled 
                                         ? "bg-primary border-primary/20 text-white" 
                                         : "bg-amber-500 border-amber-500/20 text-white animate-pulse"
                                 )}
                             >
                                 <Zap className="h-3.5 w-3.5" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">{selectedLead?.is_ai_enabled ? "Agente IA: ON" : "Agente IA: PAUSA"}</span>
+                                {!showDetails && <span className="text-[9px] font-black uppercase tracking-widest">{selectedLead?.is_ai_enabled ? "Agente IA: ON" : "Agente IA: PAUSA"}</span>}
                             </button>
 
                             {/* AGENT SELECTOR */}
@@ -581,25 +617,36 @@ export default function AIAgentInbox() {
                                     disabled={isAssigningAgent}
                                     onChange={(e) => handleAssignAgent(e.target.value || null)}
                                     title="Vincular este lead a un agente específico"
-                                    className="h-10 bg-black/40 border border-white/5 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-primary/20 appearance-none pr-8 cursor-pointer disabled:opacity-50"
+                                    className={cn(
+                                        "h-9 bg-black/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-primary/20 appearance-none cursor-pointer disabled:opacity-50 transition-all",
+                                        showDetails ? "w-9 px-0 text-center flex items-center justify-center" : "px-4 pr-8"
+                                    )}
                                 >
-                                    <option value="" className="bg-slate-900">Agente por Defecto</option>
+                                    <option value="" className="bg-slate-900">{showDetails ? "AI" : "Agente por Defecto"}</option>
                                     {availableAgents.map(agent => (
                                         <option key={agent.id} value={agent.id} className="bg-slate-900">{agent.name}</option>
                                     ))}
                                 </select>
-                                <ChevronDown className="h-3 w-3 absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none group-hover/agent:scale-110 transition-transform" />
+                                {!showDetails && <ChevronDown className="h-3 w-3 absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none group-hover/agent:scale-110 transition-transform" />}
                             </div>
+
+                            <button 
+                                onClick={handleDeleteChat}
+                                title="Vaciar conversación"
+                                className="h-9 w-9 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center hover:bg-red-500/20 transition-all"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
 
                             <button 
                                 onClick={() => setShowDetails(!showDetails)}
                                 title={showDetails ? "Ocultar detalles" : "Mostrar detalles"}
                                 className={cn(
-                                    "h-10 w-10 rounded-xl flex items-center justify-center transition-all border",
+                                    "h-9 w-9 rounded-xl flex items-center justify-center transition-all border",
                                     showDetails ? "bg-primary/20 border-primary/40 text-primary" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
                                 )}
                             >
-                                <Archive className="h-4 w-4" />
+                                <Archive className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     )}
@@ -754,7 +801,23 @@ export default function AIAgentInbox() {
                                         ))}
                                     </div>
                                 </div>
-                                <DetailField label="Teléfono" value={selectedLead.telefono || 'Desconocido'} icon={Phone} copyable />
+                                <DetailField 
+                                    label="Teléfono" 
+                                    value={selectedLead.telefono || 'Desconocido'} 
+                                    icon={Phone} 
+                                    copyable 
+                                    editable
+                                    onSave={async (newVal) => {
+                                        const res = await updateLeadInfo(selectedLead.id, { telefono: newVal });
+                                        if (res.success) {
+                                            const updated = { ...selectedLead, telefono: newVal };
+                                            setSelectedLead(updated);
+                                            setLeads(prev => prev.map(l => l.id === selectedLead.id ? updated : l));
+                                        } else {
+                                            alert("Error al actualizar teléfono: " + res.error);
+                                        }
+                                    }}
+                                />
                                 <DetailField label="País" value={selectedLead.pais || 'Identificando...'} icon={Star} />
                                 <DetailField label="Origen" value={selectedLead.origen || 'Campaña Orgánica'} icon={GitBranch} />
                             </div>
@@ -797,13 +860,19 @@ export default function AIAgentInbox() {
 
                         </div>
 
-                        <div className="p-8 border-t border-white/5 bg-black/20">
-                             <button className="w-full h-12 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest text-primary">Ver Perfil Completo</button>
+                        <div className="p-8 border-t border-white/5 bg-black/20 space-y-4">
+                              <button className="w-full h-12 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest text-primary">Ver Perfil Completo</button>
+                              <button 
+                                onClick={handleDeleteLead}
+                                className="w-full h-12 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-red-500 flex items-center justify-center gap-2"
+                              >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <span>Eliminar Lead Completamente</span>
+                              </button>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-
             {/* ─── TEMPLATE SELECTOR MODAL ─── */}
             <AnimatePresence>
                 {isTemplateModalOpen && (
@@ -915,26 +984,104 @@ function TemplateCard({ name, description, status, onClick }: { name: string, de
     );
 }
 
-function DetailField({ label, value, icon: Icon, copyable }: { label: string, value: string, icon: LucideIcon, copyable?: boolean }) {
+function DetailField({ 
+    label, 
+    value, 
+    icon: Icon, 
+    copyable, 
+    editable, 
+    onSave 
+}: { 
+    label: string, 
+    value: string, 
+    icon: LucideIcon, 
+    copyable?: boolean, 
+    editable?: boolean, 
+    onSave?: (val: string) => Promise<void> 
+}) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(value);
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        setEditValue(value);
+    }, [value]);
+
+    const handleSave = async () => {
+        if (!onSave) return;
+        setIsSaving(true);
+        await onSave(editValue);
+        setIsSaving(false);
+        setIsEditing(false);
+    };
+
     return (
         <div className="space-y-2 group">
-            <div className="flex items-center gap-2 px-1">
-                <Icon className="h-3 w-3 text-white/20" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/20">{label}</span>
+            <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                    <Icon className="h-3 w-3 text-white/20" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/20">{label}</span>
+                </div>
+                {editable && !isEditing && (
+                    <button 
+                        onClick={() => setIsEditing(true)}
+                        className="text-[9px] font-black uppercase tracking-widest text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                        Editar
+                    </button>
+                )}
             </div>
             <div className={cn(
                 "w-full p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between group-hover:bg-white/5 transition-colors",
-                copyable && "cursor-pointer"
+                copyable && !isEditing && "cursor-pointer"
             )}>
-                <span className="text-sm font-bold text-white/80">{value}</span>
-                {copyable && <Paperclip className="h-3 w-3 text-white/10 group-hover:text-primary transition-colors" />}
+                {isEditing ? (
+                    <div className="flex-1 flex items-center gap-3">
+                        <input 
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            placeholder={`Editar ${label.toLowerCase()}...`}
+                            aria-label={`Editar ${label}`}
+                            className="flex-1 bg-transparent border-none text-sm font-bold text-white focus:outline-none"
+                            autoFocus
+                        />
+                        <button 
+                            disabled={isSaving}
+                            title="Guardar cambios"
+                            onClick={handleSave}
+                            className="h-7 w-7 rounded-lg bg-primary/20 text-primary flex items-center justify-center hover:bg-primary/30 disabled:opacity-50"
+                        >
+                            {isSaving ? <Loader2 className="h-3 w-3 animate-spin"/> : <Save className="h-3 w-3" />}
+                        </button>
+                        <button 
+                            title="Cancelar"
+                            onClick={() => { setIsEditing(false); setEditValue(value); }}
+                            className="h-7 w-7 rounded-lg bg-white/5 text-white/40 flex items-center justify-center hover:bg-white/10"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <span className="text-sm font-bold text-white/80">{value}</span>
+                        {copyable && <Paperclip className="h-3 w-3 text-white/10 group-hover:text-primary transition-colors" />}
+                    </>
+                )}
             </div>
         </div>
     );
 }
 
 
-function ChatMessageBubble({ message, templates = [] }: { message: ChatMessage; templates?: any[] }) {
+interface MetaTemplate {
+    name: string;
+    components?: Array<{
+        type: string;
+        text?: string;
+    }>;
+}
+
+function ChatMessageBubble({ message, templates = [] }: { message: ChatMessage; templates?: MetaTemplate[] }) {
     const isOut = message.direction === "OUTBOUND";
     const isBot = message.sent_by?.toLowerCase().includes("agente") || message.message_type === "TEMPLATE";
     const time = new Date(message.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
@@ -948,7 +1095,7 @@ function ChatMessageBubble({ message, templates = [] }: { message: ChatMessage; 
         const template = templates.find(t => t.name === message.content);
         if (template) {
             // Meta structure: components[type=BODY].text
-            const bodyComp = template.components?.find((c: any) => c.type === 'BODY');
+            const bodyComp = template.components?.find(c => c.type === 'BODY');
             if (bodyComp?.text) {
                 displayContent = bodyComp.text;
             }

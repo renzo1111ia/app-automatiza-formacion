@@ -456,10 +456,10 @@ export class Orchestrator {
         
         // Update lead with currently active agent and reset inactivity counter
         const supabase = await getSupabaseServerClient();
-        if (lead.active_agent_id !== agentId) {
+        if (lead.ai_agent_id !== agentId) {
             await (supabase.from("lead" as any) as any)
                 .update({ 
-                    active_agent_id: agentId,
+                    ai_agent_id: agentId,
                     inactivity_sent_count: 0
                 })
                 .eq("id", lead.id);

@@ -26,7 +26,7 @@ export interface Lead {
     metadata?: Record<string, unknown> | null;
     last_interaction_at?: string | null;
     is_ai_paused?: boolean;
-    active_agent_id?: string | null;
+    ai_agent_id?: string | null;
     inactivity_sent_count?: number;
 }
 
