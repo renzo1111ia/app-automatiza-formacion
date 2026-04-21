@@ -167,11 +167,11 @@ export default function AgentsPage() {
             // Prepare variants for saving: convert empty strings to null for optional fields
             const prepVariant = (v: Partial<AIAgentVariant>) => ({
                 ...v,
-                api_key: v.api_key?.trim() || null,
-                knowledge_base_id: v.knowledge_base_id?.trim() || null,
+                api_key: v.api_key?.trim() || undefined,
+                knowledge_base_id: v.knowledge_base_id?.trim() || undefined,
                 agent_id: selectedAgent.id,
                 is_active: true
-            });
+            } as AIAgentVariant);
 
             const resA = await saveAgentVariant(prepVariant(variantA));
             
