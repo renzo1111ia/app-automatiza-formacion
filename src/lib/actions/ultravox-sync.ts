@@ -38,10 +38,12 @@ export async function syncUltravoxResources(apiKey: string) {
         return {
             success: true,
             data: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 voices: (voicesData.results || []).map((v: any) => ({
                     id: v.voiceId || v.id,
                     name: v.name || v.voiceId
                 })),
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 models: (modelsData.results || []).map((m: any) => ({
                     id: m.modelId || m.id,
                     name: m.name || m.modelId
@@ -63,8 +65,8 @@ export async function listUltravoxAgents(apiKey: string) {
     try {
         const data = await ultravoxBridge.listAgents({ apiKey });
         return { success: true, data: data.results || [] };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
 
@@ -76,8 +78,8 @@ export async function getUltravoxCallTranscript(apiKey: string, callId: string) 
     try {
         const data = await ultravoxBridge.getCallTranscript(callId, { apiKey });
         return { success: true, data: data.results || [] };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
 
@@ -89,8 +91,8 @@ export async function getUltravoxCallRecording(apiKey: string, callId: string) {
     try {
         const data = await ultravoxBridge.getCallRecording(callId, { apiKey });
         return { success: true, data: data.recordingUrl || null };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
 
@@ -102,8 +104,8 @@ export async function createUltravoxAgent(apiKey: string, params: { name: string
     try {
         const data = await ultravoxBridge.createAgent(params, { apiKey });
         return { success: true, data };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
 
@@ -115,8 +117,8 @@ export async function updateUltravoxAgent(apiKey: string, agentId: string, param
     try {
         const data = await ultravoxBridge.updateAgent(agentId, params, { apiKey });
         return { success: true, data };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
 

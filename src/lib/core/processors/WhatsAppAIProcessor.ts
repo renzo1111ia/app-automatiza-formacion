@@ -3,6 +3,7 @@ import { Database } from "@/types/database";
 import { whatsappBridge } from "../../integrations/whatsapp";
 import OpenAI from "openai";
 import { queryKnowledgeBase, invokeClaude } from "../../integrations/aws/bedrock";
+import { leadMemoryProcessor } from "./LeadMemoryProcessor";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO)
@@ -63,17 +64,21 @@ INFORMACIÓN DEL CURSO:
         ).join("\n") || "";
 
         // 4. Get AI Agent & Variant (API Key + Prompt)
-        // We look for an active agent for this tenant
-        const { data: variants } = await (supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from("ai_agent_variants" as any) as any)
-            .select("*")
-            .eq("is_active", true)
-            .limit(1);
+        // We look for the assigned agent for this lead
+        const agentId = lead.ai_agent_id;
+        let variantQuery = (supabase.from("ai_agent_variants" as any) as any).select("*").eq("is_active", true);
+        
+        if (agentId) {
+            variantQuery = variantQuery.eq("agent_id", agentId);
+        } else {
+            variantQuery = variantQuery.eq("tenant_id", tenantId);
+        }
+
+        const { data: variants } = await variantQuery.limit(1);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (!variants || (variants as any[]).length === 0) {
-            console.warn(`[AI PROCESSOR] No active AI agent found for tenant ${tenantId}`);
+            console.warn(`[AI PROCESSOR] No active AI agent found for lead ${leadId}`);
             return;
         }
 
@@ -86,7 +91,6 @@ INFORMACIÓN DEL CURSO:
         }
 
         // 5. Get Deep Knowledge from AWS Bedrock (RAG)
-        // Consultamos la base de conocimientos de Automatiza Formación para obtener datos técnicos precisos
         const kbResults = await queryKnowledgeBase(incomingMessage, activeVariant.knowledge_base_id);
         const deepKnowledgeContext = kbResults.length > 0 
             ? `\nCONOCIMIENTO ADICIONAL (AWS):\n${kbResults.map(r => `- ${r.text}`).join("\n")}\n`
@@ -160,6 +164,18 @@ ${conversationHistory}
                         token_usage: usage
                     }
                 });
+
+                // 12. Update Lead Memory & Stage (Autonomous Logic)
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const recentHistory = (history || []).map((m: any) => m.content);
+                    recentHistory.push(incomingMessage);
+                    recentHistory.push(aiResponse);
+                    
+                    await leadMemoryProcessor.extractFactsAndUpdateStage(leadId, recentHistory);
+                } catch (memErr) {
+                    console.error("[AI PROCESSOR] Failed to update lead memory:", memErr);
+                }
             } else {
                 console.error(`[AI PROCESSOR] WhatsApp credentials missing for tenant ${tenantId} during response`);
             }
