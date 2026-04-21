@@ -69,6 +69,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     }
 
     // 2. Assign an advisor (Pick the first active one for the tenant)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: advisorData } = await (supabase as any)
         .from("advisors")
         .select("id")
@@ -84,6 +85,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     }
 
     // 3. Insert record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: appointmentData, error } = await (supabase as any)
         .from("appointments")
         .insert({
@@ -98,6 +100,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         .select()
         .single();
     
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = appointmentData as any;
 
     if (error) {

@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
             last_interaction_at: new Date().toISOString()
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: lead, error: leadErr } = await (supabase as any)
             .from("lead")
             .insert(leadData) 

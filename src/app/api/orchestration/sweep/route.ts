@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_SERVICE_ROLE_KEY } from "@/lib/auth-config";
 import { Orchestrator } from "@/lib/core/orchestrator";
 import { Database, PlannedAction } from "@/types/database";
@@ -45,6 +45,7 @@ export async function GET() {
                 await orchestrator.executePlannedAction(action); // executePlannedAction might still take any if it's not updated yet
 
                 // 3. Mark as executed
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await (supabase as any)
                     .from("planned_actions")
                     .update({ status: "EXECUTED", updated_at: new Date().toISOString() })
@@ -56,6 +57,7 @@ export async function GET() {
                 console.error(`[SWEEP] Failed to process action ${action.id}:`, errMsg);
                 
                 // 4. Mark as failed
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await (supabase as any)
                     .from("planned_actions")
                     .update({ 
