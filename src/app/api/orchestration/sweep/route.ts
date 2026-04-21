@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * It executes actions that are due in the planned_actions table.
  */
 export async function GET() {
-    const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!) as unknown as SupabaseClient;
+    const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!);
     const orchestrator = new Orchestrator();
 
     try {
@@ -45,7 +45,7 @@ export async function GET() {
                 await orchestrator.executePlannedAction(action); // executePlannedAction might still take any if it's not updated yet
 
                 // 3. Mark as executed
-                await supabase
+                await (supabase as any)
                     .from("planned_actions")
                     .update({ status: "EXECUTED", updated_at: new Date().toISOString() })
                     .eq("id", action.id);
@@ -56,7 +56,7 @@ export async function GET() {
                 console.error(`[SWEEP] Failed to process action ${action.id}:`, errMsg);
                 
                 // 4. Mark as failed
-                await supabase
+                await (supabase as any)
                     .from("planned_actions")
                     .update({ 
                         status: "FAILED", 

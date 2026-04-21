@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { type SupabaseClient } from "@supabase/supabase-js";
+import { Database } from "@/types/database";
 
 /**
  * RETELL LIVE TOOLING WEBHOOK
@@ -56,8 +57,10 @@ export async function POST(req: Request) {
  * Tool: book_appointment
  * Creates a new appointment in the system database.
  */
-async function handleBookAppointment(supabase: SupabaseClient, tenantId: string, leadId: string, args: Record<string, unknown>) {
-    const { date, time, notes } = args;
+async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantId: string, leadId: string, args: Record<string, unknown>) {
+    const date = args.date as string;
+    const time = args.time as string | undefined;
+    const notes = args.notes as string | undefined;
     
     // 1. Format date (ISO 8601)
     let scheduledAt = date;
@@ -66,20 +69,22 @@ async function handleBookAppointment(supabase: SupabaseClient, tenantId: string,
     }
 
     // 2. Assign an advisor (Pick the first active one for the tenant)
-    const { data: advisor } = await supabase
+    const { data: advisorData } = await (supabase as any)
         .from("advisors")
         .select("id")
         .eq("tenant_id", tenantId)
         .eq("is_active", true)
         .limit(1)
         .single();
+    
+    const advisor = advisorData as any;
 
     if (!advisor) {
         throw new Error("No available advisors to assign the appointment.");
     }
 
     // 3. Insert record
-    const { data, error } = await supabase
+    const { data: appointmentData, error } = await (supabase as any)
         .from("appointments")
         .insert({
             tenant_id: tenantId,
@@ -92,6 +97,8 @@ async function handleBookAppointment(supabase: SupabaseClient, tenantId: string,
         })
         .select()
         .single();
+    
+    const data = appointmentData as any;
 
     if (error) {
         console.error("DB Error booking appointment:", error);
@@ -103,7 +110,7 @@ async function handleBookAppointment(supabase: SupabaseClient, tenantId: string,
     return NextResponse.json({ 
         success: true, 
         message: "Cita agendada correctamente",
-        appointment_id: data.id 
+        appointment_id: data?.id 
     });
 }
 
@@ -111,7 +118,7 @@ async function handleBookAppointment(supabase: SupabaseClient, tenantId: string,
  * Tool: get_lead_info
  * Returns relevant CRM data to the agent so it can personalize the conversation.
  */
-async function handleGetLeadInfo(supabase: SupabaseClient, leadId: string) {
+async function handleGetLeadInfo(supabase: SupabaseClient<Database>, leadId: string) {
     const { data, error } = await supabase
         .from("lead")
         .select(`

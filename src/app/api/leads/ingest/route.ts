@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { orchestrator } from "@/lib/core/orchestrator";
-import { Tenant, ClientConfig, Lead } from "@/types/database";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { Tenant, ClientConfig } from "@/types/database";
 
 /**
  * UNIVERSAL INGEST ENDPOINT
@@ -34,11 +33,13 @@ export async function POST(req: NextRequest) {
         const tenantId = (tenant as unknown as Tenant).id;
 
         // 2. Fetch Client Config for Routing Rules
-        const { data: clientConfig } = await supabase
+        const { data: clientConfigData } = await supabase
             .from("client_configs")
             .select("*")
             .eq("tenant_id", tenantId)
             .single();
+
+        const clientConfig = clientConfigData as ClientConfig | null;
 
         // 3. GATEKEEPER: Business Rules Validation
         const rules = clientConfig?.routing_rules || {
@@ -78,11 +79,11 @@ export async function POST(req: NextRequest) {
             last_interaction_at: new Date().toISOString()
         };
 
-        const { data: lead, error: leadErr } = await supabase
+        const { data: lead, error: leadErr } = await (supabase as any)
             .from("lead")
-            .insert(leadData as unknown as Lead) 
+            .insert(leadData) 
             .select()
-            .single() as { data: Lead | null, error: { message: string } | null };
+            .single();
 
         if (leadErr) {
             throw new Error("Failed to create lead: " + leadErr.message);

@@ -5,8 +5,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Workflow, OrchestrationRule, Lead } from "@/types/database";
 
 export async function GET() {
-    try {
-        const supabase = (await getAdminSupabaseClient()) as unknown as SupabaseClient;
+        const supabase = await getAdminSupabaseClient();
         const tenantId = "test-tenant-123";
 
         // 1. Ensure a Baseline Workflow exists
