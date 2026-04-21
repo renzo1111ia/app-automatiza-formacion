@@ -130,7 +130,7 @@ export async function listUltravoxCalls(apiKey: string, agentId?: string) {
     try {
         const data = await ultravoxBridge.listCalls({ agentId, limit: 50 }, { apiKey });
         return { success: true, data: data.results || [] };
-    } catch (error: any) {
-        return { success: false, error: error.message };
+    } catch (error: unknown) {
+        return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
     }
 }
