@@ -33,13 +33,15 @@ export async function POST(req: NextRequest) {
         const tenantId = (tenant as unknown as Tenant).id;
 
         // 2. Fetch Client Config for Routing Rules
-        const { data: clientConfigData } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: clientConfigData } = await (supabase as any)
             .from("client_configs")
             .select("*")
             .eq("tenant_id", tenantId)
             .single();
 
-        const clientConfig = clientConfigData as ClientConfig | null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const clientConfig = clientConfigData as any as ClientConfig | null;
 
         // 3. GATEKEEPER: Business Rules Validation
         const rules = clientConfig?.routing_rules || {
