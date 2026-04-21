@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { orchestrator } from "@/lib/core/orchestrator";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Workflow, OrchestrationRule, Lead } from "@/types/database";
 
 export async function GET() {
     try {
-        const supabase = await getAdminSupabaseClient();
+        const supabase = (await getAdminSupabaseClient()) as unknown as SupabaseClient;
         const tenantId = "test-tenant-123";
 
         // 1. Ensure a Baseline Workflow exists
-        let { data: workflows } = await (supabase.from("workflows" as any) as any).select("*").eq("tenant_id", tenantId).limit(1);
+        const { data: workflows } = await supabase.from("workflows").select("*").eq("tenant_id", tenantId).limit(1);
         let workflow = workflows && workflows.length > 0 ? workflows[0] : null;
 
         if (!workflow) {
             console.log("[PLAYGROUND] Creating Baseline Workflow...");
-            const { data: newWf, error: wfE } = await (supabase.from("workflows" as any) as any).insert({
+            const { data: newWf, error: wfE } = await supabase.from("workflows").insert({
                 tenant_id: tenantId,
                 name: "Workflow de Prueba A/B",
                 is_active: true,
@@ -24,9 +26,9 @@ export async function GET() {
             workflow = newWf;
 
             // Add a Rule
-            const { error: ruleE } = await (supabase.from("orchestration_rules" as any) as any).insert({
+            const { error: ruleE } = await supabase.from("orchestration_rules").insert({
                 tenant_id: tenantId,
-                workflow_id: workflow.id,
+                workflow_id: (workflow as unknown as Workflow).id,
                 step_name: "AI Qualification",
                 action_type: "AI_AGENT",
                 sequence_order: 1,
@@ -36,7 +38,7 @@ export async function GET() {
         }
 
         // 2. Create Mock Lead
-        const { data: lead, error: leadE } = await (supabase.from("lead" as any) as any).insert({
+        const { data: lead, error: leadE } = await supabase.from("lead").insert({
             tenant_id: tenantId,
             nombre: "Test",
             apellido: "Orchestrator",
@@ -48,16 +50,17 @@ export async function GET() {
         if (leadE) throw new Error("Lead creation failed: " + leadE.message);
 
         // 3. Execute
-        await orchestrator.executeWorkflow(workflow.id, lead as any, tenantId, {});
+        await orchestrator.executeWorkflow((workflow as unknown as Workflow).id, lead as unknown as Lead, tenantId, {});
 
         return NextResponse.json({ 
             success: true, 
-            leadId: lead.id, 
-            workflowId: workflow.id,
+            leadId: (lead as unknown as Lead).id, 
+            workflowId: (workflow as unknown as Workflow).id,
             execution: "Orquestador disparado correctamente. Variantes A/B procesadas con éxito." 
         });
 
-    } catch (error: any) {
-        return NextResponse.json({ success: false, error: error.message });
+    } catch (error) {
+        const errMsg = error instanceof Error ? error.message : "Internal Server Error";
+        return NextResponse.json({ success: false, error: errMsg });
     }
 }

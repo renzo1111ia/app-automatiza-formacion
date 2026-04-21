@@ -132,13 +132,21 @@ async function handleGetLeadInfo(supabase: SupabaseClient, leadId: string) {
         throw error;
     }
 
-    const programName = (data as any).lead_programas?.[0]?.programas?.nombre || "Sin programa definido";
+    const leadData = data as unknown as { 
+        nombre: string; 
+        apellido: string | null; 
+        email: string | null; 
+        pais: string | null; 
+        lead_programas?: { programas?: { nombre: string } | null }[] | null 
+    };
+    
+    const programName = leadData.lead_programas?.[0]?.programas?.nombre || "Sin programa definido";
 
     return NextResponse.json({
-        lead_name: data.nombre,
-        full_name: `${data.nombre} ${data.apellido || ""}`.trim(),
-        email: data.email,
-        country: data.pais,
+        lead_name: leadData.nombre,
+        full_name: `${leadData.nombre} ${leadData.apellido || ""}`.trim(),
+        email: leadData.email,
+        country: leadData.pais,
         program_of_interest: programName,
         status: "INTERESADO_ALTA_PRIORIDAD"
     });

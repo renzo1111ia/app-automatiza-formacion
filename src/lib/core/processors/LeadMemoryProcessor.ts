@@ -1,5 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { invokeClaude } from "@/lib/integrations/aws/bedrock";
+import { Lead } from "@/types/database";
 
 /**
  * LEAD MEMORY PROCESSOR
@@ -32,18 +33,18 @@ Responde ÚNICAMENTE en formato JSON plano. Ejemplo:
             const facts = JSON.parse(rawJson || "{}");
 
             // 2. Load current lead metadata
-            const { data: lead } = await (supabase.from("lead" as any) as any).select("metadata, current_stage").eq("id", leadId).single();
-            const currentMetadata = (lead as any)?.metadata || {};
+            const { data: lead } = await supabase.from("lead" as string).select("metadata, current_stage").eq("id", leadId).single();
+            const currentMetadata = (lead as unknown as Lead)?.metadata || {};
 
             // 3. Merge and update
             const newMetadata = { ...currentMetadata, ...facts };
-            const newStage = facts.etapa_sugerida || (lead as any)?.current_stage || 'QUALIFICATION';
+            const newStage = facts.etapa_sugerida || (lead as unknown as Lead)?.current_stage || 'QUALIFICATION';
 
-            await (supabase.from("lead" as any) as any).update({
+            await supabase.from("lead" as string).update({
                 metadata: newMetadata,
                 current_stage: newStage,
                 last_interaction_at: new Date().toISOString()
-            } as any).eq("id", leadId);
+            } as unknown).eq("id", leadId);
 
             console.log(`[MEMORY] Lead ${leadId} updated. Stage: ${newStage}`);
             return { success: true, stage: newStage, facts };

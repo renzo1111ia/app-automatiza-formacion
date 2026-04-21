@@ -19,14 +19,25 @@ interface TelephonyConfig {
     };
 }
 
+interface WhatsAppTemplate {
+    name: string;
+    language: string;
+    status: string;
+}
+
 interface WhatsAppConfig {
     accessToken: string;
     phoneNumberId: string;
     wabaId: string;
     verifyToken: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    templates?: any[];
+    templates?: WhatsAppTemplate[];
     lastSync?: string;
+}
+
+interface AWSConfig {
+    kbId?: string;
+    region?: string;
+    s3Bucket?: string;
 }
 
 interface IntegrationsManagerProps {
@@ -388,7 +399,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                     <div className="md:col-span-2 space-y-2 text-left">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">Default Knowledge Base ID (Bedrock)</Label>
                         <Input 
-                            value={(config?.aws as any)?.kbId || ""}
+                            value={(config?.aws as AWSConfig)?.kbId || ""}
                             onChange={(e) => updateField('aws', { kbId: e.target.value })}
                             placeholder="G9P0FC3S29"
                             className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl font-mono text-xs"
@@ -397,7 +408,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                     <div className="space-y-2 text-left">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">AWS Region</Label>
                         <Input 
-                            value={(config?.aws as any)?.region || "us-east-1"}
+                            value={(config?.aws as AWSConfig)?.region || "us-east-1"}
                             onChange={(e) => updateField('aws', { region: e.target.value })}
                             placeholder="us-east-1"
                             className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
@@ -406,7 +417,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                     <div className="space-y-2 text-left">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">S3 Bucket Name</Label>
                         <Input 
-                            value={(config?.aws as any)?.s3Bucket || "automatiza-knowledge-base"}
+                            value={(config?.aws as AWSConfig)?.s3Bucket || "automatiza-knowledge-base"}
                             onChange={(e) => updateField('aws', { s3Bucket: e.target.value })}
                             placeholder="nombre-del-bucket"
                             className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"

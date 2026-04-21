@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { orchestrator } from "@/lib/core/orchestrator";
+import { Tenant, ClientConfig, Lead } from "@/types/database";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * UNIVERSAL INGEST ENDPOINT
@@ -18,28 +20,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Missing API Key" }, { status: 401 });
         }
 
-        // Use any to prevent build failures due to supabase type inference issues with 'tenants' table
-        const { data: tenant, error: tenantErr } = await (supabase
-            .from("tenants" as any)
+        // Use typed supabase client
+        const { data: tenant, error: tenantErr } = await supabase
+            .from("tenants")
             .select("*")
             .eq("api_key", apiKey)
-            .single() as any);
+            .single();
 
         if (tenantErr || !tenant) {
             return NextResponse.json({ success: false, error: "Invalid API Key or Tenant not found" }, { status: 403 });
         }
 
-        const tenantId = (tenant as any).id;
+        const tenantId = (tenant as unknown as Tenant).id;
 
         // 2. Fetch Client Config for Routing Rules
-        const { data: clientConfig } = await (supabase
-            .from("client_configs" as any)
+        const { data: clientConfig } = await supabase
+            .from("client_configs")
             .select("*")
             .eq("tenant_id", tenantId)
-            .single() as any);
+            .single();
 
         // 3. GATEKEEPER: Business Rules Validation
-        const rules = (clientConfig as any)?.routing_rules || {
+        const rules = clientConfig?.routing_rules || {
             allowed_campaigns: [],
             allowed_origins: [],
             drop_invalid_leads: false,
@@ -76,30 +78,30 @@ export async function POST(req: NextRequest) {
             last_interaction_at: new Date().toISOString()
         };
 
-        const { data: lead, error: leadErr } = await (supabase
-            .from("lead" as any)
-            .insert(leadData as any)
+        const { data: lead, error: leadErr } = await supabase
+            .from("lead")
+            .insert(leadData as unknown as Lead) 
             .select()
-            .single() as any);
+            .single() as { data: Lead | null, error: { message: string } | null };
 
         if (leadErr) {
             throw new Error("Failed to create lead: " + leadErr.message);
         }
 
         // 5. TRIGGER ORCHESTRATION
-        if (lead && (lead as any).id) {
-            await orchestrator.handleNewLead((lead as any).id, tenantId);
+        if (lead && lead.id) {
+            await orchestrator.handleNewLead(lead.id, tenantId);
         }
 
         return NextResponse.json({ 
             success: true, 
-            leadId: (lead as any)?.id, 
+            leadId: lead?.id, 
             status: "INGESTED",
             message: "Lead processed and orchestration started" 
         });
 
-    } catch (error: any) {
-        const errMsg = error?.message || "Internal Server Error";
+    } catch (error) {
+        const errMsg = error instanceof Error ? error.message : "Internal Server Error";
         console.error("[INGEST] Error:", errMsg);
         return NextResponse.json({ success: false, error: errMsg }, { status: 500 });
     }

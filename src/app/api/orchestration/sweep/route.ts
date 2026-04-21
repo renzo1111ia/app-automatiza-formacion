@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_SERVICE_ROLE_KEY } from "@/lib/auth-config";
 import { Orchestrator } from "@/lib/core/orchestrator";
-import { Database } from "@/types/database";
+import { Database, PlannedAction } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * It executes actions that are due in the planned_actions table.
  */
 export async function GET() {
-    const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!);
+    const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!) as unknown as SupabaseClient;
     const orchestrator = new Orchestrator();
 
     try {
@@ -20,8 +20,8 @@ export async function GET() {
 
         // 1. Get pending actions that are due
         const now = new Date().toISOString();
-        const { data: actions, error: fetchError } = await (supabase
-            .from("planned_actions" as any) as any)
+        const { data: actions, error: fetchError } = await supabase
+            .from("planned_actions")
             .select("*, lead(*), workflows(*)")
             .eq("status", "PENDING")
             .lte("scheduled_for", now)
@@ -35,35 +35,37 @@ export async function GET() {
         console.log(`[SWEEP] Found ${actions.length} actions to process.`);
         const results = [];
 
-        for (const action of actions) {
+        for (const actionRaw of (actions || [])) {
+            const action = actionRaw as unknown as PlannedAction;
             try {
                 console.log(`[SWEEP] Processing action ${action.id} (${action.action_type}) for lead ${action.lead_id}`);
                 
                 // 2. Execute the action
                 // Note: In a more advanced version, we would pass saved context
-                await orchestrator.executePlannedAction(action);
+                await orchestrator.executePlannedAction(action); // executePlannedAction might still take any if it's not updated yet
 
                 // 3. Mark as executed
-                await (supabase
-                    .from("planned_actions" as any) as any)
+                await supabase
+                    .from("planned_actions")
                     .update({ status: "EXECUTED", updated_at: new Date().toISOString() })
                     .eq("id", action.id);
                 
                 results.push({ id: action.id, status: "SUCCESS" });
-            } catch (err: any) {
-                console.error(`[SWEEP] Failed to process action ${action.id}:`, err.message);
+            } catch (err) {
+                const errMsg = err instanceof Error ? err.message : "Action Execution Failed";
+                console.error(`[SWEEP] Failed to process action ${action.id}:`, errMsg);
                 
                 // 4. Mark as failed
-                await (supabase
-                    .from("planned_actions" as any) as any)
+                await supabase
+                    .from("planned_actions")
                     .update({ 
                         status: "FAILED", 
-                        error_message: err.message,
+                        error_message: errMsg,
                         updated_at: new Date().toISOString() 
                     })
                     .eq("id", action.id);
 
-                results.push({ id: action.id, status: "FAILED", error: err.message });
+                results.push({ id: action.id, status: "FAILED", error: errMsg });
             }
         }
 
@@ -73,8 +75,9 @@ export async function GET() {
             results 
         });
 
-    } catch (error: any) {
-        console.error("[SWEEP] Critical error during sweep:", error.message);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    } catch (error) {
+        const errMsg = error instanceof Error ? error.message : "Internal Server Error";
+        console.error("[SWEEP] Critical error during sweep:", errMsg);
+        return NextResponse.json({ success: false, error: errMsg }, { status: 500 });
     }
 }

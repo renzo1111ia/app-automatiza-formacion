@@ -2,6 +2,7 @@
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
 import { AIAgent, AIAgentVariant } from "@/types/database";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Fetches all AI Agents for the active tenant.
@@ -12,8 +13,8 @@ export async function getAIAgents() {
     
     if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 
-    const { data, error } = await (supabase
-        .from("ai_agents" as any) as any)
+    const { data, error } = await supabase
+        .from("ai_agents")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
@@ -27,9 +28,9 @@ export async function getAIAgents() {
  * Note: Variants are linked via agent_id; RLS should handle tenant isolation.
  */
 export async function getAgentVariants(agentId: string) {
-    const supabase = await getAdminSupabaseClient();
-    const { data, error } = await (supabase
-        .from("ai_agent_variants" as any) as any)
+    const supabase = (await getAdminSupabaseClient()) as unknown as SupabaseClient;
+    const { data, error } = await supabase
+        .from("ai_agent_variants")
         .select("*")
         .eq("agent_id", agentId)
         .order("version_label", { ascending: true });
@@ -53,9 +54,8 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
         tenant_id: tenantId
     };
 
-    const { data, error } = await (supabase
-        .from("ai_agents" as any) as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase
+        .from("ai_agents")
         .upsert(agentData as any)
         .select()
         .single();
@@ -69,16 +69,32 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
  */
 export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
     const supabase = await getAdminSupabaseClient();
-    const { data, error } = await (supabase
-        .from("ai_agent_variants" as any) as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .upsert(variant as any, { 
+    
+    // Clean up variant data to remove metadata fields that shouldn't be upserted
+    // but keep fields like api_key, knowledge_base_id and model info
+    const cleanVariant = { ...variant };
+    delete (cleanVariant as any).id;
+    delete (cleanVariant as any).created_at;
+    delete (cleanVariant as any).updated_at;
+    delete (cleanVariant as any).metrics;
+    
+    // We explicitly include the ID if it exists, otherwise use onConflict
+    const dataToUpsert = variant.id 
+        ? { id: variant.id, ...cleanVariant } 
+        : cleanVariant;
+
+    const { data, error } = await supabase
+        .from("ai_agent_variants")
+        .upsert(dataToUpsert as any, { 
             onConflict: 'agent_id,is_variant_b',
             ignoreDuplicates: false 
         })
         .select()
         .single();
 
-    if (error) return { success: false, error: error.message };
+    if (error) {
+        console.error("[ACTIONS] Error saving agent variant:", error);
+        return { success: false, error: error.message };
+    }
     return { success: true, data: data as AIAgentVariant };
 }

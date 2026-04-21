@@ -7,11 +7,11 @@ import { Settings, ClipboardList } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function HistorialPage({ searchParams }: { searchParams: Promise<any> }) {
+export default async function HistorialPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
     const params = await searchParams;
     const { from, to, filters } = parseFilters(params);
     const tenant = await getActiveTenantConfig();
-    const columns = (tenant?.config as any)?.historial_columns;
+    const columns = (tenant?.config as { historial_columns?: { key: string; label: string; }[] })?.historial_columns;
     const isAdmin = await getAdminStatus();
 
     const initialData = await fetchCalls({
@@ -68,7 +68,7 @@ async function AdminConfigSection() {
     const sample = await fetchCalls({ page: 1, pageSize: 1 });
     const sampleKeys = sample.data.length > 0 ? Object.keys(sample.data[0]) : [];
 
-    const { HistorialColumnManager } = await import("@/components/dashboard/HistorialColumnManager") as any;
+    const { HistorialColumnManager } = await import("@/components/dashboard/HistorialColumnManager");
 
     return (
         <div className="space-y-8">

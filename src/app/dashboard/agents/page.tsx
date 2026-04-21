@@ -101,13 +101,19 @@ export default function AgentsPage() {
     useEffect(() => {
         if (selectedAgent) {
             async function loadVariants(agentId: string) {
+                // Reset state before loading new variants
+                setVariantA({ agent_id: agentId, is_variant_b: false, version_label: 'v1.0', prompt_text: '', weight: 0.5, model_provider: 'OPENAI', model_name: 'gpt-4o', api_key: '', knowledge_base_id: null });
+                setVariantB({ agent_id: agentId, is_variant_b: true, version_label: 'v1.0', prompt_text: '', weight: 0.5, model_provider: 'OPENAI', model_name: 'gpt-4o', api_key: '', knowledge_base_id: null });
+                
                 const res = await getAgentVariants(agentId);
                 if (res.success && res.data) {
                     const data = res.data as AIAgentVariant[];
                     const a = data.find(v => !v.is_variant_b);
                     const b = data.find(v => v.is_variant_b);
-                    setVariantA(a || { agent_id: agentId, is_variant_b: false, version_label: 'v1.0', prompt_text: '', weight: 0.5, model_provider: 'OPENAI', model_name: 'gpt-4o', api_key: '' });
-                    setVariantB(b || { agent_id: agentId, is_variant_b: true, version_label: 'v1.0', prompt_text: '', weight: 0.5, model_provider: 'OPENAI', model_name: 'gpt-4o', api_key: '' });
+                    if (a) setVariantA(a);
+                    if (b) setVariantB(b);
+                } else if (res.error) {
+                    console.error("Error al cargar variantes:", res.error);
                 }
             }
             loadVariants(selectedAgent.id);
@@ -158,23 +164,34 @@ export default function AgentsPage() {
         if (!selectedAgent) return;
         setSaving(true);
         try {
-            const resA = await saveAgentVariant({
-                ...variantA,
+            // Prepare variants for saving: convert empty strings to null for optional fields
+            const prepVariant = (v: Partial<AIAgentVariant>) => ({
+                ...v,
+                api_key: v.api_key?.trim() || null,
+                knowledge_base_id: v.knowledge_base_id?.trim() || null,
                 agent_id: selectedAgent.id,
                 is_active: true
             });
-            const resB = await saveAgentVariant({
-                ...variantB,
-                agent_id: selectedAgent.id,
-                is_active: true
-            });
-            
-            if (resA.success && resA.data) setVariantA(resA.data);
-            if (resB.success && resB.data) setVariantB(resB.data);
 
-            alert("Configuración de agente y prompts guardada.");
+            const resA = await saveAgentVariant(prepVariant(variantA));
+            
+            if (!resA.success) {
+                throw new Error("Error en Variant A: " + (resA.error || "Desconocido"));
+            }
+
+            const resB = await saveAgentVariant(prepVariant(variantB));
+
+            if (!resB.success) {
+                throw new Error("Error en Variant B: " + (resB.error || "Desconocido"));
+            }
+            
+            if (resA.data) setVariantA(resA.data);
+            if (resB.data) setVariantB(resB.data);
+
+            alert("Configuración de agente y prompts guardada con éxito.");
         } catch (err: unknown) {
             const error = err as Error;
+            console.error("Error al guardar:", error);
             alert("Error al guardar: " + error.message);
         } finally {
             setSaving(false);

@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   CheckCircle2, 
-  Circle, 
   Clock, 
   MessageSquare, 
   PhoneCall, 
@@ -18,13 +17,13 @@ export interface TraceabilityEvent {
     description: string;
     timestamp: string;
     status: 'SUCCESS' | 'FAILURE' | 'PENDING';
-    metadata?: any;
+    metadata?: Record<string, unknown>;
 }
 
 interface Props {
     currentStage: string;
     events: TraceabilityEvent[];
-    leadMetadata: Record<string, any>;
+    leadMetadata: Record<string, unknown>;
 }
 
 const STAGES = [

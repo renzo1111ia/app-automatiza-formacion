@@ -106,7 +106,7 @@ export function KpiBuilder({ kpis, onChange }: Props) {
                                         <select
                                             title="Tamaño"
                                             value={kpi.size}
-                                            onChange={(e) => updateKpi(kpi.id, { size: e.target.value as any })}
+                                            onChange={(e) => updateKpi(kpi.id, { size: e.target.value as KpiConfig["size"] })}
                                             className="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-900 outline-none font-medium h-9"
                                         >
                                             <option value="3">Chico (1/4)</option>
@@ -130,7 +130,7 @@ export function KpiBuilder({ kpis, onChange }: Props) {
                                             <select
                                                 title="Operación"
                                                 value={kpi.calcType}
-                                                onChange={(e) => updateKpi(kpi.id, { calcType: e.target.value as any })}
+                                                onChange={(e) => updateKpi(kpi.id, { calcType: e.target.value as KpiConfig["calcType"] })}
                                                 className="w-full text-[11px] border border-blue-200 rounded-lg px-2.5 py-1.5 bg-white text-slate-900 outline-none"
                                             >
                                                 <option value="count">Contar (* o Registros)</option>
@@ -185,7 +185,7 @@ export function KpiBuilder({ kpis, onChange }: Props) {
                                             <select
                                                 title="Condición"
                                                 value={kpi.condOp || "="}
-                                                onChange={(e) => updateKpi(kpi.id, { condOp: e.target.value as any })}
+                                                onChange={(e) => updateKpi(kpi.id, { condOp: e.target.value as KpiConfig["condOp"] })}
                                                 className="w-full text-[11px] border border-amber-200 rounded-lg px-2 py-1.5 bg-white outline-none font-black text-amber-700"
                                             >
                                                 <option value="=">=</option>

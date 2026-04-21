@@ -1,5 +1,7 @@
 "use server";
 
+import { Lead } from "@/types/database";
+
 import { getActiveTenantConfig } from "./tenant";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { whatsappBridge, WhatsAppConfig } from "../integrations/whatsapp";
@@ -13,25 +15,34 @@ export async function getWhatsAppTemplates() {
         const tenant = await getActiveTenantConfig();
         if (!tenant) throw new Error("No active tenant selected.");
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const config = tenant.config as any;
+        interface TenantConfigStructure {
+            whatsapp?: {
+                templates?: unknown[];
+                accessToken?: string;
+                phoneNumberId?: string;
+                wabaId?: string;
+            };
+        }
+
+        const config = (tenant.config || {}) as TenantConfigStructure;
 
         // 1. Try to return cached templates first (for UI speed)
-        if (config?.whatsapp?.templates && Array.isArray(config.whatsapp.templates) && config.whatsapp.templates.length > 0) {
+        if (config.whatsapp?.templates && Array.isArray(config.whatsapp.templates) && config.whatsapp.templates.length > 0) {
             console.log(`[ACTIONS] Returning ${config.whatsapp.templates.length} cached WhatsApp templates.`);
             return { success: true, data: config.whatsapp.templates };
         }
 
-        // 2. Fallback to live fetch if not cached
-        const waConfig: WhatsAppConfig = {
-            accessToken: config?.whatsapp?.accessToken,
-            phoneNumberId: config?.whatsapp?.phoneNumberId,
-            wabaId: config?.whatsapp?.wabaId
-        };
-
-        if (!waConfig.accessToken || !waConfig.wabaId) {
+        if (!config.whatsapp?.accessToken || !config.whatsapp?.wabaId || !config.whatsapp?.phoneNumberId) {
             return { error: "Configuración de WhatsApp incompleta. Por favor, sincroniza las plantillas en Ajustes." };
         }
+
+        const whatsapp = config.whatsapp; // Now inferred as non-nullable
+
+        const waConfig: WhatsAppConfig = {
+            accessToken: whatsapp.accessToken as string, // Cast just to be safe with the type system
+            phoneNumberId: whatsapp.phoneNumberId as string,
+            wabaId: whatsapp.wabaId as string
+        };
 
         const templates = await whatsappBridge.getAvailableTemplates(waConfig);
         return { success: true, data: templates };
@@ -131,7 +142,7 @@ export async function triggerOrchestratorForLead(leadId: string, workflowId: str
             originalLog(...args);
         };
 
-        await orchestrator.executeWorkflow(workflowId, lead as any, tenant.id, {});
+        await orchestrator.executeWorkflow(workflowId, lead as unknown as Lead, tenant.id, {});
 
         console.log = originalLog;
 

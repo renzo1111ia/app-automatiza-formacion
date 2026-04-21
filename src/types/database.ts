@@ -1,4 +1,5 @@
 import type { Tenant } from "./tenant";
+export type { Tenant };
 
 // ─── LEAD ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export interface Lead {
 
     // v2.0 Memory Fields
     current_stage?: 'QUALIFICATION' | 'SCHEDULING' | 'COMPLETED' | 'DROPPED' | string | null;
-    metadata?: Record<string, any> | null;
+    metadata?: Record<string, unknown> | null;
     last_interaction_at?: string | null;
     is_ai_paused?: boolean;
     active_agent_id?: string | null;
@@ -421,7 +422,7 @@ export interface HistorialRow {
 
     // v2.0 Memory Fields
     current_stage?: string | null;
-    metadata?: Record<string, any> | null;
+    metadata?: Record<string, unknown> | null;
 
     // ── Computed ──
     tiempo_respuesta_minutos?: number | null;  // primera llamada - fecha_ingreso_crm
