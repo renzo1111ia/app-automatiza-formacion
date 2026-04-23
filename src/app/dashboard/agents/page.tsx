@@ -27,9 +27,12 @@ const AI_MODELS = {
         bg: "bg-emerald-500/10",
         border: "border-emerald-500/20",
         models: [
-            { id: 'gpt-4o', name: 'GPT-4o', description: 'El más capaz y rápido' },
-            { id: 'gpt-4o-mini', name: 'GPT-4o mini', description: 'Eficiente y veloz' },
-            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Legado, alta confiabilidad' }
+            { id: 'gpt-4o', name: 'GPT-4o', description: 'El más inteligente y versátil' },
+            { id: 'gpt-4o-mini', name: 'GPT-4o mini', description: 'Ultra-rápido para tareas simples' },
+            { id: 'o1-preview', name: 'o1-preview', description: 'Razonamiento avanzado' },
+            { id: 'o1-mini', name: 'o1-mini', description: 'Razonamiento rápido y eficaz' },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Alta precisión' },
+            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Legacy estable' }
         ]
     },
     ANTHROPIC: {
@@ -39,9 +42,10 @@ const AI_MODELS = {
         bg: "bg-orange-500/10",
         border: "border-orange-500/20",
         models: [
-            { id: 'claude-3-5-sonnet-20240620', name: 'Claude 3.5 Sonnet', description: 'Inteligencia superior y matices' },
-            { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Poder máximo de razonamiento' },
-            { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', description: 'Compacto y ultra-rápido' }
+            { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet (Latest)', description: 'El nuevo estándar de oro' },
+            { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', description: 'Velocidad rompedora' },
+            { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', description: 'Poder máximo' },
+            { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', description: 'Balanceado' }
         ]
     },
     GEMINI: {
@@ -51,8 +55,9 @@ const AI_MODELS = {
         bg: "bg-blue-500/10",
         border: "border-blue-500/20",
         models: [
-            { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Ventana de contexto masiva' },
-            { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Optimizado para velocidad' }
+            { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Contexto de 1M-2M tokens' },
+            { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Baja latencia y bajo costo' },
+            { id: 'gemini-1.0-pro', name: 'Gemini 1.0 Pro', description: 'Eficiencia estándar' }
         ]
     }
 };
@@ -431,6 +436,27 @@ export default function AgentsPage() {
                                                 );
                                             })}
                                         </div>
+
+                                        <div className="pt-4 space-y-4">
+                                             <div className="flex items-center gap-2 px-2">
+                                                 <Settings2 className="h-3.5 w-3.5 text-white/40" />
+                                                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">O introduce un ID de modelo manual</p>
+                                             </div>
+                                             <input 
+                                                 type="text"
+                                                 value={(activeTab === 'A' ? variantA : variantB).model_name || ""}
+                                                 onChange={(e) => {
+                                                     const val = e.target.value;
+                                                     if (activeTab === 'A') setVariantA(prev => ({...prev, model_name: val}));
+                                                     else setVariantB(prev => ({...prev, model_name: val}));
+                                                 }}
+                                                 placeholder="Ej: gpt-4-32k o claude-custom-id"
+                                                 className="w-full h-12 bg-black/40 border border-white/5 rounded-xl px-4 text-xs font-mono text-white/80 placeholder:text-white/10 focus:border-primary/40 focus:bg-primary/5 transition-all outline-none"
+                                             />
+                                             <p className="text-[9px] text-white/20 italic px-2">
+                                                 * Asegúrate de que el modelo sea compatible con el proveedor seleccionado arriba.
+                                             </p>
+                                         </div>
 
                                         {/* PGVector Knowledge Base Config */}
                                         <div className="pt-4 border-t border-white/5 space-y-4 text-left">
