@@ -83,19 +83,17 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         }
 
         // 6. Process Dynamic Variables
-        let finalPrompt = activeVariant.prompt_text;
-        
-        // Substitution Map
-        const variableMap: Record<string, string> = {
-            "nombre": (lead as any).nombre || "Prospecto",
-            "apellido": (lead as any).apellido || "",
-            "email": (lead as any).email || "desconocido",
-            "telefono": (lead as any).telefono || "",
-            "pais": (lead as any).pais || "no especificado",
-            "fecha": new Date().toLocaleDateString(),
-            "hora": new Date().toLocaleTimeString(),
-            ...((activeVariant.dynamic_variables || {}) as Record<string, string>) // Custom variables from variant
+        const variableMap = {
+            nombre: (lead as any).nombre || 'estudiante',
+            email: (lead as any).email || '',
+            telefono: (lead as any).telefono || '',
+            fecha: new Date().toLocaleDateString(),
+            hora: new Date().toLocaleTimeString(),
+            ...((lead as any).metadata || {}), // CAPTURED MEMORY
+            ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };
+
+        let finalPrompt = activeVariant.prompt_text;
 
         // Replace patterns like {{nombre}}
         Object.keys(variableMap).forEach(key => {

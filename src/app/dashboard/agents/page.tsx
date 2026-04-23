@@ -504,22 +504,23 @@ export default function AgentsPage() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Layers className="h-4 w-4 text-primary" />
-                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Variables Dinámicas</p>
+                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Inyectar Datos (Contexto Estático)</p>
                                                 </div>
                                                 <button 
                                                     onClick={() => {
-                                                        const key = prompt("Nombre de la variable (ej: sede):");
+                                                        const key = prompt("Nombre del dato (ej: sede):");
                                                         if (key) {
-                                                            const val = prompt(`Valor para ${key}:`) || "";
+                                                            const val = prompt(`Valor fijo para ${key}:`) || "";
                                                             const current = (activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {};
                                                             const updated = { ...current, [key]: val };
                                                             if (activeTab === 'A') setVariantA(prev => ({...prev, dynamic_variables: updated}));
                                                             else setVariantB(prev => ({...prev, dynamic_variables: updated}));
                                                         }
                                                     }}
+                                                    title="Añadir dato estático al contexto"
                                                     className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
                                                 >
-                                                    + Añadir Variable
+                                                    + Añadir Contexto
                                                 </button>
                                             </div>
 
@@ -544,7 +545,7 @@ export default function AgentsPage() {
                                                     </div>
                                                 ))}
                                                 {Object.keys((activeTab === 'A' ? variantA : variantB).dynamic_variables || {}).length === 0 && (
-                                                    <p className="text-[10px] text-white/10 italic">No hay variables dinámicas definidas.</p>
+                                                    <p className="text-[10px] text-white/10 italic">Usa esto para datos que nunca cambian durante la charla.</p>
                                                 )}
                                             </div>
                                         </div>
@@ -554,11 +555,11 @@ export default function AgentsPage() {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <Brain className="h-4 w-4 text-amber-400" />
-                                                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Memoria Autónoma (Seguimiento CRM)</p>
+                                                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Capturar Datos (Memoria del Agente)</p>
                                                 </div>
                                                 <button 
                                                     onClick={() => {
-                                                        const key = prompt("¿Qué dato debe 'aprender' el agente? (ej: presupuesto):");
+                                                        const key = prompt("¿Qué campo quieres que la IA aprenda? (ej: nombre):");
                                                         if (key) {
                                                             const current = (activeTab === 'A' ? variantA : variantB).tracked_variables || [];
                                                             if (!current.includes(key)) {
@@ -570,12 +571,12 @@ export default function AgentsPage() {
                                                     }}
                                                     className="text-[10px] font-bold text-amber-400 hover:underline uppercase tracking-widest"
                                                 >
-                                                    + Rastrear Dato
+                                                    + Etiqueta de Memoria
                                                 </button>
                                             </div>
 
                                             <p className="text-[9px] text-white/30 leading-relaxed">
-                                                El agente analizará el chat y guardará automáticamente estos datos en la ficha del lead si el usuario los menciona.
+                                                La IA detectará estos datos en la charla y los guardará <b>automáticamente</b> en el Lead. ¡No pide valor porque el valor lo dirá el usuario!
                                             </p>
 
                                             <div className="flex flex-wrap gap-2">
