@@ -76,9 +76,13 @@ EJEMPLO DE SALIDA:
         const supabase = createClient<Database>(url!, key!);
 
         // 1. Get current metadata
-        const { data: lead } = await supabase.from("lead").select("metadata").eq("id", leadId).single();
+        const { data: lead } = await supabase
+            .from("leads")
+            .select("metadata")
+            .eq("id", leadId)
+            .single();
         
-        const currentMetadata = (lead?.metadata as Record<string, any>) || {};
+        const currentMetadata = (lead as any)?.metadata || {};
         
         // 2. Merge and update
         const updatedMetadata = {
@@ -87,6 +91,6 @@ EJEMPLO DE SALIDA:
             last_fact_update: new Date().toISOString()
         };
 
-        await supabase.from("lead").update({ metadata: updatedMetadata }).eq("id", leadId);
+        await (supabase.from("leads") as any).update({ metadata: updatedMetadata }).eq("id", leadId);
     }
 }
