@@ -175,6 +175,7 @@ export default function AgentsPage() {
                 api_key: v.api_key?.trim() || undefined,
                 knowledge_base_id: v.knowledge_base_id?.trim() || undefined,
                 dynamic_variables: v.dynamic_variables || {},
+                tracked_variables: v.tracked_variables || [],
                 agent_id: selectedAgent.id,
                 is_active: true
             } as AIAgentVariant);
@@ -544,6 +545,60 @@ export default function AgentsPage() {
                                                 ))}
                                                 {Object.keys((activeTab === 'A' ? variantA : variantB).dynamic_variables || {}).length === 0 && (
                                                     <p className="text-[10px] text-white/10 italic">No hay variables dinámicas definidas.</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Tracked Variables (Autonomous CRM) */}
+                                        <div className="pt-4 border-t border-white/5 space-y-4 text-left">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Brain className="h-4 w-4 text-amber-400" />
+                                                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Memoria Autónoma (Seguimiento CRM)</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => {
+                                                        const key = prompt("¿Qué dato debe 'aprender' el agente? (ej: presupuesto):");
+                                                        if (key) {
+                                                            const current = (activeTab === 'A' ? variantA : variantB).tracked_variables || [];
+                                                            if (!current.includes(key)) {
+                                                                const updated = [...current, key];
+                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, tracked_variables: updated}));
+                                                                else setVariantB(prev => ({...prev, tracked_variables: updated}));
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="text-[10px] font-bold text-amber-400 hover:underline uppercase tracking-widest"
+                                                >
+                                                    + Rastrear Dato
+                                                </button>
+                                            </div>
+
+                                            <p className="text-[9px] text-white/30 leading-relaxed">
+                                                El agente analizará el chat y guardará automáticamente estos datos en la ficha del lead si el usuario los menciona.
+                                            </p>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {((activeTab === 'A' ? variantA : variantB).tracked_variables || []).map((k) => (
+                                                    <div key={k} className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/5 border border-amber-500/20 rounded-lg group">
+                                                        <Search className="h-3 w-3 text-amber-500/40" />
+                                                        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">{k}</span>
+                                                        <button 
+                                                            onClick={() => {
+                                                                const current = (activeTab === 'A' ? variantA : variantB).tracked_variables || [];
+                                                                const updated = current.filter(x => x !== k);
+                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, tracked_variables: updated}));
+                                                                else setVariantB(prev => ({...prev, tracked_variables: updated}));
+                                                            }}
+                                                            title={`Dejar de rastrear ${k}`}
+                                                            className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                                        >
+                                                            <RotateCcw className="h-3 w-3 text-red-500/60 rotate-45" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {((activeTab === 'A' ? variantA : variantB).tracked_variables || []).length === 0 && (
+                                                    <p className="text-[10px] text-white/10 italic">No hay variables de seguimiento configuradas.</p>
                                                 )}
                                             </div>
                                         </div>

@@ -5,6 +5,7 @@ import { whatsappBridge } from "../../integrations/whatsapp";
 import OpenAI from "openai";
 import { ChatMemoryService } from "@/lib/services/chat-memory";
 import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowledge-base";
+import { FactExtractionService } from "@/lib/services/fact-extractor";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
@@ -164,6 +165,20 @@ ${conversationContext}
                         token_usage: completion.usage
                     }
                 });
+
+                // 12. Autonomous Learning (Fact Extraction)
+                const trackedVars = activeVariant.tracked_variables as string[] || [];
+                if (trackedVars.length > 0) {
+                    const lastDialogue = `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;
+                    // Non-blocking call for better performance
+                    FactExtractionService.extractFromDialogue(
+                        leadId, 
+                        lastDialogue, 
+                        trackedVars, 
+                        apiKey
+                    ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));
+                }
+
             } else {
                 console.error(`[AI PROCESSOR] ❌ WhatsApp credentials missing for tenant ${tenantId}`);
             }
