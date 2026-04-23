@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
-import { uploadToS3 } from "@/lib/integrations/aws/s3";
+import { uploadToMinio } from "@/lib/integrations/minio";
 import axios from "axios";
 
 /**
@@ -41,7 +41,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             return;
         }
 
-        const tenantId = (tenants as any[])[0].id;
+        const tenantId = (tenants as unknown as Array<{ id: string }>)[0].id;
 
         // 2. Normalize Phone Number
         let searchPhone = fromNumber;
@@ -114,9 +114,9 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                         });
 
                         const fileName = `whatsapp/${tenantId}/${message.id}.${message.type === 'audio' ? 'ogg' : 'jpg'}`;
-                        mediaUrl = await uploadToS3(fileName, Buffer.from(fileRes.data), fileRes.headers['content-type']);
+                        mediaUrl = await uploadToMinio(fileName, Buffer.from(fileRes.data), fileRes.headers['content-type']);
                         content = `[${message.type.toUpperCase()}]: ${mediaUrl}`;
-                        console.log(`[WHATSAPP PROCESSOR] Media uploaded to S3: ${mediaUrl}`);
+                        console.log(`[WHATSAPP PROCESSOR] Media uploaded to MinIO: ${mediaUrl}`);
                     }
                 } catch (mediaErr) {
                     console.error("[WHATSAPP PROCESSOR] Failed to process media:", mediaErr);
@@ -129,18 +129,17 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         // 5. Log Message in chat_messages
         // Use READ status as RECEIVED is not allowed by DB constraint
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: logError } = await (supabase.from("chat_messages") as any)
+        const { error: logError } = await (supabase.from("chat_messages" as unknown as string) as unknown as { insert: (d: unknown) => Promise<{ error: unknown }> })
             .insert({
                 tenant_id: tenantId,
-                lead_id: (lead as any).id,
+                lead_id: (lead as unknown as { id: string }).id,
                 direction: "INBOUND",
                 message_type: "TEXT",
                 content: content,
                 status: "READ",
                 metadata: { 
                     meta_id: message.id, 
-                    raw: message as any,
+                    raw: message as unknown,
                     media_url: mediaUrl
                 }
             });
@@ -148,11 +147,9 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         if (logError) console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
 
         // 6. Trigger AI Response
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((lead as any).is_ai_enabled) {
+        if ((lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled) {
             const { generateAIWhatsAppResponse } = await import("./WhatsAppAIProcessor");
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await generateAIWhatsAppResponse(tenantId, (lead as any).id, content);
+            await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content);
         }
 
     } catch (err: unknown) {
