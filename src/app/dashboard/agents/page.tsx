@@ -169,6 +169,7 @@ export default function AgentsPage() {
                 ...v,
                 api_key: v.api_key?.trim() || undefined,
                 knowledge_base_id: v.knowledge_base_id?.trim() || undefined,
+                dynamic_variables: v.dynamic_variables || {},
                 agent_id: selectedAgent.id,
                 is_active: true
             } as AIAgentVariant);
@@ -338,10 +339,14 @@ export default function AgentsPage() {
                                                 else setVariantB(prev => ({...prev, prompt_text: val}));
                                             }}
                                             className="w-full h-full bg-white/[0.02] border border-white/10 rounded-3xl p-8 text-sm leading-relaxed font-medium focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner text-white/80"
-                                            placeholder={`Eres un asistente experto de ${tenantName}...`}
+                                            placeholder={`Eres un asistente experto de ${tenantName}... \n\nUsa {{nombre}}, {{email}} o tus variables personalizadas.`}
                                             aria-label="Editor de prompt"
                                         />
-
+                                        <div className="absolute bottom-6 right-6 flex items-center gap-2">
+                                            <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-lg text-[10px] font-black text-primary uppercase tracking-widest">
+                                                Tip: Usa {"{{variable}}"}
+                                            </div>
+                                        </div>
                                     </div>
 
                                      {/* Model Selector Card */}
@@ -427,18 +432,18 @@ export default function AgentsPage() {
                                             })}
                                         </div>
 
-                                        {/* AWS Knowledge Base Config */}
-                                        <div className="pt-4 border-t border-white/5 space-y-4">
+                                        {/* PGVector Knowledge Base Config */}
+                                        <div className="pt-4 border-t border-white/5 space-y-4 text-left">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <DbIcon className="h-4 w-4 text-emerald-400" />
-                                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Memoria de la IA (AWS Bedrock)</p>
+                                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Cerebro de la IA (Conocimiento Local PGVector)</p>
                                                 </div>
                                             </div>
                                             
                                             <div className="grid grid-cols-2 gap-3">
                                                 {[
-                                                    { id: 'G9P0FC3S29', name: 'Automatiza Formación v1', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                                                    { id: 'LOCAL_KB_01', name: 'Knowledge Base Esden v1', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
                                                     { id: 'NONE', name: 'Sin Base de Conocimiento', color: 'bg-white/5 text-white/40 border-white/10' }
                                                 ].map((kb) => {
                                                     const isActive = ((activeTab === 'A' ? variantA : variantB).knowledge_base_id || 'NONE') === kb.id;
@@ -462,22 +467,59 @@ export default function AgentsPage() {
                                                 })}
                                             </div>
 
-                                            <div className="relative group">
-                                                <input 
-                                                    type="text"
-                                                    value={(activeTab === 'A' ? variantA : variantB).knowledge_base_id || ""}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
-                                                        else setVariantB(prev => ({...prev, knowledge_base_id: val}));
-                                                    }}
-                                                    placeholder="O introduce un ID personalizado..."
-                                                    className="w-full h-12 bg-black/40 border border-white/5 rounded-xl px-4 text-xs font-mono text-white/80 placeholder:text-white/10 focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all outline-none"
-                                                />
-                                            </div>
                                             <p className="text-[9px] text-white/20 italic">
-                                                * Al seleccionar una base, el agente usará Inteligencia RAG para responder con tus documentos.
+                                                * El sistema usará búsqueda semántica en la base de datos local para responder.
                                             </p>
+                                        </div>
+
+                                        {/* Dynamic Variables Section */}
+                                        <div className="pt-4 border-t border-white/5 space-y-4 text-left">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Layers className="h-4 w-4 text-primary" />
+                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Variables Dinámicas</p>
+                                                </div>
+                                                <button 
+                                                    onClick={() => {
+                                                        const key = prompt("Nombre de la variable (ej: sede):");
+                                                        if (key) {
+                                                            const val = prompt(`Valor para ${key}:`) || "";
+                                                            const current = (activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {};
+                                                            const updated = { ...current, [key]: val };
+                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, dynamic_variables: updated}));
+                                                            else setVariantB(prev => ({...prev, dynamic_variables: updated}));
+                                                        }
+                                                    }}
+                                                    className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+                                                >
+                                                    + Añadir Variable
+                                                </button>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {Object.entries((activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {}).map(([k, v]) => (
+                                                    <div key={k} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg group">
+                                                        <span className="text-[10px] font-bold text-white/40">{"{{"}{k}{"}}"}:</span>
+                                                        <span className="text-[10px] font-medium text-white/80">{v}</span>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const current = (activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {};
+                                                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                                                                    const { [k]: _, ...updated } = current;
+                                                                    if (activeTab === 'A') setVariantA(prev => ({...prev, dynamic_variables: updated}));
+                                                                    else setVariantB(prev => ({...prev, dynamic_variables: updated}));
+                                                                }}
+                                                                title={`Eliminar variable ${k}`}
+                                                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+                                                            >
+                                                                <RotateCcw className="h-3 w-3 text-red-400 rotate-45" />
+                                                            </button>
+                                                    </div>
+                                                ))}
+                                                {Object.keys((activeTab === 'A' ? variantA : variantB).dynamic_variables || {}).length === 0 && (
+                                                    <p className="text-[10px] text-white/10 italic">No hay variables dinámicas definidas.</p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* API Key Input */}
@@ -489,6 +531,7 @@ export default function AgentsPage() {
                                                 </div>
                                                 <button 
                                                     onClick={() => setShowApiKey(!showApiKey)}
+                                                    title={showApiKey ? "Ocultar clave" : "Mostrar clave"}
                                                     className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"
                                                 >
                                                     {showApiKey ? "Ocultar" : "Mostrar"}

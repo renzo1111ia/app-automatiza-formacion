@@ -276,6 +276,7 @@ export interface AIAgentVariant {
     is_variant_b: boolean;
     weight: number;
     metrics: Record<string, unknown> | null;
+    dynamic_variables?: Record<string, string> | string[]; // Support for both KV and keys list
     created_at: string;
     updated_at: string;
 }

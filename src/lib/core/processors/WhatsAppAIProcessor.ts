@@ -3,142 +3,154 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import { whatsappBridge } from "../../integrations/whatsapp";
 import OpenAI from "openai";
-import { queryKnowledgeBase, invokeClaude } from "../../integrations/aws/bedrock";
-import { leadMemoryProcessor } from "./LeadMemoryProcessor";
+import { ChatMemoryService } from "@/lib/services/chat-memory";
+import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowledge-base";
 
 /**
- * WHATSAPP AI PROCESSOR (CEREBRO)
- * Generates context-aware responses using OpenAI and tenant-specific configurations.
+ * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
+ * Consolidates Redis Memory, PGVector Knowledge, and Dynamic Variables.
+ * No AWS dependencies.
  */
 
 export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string) {
-    console.log(`[AI PROCESSOR] Generating response for lead ${leadId} (tenant: ${tenantId})`);
+    console.log(`[AI PROCESSOR] 🤖 Thinking for lead ${leadId} (tenant: ${tenantId})`);
 
     try {
         const supabase = getAdminSupabase();
 
-        // 1. Get Lead & Tenant Context
-        const { data: lead } = await (supabase.from("lead" as any) as any).select("*").eq("id", leadId).single();
+        // 1. Get Lead Context
+        const { data: lead } = await (supabase.from("lead" as unknown as string) as any).select("*").eq("id", leadId).single();
         if (!lead) return;
 
-        // 2. Get Course Info (Programas)
-        // We look for the programs linked to this lead
-        const { data: leadPrograms } = await (supabase.from("lead_programas" as any) as any).select("id_programa").eq("id_lead", leadId);
-        let courseContext = "";
+        // 2. Identify Active Agent & Variant
+        const agentId = (lead as any).ai_agent_id;
         
-        if (leadPrograms && (leadPrograms as any[]).length > 0) {
-                const firstProgramId = (leadPrograms as any[])[0].id_programa;
-                const { data: program } = await (supabase.from("programas" as any) as any).select("*").eq("id", firstProgramId).single();
-            if (program) {
-                        const p = program as any;
-                courseContext = `
-INFORMACIÓN DEL CURSO:
-- Nombre: ${p.nombre}
-- Presentación: ${p.presentacion}
-- Objetivos: ${p.objetivos}
-- Precio: ${p.precio}
-- Metodología: ${p.metodologia}
-- Fechas inicio: ${p.fechas_inicio}
-- Requisitos: ${p.requisitos_cualificacion}
-`;
-            }
-        }
-
-        // 3. Get Conversation History
-        const { data: history } = await (supabase
-                .from("chat_messages" as any) as any)
-            .select("direction, content")
-            .eq("lead_id", leadId)
-            .order("created_at", { ascending: false })
-            .limit(10);
-        
-        const conversationHistory = (history || []).reverse().map((m: any) => 
-            `${m.direction === "INBOUND" ? "Usuario" : "Asistente"}: ${m.content}`
-        ).join("\n") || "";
-
-        // 4. Get AI Agent & Variant (API Key + Prompt)
-        // We look for the assigned agent for this lead
-        const agentId = lead.ai_agent_id;
-        let variantQuery = (supabase.from("ai_agent_variants" as any) as any).select("*").eq("is_active", true);
+        let variantQuery = (supabase.from("ai_agent_variants" as unknown as string) as any)
+            .select("*")
+            .eq("is_active", true);
         
         if (agentId) {
             variantQuery = variantQuery.eq("agent_id", agentId);
         } else {
-            variantQuery = variantQuery.eq("tenant_id", tenantId);
+            // Fallback to first active variant of the tenant
+            const { data: tenantAgents } = await (supabase.from("ai_agents" as unknown as string) as any).select("id").eq("tenant_id", tenantId);
+            const agentIds = (tenantAgents || []).map((a: any) => a.id);
+            variantQuery = variantQuery.in("agent_id", agentIds);
         }
 
         const { data: variants } = await variantQuery.limit(1);
 
         if (!variants || (variants as any[]).length === 0) {
-            console.warn(`[AI PROCESSOR] No active AI agent found for lead ${leadId}`);
+            console.warn(`[AI PROCESSOR] ⚠️ No active AI variant found for lead ${leadId}`);
             return;
         }
 
         const activeVariant = (variants as any[])[0];
-        const apiKey = activeVariant.api_key;
+        const apiKey = activeVariant.api_key || process.env.OPENAI_API_KEY; // Global fallback
+        
         if (!apiKey) {
-            console.error(`[AI PROCESSOR] API Key missing in agent variant for tenant ${tenantId}`);
+            console.error(`[AI PROCESSOR] ❌ API Key missing for response`);
             return;
         }
 
-        // 5. Get Deep Knowledge from AWS Bedrock (RAG)
-        const kbResults = await queryKnowledgeBase(incomingMessage, activeVariant.knowledge_base_id);
-        const deepKnowledgeContext = kbResults.length > 0 
-            ? `\nCONOCIMIENTO ADICIONAL (AWS):\n${kbResults.map(r => `- ${r.text}`).join("\n")}\n`
-            : "";
+        // 3. Get Recent Context (REDIS - Last 10 lines)
+        const recentHistory = await ChatMemoryService.getRecentContext(leadId);
+        const conversationContext = recentHistory.map(m => 
+            `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`
+        ).join("\n");
 
-        // 7. Build Prompt
-        const systemPrompt = `
-${activeVariant.prompt_text}
+        // 4. Get Long-Term Memory (SQL Summary)
+        const chatSummary = await ChatSummaryService.getSummary(leadId);
 
-CONTEXTO DEL LEAD:
-- Nombre: ${lead.nombre} ${lead.apellido || ""}
-- Email: ${lead.email || "No proveído"}
-- País: ${lead.pais || "No proveído"}
-${courseContext}
-${deepKnowledgeContext}
-
-HISTORIAL DE CONVERSACIÓN RECIENTE:
-${conversationHistory}
-`;
-
-        // 11. Call LLM (OpenAI or Bedrock)
-        let aiResponse = "";
-        const modelName = activeVariant.model_name || "gpt-4o";
-        let usage = null;
-
-        if (modelName.includes("claude") || modelName.includes("anthropic")) {
-            console.log(`[AI PROCESSOR] Using AWS Bedrock (${modelName}) for response`);
-            aiResponse = await invokeClaude(systemPrompt, incomingMessage, modelName) || "";
-        } else {
-            console.log(`[AI PROCESSOR] Using OpenAI (${modelName}) for response`);
+        // 5. Get Local Knowledge (PGVector)
+        // Note: For search, we need embeddings. For now, we assume search might be triggered
+        // if the model name supports external tools or we do it here.
+        // We'll simulate a query if knowledge is enabled.
+        let localKnowledge = "";
+        try {
+            // We'd need an embedding for incomingMessage. Using OpenAI for that.
             const openai = new OpenAI({ apiKey });
-            const completion = await openai.chat.completions.create({
-                model: modelName,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: incomingMessage }
-                ],
-                temperature: 0.7,
-                max_tokens: 500
+            const embedRes = await openai.embeddings.create({
+                model: "text-embedding-3-small",
+                input: incomingMessage,
             });
-            aiResponse = completion.choices[0]?.message?.content || "";
-            usage = completion.usage;
+            const embedding = embedRes.data[0].embedding;
+            const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3);
+            localKnowledge = kbResults.map(r => `- ${r.content}`).join("\n");
+        } catch (kbErr) {
+            console.warn("[AI PROCESSOR] KB search skipped/failed:", kbErr);
         }
 
+        // 6. Process Dynamic Variables
+        let finalPrompt = activeVariant.prompt_text;
+        
+        // Substitution Map
+        const variableMap: Record<string, string> = {
+            "nombre": (lead as any).nombre || "Prospecto",
+            "apellido": (lead as any).apellido || "",
+            "email": (lead as any).email || "desconocido",
+            "telefono": (lead as any).telefono || "",
+            "pais": (lead as any).pais || "no especificado",
+            "fecha": new Date().toLocaleDateString(),
+            "hora": new Date().toLocaleTimeString(),
+            ...((activeVariant.dynamic_variables || {}) as Record<string, string>) // Custom variables from variant
+        };
+
+        // Replace patterns like {{nombre}}
+        Object.keys(variableMap).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, "g");
+            finalPrompt = finalPrompt.replace(regex, variableMap[key]);
+        });
+
+        // 7. Build System Prompt
+        const systemPrompt = `
+${finalPrompt}
+
+INFORMACIÓN ADICIONAL (CEREBRO):
+${localKnowledge || "No hay información específica en la base de conocimiento para este mensaje."}
+
+RESUMEN DE CONVERSACIÓN PREVIA:
+${chatSummary || "Primera interacción con este lead."}
+
+CONTEXTO RECIENTE (Últimas 10 líneas):
+${conversationContext}
+`;
+
+        // 8. Call OpenAI
+        const modelName = activeVariant.model_name || "gpt-4o";
+        const openai = new OpenAI({ apiKey });
+        
+        console.log(`[AI PROCESSOR] 🧠 Calling ${modelName}...`);
+        const completion = await openai.chat.completions.create({
+            model: modelName,
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...recentHistory.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+                { role: "user", content: incomingMessage }
+            ],
+            temperature: 0.7,
+            max_tokens: 500
+        });
+
+        const aiResponse = completion.choices[0]?.message?.content || "";
+
         if (aiResponse) {
-            // 8. Send via WhatsApp
-                const { data: tenant } = await (supabase.from("tenants" as any) as any).select("config").eq("id", tenantId).single();
-                const waConfig = (tenant as any)?.config?.whatsapp;
+            // 9. Update Redis Memory (Short-term)
+            await ChatMemoryService.addMessage(leadId, 'user', incomingMessage);
+            await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
+
+            // 10. Send via WhatsApp
+            const { data: tenant } = await (supabase.from("tenants" as unknown as string) as any).select("config").eq("id", tenantId).single();
+            const waConfig = (tenant as any)?.config?.whatsapp;
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
-                await whatsappBridge.sendTextMessage(lead.telefono!, aiResponse, {
+                await whatsappBridge.sendTextMessage((lead as any).telefono!, aiResponse, {
                     accessToken: waConfig.accessToken,
                     phoneNumberId: waConfig.phoneNumberId
                 });
 
-                // 9. Log Outbound Message (Supabase)
-                        await (supabase.from("chat_messages" as any) as any).insert({
+                // 11. Log Outbound Message (Supabase)
+                await (supabase.from("chat_messages" as unknown as string) as any).insert({
                     tenant_id: tenantId,
                     lead_id: leadId,
                     direction: "OUTBOUND",
@@ -149,28 +161,17 @@ ${conversationHistory}
                     metadata: { 
                         model: modelName,
                         variant_id: activeVariant.id,
-                        token_usage: usage
+                        token_usage: completion.usage
                     }
                 });
-
-                // 12. Update Lead Memory & Stage (Autonomous Logic)
-                try {
-                                const recentHistory = (history || []).map((m: any) => m.content);
-                    recentHistory.push(incomingMessage);
-                    recentHistory.push(aiResponse);
-                    
-                    await leadMemoryProcessor.extractFactsAndUpdateStage(leadId, recentHistory);
-                } catch (memErr) {
-                    console.error("[AI PROCESSOR] Failed to update lead memory:", memErr);
-                }
             } else {
-                console.error(`[AI PROCESSOR] WhatsApp credentials missing for tenant ${tenantId} during response`);
+                console.error(`[AI PROCESSOR] ❌ WhatsApp credentials missing for tenant ${tenantId}`);
             }
         }
 
     } catch (err: unknown) {
         const error = err as Error;
-        console.error("[AI PROCESSOR] Error generating response:", error.message);
+        console.error("[AI PROCESSOR] ❌ Critical Error:", error.message);
     }
 }
 
@@ -179,13 +180,10 @@ function getAdminSupabase() {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!url || !key) {
-        throw new Error("Missing Supabase configuration (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)");
+        throw new Error("Missing Supabase configuration");
     }
 
     return createClient<Database>(url, key, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false
-        }
+        auth: { persistSession: false, autoRefreshToken: false }
     });
 }
