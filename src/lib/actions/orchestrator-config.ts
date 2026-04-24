@@ -30,11 +30,19 @@ export interface OrchestratorRetellConfig {
     from_number: string;
 }
 
+export interface OrchestratorEscalationConfig {
+    notify_crm: boolean;
+    notify_human_whatsapp: string | null;  // Teléfono del humano para recibir alertas
+    trigger_max_attempts: number;          // Intentos fallidos de la IA antes de derivar
+    handoff_on_qualified_not_booked: boolean; // Derivar si está cualificado pero no agendó
+}
+
 export interface TenantOrchestratorConfig {
     timezone_rules: OrchestratorTimezoneRules;
     sequence: OrchestratorSequenceStep[];
     ab_testing: OrchestratorABConfig;
     retell: OrchestratorRetellConfig;
+    escalation: OrchestratorEscalationConfig;
     flow_graph?: { nodes: unknown[]; edges: unknown[] };
     company_name?: string;
 }
@@ -67,8 +75,14 @@ const DEFAULT_CONFIG: TenantOrchestratorConfig = {
         api_key: "",
         from_number: ""
     },
+    escalation: {
+        notify_crm: true,
+        notify_human_whatsapp: "",
+        trigger_max_attempts: 3,
+        handoff_on_qualified_not_booked: true
+    },
     flow_graph: { nodes: [], edges: [] },
-    company_name: "Esden Analytics"
+    company_name: "Automatiza Formación"
 };
 
 // ─── Server Actions ───────────────────────────────────────────────

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GlobalLogger } from "./logger";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isFeatureEnabled } from "./feature-flags";
 import { buildComplianceDecision } from "./compliance";
@@ -10,10 +9,9 @@ import { getAgentVariants } from "../actions/agents";
 import { getOrchestratorConfigForTenant, TenantOrchestratorConfig, OrchestratorSequenceStep } from "../actions/orchestrator-config";
 import { enqueueLeadStep, LeadSequenceJob } from "./queue/lead-sequence-queue";
 import { logOrchestrationStep } from "./scheduler";
-import { Lead, PlannedAction, AIAgentVariant, Programa, VoiceAgent, VoiceAgentVariant, ClientConfig } from "@/types/database";
+import { Lead, PlannedAction, AIAgentVariant, Programa, VoiceAgent, VoiceAgentVariant } from "@/types/database";
 import { CRMFactory } from "../integrations/crm/factory";
 import { TelephonyFactory } from "../integrations/telephony/factory";
-import { leadMemoryProcessor } from "./processors/LeadMemoryProcessor";
 import { queryKnowledgeBase } from "../integrations/aws/bedrock";
 
 /**
@@ -78,12 +76,25 @@ export class Orchestrator {
             return;
         }
 
+        // ── SPEND LIMIT CHECK (Circuit Breaker) ───────────────────
+        const supabase = await getSupabaseServerClient();
+        const { data: tenant } = await supabase.from("tenants").select("daily_spend_limit, current_daily_spend").eq("id", tenantId).single();
+        const t = tenant as any;
+        if (t && t.current_daily_spend >= t.daily_spend_limit) {
+            console.error(`[ORCHESTRATOR] 🔥 CIRCUIT BREAKER: Spend limit reached for tenant ${tenantId}`);
+            await logOrchestrationStep({
+                tenantId, leadId: lead.id, step: sequence[stepIndex].step,
+                actionType: "SYSTEM", result: "SKIPPED",
+                metadata: { reason: "Daily Spend Limit Reached (Circuit Breaker)" }
+            });
+            return;
+        }
+
         const step = sequence[stepIndex];
         console.log(`[ORCHESTRATOR] Lead ${lead.id} → Step ${step.step}: ${step.action}`);
 
         // ── PERSISTENCE SYNC ──────────────────────────────────────
         // Refresh lead status from DB in case it was paused/disabled manually
-        const supabase = await getSupabaseServerClient();
         const { data: freshLead } = await (supabase.from("lead" as any) as any).select("*").eq("id", lead.id).single();
         
         if (freshLead && freshLead.is_ai_enabled === false) {
@@ -105,6 +116,18 @@ export class Orchestrator {
             config.timezone_rules
         );
 
+        // CHANNEL HOPPING: If outside hours and action is CALL, try WHATSAPP instead of queuing
+        if (!decision.canExecuteNow && step.action === "call") {
+             console.log(`[ORCHESTRATOR] Outside hours for call. Hopping to WhatsApp fallback for lead ${activeLead.id}`);
+             // Check if we have a whatsapp fallback (usually it's the next step or a standard template)
+             await this.executeWhatsAppStep(activeLead, tenantId, {
+                 ...step,
+                 action: "whatsapp",
+                 template: "lead_followup_outside_hours" // Default fallback template
+             } as any);
+             return;
+        }
+
         if (!decision.canExecuteNow && step.action !== "wait") {
             console.log(`[ORCHESTRATOR] ${decision.reason}`);
             // Queue for next window
@@ -125,7 +148,29 @@ export class Orchestrator {
         try {
             switch (step.action) {
                 case "call":
-                    await this.executeCallStep(activeLead, tenantId, step, config);
+                    try {
+                        const callResult = await this.executeCallStep(activeLead, tenantId, step, config) as any;
+                        
+                        // ── ESCALATION CHECK: Qualified but no appointment ──────────
+                        if (config.escalation?.handoff_on_qualified_not_booked) {
+                            const { data: updatedLead } = await supabase.from("lead").select("current_stage, metadata").eq("id", activeLead.id).single();
+                            const ul = updatedLead as any;
+                            if (ul && ul.current_stage === "SCHEDULING") {
+                                // If stage is scheduling but no appointment was recorded in this session (or call)
+                                // We wait a bit or trigger if call result indicates no booking
+                                if (callResult?.outcome !== "BOOKED") {
+                                    await this.triggerHumanEscalation(activeLead, tenantId, config, "Qualified Lead - No Appointment Booked");
+                                }
+                            }
+                        }
+                    } catch {
+                        console.error(`[ORCHESTRATOR] Call failed. Attempting WhatsApp fallback.`);
+                        await this.executeWhatsAppStep(activeLead, tenantId, {
+                            ...step,
+                            action: "whatsapp",
+                            template: "call_failed_fallback"
+                        } as any);
+                    }
                     break;
                 case "whatsapp":
                     await this.executeWhatsAppStep(activeLead, tenantId, step);
@@ -145,14 +190,7 @@ export class Orchestrator {
             // ── QUEUE NEXT STEP ───────────────────────────────────
             const nextIndex = stepIndex + 1;
             if (nextIndex < sequence.length) {
-                // v2.0 Logic: Check if we should skip steps based on Stage
                 const nextStep = sequence[nextIndex];
-                
-                if (activeLead.current_stage === 'SCHEDULING' && nextStep.action === 'ai_agent') {
-                    console.log(`[ORCHESTRATOR] Lead ${activeLead.id} already qualified. Skipping to next step.`);
-                    // We might want to find the first 'call' or 'scheduling' agent here
-                }
-
                 const delayMs = nextStep.delay_hours * 60 * 60 * 1000;
                 await this.queueStep(activeLead, tenantId, nextStep, nextIndex, config, delayMs);
             }
@@ -482,10 +520,11 @@ export class Orchestrator {
         }
 
         // 3. Prompt Construction with Memory & Stages
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const systemPrompt = `
         ${promptVariantData.prompt_text}
         
-        CONTEXTO DEL CURSO (AWS RAG):
+        CONTEXTO DEL CURSO (PDF Knowledge Base):
         ${ragContext || courseContext.course_info}
         
         REGLAS DE CUALIFICACIÓN:
@@ -497,9 +536,8 @@ export class Orchestrator {
         ETAPA ACTUAL: ${lead.current_stage || 'QUALIFICATION'}
         `;
 
-        // 4. Update Memory after AI turn (placeholder for actual message flow integration)
-        // In a real message event, this would be called AFTER the user replies.
-        // For the orchestrator trigger, we just prepare the context.
+        // 4. In a real message event, this would be used for the AI Turn.
+        // The orchestrator just ensures the agent is assigned and ready.
         
         await logOrchestrationStep({
             tenantId, leadId: lead.id, step: step.step,
@@ -722,6 +760,55 @@ export class Orchestrator {
         };
 
         await this.executeSequenceStep(lead, action.tenant_id, [step], 0, config);
+    }
+
+    /**
+     * Triggers human escalation based on config.
+     */
+    private async triggerHumanEscalation(lead: Lead, tenantId: string, config: TenantOrchestratorConfig, reason: string) {
+        console.log(`[ORCHESTRATOR] 🚨 Triggering Escalation for Lead ${lead.id}. Reason: ${reason}`);
+        
+        const esc = config.escalation;
+        const supabase = await getSupabaseServerClient();
+
+        // 1. Mark lead as "Handed Off"
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).from("lead").update({ 
+            is_handed_off: true,
+            handoff_reason: reason,
+            assigned_advisor_id: null // Release for manual pickup
+        }).eq("id", lead.id);
+
+        // 2. Notify CRM (Task creation)
+        if (esc?.notify_crm) {
+            try {
+                const provider = CRMFactory.getProvider(tenantId, config);
+                await provider.executeAction(lead.id_lead_externo || "", "CREATE_TASK", {
+                    subject: `Derivación Humana: ${reason}`,
+                    description: `El lead necesita atención humana inmediata. Razón: ${reason}. Ver en Dashboard: https://automatiza.es/dashboard/leads/${lead.id}`,
+                    priority: "High"
+                });
+            } catch (e) {
+                console.error("[ORCHESTRATOR] CRM Handoff Failed:", e);
+            }
+        }
+
+        // 3. Notify via WhatsApp to Sales Human
+        if (esc?.notify_human_whatsapp) {
+            try {
+                // Get a WhatsApp provider (Twilio or Meta)
+                const telephony = TelephonyFactory.getProvider(config as any);
+                await (telephony as any).sendMessage?.(esc.notify_human_whatsapp, `ALERTA DERIVACIÓN HUMANA: Lead ${lead.nombre} ${lead.apellido} necesita atención. Razón: ${reason}`);
+            } catch (e) {
+                console.error("[ORCHESTRATOR] WA Handoff Failed:", e);
+            }
+        }
+
+        await logOrchestrationStep({
+            tenantId, leadId: lead.id, step: 0,
+            actionType: "SYSTEM", result: "SUCCESS",
+            metadata: { escalation: true, reason }
+        });
     }
 }
 

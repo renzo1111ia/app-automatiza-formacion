@@ -13,13 +13,23 @@ import path from "path";
 // Load .env.local
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
-console.log("[WORKER] 🚀 ESDEN Lead Sequence Worker starting...");
+console.log("[WORKER] 🚀 Automatiza Formación Lead Sequence Worker starting...");
 console.log(`[WORKER] Redis: ${process.env.REDIS_URL || "redis://localhost:6379"}`);
 
 const worker = createLeadWorker(async (job) => {
     const { leadId, tenantId, step, action, transcript, callId } = job.data;
     
     console.log(`[WORKER] Incoming job ${job.id}: Action: ${action} | Lead: ${leadId}`);
+
+    // Fetch tenant and check spend limits (Circuit Breaker)
+    const supabase = await getSupabaseServerClient();
+    if (tenantId) {
+        const { data: tenant } = await supabase.from("tenants").select("daily_spend_limit, current_daily_spend").eq("id", tenantId).single();
+        if (tenant && tenant.current_daily_spend >= tenant.daily_spend_limit) {
+            console.error(`[WORKER] 🔥 CIRCUIT BREAKER ACTIVE: Tenant ${tenantId} exceeded daily spend limit (${tenant.current_daily_spend}/${tenant.daily_spend_limit})`);
+            return; // Stop processing for this tenant
+        }
+    }
 
     // 1. HANDLER: Recurring Watchdog Scan
     if (action === "WATCHDOG_SCAN") {
@@ -45,7 +55,6 @@ const worker = createLeadWorker(async (job) => {
     // 4. HANDLER: Standard Lead Sequence Step (Calls, WhatsApp, Zoho Update)
     if (action === "call" || action === "whatsapp" || action === "ai_agent" || action === "zoho") {
         // Fetch the lead
-        const supabase = await getSupabaseServerClient();
         const { data: lead, error } = await supabase
             .from("lead")
             .select("*")

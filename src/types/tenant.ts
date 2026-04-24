@@ -10,6 +10,11 @@ export interface Tenant {
     api_type?: 'internal' | 'client';
     config: Record<string, unknown>;
     api_key?: string | null;
+    daily_spend_limit?: number;
+    monthly_spend_limit?: number;
+    current_daily_spend?: number;
+    current_monthly_spend?: number;
+    last_spend_reset?: string;
     created_at?: string;
     updated_at?: string;
 }

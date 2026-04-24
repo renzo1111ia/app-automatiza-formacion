@@ -37,7 +37,7 @@ export const useTenantStore = create<TenantState>()(
                 set({ ...DEFAULT_STATE, isConfigured: false }),
         }),
         {
-            name: "esden-tenant",
+            name: "automatiza-tenant",
             storage: createJSONStorage(() => sessionStorage),
         }
     )

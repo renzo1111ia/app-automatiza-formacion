@@ -65,7 +65,7 @@ const AI_MODELS = {
 
 
 export default function AgentsPage() {
-    const tenantName = useTenantStore((s) => s.tenantName) || "ESDEN";
+    const tenantName = useTenantStore((s) => s.tenantName) || "Automatiza Formación";
     const [agents, setAgents] = useState<AIAgent[]>([]);
 
     const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
