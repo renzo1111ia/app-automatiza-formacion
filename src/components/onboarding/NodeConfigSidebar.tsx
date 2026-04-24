@@ -5,7 +5,8 @@ import {
     X, Save, Settings2, Info,
     Phone, MessageSquare, BrainCircuit,
     Globe, GitBranchPlus, Clock, Bot,
-    Webhook, Copy, Check, Reply, Hourglass, Zap
+    Webhook, Copy, Check, Reply, Hourglass, Zap,
+    Timer, Sun, Moon, Globe2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,28 @@ import { getAIAgents } from "@/lib/actions/agents";
 import { WhatsAppTemplate } from "@/lib/integrations/whatsapp";
 import { AIAgent } from "@/types/database";
 import { VoiceAgentSelector } from "../orchestrator/VoiceAgentSelector";
+
+const DAYS_MAP = [
+    { value: 0, label: "Dom" },
+    { value: 1, label: "Lun" },
+    { value: 2, label: "Mar" },
+    { value: 3, label: "Mié" },
+    { value: 4, label: "Jue" },
+    { value: 5, label: "Vie" },
+    { value: 6, label: "Sáb" },
+];
+
+const DEFAULT_PREFIX_MAP: Record<string, string> = {
+    "+34": "Europe/Madrid",
+    "+56": "America/Santiago",
+    "+52": "America/Mexico_City",
+    "+57": "America/Bogota",
+    "+51": "America/Lima",
+    "+54": "America/Argentina/Buenos_Aires",
+    "+598": "America/Montevideo",
+    "+1":  "America/New_York",
+    "+44": "Europe/London",
+};
 
 /**
  * NODE CONFIGURATION SIDEBAR
@@ -66,16 +89,13 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
     }
 
     useEffect(() => {
-        if (node.type === 'action' && node.data?.action === 'WHATSAPP') {
-            loadTemplates();
-        }
-        if (node.type === 'action' && node.data?.action === 'AI_AGENT') {
-            loadAgents();
-            loadTemplates(); // Load templates too in case we want to send a msg
-        }
-        if (node.type === 'llm') {
-            loadAgents(); // Load text agents for the LLM node selector
-        }
+        if (node.type === 'action' && node.data?.action === 'WHATSAPP') loadTemplates();
+        if (node.type === 'action' && node.data?.action === 'AI_AGENT') { loadAgents(); loadTemplates(); }
+        if (node.type === 'llm') loadAgents();
+        // New specialized nodes
+        if (node.type === 'voiceCall') { /* voice agents loaded by VoiceAgentSelector */ }
+        if (node.type === 'textAgent') loadAgents();
+        if (node.type === 'whatsapp') loadTemplates();
     }, [node.id, node.type, node.data?.action]);
 
     const handleSave = () => {
@@ -777,6 +797,297 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                                 </select>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* ── TIME CONDITION CONFIG ───────────────────────── */}
+                {type === 'timeCondition' && (
+                    <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-2 text-yellow-400">
+                            <Timer className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest">Condición Horaria del Sistema</span>
+                        </div>
+
+                        {/* Hour range */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label htmlFor="tc-start" className="text-[10px] font-bold text-white/40 uppercase flex items-center gap-1">
+                                    <Sun className="h-3 w-3 text-emerald-400" /> Hora Inicio
+                                </label>
+                                <input
+                                    id="tc-start"
+                                    type="time"
+                                    value={(config.start as string) || '09:00'}
+                                    onChange={(e) => setConfig({ ...config, start: e.target.value })}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-black text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 [color-scheme:dark]"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label htmlFor="tc-end" className="text-[10px] font-bold text-white/40 uppercase flex items-center gap-1">
+                                    <Moon className="h-3 w-3 text-blue-400" /> Hora Fin
+                                </label>
+                                <input
+                                    id="tc-end"
+                                    type="time"
+                                    value={(config.end as string) || '20:00'}
+                                    onChange={(e) => setConfig({ ...config, end: e.target.value })}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-black text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 [color-scheme:dark]"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Working days */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Días Laborables</label>
+                            <div className="flex gap-2 flex-wrap">
+                                {DAYS_MAP.map(d => {
+                                    const activeDays = (config.working_days as number[]) || [1,2,3,4,5];
+                                    const isActive = activeDays.includes(d.value);
+                                    return (
+                                        <button
+                                            key={d.value}
+                                            onClick={() => {
+                                                const updated = isActive
+                                                    ? activeDays.filter(x => x !== d.value)
+                                                    : [...activeDays, d.value].sort();
+                                                setConfig({ ...config, working_days: updated });
+                                            }}
+                                            className={cn(
+                                                "h-10 w-10 rounded-xl text-xs font-black transition-all border",
+                                                isActive
+                                                    ? "bg-yellow-500/20 border-yellow-500/40 text-yellow-300"
+                                                    : "bg-white/5 border-white/10 text-white/30 hover:text-white/50"
+                                            )}
+                                        >
+                                            {d.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Timezone map info */}
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-white/30">
+                                <Globe2 className="h-3.5 w-3.5 text-cyan-500/60" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Mapa Prefijo → Huso Horario</span>
+                            </div>
+                            <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-2 text-[10px] font-mono">
+                                {Object.entries((config.phone_prefix_map as Record<string,string>) || DEFAULT_PREFIX_MAP).map(([prefix, tz]) => (
+                                    <div key={prefix} className="flex justify-between items-center">
+                                        <span className="text-cyan-400/70 font-bold">{prefix}</span>
+                                        <span className="text-white/30">{tz}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[9px] text-white/20 italic leading-relaxed">
+                                El motor evalúa la hora actual EN EL HUSO HORARIO DEL LEAD (detectado por el prefijo de su número). Si cae dentro del rango → salida &quot;Dentro horario&quot;, si no → &quot;Fuera de horario&quot;.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── VOICE CALL CONFIG ───────────────────────────── */}
+                {type === 'voiceCall' && (
+                    <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-2 text-blue-400">
+                            <Phone className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest">Llamada IA — Agente de Voz</span>
+                        </div>
+
+                        {/* Provider selector */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Proveedor de Voz</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                {(['retell', 'ultravox'] as const).map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setConfig({ ...config, provider: p })}
+                                        className={cn(
+                                            "h-11 rounded-xl text-xs font-black border transition-all uppercase tracking-widest",
+                                            (config.provider || 'retell') === p
+                                                ? "bg-blue-500/20 border-blue-500/40 text-blue-300 shadow-lg shadow-blue-500/10"
+                                                : "bg-white/5 border-white/10 text-white/30 hover:text-white/60"
+                                        )}
+                                    >
+                                        {p === 'retell' ? '📞 Retell AI' : '🎙 Ultravox'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <VoiceAgentSelector
+                            selectedAgentId={(config.agentId as string) || null}
+                            onChange={(id, name) => setConfig({ ...config, agentId: id, agentName: name || id })}
+                        />
+
+                        <div className="space-y-2">
+                            <label htmlFor="vc-from" className="text-[10px] font-bold text-white/40 uppercase">Número de Salida (From)</label>
+                            <input
+                                id="vc-from"
+                                value={(config.fromNumber as string) || ''}
+                                onChange={(e) => setConfig({ ...config, fromNumber: e.target.value })}
+                                className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                placeholder="+34912345678"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label htmlFor="vc-vars" className="text-[10px] font-bold text-white/40 uppercase">Variables Dinámicas (JSON)</label>
+                            <textarea
+                                id="vc-vars"
+                                value={(config.dynamicVariables as string) || ''}
+                                onChange={(e) => setConfig({ ...config, dynamicVariables: e.target.value })}
+                                rows={3}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder='{"nombre_lead": "{{lead.nombre}}"}'
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* ── TEXT AGENT CONFIG ───────────────────────────── */}
+                {type === 'textAgent' && (
+                    <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-2 text-purple-400">
+                            <Bot className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest">Agente de Texto IA</span>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Seleccionar Agente Configurado</label>
+                            {loadingAgents ? (
+                                <div className="h-12 bg-white/5 border border-white/5 rounded-xl animate-pulse" />
+                            ) : (
+                                <select
+                                    title="Seleccionar agente de texto"
+                                    value={(config.linkedAgentId as string) || 'none'}
+                                    onChange={(e) => {
+                                        const agent = agents.find(a => a.id === e.target.value);
+                                        setConfig({ ...config, linkedAgentId: e.target.value, agentName: agent?.name || e.target.value });
+                                    }}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm appearance-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 font-bold"
+                                >
+                                    <option value="none" className="bg-black">— Configurar manualmente —</option>
+                                    {agents.map(a => (
+                                        <option key={a.id} value={a.id} className="bg-black text-white">{a.name} ({a.type})</option>
+                                    ))}
+                                </select>
+                            )}
+                            {agents.length === 0 && !loadingAgents && (
+                                <p className="text-[9px] text-white/20 px-1 italic">No hay agentes. Crea uno en el módulo de Agentes.</p>
+                            )}
+                        </div>
+
+                        {(!config.linkedAgentId || (config.linkedAgentId as string) === 'none') && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="space-y-5 pt-2 border-t border-white/5"
+                            >
+                                <div className="space-y-2">
+                                    <label htmlFor="ta-prompt" className="text-[10px] font-bold text-white/40 uppercase">Prompt del Sistema</label>
+                                    <textarea
+                                        id="ta-prompt"
+                                        value={(config.prompt as string) || ''}
+                                        rows={6}
+                                        onChange={(e) => setConfig({ ...config, prompt: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all leading-relaxed resize-none"
+                                        placeholder="Eres un asistente de ventas. Califica al lead según su interés..."
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label htmlFor="ta-model" className="text-[10px] font-bold text-white/40 uppercase">Modelo de IA</label>
+                                    <select
+                                        id="ta-model"
+                                        title="Modelo"
+                                        value={(config.model as string) || 'gpt-4o-mini'}
+                                        onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm appearance-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 font-bold"
+                                    >
+                                        <optgroup label="OpenAI" className="bg-black">
+                                            <option value="gpt-4o" className="bg-black text-white">GPT-4o</option>
+                                            <option value="gpt-4o-mini" className="bg-black text-white">GPT-4o Mini</option>
+                                        </optgroup>
+                                        <optgroup label="Anthropic" className="bg-black">
+                                            <option value="claude-3-5-sonnet-20241022" className="bg-black text-white">Claude 3.5 Sonnet</option>
+                                            <option value="claude-3-haiku-20240307" className="bg-black text-white">Claude 3 Haiku</option>
+                                        </optgroup>
+                                        <optgroup label="Google" className="bg-black">
+                                            <option value="gemini-2.0-flash" className="bg-black text-white">Gemini 2.0 Flash</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── WHATSAPP NODE CONFIG (new type) ────────────── */}
+                {type === 'whatsapp' && (
+                    <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-2 text-emerald-400">
+                            <MessageSquare className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest">WhatsApp — Meta Cloud API</span>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Seleccionar Plantilla</label>
+                            {loadingTemplates ? (
+                                <div className="h-12 bg-white/5 border border-white/5 rounded-xl animate-pulse flex items-center px-4 text-xs text-white/20 font-bold">Cargando plantillas...</div>
+                            ) : (
+                                <select
+                                    title="WhatsApp Template"
+                                    value={(config.templateId as string) || ''}
+                                    onChange={(e) => setConfig({ ...config, templateId: e.target.value })}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm appearance-none cursor-pointer focus:ring-2 focus:ring-emerald-500/20 font-bold text-emerald-400"
+                                >
+                                    <option value="" disabled className="bg-black">-- Elige una plantilla --</option>
+                                    {templates.map(t => (
+                                        <option key={t.id} value={t.name} className="bg-black text-white">{t.name} ({t.language})</option>
+                                    ))}
+                                    {templates.length === 0 && <option value="" className="bg-black">Sin plantillas — configura en Ajustes</option>}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Template preview */}
+                        {(() => {
+                            const selected = templates.find(t => t.name === config.templateId);
+                            if (!selected) return null;
+                            const body = selected.components?.find(c => c.type === 'BODY');
+                            const text = (body?.text as string) || '';
+                            const vars: string[] = Array.from(new Set(text.match(/\{\{\d+\}\}/g) || []));
+                            return (
+                                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                                    <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                                        <p className="text-[9px] font-black text-emerald-500/50 uppercase mb-2">Vista Previa</p>
+                                        <p className="text-[11px] text-white/70 leading-relaxed">{text}</p>
+                                    </div>
+                                    {vars.length > 0 && (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-white/40 uppercase flex items-center gap-2"><Zap className="h-3 w-3 text-amber-500" /> Variables ({vars.length})</label>
+                                            {vars.map((v) => {
+                                                const idx = v.replace(/[\{\}]/g, '');
+                                                const maps = (config.variableMappings as Record<string,string>) || {};
+                                                return (
+                                                    <div key={idx} className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white/40">{idx}</div>
+                                                        <input
+                                                            value={maps[idx] || ''}
+                                                            onChange={(e) => setConfig({ ...config, variableMappings: { ...maps, [idx]: e.target.value } })}
+                                                            placeholder="lead.nombre o Texto fijo"
+                                                            className="flex-1 h-9 bg-white/5 border border-white/10 rounded-xl px-3 text-xs font-bold focus:ring-1 focus:ring-emerald-500/20"
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </motion.div>
+                            );
+                        })()}
                     </div>
                 )}
 

@@ -13,7 +13,7 @@ interface Props {
 export function CampaignSelector({ campaigns, currentCampaign }: Props) {
     const router = useRouter();
     const pathname = usePathname();
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams() ?? new URLSearchParams();
     const [isOpen, setIsOpen] = useState(false);
 
     function selectCampaign(name: string) {

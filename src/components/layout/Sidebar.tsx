@@ -11,7 +11,7 @@ import {
     LayoutDashboard, Megaphone, MessageCircle, 
     Clock, History, Settings, X, ChevronDown, PlusCircle,
     Workflow, Bot, ShieldCheck, Terminal,
-    Calendar, Zap, MessageSquare, FlaskConical, Mic
+    Calendar, MessageSquare, FlaskConical, Mic
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -43,11 +43,7 @@ const NAV_ITEMS: NavItem[] = [
                 href: "/dashboard/voice-agents",
                 icon: <Mic className="h-4 w-4" strokeWidth={1.8} />
             },
-            {
-                label: "Orquestador",
-                href: "/dashboard/orchestrator",
-                icon: <Zap className="h-4 w-4" strokeWidth={1.8} />
-            },
+
             {
                 label: "Conversaciones",
                 href: "/dashboard/conversaciones",

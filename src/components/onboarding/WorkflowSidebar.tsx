@@ -2,9 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { 
-    Plus, FolderTree, Zap, ChevronRight, Trash2
+    Plus, FolderTree, Zap, ChevronRight, Trash2,
+    Settings2, Sun, Moon, Rocket, Globe2, ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getOrchestratorConfig, saveOrchestratorConfig } from "@/lib/actions/orchestrator-config";
+import { runSystemDeployment } from "@/lib/actions/system";
 
 interface Workflow {
     id: string;
@@ -19,9 +22,27 @@ interface WorkflowSidebarProps {
     onSelect: (id: string) => void;
 }
 
+const DAYS_MAP = [
+    { value: 0, label: "D" },
+    { value: 1, label: "L" },
+    { value: 2, label: "M" },
+    { value: 3, label: "X" },
+    { value: 4, label: "J" },
+    { value: 5, label: "V" },
+    { value: 6, label: "S" },
+];
+
 export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: WorkflowSidebarProps) {
     const [workflows, setWorkflows] = useState<Workflow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [configOpen, setConfigOpen] = useState(false);
+    const [deploying, setDeploying] = useState(false);
+    const [savingConfig, setSavingConfig] = useState(false);
+
+    // ── Orchestrator Global Config ───────────────────────────────
+    const [startTime, setStartTime] = useState("09:00");
+    const [endTime, setEndTime] = useState("20:00");
+    const [workingDays, setWorkingDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
     useEffect(() => {
         const loadWorkflows = async () => {
@@ -30,7 +51,6 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                 if (res.ok) {
                     const data = await res.json();
                     setWorkflows(data);
-                    // Auto-select primary or first if none selected
                     if (!selectedWorkflowId && data.length > 0) {
                         const primary = data.find((w: Workflow) => w.is_primary) || data[0];
                         onSelect(primary.id);
@@ -43,33 +63,80 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
             }
         };
         loadWorkflows();
-    }, [tenantId, selectedWorkflowId, onSelect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tenantId]);
+
+    // Load orchestrator config for timezone section
+    useEffect(() => {
+        async function loadConfig() {
+            const res = await getOrchestratorConfig();
+            if (res.success && res.data) {
+                setStartTime(res.data.timezone_rules.start || "09:00");
+                setEndTime(res.data.timezone_rules.end || "20:00");
+                setWorkingDays(res.data.timezone_rules.working_days || [1,2,3,4,5]);
+            }
+        }
+        loadConfig();
+    }, []);
+
+    const handleSaveConfig = async () => {
+        setSavingConfig(true);
+        await saveOrchestratorConfig({
+            timezone_rules: {
+                start: startTime,
+                end: endTime,
+                working_days: workingDays,
+                phone_prefix_map: {
+                    "+34": "Europe/Madrid",
+                    "+56": "America/Santiago",
+                    "+52": "America/Mexico_City",
+                    "+57": "America/Bogota",
+                    "+51": "America/Lima",
+                    "+54": "America/Argentina/Buenos_Aires",
+                    "+598": "America/Montevideo",
+                    "+1":  "America/New_York",
+                    "+44": "Europe/London",
+                }
+            }
+        });
+        setSavingConfig(false);
+    };
+
+    const handleDeploy = async () => {
+        setDeploying(true);
+        try {
+            await handleSaveConfig();
+            const res = await runSystemDeployment();
+            if (res.success) {
+                alert("✅ " + res.message);
+            } else {
+                alert("❌ Error: " + res.error);
+            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            alert("Error: " + error.message);
+        } finally {
+            setDeploying(false);
+        }
+    };
 
     const handleDelete = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         if (!confirm("¿Estás seguro de que deseas eliminar este workflow? Esta acción no se puede deshacer.")) return;
-
         try {
-            const res = await fetch(`/api/orchestration/workflows?id=${id}&tenantId=${tenantId}`, {
-                method: 'DELETE'
-            });
+            const res = await fetch(`/api/orchestration/workflows?id=${id}&tenantId=${tenantId}`, { method: 'DELETE' });
             if (res.ok) {
                 const updatedWfs = workflows.filter(wf => wf.id !== id);
                 setWorkflows(updatedWfs);
-                // If deleted workflow was selected, select another one
                 if (selectedWorkflowId === id) {
-                    if (updatedWfs.length > 0) {
-                        onSelect(updatedWfs[0].id);
-                    } else {
-                        onSelect("");
-                    }
+                    onSelect(updatedWfs.length > 0 ? updatedWfs[0].id : "");
                 }
             } else {
                 const errData = await res.json();
-                alert(`Error al eliminar workflow: ${errData.error || res.statusText}`);
+                alert(`Error al eliminar: ${errData.error || res.statusText}`);
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            console.error("Failed to delete workflow:", error);
             alert(`Error de red: ${error.message}`);
         }
     };
@@ -77,7 +144,6 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
     const handleCreate = async () => {
         const name = prompt("Nombre del nuevo workflow:");
         if (!name) return;
-
         try {
             const res = await fetch('/api/orchestration/workflows', {
                 method: 'POST',
@@ -89,38 +155,48 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                 onSelect(newWf.id);
             } else {
                 const errData = await res.json();
-                alert(`Error al crear workflow: ${errData.error || res.statusText}`);
+                alert(`Error al crear: ${errData.error || res.statusText}`);
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            console.error("Failed to create workflow:", error);
             alert(`Error de red: ${error.message}`);
         }
     };
 
     return (
         <div className="w-72 border-r border-white/5 bg-black/60 backdrop-blur-3xl flex flex-col h-full animate-in slide-in-from-left duration-500">
-            {/* Sidebar Header */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            
+            {/* ── Header ──────────────────────────────────────────── */}
+            <div className="p-5 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white/40">
                     <FolderTree className="h-4 w-4" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Colecciones</span>
                 </div>
                 <button 
                     onClick={handleCreate}
-                    title="Crear nuevo flujo de automatización"
+                    title="Crear nuevo flujo"
                     className="h-7 w-7 flex items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
                 >
                     <Plus className="h-4 w-4" />
                 </button>
             </div>
 
-            {/* Workflow List */}
+            {/* ── Workflow List ────────────────────────────────────── */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {loading ? (
                     <div className="space-y-3 px-2">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-12 rounded-xl bg-white/5 animate-pulse" />
                         ))}
+                    </div>
+                ) : workflows.length === 0 ? (
+                    <div className="text-center py-8 space-y-3">
+                        <Zap className="h-8 w-8 mx-auto text-white/10" />
+                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Sin workflows</p>
+                        <button
+                            onClick={handleCreate}
+                            className="text-[10px] font-black text-primary hover:underline"
+                        >+ Crear primero</button>
                     </div>
                 ) : workflows.map((wf) => (
                     <div 
@@ -134,7 +210,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                         )}
                     >
                         <div className={cn(
-                            "h-8 w-8 flex items-center justify-center rounded-lg transition-colors",
+                            "h-8 w-8 flex items-center justify-center rounded-lg transition-colors shrink-0",
                             selectedWorkflowId === wf.id ? "bg-primary text-primary-foreground" : "bg-white/5 text-white/20 group-hover:text-white/40"
                         )}>
                             <Zap className="h-4 w-4" />
@@ -167,14 +243,110 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                 ))}
             </div>
 
-            {/* Sidebar Footer */}
-            <div className="p-4 bg-white/5 border-t border-white/5">
-                <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10 space-y-2">
-                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">SaaS Engine V4.0</p>
-                    <p className="text-[11px] text-white/40 leading-relaxed font-medium">
-                        Crea flujos modulares para maximizar la conversión en cada etapa.
-                    </p>
-                </div>
+            {/* ── Global System Config ─────────────────────────────── */}
+            <div className="border-t border-white/5">
+                <button
+                    onClick={() => setConfigOpen(!configOpen)}
+                    className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors"
+                >
+                    <div className="flex items-center gap-2 text-white/40">
+                        <Settings2 className="h-4 w-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Config. Sistema</span>
+                    </div>
+                    <ChevronDown className={cn("h-4 w-4 text-white/20 transition-transform duration-300", configOpen && "rotate-180")} />
+                </button>
+
+                {configOpen && (
+                    <div className="px-5 pb-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                        {/* Time range */}
+                        <div className="space-y-2">
+                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Horario de Activación</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                                    <Sun className="h-3 w-3 text-emerald-400 shrink-0" />
+                                    <input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        className="bg-transparent text-emerald-400 text-xs font-black w-full outline-none [color-scheme:dark]"
+                                        title="Hora inicio"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                                    <Moon className="h-3 w-3 text-blue-400 shrink-0" />
+                                    <input
+                                        type="time"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                        className="bg-transparent text-blue-400 text-xs font-black w-full outline-none [color-scheme:dark]"
+                                        title="Hora fin"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Working days */}
+                        <div className="space-y-2">
+                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Días Laborables</p>
+                            <div className="flex gap-1">
+                                {DAYS_MAP.map(d => {
+                                    const isActive = workingDays.includes(d.value);
+                                    return (
+                                        <button
+                                            key={d.value}
+                                            onClick={() => {
+                                                const updated = isActive
+                                                    ? workingDays.filter(x => x !== d.value)
+                                                    : [...workingDays, d.value].sort();
+                                                setWorkingDays(updated);
+                                            }}
+                                            className={cn(
+                                                "flex-1 h-8 rounded-lg text-[10px] font-black transition-all border",
+                                                isActive
+                                                    ? "bg-primary/20 border-primary/40 text-primary"
+                                                    : "bg-white/5 border-white/10 text-white/20 hover:text-white/40"
+                                            )}
+                                        >
+                                            {d.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Timezone note */}
+                        <div className="flex items-start gap-2 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
+                            <Globe2 className="h-3.5 w-3.5 text-cyan-500/60 mt-0.5 shrink-0" />
+                            <p className="text-[9px] text-white/30 leading-relaxed">
+                                El sistema adapta el horario al huso horario del lead según su prefijo telefónico (+34 España, +52 México, etc.)
+                            </p>
+                        </div>
+
+                        {/* Save config */}
+                        <button
+                            onClick={handleSaveConfig}
+                            disabled={savingConfig}
+                            className="w-full h-9 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/50 hover:bg-white/10 hover:text-white/80 transition-all disabled:opacity-40"
+                        >
+                            {savingConfig ? "Guardando..." : "Guardar Configuración"}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Deploy Button ────────────────────────────────────── */}
+            <div className="p-4 border-t border-white/5 bg-white/[0.02]">
+                <button
+                    onClick={handleDeploy}
+                    disabled={deploying}
+                    className={cn(
+                        "w-full h-12 flex items-center justify-center gap-2 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-lg",
+                        "bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] shadow-primary/20 disabled:opacity-50 disabled:cursor-wait"
+                    )}
+                >
+                    <Rocket className={cn("h-4 w-4", deploying && "animate-bounce")} />
+                    {deploying ? "Desplegando..." : "Desplegar Sistema"}
+                </button>
             </div>
         </div>
     );

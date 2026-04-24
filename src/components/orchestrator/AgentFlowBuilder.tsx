@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { 
     ReactFlow, 
     Background, 
@@ -46,6 +46,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { AIAgent } from "@/types/database";
+import { getAIAgents } from "@/lib/actions/agents";
 
 interface FlowNodeData {
     text?: string;
@@ -339,8 +341,8 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
 
     useEffect(() => {
         const loadAgents = async () => {
-            const data = await getAIAgents();
-            setAiAgents(data);
+            const res = await getAIAgents();
+            if (res.success && res.data) setAiAgents(res.data);
         };
         loadAgents();
     }, []);
@@ -1138,7 +1140,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                         <div className="space-y-3">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Nombre de la Plantilla (Meta)</label>
                                             <input 
-                                                value={selectedNode.data.templateName || ""}
+                                                value={(selectedNode.data.templateName as string) || ""}
                                                 onChange={(e) => updateNodeData(selectedNode.id, { templateName: e.target.value })}
                                                 placeholder="Ej: bienvenida_esden"
                                                 className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
@@ -1147,7 +1149,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                         <div className="space-y-3">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Idioma</label>
                                             <input 
-                                                value={selectedNode.data.language || "es"}
+                                                value={(selectedNode.data.language as string) || "es"}
                                                 onChange={(e) => updateNodeData(selectedNode.id, { language: e.target.value })}
                                                 placeholder="es"
                                                 className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
@@ -1156,7 +1158,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                         <div className="space-y-3">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Mapeo de Parámetros (Indice 1, 2...)</label>
                                             <textarea 
-                                                value={selectedNode.data.paramsMapping?.join("\n") || ""}
+                                                value={(selectedNode.data.paramsMapping as string[] | undefined)?.join("\n") || ""}
                                                 onChange={(e) => updateNodeData(selectedNode.id, { paramsMapping: e.target.value.split("\n") })}
                                                 placeholder="Ej:&#10;{{nombre}}&#10;{{sede}}"
                                                 className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-xl p-4 text-[11px] font-mono text-white/50"

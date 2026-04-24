@@ -9,7 +9,7 @@ import Link from "next/link";
 
 interface VoiceAgentSelectorProps {
     selectedAgentId: string | null;
-    onChange: (agentId: string) => void;
+    onChange: (agentId: string, agentName?: string) => void;
 }
 
 export function VoiceAgentSelector({ 
@@ -99,7 +99,7 @@ export function VoiceAgentSelector({
                                                     key={agent.id}
                                                     type="button"
                                                     onClick={() => {
-                                                        onChange(agent.id);
+                                                        onChange(agent.id, agent.name);
                                                         setIsOpen(false);
                                                     }}
                                                     className={cn(
