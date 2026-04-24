@@ -41,6 +41,7 @@ import {
     Activity,
     ArrowRight,
     Save,
+    FileText,
     LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -187,6 +188,33 @@ const QuestionNode = ({ data, selected }: { data: { text?: string; validation?: 
     </NodeWrapper>
 );
 
+const AIAgentNode = ({ data, selected }: { data: { agentId?: string; agentName?: string }; selected?: boolean }) => (
+    <NodeWrapper title="Cerebro Agente" icon={Brain} color="bg-indigo-500/20 text-indigo-400" headerColor="bg-indigo-500" selected={selected} type="IA_ADVANCED">
+        <Handle type="target" position={Position.Top} className="w-3 h-3 bg-indigo-500 border-2 border-slate-900" />
+        <div className="space-y-2">
+            <div className="p-2 bg-indigo-500/5 rounded-lg border border-indigo-500/10 text-[10px] font-bold text-indigo-300">
+                Agente: {data.agentName || "No seleccionado"}
+            </div>
+            <p className="text-[8px] text-white/30 uppercase tracking-widest font-black">Memory Enabled • KB Sync</p>
+        </div>
+        <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-indigo-500 border-2 border-slate-900" />
+    </NodeWrapper>
+);
+
+const MetaTemplateNode = ({ data, selected }: { data: { templateName?: string; language?: string }; selected?: boolean }) => (
+    <NodeWrapper title="Plantilla Meta" icon={FileText} color="bg-green-500/20 text-green-400" headerColor="bg-green-500" selected={selected} type="WHATSAPP">
+        <Handle type="target" position={Position.Top} className="w-3 h-3 bg-green-500 border-2 border-slate-900" />
+        <div className="space-y-2">
+            <div className="flex items-center gap-1.5 p-1.5 bg-green-500/5 rounded border border-green-500/10">
+                <span className="text-[9px] font-black uppercase text-green-400">{data.templateName || "N/A"}</span>
+                <span className="text-[7px] text-white/20">({data.language || "es"})</span>
+            </div>
+            <p className="text-[8px] text-white/30 italic">Mapeo dinámico activado</p>
+        </div>
+        <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-green-500 border-2 border-slate-900" />
+    </NodeWrapper>
+);
+
 const ConditionNode = ({ data, selected }: { data: { ifLabel?: string; elseLabel?: string }; selected?: boolean }) => (
     <NodeWrapper title="Filtro" icon={GitBranch} color="bg-pink-500/20 text-pink-400" headerColor="bg-pink-500" selected={selected} type="LÓGICA">
         <Handle type="target" position={Position.Top} className="w-3 h-3 bg-pink-500 border-2 border-slate-900" />
@@ -307,6 +335,15 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const [saving, setSaving] = useState(false);
     const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [aiAgents, setAiAgents] = useState<AIAgent[]>([]);
+
+    useEffect(() => {
+        const loadAgents = async () => {
+            const data = await getAIAgents();
+            setAiAgents(data);
+        };
+        loadAgents();
+    }, []);
 
     const handlePublish = async () => {
         setSaving(true);
@@ -331,6 +368,8 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
         flow_ai: AITaskNode,
         flow_crm: CRMNode,
         flow_crm_connect: CrmConnectNode,
+        flow_ai_agent: AIAgentNode,
+        flow_meta_template: MetaTemplateNode,
     }), []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
@@ -409,8 +448,10 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
             title: "Interacción",
             icon: MessageSquare,
             items: [
-                { type: "flow_message", label: "Enviar Mensaje", desc: "Respuesta automática de la IA.", icon: Sparkles },
-                { type: "flow_question", label: "Hacer Pregunta", desc: "Solicita datos al usuario.", icon: HelpCircle },
+                { type: "flow_message", label: "Mensaje Simple", desc: "Texto fijo predefinido.", icon: MessageSquare },
+                { type: "flow_ai_agent", label: "Agente IA (Cerebro)", desc: "Invoca un agente con memoria y cualificación.", icon: Brain },
+                { type: "flow_meta_template", label: "Plantilla WhatsApp", desc: "Envía plantilla oficial de Meta.", icon: FileText },
+                { type: "flow_question", label: "Hacer Pregunta", desc: "Solicita datos específicos.", icon: HelpCircle },
                 { type: "flow_wait", label: "Esperar", desc: "Pausa el flujo temporalmente.", icon: Timer },
             ]
         },
@@ -1057,6 +1098,71 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                             placeholder='{\n  "nombre": "{{nombre}}",\n  "cualificacion": "{{score}}"\n}'
                                             className="w-full min-h-[100px] bg-black/40 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-cyan-200/40 focus:text-cyan-200/80 transition-all outline-none"
                                         />
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedNode.type === 'flow_ai_agent' && (
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Seleccionar Cerebro Agente</label>
+                                        <select 
+                                            title="Seleccionar Agente de IA"
+                                            value={selectedNode.data.agentId as string || ""}
+                                            onChange={(e) => {
+                                                const agent = aiAgents.find(a => a.id === e.target.value);
+                                                updateNodeData(selectedNode.id, { 
+                                                    agentId: e.target.value,
+                                                    agentName: agent?.name || "Agente sin nombre"
+                                                });
+                                            }}
+                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-4 text-xs text-white/80 focus:border-indigo-500/40 outline-none"
+                                        >
+                                            <option value="">-- Seleccionar Agente --</option>
+                                            {aiAgents.map(agent => (
+                                                <option key={agent.id} value={agent.id}>{agent.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                                        <p className="text-[10px] text-indigo-200/60 leading-relaxed font-medium">
+                                            Este nodo invocará al agente seleccionado usando su configuración de <b>Memoria Autónoma</b> y <b>Base de Conocimiento.</b>
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedNode.type === 'flow_meta_template' && (
+                                <div className="space-y-6">
+                                    <div className="space-y-4">
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Nombre de la Plantilla (Meta)</label>
+                                            <input 
+                                                value={selectedNode.data.templateName || ""}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { templateName: e.target.value })}
+                                                placeholder="Ej: bienvenida_esden"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Idioma</label>
+                                            <input 
+                                                value={selectedNode.data.language || "es"}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { language: e.target.value })}
+                                                placeholder="es"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Mapeo de Parámetros (Indice 1, 2...)</label>
+                                            <textarea 
+                                                value={selectedNode.data.paramsMapping?.join("\n") || ""}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { paramsMapping: e.target.value.split("\n") })}
+                                                placeholder="Ej:&#10;{{nombre}}&#10;{{sede}}"
+                                                className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-xl p-4 text-[11px] font-mono text-white/50"
+                                            />
+                                            <p className="text-[8px] text-white/20 italic">Pon una variable por línea. El sistema las mapeará por orden.</p>
+                                        </div>
                                     </div>
                                 </div>
                             )}
