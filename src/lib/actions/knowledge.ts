@@ -18,7 +18,7 @@ export type KnowledgeItem = {
  * Fetches all knowledge base documents for the active tenant.
  */
 export async function getKnowledgeBase() {
-    const supabase = await getAdminSupabaseClient<Database>();
+    const supabase = await getAdminSupabaseClient();
     const tenantId = await getActiveTenantId();
     
     if (!tenantId) return { success: false, error: "No context." };
@@ -38,7 +38,7 @@ export async function getKnowledgeBase() {
  * Uploads a PDF and creates a knowledge base entry.
  */
 export async function uploadKnowledgeDocument(formData: FormData) {
-    const supabase = await getAdminSupabaseClient<Database>();
+    const supabase = await getAdminSupabaseClient();
     const tenantId = await getActiveTenantId();
     
     if (!tenantId) return { success: false, error: "No context." };
@@ -83,7 +83,7 @@ export async function uploadKnowledgeDocument(formData: FormData) {
  * Deletes a knowledge base document.
  */
 export async function deleteKnowledgeDocument(id: string) {
-    const supabase = await getAdminSupabaseClient<Database>();
+    const supabase = await getAdminSupabaseClient();
     const tenantId = await getActiveTenantId();
     
     if (!tenantId) return { success: false, error: "No context." };
