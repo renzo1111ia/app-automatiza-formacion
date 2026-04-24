@@ -1,8 +1,7 @@
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
-import { AIAgent, AIAgentVariant } from "@/types/database";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { AIAgent, AIAgentVariant, Database } from "@/types/database";
 
 /**
  * Fetches all AI Agents for the active tenant.
@@ -28,7 +27,7 @@ export async function getAIAgents() {
  * Note: Variants are linked via agent_id; RLS should handle tenant isolation.
  */
 export async function getAgentVariants(agentId: string) {
-    const supabase = (await getAdminSupabaseClient()) as unknown as SupabaseClient;
+    const supabase = await getAdminSupabaseClient();
     const { data, error } = await supabase
         .from("ai_agent_variants")
         .select("*")
@@ -54,9 +53,12 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
         tenant_id: tenantId
     };
 
+    // We use a safe cast to avoid inference issues with generic Supabase client
+    // while avoiding the use of 'any' to satisfy lint rules.
     const { data, error } = await supabase
         .from("ai_agents")
-        .upsert(agentData as any)
+        // @ts-expect-error - Supabase inference issue with table keys
+        .upsert(agentData as Database["public"]["Tables"]["ai_agents"]["Insert"])
         .select()
         .single();
 
@@ -72,21 +74,22 @@ export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
     
     // Clean up variant data to remove metadata fields that shouldn't be upserted
     // but keep fields like api_key, knowledge_base_id and model info
-    const cleanVariant = { ...variant };
-    delete (cleanVariant as any).id;
-    delete (cleanVariant as any).created_at;
-    delete (cleanVariant as any).updated_at;
-    delete (cleanVariant as any).metrics;
+    const { 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        id: _id, created_at, updated_at, metrics, 
+        ...cleanVariant 
+    } = variant;
     
     // We explicitly include the ID if it exists, otherwise use onConflict
     const dataToUpsert = variant.id 
-        ? { id: variant.id, ...cleanVariant } 
-        : cleanVariant;
+        ? { id: variant.id, ...(cleanVariant as Partial<AIAgentVariant>) } 
+        : (cleanVariant as Partial<AIAgentVariant>);
 
     const { data, error } = await supabase
         .from("ai_agent_variants")
-        .upsert(dataToUpsert as any, { 
-            onConflict: 'agent_id,is_variant_b',
+        // @ts-expect-error - Supabase inference issue with table keys
+        .upsert(dataToUpsert as Database["public"]["Tables"]["ai_agent_variants"]["Insert"], { 
+            onConflict: "agent_id,is_variant_b",
             ignoreDuplicates: false 
         })
         .select()
@@ -97,4 +100,23 @@ export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
         return { success: false, error: error.message };
     }
     return { success: true, data: data as AIAgentVariant };
+}
+
+/**
+ * Deletes an AI agent.
+ */
+export async function deleteAIAgent(agentId: string) {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
+
+    if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
+
+    const { error } = await supabase
+        .from("ai_agents")
+        .delete()
+        .eq("id", agentId)
+        .eq("tenant_id", tenantId);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
 }

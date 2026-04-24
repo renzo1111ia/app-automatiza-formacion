@@ -8,12 +8,13 @@ import {
     Sparkles, PlusCircle,
     GitBranch, RotateCcw,
     Key, Eye, EyeOff,
-    AlarmClock, Send, MessageSquare as MessageSquareIcon
+    AlarmClock, Send, MessageSquare as MessageSquareIcon,
+    Trash2, Edit3, AlertTriangle
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent } from "@/lib/actions/agents";
+import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent, deleteAIAgent } from "@/lib/actions/agents";
 import { AIAgent, AIAgentVariant } from "@/types/database";
 import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
 import { useTenantStore } from "@/store/tenant";
@@ -80,6 +81,10 @@ export default function AgentsPage() {
     const [savingInactivity, setSavingInactivity] = useState(false);
     const [saving, setSaving] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
+
     const [newAgentName, setNewAgentName] = useState("");
     const [newAgentDescription, setNewAgentDescription] = useState("");
     const [showApiKey, setShowApiKey] = useState(false);
@@ -228,6 +233,44 @@ export default function AgentsPage() {
         setSaving(false);
     };
 
+    const handleUpdateAgent = async () => {
+        if (!selectedAgent || !newAgentName.trim()) return;
+        setSaving(true);
+        const res = await saveAIAgent({
+            id: selectedAgent.id,
+            name: newAgentName,
+            description: newAgentDescription,
+        });
+
+        if (res.success && res.data) {
+            await loadAgents();
+            setSelectedAgent(res.data);
+            setIsEditModalOpen(false);
+            setNewAgentName("");
+            setNewAgentDescription("");
+        } else {
+            alert("Error al actualizar el agente: " + (res.error || "Desconocido"));
+        }
+        setSaving(false);
+    };
+
+    const handleDeleteAgent = async () => {
+        if (!agentToDelete) return;
+        setSaving(true);
+        const res = await deleteAIAgent(agentToDelete.id);
+        if (res.success) {
+            await loadAgents();
+            if (selectedAgent?.id === agentToDelete.id) {
+                setSelectedAgent(null);
+            }
+            setIsDeleteModalOpen(false);
+            setAgentToDelete(null);
+        } else {
+            alert("Error al eliminar el agente: " + (res.error || "Desconocido"));
+        }
+        setSaving(false);
+    };
+
 
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-950 text-white selection:bg-primary/30">
@@ -238,7 +281,22 @@ export default function AgentsPage() {
                         <Bot className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black uppercase tracking-tight">Gestión de Agentes de IA</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-black uppercase tracking-tight">{selectedAgent?.name || "Gestión de Agentes de IA"}</h1>
+                            {selectedAgent && (
+                                <button 
+                                    onClick={() => {
+                                        setNewAgentName(selectedAgent.name);
+                                        setNewAgentDescription(selectedAgent.description || "");
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all"
+                                    title="Editar nombre y descripción"
+                                >
+                                    <Edit3 className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
                         <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-none mt-1">Itera sobre los prompts de tus agentes y configura pruebas A/B.</p>
                     </div>
                 </div>
@@ -277,11 +335,11 @@ export default function AgentsPage() {
                     </div>
                     <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-10">
                         {agents.map(agent => (
-                            <button
+                            <div
                                 key={agent.id}
                                 onClick={() => setSelectedAgent(agent)}
                                 className={cn(
-                                    "w-full p-4 rounded-2xl text-left transition-all border group",
+                                    "w-full p-4 rounded-2xl text-left transition-all border group cursor-pointer",
                                     selectedAgent?.id === agent.id 
                                         ? "bg-primary/10 border-primary/20" 
                                         : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
@@ -295,11 +353,24 @@ export default function AgentsPage() {
                                     )}>
                                         {agent.status === 'ACTIVE' ? 'Activo' : 'Pausado'}
                                     </span>
-                                    {agent.status === 'ACTIVE' && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAgentToDelete(agent);
+                                                setIsDeleteModalOpen(true);
+                                            }}
+                                            className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"
+                                            title="Eliminar agente"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                        {agent.status === 'ACTIVE' && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                                    </div>
                                 </div>
-                                <h3 className="font-bold text-sm text-white/90 group-hover:text-white">{agent.name}</h3>
+                                <h3 className="font-bold text-sm text-white/90 group-hover:text-white truncate pr-6">{agent.name}</h3>
                                 <p className="text-[10px] text-white/30 line-clamp-1 mt-0.5">{agent.description || "Sin descripción"}</p>
-                            </button>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -1003,13 +1074,17 @@ export default function AgentsPage() {
 
             {/* ── CREATE MODAL ── */}
 
+            {/* ── CREATE / EDIT MODAL ── */}
             <AnimatePresence>
-                {isCreateModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+                {(isCreateModalOpen || isEditModalOpen) && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
                         <motion.div 
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                            onClick={() => setIsCreateModalOpen(false)}
+                            onClick={() => {
+                                setIsCreateModalOpen(false);
+                                setIsEditModalOpen(false);
+                            }}
                         />
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1017,14 +1092,14 @@ export default function AgentsPage() {
                         >
                             <div className="text-center space-y-4">
                                 <div className="h-16 w-16 bg-primary/10 rounded-3xl border border-primary/20 flex items-center justify-center mx-auto mb-4">
-                                    <PlusCircle className="h-8 w-8 text-primary" />
+                                    {isCreateModalOpen ? <PlusCircle className="h-8 w-8 text-primary" /> : <Edit3 className="h-8 w-8 text-primary" />}
                                 </div>
-                                <h3 className="text-3xl font-black uppercase tracking-tight">Nuevo Agente</h3>
-                                <p className="text-white/40 text-sm font-medium">Define la identidad base de tu nuevo agente inteligente.</p>
+                                <h3 className="text-3xl font-black uppercase tracking-tight">{isCreateModalOpen ? "Nuevo Agente" : "Editar Agente"}</h3>
+                                <p className="text-white/40 text-sm font-medium">Define la identidad base de tu agente inteligente.</p>
                             </div>
 
                             <div className="space-y-6">
-                                <div className="space-y-3">
+                                <div className="space-y-3 text-left">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Nombre del Agente</label>
                                     <input 
                                         autoFocus
@@ -1034,7 +1109,7 @@ export default function AgentsPage() {
                                         placeholder="Ej: Asistente Lead Master"
                                     />
                                 </div>
-                                <div className="space-y-3">
+                                <div className="space-y-3 text-left">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Descripción / Objetivo</label>
                                     <textarea 
                                         value={newAgentDescription}
@@ -1047,17 +1122,63 @@ export default function AgentsPage() {
 
                             <div className="flex gap-4 pt-4">
                                 <button 
-                                    onClick={() => setIsCreateModalOpen(false)}
+                                    onClick={() => {
+                                        setIsCreateModalOpen(false);
+                                        setIsEditModalOpen(false);
+                                    }}
                                     className="flex-1 h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all font-bold"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
-                                    onClick={handleCreateAgent}
+                                    onClick={isCreateModalOpen ? handleCreateAgent : handleUpdateAgent}
                                     disabled={saving || !newAgentName.trim()}
                                     className="flex-1 h-14 rounded-2xl bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                                 >
-                                    {saving ? "Creando..." : "Crear Agente"}
+                                    {saving ? "Guardando..." : (isCreateModalOpen ? "Crear Agente" : "Guardar Cambios")}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ── DELETE CONFIRMATION MODAL ── */}
+            <AnimatePresence>
+                {isDeleteModalOpen && agentToDelete && (
+                    <div className="fixed inset-0 z-[400] flex items-center justify-center p-6">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                            onClick={() => setIsDeleteModalOpen(false)}
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-md bg-slate-900 border border-red-500/20 rounded-[40px] p-10 shadow-2xl space-y-8"
+                        >
+                            <div className="text-center space-y-4">
+                                <div className="h-16 w-16 bg-red-500/10 rounded-3xl border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle className="h-8 w-8 text-red-500" />
+                                </div>
+                                <h3 className="text-2xl font-black uppercase tracking-tight">¿Eliminar Agente?</h3>
+                                <p className="text-white/40 text-sm font-medium leading-relaxed">
+                                    Esta acción es permanente. Se eliminará el agente <span className="text-white font-bold">&quot;{agentToDelete.name}&quot;</span> y todas sus variantes y configuraciones de flujo.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <button 
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    className="flex-1 h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all font-bold"
+                                >
+                                    No, Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleDeleteAgent}
+                                    disabled={saving}
+                                    className="flex-1 h-14 rounded-2xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                                >
+                                    {saving ? "Eliminando..." : "Sí, Eliminar Agente"}
                                 </button>
                             </div>
                         </motion.div>
