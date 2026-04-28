@@ -1178,7 +1178,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                             )}
 
                             {selectedNode.type === 'flow_ai_agent' && (
-                                <div className="space-y-6">
+                                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
                                     <div className="space-y-3">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Seleccionar Cerebro Agente</label>
                                         <select 
@@ -1199,6 +1199,60 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                             ))}
                                         </select>
                                     </div>
+
+                                    {/* Exit Criteria Section */}
+                                    <div className="p-5 rounded-[32px] bg-indigo-500/[0.03] border border-indigo-500/10 space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Criterio de Salida (Escalamiento)</p>
+                                        </div>
+                                        <p className="text-[10px] text-white/30 leading-relaxed italic">
+                                            Define la variable que, al cumplirse, hará que el agente finalice y el flujo continúe al siguiente nodo.
+                                        </p>
+
+                                        <div className="space-y-3 pt-2">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Variable de Disparo</label>
+                                            <select 
+                                                value={selectedNode.data.exit_variable as string || ""}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { exit_variable: e.target.value })}
+                                                title="Variable que dispara la salida"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none"
+                                            >
+                                                <option value="">-- Siempre Continuar --</option>
+                                                <option value="cualificado">Cualificado (True/False)</option>
+                                                <option value="es_agendable">Es Agendable</option>
+                                                <option value="interes_confirmado">Interés Confirmado</option>
+                                                <option value="custom">Variable Personalizada...</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Condición de Salida</label>
+                                            <select 
+                                                value={selectedNode.data.exit_condition as string || "is_true"}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { exit_condition: e.target.value })}
+                                                title="Condición para salir del nodo"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none"
+                                            >
+                                                <option value="is_true">Es Verdadero (True)</option>
+                                                <option value="exists">Tiene Valor (Cualquiera)</option>
+                                                <option value="equals">Es igual a...</option>
+                                            </select>
+                                        </div>
+
+                                        {selectedNode.data.exit_condition === 'equals' && (
+                                            <div className="space-y-3">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Valor Esperado</label>
+                                                <input 
+                                                    value={selectedNode.data.exit_value as string || ""}
+                                                    onChange={(e) => updateNodeData(selectedNode.id, { exit_value: e.target.value })}
+                                                    placeholder="Ej: Si"
+                                                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
                                         <p className="text-[10px] text-indigo-200/60 leading-relaxed font-medium">
                                             Este nodo invocará al agente seleccionado usando su configuración de <b>Memoria Autónoma</b> y <b>Base de Conocimiento.</b>
