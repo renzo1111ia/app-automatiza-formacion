@@ -305,6 +305,26 @@ export interface FeatureFlag {
     created_at?: string;
 }
 
+export interface KnowledgeItem {
+    id: string;
+    tenant_id: string;
+    name: string;
+    description: string | null;
+    file_key: string;
+    file_url: string | null;
+    content_hash: string | null;
+    created_at: string;
+}
+
+export interface KnowledgeEmbedding {
+    id: string;
+    tenant_id: string;
+    content: string;
+    embedding: number[];
+    metadata: Record<string, unknown>;
+    created_at: string;
+}
+
 // ─── RETELL TYPES ─────────────────────────────────────────────────────────────
 
 export interface RetellTool {
@@ -485,6 +505,8 @@ export type Database = {
             chat_messages: { Row: { id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }; Insert: Omit<{ id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }, 'id' | 'created_at'>; Update: Partial<{ status: string; metadata: Record<string, unknown> }>; };
             web_widgets: { Row: WebWidget; Insert: Omit<WebWidget, "id" | "created_at" | "updated_at">; Update: Partial<WebWidget>; };
             tenants: { Row: Tenant; Insert: Omit<Tenant, "id" | "created_at" | "updated_at">; Update: Partial<Tenant>; };
+            knowledge_base: { Row: KnowledgeItem; Insert: Omit<KnowledgeItem, "id" | "created_at">; Update: Partial<KnowledgeItem>; };
+            knowledge_base_embeddings: { Row: KnowledgeEmbedding; Insert: Omit<KnowledgeEmbedding, "id" | "created_at">; Update: Partial<KnowledgeEmbedding>; };
         };
 
         Views: {

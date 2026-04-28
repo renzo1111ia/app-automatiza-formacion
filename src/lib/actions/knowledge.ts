@@ -1,17 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
 import { uploadToMinio, deleteFromMinio } from "@/lib/integrations/minio";
-
-export type KnowledgeItem = {
-    id: string;
-    name: string;
-    description: string | null;
-    file_key: string;
-    file_url: string | null;
-    content_hash: string | null;
-    created_at: string;
-};
+import { KnowledgeItem } from "@/types/database";
 
 /**
  * Fetches all knowledge base documents for the active tenant.
@@ -22,9 +14,8 @@ export async function getKnowledgeBase() {
     
     if (!tenantId) return { success: false, error: "No context." };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase
-        .from("knowledge_base" as any) as any)
+    const { data, error } = await supabase
+        .from("knowledge_base" as any)
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
@@ -56,9 +47,8 @@ export async function uploadKnowledgeDocument(formData: FormData) {
         const fileUrl = await uploadToMinio(fileKey, buffer, file.type);
 
         // Save to DB
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase
-            .from("knowledge_base" as any) as any)
+        const { data, error } = await supabase
+            .from("knowledge_base" as any)
             .insert({
                 tenant_id: tenantId,
                 name: name || file.name,
@@ -73,7 +63,6 @@ export async function uploadKnowledgeDocument(formData: FormData) {
         if (error) throw error;
         return { success: true, data };
     } catch (error: any) {
-        // eslint-disable-next-line no-console
         console.error('❌ [UPLOAD_KNOWLEDGE] Critical Error:', error);
         return { 
             success: false, 
@@ -92,9 +81,8 @@ export async function deleteKnowledgeDocument(id: string) {
     if (!tenantId) return { success: false, error: "No context." };
 
     // 1. Get file key first for deletion from MinIO
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: item } = await (supabase
-        .from("knowledge_base" as any) as any)
+    const { data: item } = await supabase
+        .from("knowledge_base" as any)
         .select("file_key")
         .eq("id", id)
         .single();
@@ -104,9 +92,8 @@ export async function deleteKnowledgeDocument(id: string) {
     }
 
     // 2. Delete from DB
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase
-        .from("knowledge_base" as any) as any)
+    const { error } = await supabase
+        .from("knowledge_base" as any)
         .delete()
         .eq("id", id)
         .eq("tenant_id", tenantId);
