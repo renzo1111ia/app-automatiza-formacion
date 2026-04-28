@@ -84,7 +84,9 @@ export class QualificationProcessor {
 
         // 3. Create dynamic LLM
         const provider = (variant?.model_provider as LLMType) || "OPENAI";
-        const modelName = variant?.model_name || "gpt-4o";
+        let modelName = variant?.model_name || "gpt-4o";
+        if (modelName === "gpt-4.1") modelName = "gpt-4o";
+        if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
         const apiKey = variant?.api_key || (provider === "OPENAI" ? process.env.OPENAI_API_KEY : provider === "ANTHROPIC" ? process.env.ANTHROPIC_API_KEY : process.env.GOOGLE_GENERATIVE_AI_API_KEY);
 
         const llm = AgentFactory.createModel({

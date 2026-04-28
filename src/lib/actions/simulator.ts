@@ -44,8 +44,12 @@ export async function testAgentVariables(params: {
             { role: "user", content: message }
         ];
 
+        let modelName = variant.model_name || "gpt-4o";
+        if (modelName === "gpt-4.1") modelName = "gpt-4o";
+        if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
+
         const completion = await openai.chat.completions.create({
-            model: variant.model_name || "gpt-4o",
+            model: modelName,
             messages,
             temperature: ((variant as unknown as Record<string, unknown>).temperature as number | undefined) || 0.7
         });

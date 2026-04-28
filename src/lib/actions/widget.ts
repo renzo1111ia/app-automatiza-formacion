@@ -146,9 +146,13 @@ ${chatSummary || "New interaction."}
 `;
 
         // 4. Call LLM
+        let modelName = activeVariant.model_name || "gpt-4o";
+        if (modelName === "gpt-4.1") modelName = "gpt-4o";
+        if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
+
         const openai = new OpenAI({ apiKey });
         const completion = await openai.chat.completions.create({
-            model: activeVariant.model_name || "gpt-4o",
+            model: modelName,
             messages: [
                 { role: "system", content: systemPrompt },
                 ...recentHistory.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),

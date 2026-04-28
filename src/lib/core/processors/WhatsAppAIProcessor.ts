@@ -132,7 +132,10 @@ ${conversationContext}
 `;
 
         // 8. Call OpenAI
-        const modelName = activeVariant.model_name || "gpt-4o";
+        let modelName = activeVariant.model_name || "gpt-4o";
+        if (modelName === "gpt-4.1") modelName = "gpt-4o";
+        if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
+        
         const openai = new OpenAI({ apiKey });
         
         console.log(`[AI PROCESSOR] 🧠 Calling ${modelName}...`);
