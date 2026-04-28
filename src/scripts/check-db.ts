@@ -14,7 +14,7 @@ async function main() {
   }
   const supabase = createClient(supabaseUrl, supabaseKey);
   
-  const { data: tenants, error: tenantsError } = await supabase.from('tenants').select('id, name');
+  const { data: tenants, error: tenantsError } = await supabase.from('tenants').select('id, name, config');
   if (tenantsError) console.error('Error tenants:', tenantsError);
   else console.log('Tenants:', JSON.stringify(tenants, null, 2));
 

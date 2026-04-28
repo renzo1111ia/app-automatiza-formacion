@@ -28,6 +28,7 @@ export default function KnowledgeBasePage() {
 
     // Form state for multiple files
     const [files, setFiles] = useState<File[]>([]);
+    const [kbName, setKbName] = useState("");
     const [description, setDescription] = useState("");
     const [uploadProgress, setUploadProgress] = useState<{current: number, total: number}>({current: 0, total: 0});
 
@@ -69,7 +70,7 @@ export default function KnowledgeBasePage() {
 
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("name", file.name); // Using filename as default name
+            formData.append("name", kbName || file.name); // Using custom name if provided, else filename
             formData.append("description", description);
 
             const res = await uploadKnowledgeDocument(formData);
@@ -85,6 +86,7 @@ export default function KnowledgeBasePage() {
             if (errors.length === 0) {
                 setIsUploadModalOpen(false);
                 setFiles([]);
+                setKbName("");
                 setDescription("");
             } else {
                 alert(`Se subieron ${successCount} archivos, pero hubo errores en algunos:\n${errors.join('\n')}`);
@@ -288,6 +290,19 @@ export default function KnowledgeBasePage() {
                                             ))}
                                         </div>
                                     )}
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Nombre de la Base (Opcional)</label>
+                                    <input 
+                                        type="text"
+                                        value={kbName}
+                                        disabled={uploading}
+                                        onChange={(e) => setKbName(e.target.value)}
+                                        className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all disabled:opacity-50"
+                                        placeholder="Ej: Manual de Ventas 2025..."
+                                    />
+                                    <p className="text-[8px] text-white/20 italic ml-4">Si se deja vacío, se usará el nombre del archivo PDF.</p>
                                 </div>
 
                                 <div className="space-y-3">
