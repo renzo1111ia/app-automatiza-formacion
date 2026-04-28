@@ -14,8 +14,8 @@ export async function getKnowledgeBase() {
     
     if (!tenantId) return { success: false, error: "No context." };
 
-    const { data, error } = await supabase
-        .from("knowledge_base" as any)
+    const { data, error } = await (supabase
+        .from("knowledge_base" as any) as any)
         .select("*")
         .eq("tenant_id", tenantId)
         .order("created_at", { ascending: false });
@@ -47,8 +47,8 @@ export async function uploadKnowledgeDocument(formData: FormData) {
         const fileUrl = await uploadToMinio(fileKey, buffer, file.type);
 
         // Save to DB
-        const { data, error } = await supabase
-            .from("knowledge_base" as any)
+        const { data, error } = await (supabase
+            .from("knowledge_base" as any) as any)
             .insert({
                 tenant_id: tenantId,
                 name: name || file.name,
@@ -81,8 +81,8 @@ export async function deleteKnowledgeDocument(id: string) {
     if (!tenantId) return { success: false, error: "No context." };
 
     // 1. Get file key first for deletion from MinIO
-    const { data: item } = await supabase
-        .from("knowledge_base" as any)
+    const { data: item } = await (supabase
+        .from("knowledge_base" as any) as any)
         .select("file_key")
         .eq("id", id)
         .single();
@@ -92,8 +92,8 @@ export async function deleteKnowledgeDocument(id: string) {
     }
 
     // 2. Delete from DB
-    const { error } = await supabase
-        .from("knowledge_base" as any)
+    const { error } = await (supabase
+        .from("knowledge_base" as any) as any)
         .delete()
         .eq("id", id)
         .eq("tenant_id", tenantId);
