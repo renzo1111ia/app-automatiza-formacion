@@ -1124,16 +1124,33 @@ export default function AgentsPage() {
                             onClose={() => setActiveTab('A')}
                             onSave={async (flow) => {
                                 setSaving(true);
-                                const res = await saveAIAgent({
-                                    id: selectedAgent.id,
-                                    flow_config: flow
-                                } as Partial<AIAgent>);
-                                if (res.success) {
-                                    setAgents(prev => prev.map(a => 
-                                        a.id === selectedAgent.id ? { ...a, flow_config: flow } : a
-                                    ));
+                                try {
+                                    const res = await saveAIAgent({
+                                        id: selectedAgent.id,
+                                        flow_config: flow
+                                    } as Partial<AIAgent>);
+                                    
+                                    if (res.success && res.data) {
+                                        const updatedAgent = { ...selectedAgent, flow_config: flow };
+                                        
+                                        // Actualizar lista global
+                                        setAgents(prev => prev.map(a => 
+                                            a.id === selectedAgent.id ? updatedAgent : a
+                                        ));
+                                        
+                                        // Actualizar agente seleccionado para que el estado sea consistente
+                                        setSelectedAgent(updatedAgent);
+                                        
+                                        alert("¡Flujo publicado con éxito!");
+                                    } else {
+                                        alert("Error al guardar el flujo: " + (res.error || "Error desconocido"));
+                                    }
+                                } catch (error) {
+                                    console.error("Error saving flow:", error);
+                                    alert("Error crítico al guardar el flujo.");
+                                } finally {
+                                    setSaving(false);
                                 }
-                                setSaving(false);
                             }}
                         />
                     </motion.div>

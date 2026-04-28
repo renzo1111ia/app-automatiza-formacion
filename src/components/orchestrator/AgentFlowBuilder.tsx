@@ -338,6 +338,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [aiAgents, setAiAgents] = useState<AIAgent[]>([]);
+    const [precedingVariables, setPrecedingVariables] = useState<string[]>([]);
 
     useEffect(() => {
         const loadAgents = async () => {
@@ -346,6 +347,40 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
         };
         loadAgents();
     }, []);
+
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
+        initialFlow.nodes && initialFlow.nodes.length > 0 ? initialFlow.nodes : [
+            { id: "start", type: "flow_trigger", position: { x: 250, y: 0 }, data: {} }
+        ]
+    );
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlow.edges || []);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+    // Fetch variables from preceding nodes when a condition node is selected
+    useEffect(() => {
+        const fetchPrecedingVars = async () => {
+            const node = nodes.find(n => n.id === selectedNodeId);
+            if (node?.type === 'flow_condition') {
+                // Find source node
+                const edge = edges.find(e => e.target === node.id);
+                if (edge) {
+                    const sourceNode = nodes.find(n => n.id === edge.source);
+                    if (sourceNode?.type === 'flow_ai_agent' && sourceNode.data.agentId) {
+                        const { getAgentTrackedVariables } = await import("@/lib/actions/inbox");
+                        const res = await getAgentTrackedVariables(sourceNode.data.agentId as string);
+                        if (res.success && res.data) {
+                            setPrecedingVariables(res.data);
+                        } else {
+                            setPrecedingVariables([]);
+                        }
+                    } else {
+                        setPrecedingVariables(['nombre', 'email', 'telefono', 'pais', 'origen', 'segmentacion', 'tipo_lead']);
+                    }
+                }
+            }
+        };
+        fetchPrecedingVars();
+    }, [selectedNodeId, nodes, edges]);
 
     const handlePublish = async () => {
         setSaving(true);
@@ -373,14 +408,6 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
         flow_ai_agent: AIAgentNode,
         flow_meta_template: MetaTemplateNode,
     }), []);
-
-    const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
-        initialFlow.nodes && initialFlow.nodes.length > 0 ? initialFlow.nodes : [
-            { id: "start", type: "flow_trigger", position: { x: 250, y: 0 }, data: {} }
-        ]
-    );
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialFlow.edges || []);
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
     const onConnect = useCallback(
         (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: "#7c3aed", strokeWidth: 2 } }, eds)),
@@ -808,6 +835,52 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                             placeholder="NO"
                                             className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-red-400 font-bold"
                                         />
+                                    </div>
+
+                                    <div className="pt-4 border-t border-white/5 space-y-4">
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-pink-400">Variable a Filtrar</label>
+                                            <select 
+                                                value={selectedNode.data.condition_variable as string || ""}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { condition_variable: e.target.value })}
+                                                title="Variable a filtrar"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                            >
+                                                <option value="">-- Seleccionar Variable --</option>
+                                                {precedingVariables.map(v => (
+                                                    <option key={v} value={v}>{v}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-pink-400">Operador</label>
+                                            <select 
+                                                value={selectedNode.data.condition_operator as string || "equals"}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { condition_operator: e.target.value })}
+                                                title="Operador de comparación"
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                            >
+                                                <option value="equals">Es igual a</option>
+                                                <option value="not_equals">Es distinto a</option>
+                                                <option value="contains">Contiene</option>
+                                                <option value="is_true">Es Verdadero</option>
+                                                <option value="is_false">Es Falso</option>
+                                                <option value="exists">Existe / Tiene valor</option>
+                                            </select>
+                                        </div>
+
+                                        {(!['is_true', 'is_false', 'exists'].includes(selectedNode.data.condition_operator as string)) && (
+                                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-pink-400">Valor de Comparación</label>
+                                                <input 
+                                                    value={selectedNode.data.condition_value as string || ""}
+                                                    onChange={(e) => updateNodeData(selectedNode.id, { condition_value: e.target.value })}
+                                                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                                    placeholder="Ej: cualificado, si, 5000..."
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
