@@ -25,7 +25,7 @@ import {
 } from './nodes/TriggerNodes';
 import { NodeConfigSidebar } from './NodeConfigSidebar';
 import { 
-    Save, Plus, Play, Trash2, 
+    Save, Plus, Rocket, Trash2, 
     Phone, MessageSquare, BrainCircuit, 
     Globe, Clock, GitBranchPlus, Webhook, 
     Reply, Hourglass, Timer, Bot, CheckCircle2, MessageCircle
@@ -376,6 +376,32 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
     }
   };
 
+  const onDeploy = async () => {
+    setIsPublishing(true);
+    try {
+      // First save it
+      await onPublish();
+      
+      // Then call deploy specifically to activate it
+      const res = await fetch('/api/orchestration/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, workflowId, status: 'ACTIVE' })
+      });
+      
+      if (res.ok) {
+        alert("🚀 Workflow Desplegado y Activo");
+      } else {
+        alert("⚠️ El flujo se guardó pero hubo un error al activarlo.");
+      }
+    } catch (error) {
+      console.error("Error deploying:", error);
+      alert("❌ Error crítico en el despliegue.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   return (
     <div className="flex-1 h-full w-full relative group">
       {/* ── Canvas Toolbar ─────────────────────────────────────── */}
@@ -384,12 +410,12 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
           disabled={isPublishing}
           onClick={onPublish}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold hover:scale-105 active:scale-95 transition-all shadow-lg hover:shadow-primary/20 text-xs",
+            "flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-white/60 font-bold hover:bg-white/10 hover:text-white transition-all text-xs",
             isPublishing && "opacity-50 cursor-not-allowed"
           )}
         >
           <Save className={cn("h-4 w-4", isPublishing && "animate-spin")} />
-          {isPublishing ? "Publicando..." : "Publicar Flujo"}
+          {isPublishing ? "Guardando..." : "Guardar Borrador"}
         </button>
 
         <div className="h-4 w-px bg-white/10 mx-1" />
@@ -450,8 +476,13 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
 
         <div className="h-4 w-px bg-white/10 mx-1" />
 
-        <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-bold hover:bg-emerald-500/20 transition-all text-xs">
-          <Play className="h-3.5 w-3.5" /> Depurar
+        <button 
+          onClick={onDeploy}
+          disabled={isPublishing}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 text-white font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all text-[10px]"
+        >
+          <Rocket className={cn("h-3.5 w-3.5", isPublishing && "animate-pulse")} /> 
+          {isPublishing ? "Desplegando..." : "Desplegar Workflow"}
         </button>
       </div>
 
