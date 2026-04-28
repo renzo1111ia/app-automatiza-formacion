@@ -45,13 +45,14 @@ export class FactExtractionService {
 REGLAS ESTRICTAS:
 1. Devuelve ÚNICAMENTE un JSON plano con las claves exactas listadas arriba.
 2. Si no hay información clara para una clave, omítela del JSON.
-3. Si el usuario menciona su nombre, úsalo para "user_name".
-4. Para países o ciudades, normaliza el nombre (ej: "España", "Bolivia").
-5. Para "qualified": usa "SI" si muestra interés claro, "NO" si rechaza, omite si no está claro.
-6. NO inventes datos. Solo extrae lo que el usuario haya dicho explícitamente.
+3. PRIORIDAD: El diálogo puede contener patrones como {clave}=valor o {CLAVE}=valor. Si los ves, úsalos como fuente principal de verdad.
+4. Si el usuario menciona su nombre, úsalo para "user_name" o "nombre".
+5. Para países o ciudades, normaliza el nombre (ej: "España", "Bolivia").
+6. Para "qualified": usa "SI" si muestra interés claro, "NO" si rechaza, omite si no está claro.
+7. NO inventes datos. Solo extrae lo que se haya mencionado explícitamente en el diálogo.
 
 EJEMPLO de salida válida:
-{"user_name": "Carlos", "user_country": "Bolivia", "curse_name": "MBA"}`;
+{"USER_NAME": "Carlos", "USER_COUNTRY": "Bolivia", "CURSE_NAME": "MBA"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",

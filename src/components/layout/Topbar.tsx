@@ -37,11 +37,11 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
                 </button>
 
                 <div className="flex flex-col">
-                    <h1 className="text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                    <h1 className="text-sm md:text-base font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">
                         {(config?.dashboard_title as string) || title}
                     </h1>
                     {tenantName && (
-                        <span className="text-[10px] uppercase tracking-widest text-blue-600 dark:text-blue-400 font-black leading-none">
+                        <span className="text-[10px] uppercase tracking-widest text-blue-500 dark:text-blue-400 font-bold leading-none mt-0.5">
                             {tenantName}
                         </span>
                     )}

@@ -78,7 +78,7 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
 
         const leadIds = leadList.map(l => l.id);
 
-        // 2. Fetch the most recent message for each of these leads
+        // 2. Fetch the most recent message for each of these leads (Legacy)
         const { data: messages, error: msgError } = await supabase
             .from("chat_messages")
             .select("lead_id, content, created_at")
@@ -87,13 +87,36 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
 
         if (msgError) throw msgError;
 
+        // 2b. Fetch Consolidated Summaries (New Strategy)
+        const { data: summaries } = await supabase
+            .from("chat_summaries")
+            .select("lead_id, summary, last_interaction_at")
+            .in("lead_id", leadIds);
+
         // 3. Map latest messages to their leads
         const latestMsgByLead = new Map<string, { content: string; time: string }>();
-        const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
         
+        // Legacy messages first
+        const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
         msgList.forEach(m => {
             if (m.lead_id && !latestMsgByLead.has(m.lead_id)) {
                 latestMsgByLead.set(m.lead_id, { content: m.content, time: m.created_at });
+            }
+        });
+
+        // Consolidates summaries override legacy
+        (summaries || []).forEach(s => {
+            const summaryStr = (s as any).summary as string;
+            const lines = summaryStr.split('\n').filter(l => l.trim());
+            const lastLine = lines[lines.length - 1];
+            const match = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
+            
+            if (match && s.lead_id) {
+                const [, time, , content] = match;
+                latestMsgByLead.set(s.lead_id, { 
+                    content: content, 
+                    time: (s as any).last_interaction_at || new Date().toISOString() 
+                });
             }
         });
 
@@ -148,16 +171,46 @@ export async function getChatHistory(leadId: string): Promise<{ success: boolean
 
     const supabase = await getAdminSupabaseClient();
     
-    // Fetch Messages
-    const { data: messages, error: msgError } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .eq("lead_id", leadId)
-        .order("created_at", { ascending: false })
-        .limit(100);
+    // 1. Fetch Consolidated History (New low-cost strategy)
+    const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
+    const summary = await ChatSummaryService.getSummary(leadId);
 
-    if (msgError) return { success: false, error: msgError.message };
+    let messages: ChatMessage[] = [];
+
+    if (summary) {
+        const lines = summary.split('\n').filter(l => l.trim());
+        messages = lines.map((line, idx) => {
+            const match = line.match(/^\[(.*?)\] (.*?): (.*)$/);
+            if (match) {
+                const [, time, role, content] = match;
+                return {
+                    id: `sum-${leadId}-${idx}`,
+                    tenant_id: tenant.id,
+                    lead_id: leadId,
+                    direction: role === 'Usuario' ? 'INBOUND' : 'OUTBOUND',
+                    message_type: 'TEXT',
+                    content: content,
+                    sent_by: role === 'Usuario' ? null : 'AI_AGENT',
+                    status: 'READ',
+                    created_at: new Date().toISOString(),
+                    metadata: { time_label: time }
+                } as ChatMessage;
+            }
+            return null;
+        }).filter(m => m !== null) as ChatMessage[];
+    } else {
+        // 2. Legacy Fallback
+        const { data: legacyMsgs, error: msgError } = await supabase
+            .from("chat_messages")
+            .select("*")
+            .eq("tenant_id", tenant.id)
+            .eq("lead_id", leadId)
+            .order("created_at", { ascending: false })
+            .limit(100);
+
+        if (msgError) return { success: false, error: msgError.message };
+        messages = (legacyMsgs as ChatMessage[] || []).reverse();
+    }
 
     // Fetch Calls to show in timeline
     const { data: calls } = await supabase

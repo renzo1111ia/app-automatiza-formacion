@@ -26,6 +26,35 @@ import { parsePhoneNumber } from "libphonenumber-js";
 import ct from "countries-and-timezones";
 
 /**
+ * Resolves country and timezone from phone prefix.
+ */
+export function getLeadLocationData(
+    phone?: string | null,
+    defaultTimezone: string = "Europe/Madrid"
+): { countryCode: string | null; countryName: string | null; timezone: string } {
+    if (phone) {
+        try {
+            const cleanPhone = phone.startsWith("+") ? phone : `+${phone.replace(/\D/g, "")}`;
+            const phoneNumber = parsePhoneNumber(cleanPhone);
+            
+            if (phoneNumber && phoneNumber.country) {
+                const countryInfo = ct.getCountry(phoneNumber.country);
+                if (countryInfo) {
+                    return {
+                        countryCode: phoneNumber.country,
+                        countryName: countryInfo.name,
+                        timezone: countryInfo.timezones[0] || defaultTimezone
+                    };
+                }
+            }
+        } catch (e) {
+            console.warn(`[COMPLIANCE] Failed to parse phone ${phone}:`, e);
+        }
+    }
+    return { countryCode: null, countryName: null, timezone: defaultTimezone };
+}
+
+/**
  * Resolves timezone from phone prefix, country code, or defaults to a given headquarters timezone.
  */
 export function resolveTimezone(
@@ -34,22 +63,9 @@ export function resolveTimezone(
     defaultTimezone: string = "Europe/Madrid"
 ): string {
     // 1. Try to parse phone number to get ISO country code
-    if (phone) {
-        try {
-            const cleanPhone = phone.startsWith("+") ? phone : `+${phone.replace(/\D/g, "")}`;
-            const phoneNumber = parsePhoneNumber(cleanPhone);
-            
-            if (phoneNumber && phoneNumber.country) {
-                const countryInfo = ct.getCountry(phoneNumber.country);
-                if (countryInfo && countryInfo.timezones.length > 0) {
-                    // Return the first/primary timezone of the country
-                    return countryInfo.timezones[0];
-                }
-            }
-        } catch (e) {
-            console.warn(`[COMPLIANCE] Failed to parse phone ${phone} for timezone:`, e);
-        }
-    }
+    const location = getLeadLocationData(phone, defaultTimezone);
+    if (location.countryCode) return location.timezone;
+
 
     // 2. Try explicit country string
     if (country) {

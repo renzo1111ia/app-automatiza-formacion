@@ -163,7 +163,11 @@ ${conversationContext}
                     phoneNumberId: waConfig.phoneNumberId
                 });
 
-                // 11. Log Outbound Message (Supabase)
+                // 11. Log Outbound Message (Consolidated)
+                await ChatSummaryService.appendMessage(tenantId, leadId, "Asistente", aiResponse);
+
+                /*
+                // LEGACY: Individual message logging
                 await (supabase.from("chat_messages" as unknown as string) as any).insert({
                     tenant_id: tenantId,
                     lead_id: leadId,
@@ -178,6 +182,7 @@ ${conversationContext}
                         token_usage: completion.usage
                     }
                 });
+                */
 
                 // 12. Autonomous Learning (Fact Extraction)
                 const trackedVars = (activeVariant.tracked_variables as string[]) || [];

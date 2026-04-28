@@ -11,7 +11,7 @@ import {
     LayoutDashboard, Megaphone, MessageCircle, 
     Clock, History, Settings, X, ChevronDown, PlusCircle,
     Workflow, Bot, ShieldCheck, Terminal,
-    Calendar, MessageSquare, FlaskConical, Mic, Globe, BookOpen
+    Calendar, MessageSquare, FlaskConical, Mic, Globe, BookOpen, DollarSign
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -117,6 +117,11 @@ const NAV_ITEMS: NavItem[] = [
                 label: "Auditoría de IA",
                 href: "/dashboard/logs",
                 icon: <Terminal className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Análisis de Costes",
+                href: "/dashboard/costs",
+                icon: <DollarSign className="h-4 w-4" strokeWidth={1.8} />
             },
             {
                 label: "Historial",

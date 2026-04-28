@@ -18,9 +18,13 @@ async function main() {
   if (tenantsError) console.error('Error tenants:', tenantsError);
   else console.log('Tenants:', JSON.stringify(tenants, null, 2));
 
-  const { data: agents, error: agentsError } = await supabase.from('ai_agents').select('id, name, tenant_id');
-  if (agentsError) console.error('Error agents:', agentsError);
-  else console.log('AI Agents:', JSON.stringify(agents, null, 2));
+  const { data: variants, error: variantsError } = await supabase.from('ai_agent_variants').select('agent_id, name, is_active, tracked_variables').eq('is_active', true);
+  if (variantsError) console.error('Error variants:', variantsError);
+  else console.log('Active Variants:', JSON.stringify(variants, null, 2));
+
+  const { data: leads, error: leadsError } = await supabase.from('lead').select('id, nombre, apellido, metadata').order('fecha_creacion', { ascending: false }).limit(3);
+  if (leadsError) console.error('Error leads:', leadsError);
+  else console.log('Recent Leads Metadata:', JSON.stringify(leads, null, 2));
 }
 
 main();

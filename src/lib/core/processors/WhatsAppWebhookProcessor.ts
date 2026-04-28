@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import { uploadToMinio } from "@/lib/integrations/minio";
 import axios from "axios";
+import { getLeadLocationData } from "@/lib/core/compliance";
 
 /**
  * WHATSAPP WEBHOOK PROCESSOR
@@ -66,6 +67,9 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             const firstName = parts[0];
             const lastName = parts.slice(1).join(' ') || (contactName ? "" : "WhatsApp"); // If it's a real name we don't force 'WhatsApp' as surname
 
+            // Get location data from phone prefix
+            const location = getLeadLocationData(fromNumber);
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
@@ -74,13 +78,24 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                     nombre: firstName,
                     apellido: lastName,
                     origen: "WHATSAPP_INBOUND",
-                    is_ai_enabled: true
+                    is_ai_enabled: true,
+                    pais: location.countryName
                 })
                 .select()
                 .single();
             
             if (createError) throw createError;
             lead = newLead;
+        } else if (!lead.pais) {
+            // Update country for existing lead if missing
+            const location = getLeadLocationData(fromNumber);
+            if (location.countryName) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (supabase.from("lead") as any)
+                    .update({ pais: location.countryName })
+                    .eq("id", lead.id);
+                lead.pais = location.countryName;
+            }
         }
 
         if (!lead) return;
@@ -134,8 +149,12 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             content = `[Mensaje tipo: ${message.type}]`;
         }
 
-        // 5. Log Message in chat_messages
-        // Use READ status as RECEIVED is not allowed by DB constraint
+        // 5. Log Message in consolidated chat_summaries
+        const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
+        await ChatSummaryService.appendMessage(tenantId, lead.id, "Usuario", content);
+
+        /* 
+        // LEGACY: Individual message logging (Disabled to save costs as per user request)
         const { error: logError } = await (supabase.from("chat_messages" as unknown as string) as unknown as { insert: (d: unknown) => Promise<{ error: unknown }> })
             .insert({
                 tenant_id: tenantId,
@@ -152,6 +171,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             });
 
         if (logError) console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
+        */
 
         // 6. Trigger AI Response
         if ((lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled) {

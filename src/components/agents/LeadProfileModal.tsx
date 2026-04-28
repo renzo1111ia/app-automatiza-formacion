@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { InboxLead } from "@/lib/actions/inbox";
 import { updateLeadInfo } from "@/lib/actions/inbox";
 import type { LucideIcon } from "lucide-react";
+import { resolveCountryFromPhone } from "@/lib/utils/location-client";
 
 interface LeadProfileModalProps {
     lead: InboxLead;
@@ -134,7 +135,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                             <InputField 
                                 label="País" 
                                 icon={Globe}
-                                value={editedLead.pais || ""} 
+                                value={editedLead.pais || resolveCountryFromPhone(editedLead.telefono) || ""} 
                                 onChange={(val) => setEditedLead(prev => ({ ...prev, pais: val }))} 
                             />
                         </div>

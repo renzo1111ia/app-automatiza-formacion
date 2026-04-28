@@ -48,28 +48,6 @@ export class KnowledgeBaseService {
 
 export class ChatSummaryService {
     /**
-     * Saves or updates a conversation summary (Long-term memory)
-     */
-    static async updateSummary(tenantId: string, leadId: string, summary: string) {
-        const supabase = await getSupabaseServerClient();
-
-        // Using unknown cast to bypass 'never' type
-        const { error } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { upsert: (d: unknown, options: unknown) => Promise<{ error: unknown }> })
-            .upsert({
-                tenant_id: tenantId,
-                lead_id: leadId,
-                summary,
-                last_interaction_at: new Date().toISOString()
-            }, { onConflict: 'lead_id' });
-
-        if (error) {
-            const msg = (error as unknown as { message: string }).message;
-            console.error('❌ [CHAT_SUMMARY] Error:', msg);
-            throw new Error(msg);
-        }
-    }
-
-    /**
      * Gets the current summary for a lead
      */
     static async getSummary(leadId: string) {
@@ -87,5 +65,28 @@ export class ChatSummaryService {
         }
 
         return (data as unknown as { summary: string } | null)?.summary || null;
+    }
+
+    /**
+     * Appends a message to the consolidated conversation log
+     */
+    static async appendMessage(tenantId: string, leadId: string, role: string, content: string) {
+        const supabase = await getSupabaseServerClient();
+        const currentSummary = await this.getSummary(leadId) || "";
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const newMessage = `[${timestamp}] ${role}: ${content}\n`;
+        const updatedSummary = currentSummary + newMessage;
+
+        const { error } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { upsert: (d: unknown, options: unknown) => Promise<{ error: unknown }> })
+            .upsert({
+                tenant_id: tenantId,
+                lead_id: leadId,
+                summary: updatedSummary,
+                last_interaction_at: new Date().toISOString()
+            }, { onConflict: 'lead_id' });
+
+        if (error) {
+            console.error('❌ [CHAT_SUMMARY_APPEND] Error:', (error as unknown as { message: string }).message);
+        }
     }
 }

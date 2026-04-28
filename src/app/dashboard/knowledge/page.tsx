@@ -12,7 +12,8 @@ import {
     ShieldCheck,
     Cloud,
     Loader2,
-    RefreshCw
+    RefreshCw,
+    X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,10 +26,10 @@ export default function KnowledgeBasePage() {
     const [uploading, setUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Form state
-    const [file, setFile] = useState<File | null>(null);
-    const [name, setName] = useState("");
+    // Form state for multiple files
+    const [files, setFiles] = useState<File[]>([]);
     const [description, setDescription] = useState("");
+    const [uploadProgress, setUploadProgress] = useState<{current: number, total: number}>({current: 0, total: 0});
 
     const loadItems = async () => {
         setLoading(true);
@@ -54,23 +55,42 @@ export default function KnowledgeBasePage() {
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) return;
+        if (files.length === 0) return;
 
         setUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("name", name || file.name);
-        formData.append("description", description);
+        setUploadProgress({ current: 0, total: files.length });
 
-        const res = await uploadKnowledgeDocument(formData);
-        if (res.success) {
+        let successCount = 0;
+        let errors: string[] = [];
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            setUploadProgress({ current: i + 1, total: files.length });
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("name", file.name); // Using filename as default name
+            formData.append("description", description);
+
+            const res = await uploadKnowledgeDocument(formData);
+            if (res.success) {
+                successCount++;
+            } else {
+                errors.push(`${file.name}: ${res.error}`);
+            }
+        }
+
+        if (successCount > 0) {
             await loadItems();
-            setIsUploadModalOpen(false);
-            setFile(null);
-            setName("");
-            setDescription("");
+            if (errors.length === 0) {
+                setIsUploadModalOpen(false);
+                setFiles([]);
+                setDescription("");
+            } else {
+                alert(`Se subieron ${successCount} archivos, pero hubo errores en algunos:\n${errors.join('\n')}`);
+            }
         } else {
-            alert("Error al subir el documento: " + res.error);
+            alert("Error al subir los documentos:\n" + errors.join('\n'));
         }
         setUploading(false);
     };
@@ -84,6 +104,10 @@ export default function KnowledgeBasePage() {
         } else {
             alert("Error al eliminar: " + res.error);
         }
+    };
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
     };
 
     const filteredItems = itmes.filter(item => 
@@ -118,7 +142,10 @@ export default function KnowledgeBasePage() {
                         />
                     </div>
                     <button 
-                        onClick={() => setIsUploadModalOpen(true)}
+                        onClick={() => {
+                            setFiles([]);
+                            setIsUploadModalOpen(true);
+                        }}
                         className="flex items-center gap-2 h-11 px-6 bg-emerald-500 text-white font-black uppercase tracking-widest text-[11px] rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                         <Plus className="h-4 w-4" />
@@ -196,11 +223,11 @@ export default function KnowledgeBasePage() {
                         <motion.div 
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-                            onClick={() => setIsUploadModalOpen(false)}
+                            onClick={() => !uploading && setIsUploadModalOpen(false)}
                         />
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8"
+                            className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto"
                         >
                             <div className="text-center space-y-4">
                                 <div className="h-16 w-16 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
@@ -208,48 +235,69 @@ export default function KnowledgeBasePage() {
                                 </div>
                                 <h3 className="text-3xl font-black uppercase tracking-tight">Sincronizar Conocimiento</h3>
                                 <p className="text-white/40 text-sm font-medium leading-relaxed px-4">
-                                    Los datos se guardarán en MinIO y se indexarán automáticamente en PGVector para tus agentes.
+                                    Selecciona varios PDFs. Se guardarán en MinIO y se indexarán automáticamente.
                                 </p>
                             </div>
 
                             <form onSubmit={handleUpload} className="space-y-6">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Nombre del Documento</label>
-                                    <input 
-                                        type="text"
-                                        required
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:border-emerald-500/40 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all"
-                                        placeholder="Ej: Programa MBA Moda 2024"
-                                    />
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Archivo PDF</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Archivos PDF</label>
                                     <div className={cn(
-                                        "relative h-24 border-2 border-dashed rounded-[24px] transition-all flex flex-col items-center justify-center gap-1 overflow-hidden",
-                                        file ? "border-emerald-500/50 bg-emerald-500/5" : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                                        "relative h-32 border-2 border-dashed rounded-[24px] transition-all flex flex-col items-center justify-center gap-2 overflow-hidden",
+                                        files.length > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-white/10 hover:border-white/20 bg-white/[0.02]"
                                     )}>
                                         <input 
                                             type="file"
+                                            multiple
                                             accept=".pdf"
-                                            title="Subir archivo PDF"
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
-                                            onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                            title="Subir archivos PDF"
+                                            disabled={uploading}
+                                            className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                            onChange={(e) => {
+                                                if (e.target.files) {
+                                                    setFiles(Array.from(e.target.files));
+                                                }
+                                            }}
                                         />
-                                        <Upload className={cn("h-6 w-6 mb-1", file ? "text-emerald-400" : "text-white/10")} />
-                                        <p className="text-[10px] font-bold uppercase tracking-tight">{file ? file.name : "Subir archivo (PDF máx 10MB)"}</p>
+                                        <Upload className={cn("h-8 w-8 mb-1", files.length > 0 ? "text-emerald-400" : "text-white/10")} />
+                                        <p className="text-[10px] font-bold uppercase tracking-tight">
+                                            {files.length > 0 ? `${files.length} archivos seleccionados` : "Click o arrastra varios archivos (PDF máx 10MB)"}
+                                        </p>
                                     </div>
+                                    
+                                    {/* Selected Files List */}
+                                    {files.length > 0 && (
+                                        <div className="max-h-32 overflow-y-auto space-y-2 mt-4 px-2 custom-scrollbar">
+                                            {files.map((f, i) => (
+                                                <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        <FileText className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                                                        <span className="text-xs font-bold truncate opacity-80">{f.name}</span>
+                                                    </div>
+                                                    {!uploading && (
+                                                        <button 
+                                                            type="button"
+                                                            title={`Eliminar ${f.name}`}
+                                                            onClick={() => removeFile(i)}
+                                                            className="text-white/20 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Descripción / Referencia</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Descripción General (Opcional)</label>
                                     <textarea 
                                         value={description}
+                                        disabled={uploading}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full h-24 bg-white/5 border border-white/10 rounded-2xl p-6 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all resize-none"
-                                        placeholder="Describe qué contiene este documento..."
+                                        className="w-full h-20 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all resize-none disabled:opacity-50"
+                                        placeholder="Descripción común para este lote de documentos..."
                                     />
                                 </div>
 
@@ -264,14 +312,17 @@ export default function KnowledgeBasePage() {
                                     </button>
                                     <button 
                                         type="submit"
-                                        disabled={uploading || !file}
-                                        className="flex-1 h-14 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        disabled={uploading || files.length === 0}
+                                        className="flex-1 h-14 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex flex-col items-center justify-center"
                                     >
                                         {uploading ? (
-                                            <>
-                                                <RefreshCw className="h-4 w-4 animate-spin" />
-                                                Indexando...
-                                            </>
+                                            <div className="flex flex-col items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <RefreshCw className="h-4 w-4 animate-spin" />
+                                                    <span>Subiendo...</span>
+                                                </div>
+                                                <span className="text-[8px] mt-1 opacity-60">{uploadProgress.current} de {uploadProgress.total}</span>
+                                            </div>
                                         ) : (
                                             "Completar Carga"
                                         )}
