@@ -45,9 +45,9 @@ export async function testAgentVariables(params: {
         ];
 
         const completion = await openai.chat.completions.create({
-            model: variant.model || "gpt-4o",
+            model: variant.model_name || "gpt-4o",
             messages,
-            temperature: variant.temperature || 0.7
+            temperature: ((variant as unknown as Record<string, unknown>).temperature as number | undefined) || 0.7
         });
 
         const aiResponse = completion.choices[0]?.message?.content || "";
@@ -75,7 +75,8 @@ export async function testAgentVariables(params: {
             extracted: newExtractedData
         };
 
-    } catch (err: any) {
+    } catch (error: unknown) {
+        const err = error as Error;
         console.error("[TEST ACTION] Error:", err);
         return { success: false, error: err.message };
     }
