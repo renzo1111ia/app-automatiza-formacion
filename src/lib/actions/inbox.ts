@@ -39,6 +39,7 @@ export interface InboxLead {
     campana?: string | null;
     segmentacion?: 'PUESTO 1' | 'REVISADO' | 'CUALIFICADO' | 'SIN INTERÉS' | null;
     created_at?: string | null;
+    metadata?: Record<string, unknown> | null;
 }
 
 export async function updateLeadSegment(leadId: string, segment: InboxLead['segmentacion']): Promise<{ success: boolean; error?: string }> {
@@ -56,8 +57,8 @@ export async function updateLeadSegment(leadId: string, segment: InboxLead['segm
  * Gets the list of ALL leads for the current tenant, attaching their most recent message if it exists.
  * Upgraded to show leads even if they don't have conversation history yet.
  */
-export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxLead[]; error?: string }> {
-    const tenant = await getActiveTenantConfig();
+export async function getInboxLeads(tenantIdOverride?: string): Promise<{ success: boolean; data?: InboxLead[]; error?: string }> {
+    const tenant = tenantIdOverride ? { id: tenantIdOverride } : await getActiveTenantConfig();
     if (!tenant) return { success: false, error: "No se encontró configuración de tenant activa." };
 
     try {
@@ -122,6 +123,7 @@ export async function getInboxLeads(): Promise<{ success: boolean; data?: InboxL
                 origen: l.origen || 'Manual / CRM',
                 campana: l.campana || 'General',
                 segmentacion: (l as LeadRow & { segmentacion?: InboxLead['segmentacion'] }).segmentacion || null,
+                metadata: (l as unknown as Lead).metadata || {},
                 unread_count: 0
             };
         });
@@ -258,8 +260,8 @@ export async function sendManualMessage(
                 );
             }
         } catch (waError) {
-            const err = waError as { message: string, response?: { data: any } };
-            const errorMsg = err.response?.data?.error?.message || err.message;
+            const err = waError as { message: string, response?: { data: Record<string, unknown> } };
+            const errorMsg = err.response?.data?.error ? (err.response.data.error as { message: string }).message : err.message;
             console.error("[INBOX] WhatsApp Send Error:", errorMsg);
             
             // Log to system_logs for the user to see
@@ -399,6 +401,20 @@ export async function deleteChatHistory(leadId: string): Promise<{ success: bool
 }
 
 /**
+ * Clears the agent memory (facts/captured variables) for a specific lead.
+ */
+export async function deleteLeadFacts(leadId: string): Promise<{ success: boolean; error?: string }> {
+    const supabase = await getAdminSupabaseClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.from("lead" as any) as any)
+        .update({ metadata: {} } as never)
+        .eq("id", leadId);
+    
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+}
+
+/**
  * Updates a lead's basic info.
  */
 export async function updateLeadInfo(leadId: string, updates: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
@@ -411,4 +427,45 @@ export async function updateLeadInfo(leadId: string, updates: Record<string, unk
     
     if (error) return { success: false, error: error.message };
     return { success: true };
+}
+
+/**
+ * Gets the tracked_variables configured in the active variant of a given agent.
+ * If agentId is null, returns variables from the first active variant of the tenant.
+ */
+export async function getAgentTrackedVariables(agentId: string | null): Promise<{ success: boolean; data?: string[]; error?: string }> {
+    const supabase = await getAdminSupabaseClient();
+    const tenant = await getActiveTenantConfig();
+    if (!tenant) return { success: false, error: "No tenant" };
+
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let query = (supabase.from("ai_agent_variants" as any) as any)
+            .select("tracked_variables")
+            .eq("is_active", true)
+            .neq("prompt_text", "")
+            .not("api_key", "is", null)
+            .order("updated_at", { ascending: false });
+
+        if (agentId) {
+            query = query.eq("agent_id", agentId);
+        } else {
+            // Fallback: find any agent for this tenant
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: agents } = await (supabase.from("ai_agents" as any) as any)
+                .select("id")
+                .eq("tenant_id", tenant.id);
+            const ids = (agents || []).map((a: { id: string }) => a.id);
+            if (ids.length === 0) return { success: true, data: [] };
+            query = query.in("agent_id", ids);
+        }
+
+        const { data, error } = await query.limit(1).maybeSingle();
+        if (error) return { success: false, error: error.message };
+
+        const vars = (data?.tracked_variables as string[]) || [];
+        return { success: true, data: vars };
+    } catch (e: unknown) {
+        return { success: false, error: (e as Error).message };
+    }
 }

@@ -48,4 +48,10 @@ export interface ICRMProvider {
      * Fetches a lead record by its CRM ID.
      */
     getLead(leadId: string): Promise<CRMLead | null>;
+
+    /**
+     * CREATE CALENDAR EVENT
+     * Creates a meeting or event in the CRM's calendar.
+     */
+    createEvent(leadId: string, eventData: { subject: string; startTime: string; durationMinutes: number; description?: string }): Promise<any>;
 }

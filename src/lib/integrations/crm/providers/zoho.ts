@@ -137,4 +137,28 @@ export class ZohoCRMProvider implements ICRMProvider {
         const data = await this.request(`/Leads/${leadId}`);
         return data.data?.[0] ? this.mapToLead(data.data[0]) : null;
     }
+
+    /**
+     * CREATE CALENDAR EVENT (Zoho Events)
+     */
+    async createEvent(leadId: string, eventData: { subject: string; startTime: string; durationMinutes: number; description?: string }) {
+        const endTime = new Date(new Date(eventData.startTime).getTime() + eventData.durationMinutes * 60000).toISOString();
+        
+        return this.request(`/Events`, {
+            method: "POST",
+            body: JSON.stringify({
+                data: [{
+                    Event_Title: eventData.subject,
+                    Start_DateTime: eventData.startTime,
+                    End_DateTime: endTime,
+                    Description: eventData.description || "",
+                    What_Id: {
+                        id: leadId,
+                        name: "Leads"
+                    },
+                    $se_module: "Leads"
+                }]
+            })
+        });
+    }
 }

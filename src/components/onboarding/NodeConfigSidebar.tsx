@@ -6,7 +6,7 @@ import {
     Phone, MessageSquare, BrainCircuit,
     Globe, GitBranchPlus, Clock, Bot,
     Webhook, Copy, Check, Reply, Hourglass, Zap,
-    Timer, Sun, Moon, Globe2
+    Timer, Sun, Moon, Globe2, Plus, Database, MessageCircle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ import { getAIAgents } from "@/lib/actions/agents";
 import { WhatsAppTemplate } from "@/lib/integrations/whatsapp";
 import { AIAgent } from "@/types/database";
 import { VoiceAgentSelector } from "../orchestrator/VoiceAgentSelector";
+import ct from "countries-and-timezones";
 
 const DAYS_MAP = [
     { value: 0, label: "Dom" },
@@ -27,17 +28,7 @@ const DAYS_MAP = [
     { value: 6, label: "Sáb" },
 ];
 
-const DEFAULT_PREFIX_MAP: Record<string, string> = {
-    "+34": "Europe/Madrid",
-    "+56": "America/Santiago",
-    "+52": "America/Mexico_City",
-    "+57": "America/Bogota",
-    "+51": "America/Lima",
-    "+54": "America/Argentina/Buenos_Aires",
-    "+598": "America/Montevideo",
-    "+1":  "America/New_York",
-    "+44": "Europe/London",
-};
+
 
 /**
  * NODE CONFIGURATION SIDEBAR
@@ -139,6 +130,113 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
 
             {/* Form Fields */}
             <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                {/* 0. INBOUND WHATSAPP TRIGGER CONFIG */}
+                {type === 'inboundWhatsApp' && (
+                    <div className="space-y-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-2 text-emerald-400">
+                            <MessageCircle className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest text-emerald-400/80">Trigger: WhatsApp Entrante</span>
+                        </div>
+                        <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                            <p className="text-[10px] leading-relaxed text-emerald-300/80">
+                                Este nodo inicia el flujo automáticamente cuando alguien te escribe a tu número de WhatsApp y <strong>aún no está en el CRM</strong>.
+                            </p>
+                            <p className="text-[10px] leading-relaxed text-white/50">
+                                Es ideal para prospectos fríos que llegan desde campañas o botones en tu web. El sistema extraerá el teléfono y creará el lead temporalmente.
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {/* 0. LEAD TRIGGER CONFIG */}
+                {type === 'leadTrigger' && (
+                    <div className="space-y-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-2 text-orange-400">
+                            <Zap className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest text-orange-400/80">Disparador de Entrada</span>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/40 uppercase">Origen del Lead</label>
+                                <select
+                                    title="Origen del Lead"
+                                    value={(config.source as string) || "Cualquier Origen"}
+                                    onChange={(e) => setConfig({ ...config, source: e.target.value })}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all font-bold text-white/80 appearance-none"
+                                >
+                                    <option value="Cualquier Origen" className="bg-[#0a0a0a]">Cualquier Origen (Global)</option>
+                                    <option value="Meta Ads" className="bg-[#0a0a0a]">Meta Ads (Facebook/Instagram)</option>
+                                    <option value="API Manual" className="bg-[#0a0a0a]">API Manual / CRM</option>
+                                    <option value="Zapier" className="bg-[#0a0a0a]">Zapier / Make</option>
+                                </select>
+                            </div>
+
+                            {/* Configuración activa de API CRM */}
+                            {config.source === "API Manual" && (
+                                <div className="space-y-4 p-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 animate-in fade-in zoom-in-95 duration-300">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="h-4 w-4 text-cyan-400" />
+                                        <span className="text-[10px] font-black uppercase text-cyan-400 tracking-widest">Conexión a CRM (Pull API)</span>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-white/40 uppercase">Endpoint del CRM (URL para obtener leads)</label>
+                                        <div className="flex bg-black/60 border border-white/10 rounded-xl overflow-hidden focus-within:ring-1 focus-within:ring-cyan-500/30 transition-all">
+                                            <select
+                                                title="HTTP Method"
+                                                value={(config.crmMethod as string) || "GET"}
+                                                onChange={(e) => setConfig({ ...config, crmMethod: e.target.value })}
+                                                className="bg-transparent border-r border-white/10 px-3 py-3 text-[10px] font-black uppercase text-cyan-400 outline-none cursor-pointer hover:bg-white/5 transition-colors appearance-none text-center"
+                                            >
+                                                <option value="GET" className="bg-[#0a0a0a]">GET</option>
+                                                <option value="POST" className="bg-[#0a0a0a]">POST</option>
+                                            </select>
+                                            <input
+                                                value={(config.crmEndpoint as string) || ""}
+                                                onChange={(e) => setConfig({ ...config, crmEndpoint: e.target.value })}
+                                                placeholder="https://api.tu-crm.com/v1/leads/new"
+                                                className="flex-1 bg-transparent px-4 py-3 text-xs font-mono text-white/80 outline-none placeholder:opacity-20"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold text-white/40 uppercase">Autenticación / API Key</label>
+                                        <input
+                                            type="password"
+                                            value={(config.crmApiKey as string) || ""}
+                                            onChange={(e) => setConfig({ ...config, crmApiKey: e.target.value })}
+                                            placeholder="Bearer token o API Key del CRM"
+                                            className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-all text-white/80 placeholder:opacity-20"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-start gap-2 pt-2 border-t border-cyan-500/10">
+                                        <Info className="h-3.5 w-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                                        <p className="text-[9px] leading-relaxed text-white/50">
+                                            El orquestador consultará esta API periódicamente para extraer los nuevos leads. Asegúrate de que el endpoint devuelva los datos del lead en formato JSON.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/40 uppercase">Filtro por Campaña (Opcional)</label>
+                                <input
+                                    value={(config.campaignFilter as string) || ""}
+                                    onChange={(e) => setConfig({ ...config, campaignFilter: e.target.value })}
+                                    placeholder="Ej: Promo Verano 2026"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all text-white/80"
+                                />
+                                <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/10 text-[9px] text-white/40 leading-relaxed font-medium">
+                                    🚀 Si lo dejas en blanco, este flujo se activará para **TODOS** los leads que entren. Si pones un nombre, solo procesará los leads de esa campaña específica.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 1. RETELL CALL CONFIG */}
                 {(type === 'action' && action === 'CALL') && (
                     <div className="space-y-6 text-left">
@@ -448,13 +546,16 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                     </div>
                 )}
 
-                {/* 3.5 LLM TEXT CONFIG (AGENTE DE TEXTO) */}
+                {/* 3.5 LLM TEXT CONFIG (RAZONAMIENTO) */}
                 {type === 'llm' && (
                     <div className="space-y-6 text-left">
-                        <div className="flex items-center gap-2 text-purple-400">
+                        <div className="flex items-center gap-2 text-fuchsia-400">
                             <BrainCircuit className="h-4 w-4" />
-                            <span className="text-xs font-black uppercase tracking-widest">Agente de Texto IA</span>
+                            <span className="text-xs font-black uppercase tracking-widest">Nodo de Razonamiento (LLM)</span>
                         </div>
+                        <p className="text-[10px] text-white/50 italic leading-relaxed">
+                            A diferencia del Agente de Texto, este nodo no envía mensajes al lead. Se usa para analizar transcripciones, calcular el &quot;Scoring&quot; de interés o extraer variables JSON internamente.
+                        </p>
 
                         {/* Agent selector */}
                         <div className="space-y-2">
@@ -506,11 +607,16 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                                         onChange={(e) => setConfig({ ...config, model: e.target.value })}
                                         className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm appearance-none cursor-pointer focus:ring-2 focus:ring-purple-500/20 transition-all font-bold"
                                     >
-                                        <optgroup label="OpenAI" className="bg-black">
-                                            <option value="gpt-4o" className="bg-black text-white">GPT-4o (Avanzado)</option>
+                                        <optgroup label="OpenAI" className="bg-black text-white">
+                                            <option value="gpt-4.1" className="bg-black text-white">GPT-4.1 (Avanzado)</option>
+                                            <option value="gpt-4.1-mini" className="bg-black text-white">GPT-4.1 Mini (Eficiente)</option>
+                                            <option value="gpt-4.5-preview" className="bg-black text-white">GPT-4.5 Preview (Experimental)</option>
+                                            <option value="o3-mini" className="bg-black text-white">o3-mini (Razonamiento)</option>
+                                            <option value="o1" className="bg-black text-white">o1 (Profundo)</option>
+                                            <option value="o1-mini" className="bg-black text-white">o1 Mini (Razonamiento Rápido)</option>
+                                            <option value="gpt-4o" className="bg-black text-white">GPT-4o (Inteligente)</option>
                                             <option value="gpt-4o-mini" className="bg-black text-white">GPT-4o Mini (Rápido)</option>
                                             <option value="gpt-4-turbo" className="bg-black text-white">GPT-4 Turbo</option>
-                                            <option value="o1-mini" className="bg-black text-white">o1 Mini (Razonamiento)</option>
                                         </optgroup>
                                         <optgroup label="Anthropic" className="bg-black">
                                             <option value="claude-3-5-sonnet-20241022" className="bg-black text-white">Claude 3.5 Sonnet</option>
@@ -866,23 +972,55 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                             </div>
                         </div>
 
-                        {/* Timezone map info */}
+                        {/* Searchable Headquarters Timezone Selection */}
                         <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-white/30">
-                                <Globe2 className="h-3.5 w-3.5 text-cyan-500/60" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Mapa Prefijo → Huso Horario</span>
+                            <label className="text-[10px] font-bold text-white/40 uppercase flex items-center gap-2">
+                                <Globe2 className="h-3.5 w-3.5 text-cyan-500" />
+                                Escribe tu País / Zona de Cabecera
+                            </label>
+                            <div className="relative">
+                                <input
+                                    list="timezone-options"
+                                    placeholder="Escribe un país (ej: Colombia, España...)"
+                                    value={(config.default_timezone_label as string | undefined) ?? (config.default_timezone as string | undefined) ?? ""}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        // We store the label separately to allow clearing without immediate fallback
+                                        setConfig({ 
+                                            ...config, 
+                                            default_timezone_label: val,
+                                            default_timezone: val
+                                        });
+                                    }}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-bold text-white/70 focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                                />
+                                <datalist id="timezone-options">
+                                    {/* Principales / Sugeridos */}
+                                    <option value="Europe/Madrid">España (Madrid)</option>
+                                    <option value="America/Bogota">Colombia (Bogotá)</option>
+                                    <option value="America/Mexico_City">México (CDMX)</option>
+                                    <option value="America/Lima">Perú (Lima)</option>
+                                    <option value="America/Santiago">Chile (Santiago)</option>
+                                    <option value="America/Argentina/Buenos_Aires">Argentina (B. Aires)</option>
+                                    <option value="America/Panama">Panamá</option>
+                                    <option value="America/Guayaquil">Ecuador</option>
+                                    <option value="America/New_York">Miami / Nueva York (EST)</option>
+                                    <option value="America/Chicago">Chicago / Central (CST)</option>
+                                    <option value="America/Denver">Denver / Mountain (MST)</option>
+                                    <option value="America/Los_Angeles">Los Ángeles / Pacific (PST)</option>
+                                    
+                                    {/* Carga dinámica de todos los husos del mundo para que aparezca Miami, etc */}
+                                    {Object.keys(ct.getAllTimezones()).map(tz => (
+                                        <option key={tz} value={tz}>{tz}</option>
+                                    ))}
+                                </datalist>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-20">
+                                    <Plus className="h-4 w-4" />
+                                </div>
                             </div>
-                            <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-2 text-[10px] font-mono">
-                                {Object.entries((config.phone_prefix_map as Record<string,string>) || DEFAULT_PREFIX_MAP).map(([prefix, tz]) => (
-                                    <div key={prefix} className="flex justify-between items-center">
-                                        <span className="text-cyan-400/70 font-bold">{prefix}</span>
-                                        <span className="text-white/30">{tz}</span>
-                                    </div>
-                                ))}
+                            <div className="p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-[9px] text-white/40 leading-relaxed font-medium">
+                                🚀 **Buscador Inteligente**: Puedes escribir el nombre del país o la zona horaria directamente. El sistema se encargará de traducir &quot;Ecuador&quot; a su zona horaria correspondiente.
                             </div>
-                            <p className="text-[9px] text-white/20 italic leading-relaxed">
-                                El motor evalúa la hora actual EN EL HUSO HORARIO DEL LEAD (detectado por el prefijo de su número). Si cae dentro del rango → salida &quot;Dentro horario&quot;, si no → &quot;Fuera de horario&quot;.
-                            </p>
                         </div>
                     </div>
                 )}
@@ -922,14 +1060,14 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                         />
 
                         <div className="space-y-2">
-                            <label htmlFor="vc-from" className="text-[10px] font-bold text-white/40 uppercase">Número de Salida (From)</label>
-                            <input
-                                id="vc-from"
-                                value={(config.fromNumber as string) || ''}
-                                onChange={(e) => setConfig({ ...config, fromNumber: e.target.value })}
-                                className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                                placeholder="+34912345678"
-                            />
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Número de Salida</label>
+                            <div className="flex items-center gap-2 p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-white/60">
+                                <Phone className="h-4 w-4 text-blue-400" />
+                                <span>Autoresuelto por la API del Proveedor</span>
+                            </div>
+                            <p className="text-[9px] text-white/30 italic px-1">
+                                El sistema detectará y utilizará automáticamente el número de teléfono que hayas vinculado a este agente en Retell / Ultravox.
+                            </p>
                         </div>
 
                         <div className="space-y-2">
@@ -939,9 +1077,119 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                                 value={(config.dynamicVariables as string) || ''}
                                 onChange={(e) => setConfig({ ...config, dynamicVariables: e.target.value })}
                                 rows={3}
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 text-emerald-300"
                                 placeholder='{"nombre_lead": "{{lead.nombre}}"}'
                             />
+                            
+                            {/* Diccionario de Variables */}
+                            <div className="mt-3 p-3 rounded-xl bg-black/40 border border-white/5 space-y-2">
+                                <p className="text-[9px] font-black uppercase text-white/40 flex items-center gap-1.5">
+                                    <Database className="h-3 w-3" /> Diccionario del Sistema
+                                </p>
+                                <p className="text-[9px] text-white/30 leading-relaxed mb-2">
+                                    Usa estos códigos para inyectar los datos del Lead que entraron por el Disparador (ZOHO/Webhook) hacia tu agente de voz:
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-cyan-300/70">
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.nombre}}">{'{{lead.nombre}}'}</div>
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.apellido}}">{'{{lead.apellido}}'}</div>
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.telefono}}">{'{{lead.telefono}}'}</div>
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.email}}">{'{{lead.email}}'}</div>
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.pais}}">{'{{lead.pais}}'}</div>
+                                    <div className="bg-white/5 p-1.5 rounded border border-white/5 truncate" title="{{lead.curso}}">{'{{lead.curso}}'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── CONDITION (IF/ELSE) CONFIG ──────────────────────── */}
+                {type === 'condition' && (
+                    <div className="space-y-6 text-left">
+                        <div className="flex items-center gap-2 text-indigo-400">
+                            <GitBranchPlus className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest">Condición Lógica (IF/ELSE)</span>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-white/40 uppercase">Variable a evaluar</label>
+                                <input
+                                    value={(config.variable as string) || "{{call.answered}}"}
+                                    onChange={(e) => setConfig({ ...config, variable: e.target.value })}
+                                    placeholder="{{call.answered}}"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-white/80"
+                                />
+                                <p className="text-[9px] text-white/30 px-1 italic">
+                                    Ej: <code>{`{{call.answered}}`}</code>, <code>{`{{llm.is_qualified}}`}</code>
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-white/40 uppercase">Operador</label>
+                                    <select
+                                        title="Operador Lógico"
+                                        value={(config.operator as string) || "=="}
+                                        onChange={(e) => setConfig({ ...config, operator: e.target.value })}
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-bold text-white/80 appearance-none text-center cursor-pointer"
+                                    >
+                                        <option value="==" className="bg-[#0a0a0a]">Es igual a (==)</option>
+                                        <option value="!=" className="bg-[#0a0a0a]">Distinto de (!=)</option>
+                                        <option value="contains" className="bg-[#0a0a0a]">Contiene</option>
+                                        <option value=">" className="bg-[#0a0a0a]">Mayor que ({'>'})</option>
+                                        <option value="<" className="bg-[#0a0a0a]">Menor que ({'<'})</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-white/40 uppercase">Valor Esperado</label>
+                                    <input
+                                        value={(config.value as string) || "true"}
+                                        onChange={(e) => setConfig({ ...config, value: e.target.value })}
+                                        placeholder="true, false, yes..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all font-mono text-white/80"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-[9px] text-white/40 leading-relaxed font-medium">
+                            🚀 Si la condición se cumple, el flujo continuará por la conexión &quot;Sí (True)&quot;. En caso contrario, seguirá por la rama &quot;No (False)&quot;.
+                        </div>
+
+                        {/* INSPECTOR DE PAYLOAD (n8n style) */}
+                        <div className="pt-4 border-t border-white/5 space-y-3">
+                            <label className="text-[10px] font-bold text-white/40 uppercase flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Database className="h-3 w-3 text-emerald-400" />
+                                    <span>Inspeccionar Datos de Entrada</span>
+                                </div>
+                                <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[8px] tracking-widest font-black">SIMULADO</span>
+                            </label>
+                            <div className="p-3 bg-black/60 rounded-xl border border-white/10 overflow-x-auto custom-scrollbar">
+                                <pre className="text-[9px] font-mono text-emerald-400/80 leading-relaxed">
+{JSON.stringify({
+  lead: {
+    nombre: "Juan Perez",
+    email: "juan@ejemplo.com",
+    telefono: "+34600000000",
+    score: 85
+  },
+  call: {
+    answered: true,
+    duration_seconds: 124,
+    status: "completed"
+  },
+  llm: {
+    is_qualified: true,
+    objecion_principal: "precio",
+    interes_curso: "MBA"
+  }
+}, null, 2)}
+                                </pre>
+                            </div>
+                            <p className="text-[9px] text-white/30 italic px-1">
+                                * Este JSON simula la estructura exacta que llega al nodo. Copia la ruta (ej. <code className="text-emerald-400 bg-emerald-500/10 px-1 rounded">{`{{llm.is_qualified}}`}</code>) para armar tu condición.
+                            </p>
                         </div>
                     </div>
                 )}

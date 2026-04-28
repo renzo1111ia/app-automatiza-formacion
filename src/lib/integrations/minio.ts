@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { 
+    S3Client, PutObjectCommand, GetObjectCommand, 
+    DeleteObjectCommand, ListObjectsV2Command,
+    HeadBucketCommand, CreateBucketCommand
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -23,10 +27,31 @@ const minioClient = new S3Client({
 });
 
 /**
+ * Ensures the target bucket exists before performing operations.
+ * Auto-creates it if it throws a 404/NotFound error.
+ */
+async function ensureBucketExists(targetBucket: string = bucketName) {
+    try {
+        await minioClient.send(new HeadBucketCommand({ Bucket: targetBucket }));
+    } catch (error: any) {
+        if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+            console.log(`[MINIO] Bucket '${targetBucket}' no encontrado. Creándolo automáticamente...`);
+            await minioClient.send(new CreateBucketCommand({ Bucket: targetBucket }));
+            console.log(`[MINIO] ✅ Bucket '${targetBucket}' creado exitosamente.`);
+        } else {
+            console.error(`[MINIO] Error verificando el bucket '${targetBucket}':`, error);
+            throw error;
+        }
+    }
+}
+
+/**
  * Uploads a document to MinIO
  */
 export async function uploadToMinio(key: string, body: Buffer | Uint8Array | Blob | string, contentType?: string) {
     try {
+        await ensureBucketExists(bucketName);
+
         const command = new PutObjectCommand({
             Bucket: bucketName,
             Key: key,

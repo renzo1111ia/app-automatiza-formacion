@@ -1,68 +1,65 @@
-import IORedis from "ioredis";
+import { createClient } from "@supabase/supabase-js";
 
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-const MAX_LINES = 10;
+/**
+ * CHAT MEMORY SERVICE (DB-backed, resilient)
+ * Replaces the brittle Redis implementation with a direct Supabase query.
+ * Reads the last N messages from chat_messages for context.
+ */
 
-// Reusing connection pattern from lead-sequence-queue.ts
-function createRedisConnection(): IORedis {
-    return new IORedis(REDIS_URL, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-        retryStrategy(times) {
-            return Math.min(times * 50, 2000);
-        }
-    });
+function getSupabase() {
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-const redis = createRedisConnection();
+const MAX_LINES = 10;
 
 export class ChatMemoryService {
     /**
-     * Adds a new message to the sliding window (Redis List)
-     * Keeps only the last 10 lines.
+     * Retrieves the last MAX_LINES messages for context window.
+     * Reads directly from chat_messages — no Redis dependency.
      */
-    static async addMessage(leadId: string, role: 'user' | 'assistant', content: string) {
-        const key = `chat_memory:${leadId}`;
-        const entry = JSON.stringify({ role, content, timestamp: new Date().toISOString() });
-
+    static async getRecentContext(leadId: string): Promise<Array<{ role: string; content: string }>> {
         try {
-            // Push to the end
-            await redis.rpush(key, entry);
-            // Trim to keep only the last MAX_LINES
-            await redis.ltrim(key, -MAX_LINES, -1);
-            // Expire after 24 hours of inactivity
-            await redis.expire(key, 86400); 
-        } catch (error) {
-            console.error(`❌ [REDIS_MEMORY] Error adding message for ${leadId}:`, error);
-        }
-    }
+            const supabase = getSupabase();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error } = await (supabase.from("chat_messages" as any) as any)
+                .select("direction, content")
+                .eq("lead_id", leadId)
+                .in("message_type", ["TEXT", "TEMPLATE"])
+                .order("created_at", { ascending: false })
+                .limit(MAX_LINES);
 
-    /**
-     * Retrieves the last 10 lines of conversation
-     */
-    static async getRecentContext(leadId: string): Promise<Array<{ role: string, content: string }>> {
-        const key = `chat_memory:${leadId}`;
-        try {
-            const lines = await redis.lrange(key, 0, -1);
-            return lines.map(line => {
-                const parsed = JSON.parse(line);
-                return { role: parsed.role, content: parsed.content };
-            });
-        } catch (error) {
-            console.error(`❌ [REDIS_MEMORY] Error fetching context for ${leadId}:`, error);
+            if (error || !data) return [];
+
+            // Reverse so it's chronological (oldest first)
+            return (data as Array<{ direction: string; content: string }>)
+                .reverse()
+                .map(m => ({
+                    role: m.direction === "INBOUND" ? "user" : "assistant",
+                    content: m.content,
+                }));
+        } catch (err) {
+            console.error("[CHAT_MEMORY] Failed to fetch context:", err);
             return [];
         }
     }
 
     /**
-     * Clears the memory for a lead
+     * No-op — memory is stored in chat_messages automatically by the processor.
      */
-    static async clearMemory(leadId: string) {
-        const key = `chat_memory:${leadId}`;
-        try {
-            await redis.del(key);
-        } catch (error) {
-            console.error(`❌ [REDIS_MEMORY] Error clearing memory for ${leadId}:`, error);
-        }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static async addMessage(_leadId: string, _role: "user" | "assistant", _content: string) {
+        // Messages are persisted in chat_messages by WhatsAppAIProcessor itself.
+        // This method is kept for interface compatibility.
+    }
+
+    /**
+     * No-op — clearing memory in DB-backed mode would mean deleting messages,
+     * which is handled separately by the inbox delete flow.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static async clearMemory(_leadId: string) {
+        // No-op
     }
 }

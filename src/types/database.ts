@@ -282,6 +282,20 @@ export interface AIAgentVariant {
     updated_at: string;
 }
 
+export interface WebWidget {
+    id: string;
+    tenant_id: string;
+    name: string;
+    agent_id: string | null;
+    welcome_message: string | null;
+    required_variables: string[];
+    bubble_color: string | null;
+    bubble_icon: string | null;
+    status: 'ACTIVE' | 'INACTIVE' | string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface FeatureFlag {
     id: string;
     tenant_id?: string | null;
@@ -469,6 +483,7 @@ export type Database = {
             appointments: { Row: { id: string; tenant_id: string; advisor_id: string; lead_id: string | null; scheduled_at: string; duration_minutes: number; status: string; notes: string | null; agent_used: string | null; ab_variant: string | null; created_at: string; updated_at: string; watchdog_processed: boolean }; Insert: { tenant_id: string; advisor_id: string; lead_id?: string | null; scheduled_at: string; duration_minutes?: number; status?: string; notes?: string | null; agent_used?: string | null; ab_variant?: string | null; watchdog_processed?: boolean }; Update: Partial<{ status: string; notes: string | null; updated_at: string; watchdog_processed: boolean }>; };
             orchestration_logs: { Row: { id: string; tenant_id: string; lead_id: string | null; workflow_id: string | null; step_number: number; action_type: string; agent_used: string | null; ab_variant: string | null; result: string; error_message: string | null; metadata: Record<string, unknown>; executed_at: string }; Insert: { tenant_id: string; lead_id?: string | null; workflow_id?: string | null; step_number: number; action_type: string; agent_used?: string | null; ab_variant?: string | null; result: string; error_message?: string | null; metadata?: Record<string, unknown> }; Update: Partial<{ result: string }>; };
             chat_messages: { Row: { id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }; Insert: Omit<{ id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }, 'id' | 'created_at'>; Update: Partial<{ status: string; metadata: Record<string, unknown> }>; };
+            web_widgets: { Row: WebWidget; Insert: Omit<WebWidget, "id" | "created_at" | "updated_at">; Update: Partial<WebWidget>; };
             tenants: { Row: Tenant; Insert: Omit<Tenant, "id" | "created_at" | "updated_at">; Update: Partial<Tenant>; };
         };
 

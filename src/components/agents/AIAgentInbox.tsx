@@ -11,11 +11,13 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { 
     getInboxLeads, getChatHistory, sendManualMessage, 
     toggleLeadAI, updateLeadSegment, assignAgentToLead,
     deleteLead, deleteChatHistory, updateLeadInfo,
+    deleteLeadFacts, getAgentTrackedVariables,
     type InboxLead, type ChatMessage 
 } from "@/lib/actions/inbox";
 import { getAIAgents } from "@/lib/actions/agents";
@@ -26,12 +28,15 @@ import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
 import { useTenantStore } from "@/store/tenant";
 import { CreateLeadDialog } from "@/components/historial/CreateLeadDialog";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { LeadProfileModal } from "./LeadProfileModal";
 import type { LucideIcon } from "lucide-react";
 
 
 export default function AIAgentInbox() {
     // --- Tenant Context ---
     const tenantName = useTenantStore((s) => s.tenantName) || "ESDEN";
+    const tenantId = useTenantStore((s) => s.tenantId);
+    const router = useRouter();
 
     // --- State ---
 
@@ -52,6 +57,7 @@ export default function AIAgentInbox() {
     const [isCreateLeadModalOpen, setIsCreateLeadModalOpen] = useState(false);
     const [showDetails, setShowDetails] = useState(true);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     
     // Filters
     const [segmentFilter, setSegmentFilter] = useState<string | null>(null);
@@ -62,18 +68,30 @@ export default function AIAgentInbox() {
     const [loadingTemplates, setLoadingTemplates] = useState(false);
     const [availableAgents, setAvailableAgents] = useState<AIAgent[]>([]);
     const [isAssigningAgent, setIsAssigningAgent] = useState(false);
+    const [trackedVariables, setTrackedVariables] = useState<string[]>([]);
+    const [deleteModal, setDeleteModal] = useState<{
+        isOpen: boolean;
+        type: 'LEAD' | 'CHAT';
+        includeFacts: boolean;
+    }>({
+        isOpen: false,
+        type: 'LEAD',
+        includeFacts: true
+    });
     
     // Refs
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     // --- Data Loading ---
-    const loadLeads = useCallback(async () => {
-        setLoading(true);
-        const res = await getInboxLeads();
+    const loadLeads = useCallback(async (silent = false) => {
+        if (!silent) setLoading(true);
+        // Pass tenantId from state to ensure we bypass any cookie lag
+        const currentTenantId = useTenantStore.getState().tenantId;
+        const res = await getInboxLeads(currentTenantId || undefined);
         if (res.success && typeof res.data !== 'undefined') {
             setLeads(res.data);
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
     }, []);
 
     const loadChat = useCallback(async (leadId: string) => {
@@ -114,15 +132,29 @@ export default function AIAgentInbox() {
         }
     }, []);
     
-    // Initial Load
+    // Initial Load & Polling Fallback
     useEffect(() => {
-        const timer = setTimeout(() => {
-            loadLeads();
-            loadTemplates(); // Load templates early for mapping in history
-            loadAvailableAgents();
-        }, 0);
-        return () => clearTimeout(timer);
-    }, [loadLeads, loadTemplates, loadAvailableAgents]);
+        if (!tenantId) return;
+        
+        // Initial Fetch
+        const runInitialFetch = async () => {
+            await Promise.all([
+                loadLeads(),
+                loadTemplates(),
+                loadAvailableAgents()
+            ]);
+        };
+        runInitialFetch();
+
+        // 🛡️ Polling Fallback: Check for new messages/leads every 15 seconds
+        // This ensures the UI updates even if Realtime (WebSocket) is blocked by RLS/Network
+        const pollingInterval = setInterval(() => {
+            console.log("[POLLING] Syncing inbox...");
+            loadLeads(true); // Silent update
+        }, 15000);
+
+        return () => clearInterval(pollingInterval);
+    }, [tenantId, loadLeads, loadTemplates, loadAvailableAgents]);
 
     useEffect(() => {
         if (activeView === 'LOGIC') {
@@ -131,16 +163,22 @@ export default function AIAgentInbox() {
         }
     }, [activeView, loadFlow]);
 
-    // Load chat only when selection ID changes
+    // Load chat + tracked variables when selection changes
     const lastSelectedId = useRef<string | null>(null);
     useEffect(() => {
         if (selectedLead && selectedLead.id !== lastSelectedId.current) {
             lastSelectedId.current = selectedLead.id;
             setTimeout(() => loadChat(selectedLead.id), 0);
+            // Load the configured tracked variables for this lead's agent
+            getAgentTrackedVariables(selectedLead.ai_agent_id || null).then(res => {
+                if (res.success && res.data) setTrackedVariables(res.data);
+                else setTrackedVariables([]);
+            });
         } else if (!selectedLead) {
             if (lastSelectedId.current !== null) {
                 lastSelectedId.current = null;
                 setTimeout(() => setMessages([]), 0);
+                setTrackedVariables([]);
             }
         }
     }, [selectedLead, loadChat]);
@@ -168,47 +206,143 @@ export default function AIAgentInbox() {
     };
 
     // --- Realtime Subscription ---
+    // Use a ref so the Supabase callback always has the latest selectedLead
+    // without needing to re-subscribe on every lead change (stale closure fix)
+    const selectedLeadRef = useRef<InboxLead | null>(null);
+    useEffect(() => { selectedLeadRef.current = selectedLead; }, [selectedLead]);
+
     useEffect(() => {
         const supabase = getSupabaseClient();
         const tenantId = useTenantStore.getState().tenantId;
-        
         if (!tenantId) return;
 
-        console.log(`[REALTIME] Subscribing to chat_messages for tenant: ${tenantId}`);
+        console.log(`[REALTIME] Subscribing for tenant: ${tenantId}`);
 
-        const channel = supabase
-            .channel('public:chat_messages')
+        // ── 1. New or Updated chat messages ─────────────────────────────
+        const messageChannel = supabase
+            .channel(`inbox:chat_messages:${tenantId}`)
             .on(
                 'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'chat_messages',
-                    filter: `tenant_id=eq.${tenantId}`
-                },
+                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `tenant_id=eq.${tenantId}` },
                 (payload) => {
-                    const newMessage = payload.new as ChatMessage;
-                    console.log("[REALTIME] New message received:", newMessage);
+                    const newMsg = payload.new as ChatMessage;
 
-                    // 1. Update messages if current lead is selected
-                    if (selectedLead && newMessage.lead_id === selectedLead.id) {
+                    // Append to open chat if this message belongs to the selected lead
+                    if (selectedLeadRef.current?.id === newMsg.lead_id) {
                         setMessages((prev) => {
-                            if (prev.find(m => m.id === newMessage.id)) return prev;
-                            return [...prev, newMessage];
+                            if (prev.find(m => m.id === newMsg.id)) return prev;
+                            return [...prev, newMsg];
                         });
-                        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+                        setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
                     }
 
-                    // 2. Refresh leads list to update "last message" and order
-                    loadLeads();
+                    // Always update the last message preview and re-sort the leads list
+                    setLeads((prev) => {
+                        const leadExists = prev.find(l => l.id === newMsg.lead_id);
+                        if (!leadExists) {
+                            // NEW LEAD TALKING! Refresh list immediately
+                            loadLeads(true);
+                            router.refresh();
+                            return prev;
+                        }
+
+                        const updated = prev.map(l =>
+                            l.id === newMsg.lead_id
+                                ? { ...l, last_message: newMsg.content, last_message_time: newMsg.created_at }
+                                : l
+                        );
+                        // Re-sort: most recent message first
+                        return [...updated].sort((a, b) =>
+                            new Date(b.last_message_time || 0).getTime() - new Date(a.last_message_time || 0).getTime()
+                        );
+                    });
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `tenant_id=eq.${tenantId}` },
+                (payload) => {
+                    const updatedMsg = payload.new as ChatMessage;
+                    if (selectedLeadRef.current?.id === updatedMsg.lead_id) {
+                        setMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+                    }
+                }
+            )
+            .subscribe();
+
+        // ── 2. New leads (e.g. from WhatsApp inbound) ──────────────────
+        const newLeadChannel = supabase
+            .channel(`inbox:new_leads:${tenantId}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'lead', filter: `tenant_id=eq.${tenantId}` },
+                (payload) => {
+                    const newLead = payload.new as Record<string, unknown>;
+                    console.log('[REALTIME] New lead:', newLead.id);
+
+                    // Normalise phone
+                    let phone = (newLead.telefono as string) || null;
+                    if (phone && !phone.startsWith('+')) phone = '+' + phone;
+
+                    const inboxLead: InboxLead = {
+                        id: newLead.id as string,
+                        nombre: (newLead.nombre as string) || null,
+                        apellido: (newLead.apellido as string) || null,
+                        telefono: phone,
+                        foto_url: null,
+                        is_ai_enabled: (newLead.is_ai_enabled as boolean) ?? true,
+                        ai_agent_id: (newLead.ai_agent_id as string) || null,
+                        last_message: 'Nueva conversación',
+                        last_message_time: (newLead.fecha_creacion as string) || new Date().toISOString(),
+                        created_at: (newLead.fecha_creacion as string) || null,
+                        tipo_lead: (newLead.tipo_lead as string) || 'SIN CALIFICAR',
+                        pais: (newLead.pais as string) || 'Identificando...',
+                        origen: (newLead.origen as string) || 'WHATSAPP_INBOUND',
+                        campana: (newLead.campana as string) || 'General',
+                        segmentacion: null,
+                        metadata: (newLead.metadata as Record<string, unknown>) || {},
+                        unread_count: 1,
+                    };
+
+                    setLeads((prev) => {
+                        if (prev.find(l => l.id === inboxLead.id)) return prev;
+                        router.refresh(); // Force page refresh as requested by user
+                        return [inboxLead, ...prev];
+                    });
+                }
+            )
+            .subscribe();
+
+        // ── 3. Lead updates (metadata, ai_enabled, segmentation) ───────
+        const leadUpdateChannel = supabase
+            .channel(`inbox:lead_updates:${tenantId}`)
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'lead', filter: `tenant_id=eq.${tenantId}` },
+                (payload) => {
+                    const updated = payload.new as Record<string, unknown>;
+                    setLeads((prev) => prev.map(l => l.id === updated.id
+                        ? { ...l, is_ai_enabled: updated.is_ai_enabled as boolean, metadata: (updated.metadata as Record<string, unknown>) || l.metadata, segmentacion: updated.segmentacion as InboxLead['segmentacion'] }
+                        : l
+                    ));
+                    if (selectedLeadRef.current?.id === updated.id) {
+                        setSelectedLead(prev => prev
+                            ? { ...prev, is_ai_enabled: updated.is_ai_enabled as boolean, metadata: (updated.metadata as Record<string, unknown>) || prev.metadata, segmentacion: updated.segmentacion as InboxLead['segmentacion'] }
+                            : null
+                        );
+                    }
                 }
             )
             .subscribe();
 
         return () => {
-            supabase.removeChannel(channel);
+            supabase.removeChannel(messageChannel);
+            supabase.removeChannel(newLeadChannel);
+            supabase.removeChannel(leadUpdateChannel);
         };
-    }, [selectedLead, loadLeads]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tenantId]); // Re-subscribe when tenantId changes or becomes available
+
 
     const handleSendTemplate = async (templateName: string) => {
         if (!selectedLead) return;
@@ -277,27 +411,43 @@ export default function AIAgentInbox() {
 
     const handleDeleteLead = async () => {
         if (!selectedLead) return;
-        if (!confirm("¿Estás seguro de que deseas eliminar este lead completamente? Esta acción no se puede deshacer.")) return;
-        
-        const res = await deleteLead(selectedLead.id);
-        if (res.success) {
-            setLeads((prev) => prev.filter(l => l.id !== selectedLead.id));
-            setSelectedLead(null);
-        } else {
-            alert("Error al eliminar lead: " + res.error);
-        }
+        setDeleteModal({ isOpen: true, type: 'LEAD', includeFacts: true });
     };
 
     const handleDeleteChat = async () => {
         if (!selectedLead) return;
-        if (!confirm("¿Estás seguro de que deseas vaciar la conversación de este lead? los datos del lead se mantendrán.")) return;
-        
-        const res = await deleteChatHistory(selectedLead.id);
-        if (res.success) {
-            setMessages([]);
+        setDeleteModal({ isOpen: true, type: 'CHAT', includeFacts: false });
+    };
+
+    const confirmDelete = async () => {
+        if (!selectedLead) return;
+        setLoadingChat(true);
+
+        if (deleteModal.type === 'LEAD') {
+            const res = await deleteLead(selectedLead.id);
+            if (res.success) {
+                setLeads((prev) => prev.filter(l => l.id !== selectedLead.id));
+                setSelectedLead(null);
+            } else {
+                alert("Error al eliminar lead: " + res.error);
+            }
         } else {
-            alert("Error al vaciar chat: " + res.error);
+            // Delete Chat
+            const res = await deleteChatHistory(selectedLead.id);
+            if (res.success) {
+                setMessages([]);
+                // If requested, also delete facts
+                if (deleteModal.includeFacts) {
+                    await deleteLeadFacts(selectedLead.id);
+                    setSelectedLead(prev => prev ? { ...prev, metadata: {} } : null);
+                }
+            } else {
+                alert("Error al vaciar chat: " + res.error);
+            }
         }
+
+        setLoadingChat(false);
+        setDeleteModal(prev => ({ ...prev, isOpen: false }));
     };
 
     // --- Render Helpers ---
@@ -637,7 +787,6 @@ export default function AIAgentInbox() {
                                         showDetails ? "w-9 px-0 text-center flex items-center justify-center" : "px-4 pr-8"
                                     )}
                                 >
-                                    <option value="" className="bg-slate-900">{showDetails ? "AI" : "Agente por Defecto"}</option>
                                     {availableAgents.map(agent => (
                                         <option key={agent.id} value={agent.id} className="bg-slate-900">{agent.name}</option>
                                     ))}
@@ -837,6 +986,77 @@ export default function AIAgentInbox() {
                                 <DetailField label="Origen" value={selectedLead.origen || 'Campaña Orgánica'} icon={GitBranch} />
                             </div>
 
+                            {/* Captured Variables (Live Memory) */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between px-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Variables Capturadas</p>
+                                        <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-tighter animate-pulse">Live</span>
+                                    </div>
+                                    <button 
+                                        onClick={async () => {
+                                            if (confirm("¿Estás seguro de que deseas borrar todas las variables capturadas para este lead? Esto reiniciará la memoria de la IA.")) {
+                                                const res = await deleteLeadFacts(selectedLead.id);
+                                                if (res.success) {
+                                                    const updated = { ...selectedLead, metadata: {} };
+                                                    setSelectedLead(updated);
+                                                    setLeads(prev => prev.map(l => l.id === selectedLead.id ? updated : l));
+                                                } else {
+                                                    alert("Error al borrar variables: " + res.error);
+                                                }
+                                            }
+                                        }}
+                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 transition-all group"
+                                    >
+                                        <Trash2 className="h-3 w-3 group-hover:scale-110 transition-transform" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Depurar</span>
+                                    </button>
+                                </div>
+                                {trackedVariables.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {trackedVariables.map((varName) => {
+                                            // Strip {{ }} wrapping from variable name
+                                            const key = varName.replace(/^\{\{|\}\}$/g, '');
+                                            const capturedValue = selectedLead.metadata?.[key];
+                                            const hasCaptured = capturedValue !== undefined && capturedValue !== null && String(capturedValue).trim() !== '';
+                                            return (
+                                                <div
+                                                    key={key}
+                                                    className={cn(
+                                                        "px-4 py-3 rounded-2xl border flex items-center justify-between gap-3 transition-colors",
+                                                        hasCaptured
+                                                            ? "bg-emerald-500/[0.05] border-emerald-500/15 hover:bg-emerald-500/10"
+                                                            : "bg-white/[0.02] border-white/5"
+                                                    )}
+                                                >
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <span className={cn(
+                                                            "text-[8px] font-black uppercase tracking-tighter",
+                                                            hasCaptured ? "text-emerald-500/50" : "text-white/20"
+                                                        )}>{'{{' + key + '}}'}</span>
+                                                        <span className={cn(
+                                                            "text-[11px] font-bold truncate",
+                                                            hasCaptured ? "text-emerald-400" : "text-white/15 italic"
+                                                        )}>
+                                                            {hasCaptured ? String(capturedValue) : 'Pendiente...'}
+                                                        </span>
+                                                    </div>
+                                                    {hasCaptured && (
+                                                        <div className="h-4 w-4 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                                                            <Check className="h-2.5 w-2.5 text-emerald-500" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 border-dashed text-center">
+                                        <p className="text-[9px] font-bold text-white/15 uppercase tracking-widest">Sin variables configuradas en el agente</p>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Automation Timeline */}
                             <div className="space-y-6 pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-1">Progreso de Automatización</p>
@@ -876,7 +1096,12 @@ export default function AIAgentInbox() {
                         </div>
 
                         <div className="p-8 border-t border-white/5 bg-black/20 space-y-4">
-                              <button className="w-full h-12 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest text-primary">Ver Perfil Completo</button>
+                              <button 
+                                onClick={() => setIsProfileModalOpen(true)}
+                                className="w-full h-12 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest text-primary"
+                              >
+                                  Ver Perfil Completo
+                              </button>
                               <button 
                                 onClick={handleDeleteLead}
                                 className="w-full h-12 rounded-xl bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest text-red-500 flex items-center justify-center gap-2"
@@ -888,6 +1113,21 @@ export default function AIAgentInbox() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* ─── LEAD PROFILE MODAL ─── */}
+            <AnimatePresence>
+                {isProfileModalOpen && selectedLead && (
+                    <LeadProfileModal 
+                        lead={selectedLead}
+                        onClose={() => setIsProfileModalOpen(false)}
+                        onUpdate={(updated) => {
+                            setSelectedLead(updated);
+                            setLeads(prev => prev.map(l => l.id === updated.id ? updated : l));
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
             {/* ─── TEMPLATE SELECTOR MODAL ─── */}
             <AnimatePresence>
                 {isTemplateModalOpen && (
@@ -944,6 +1184,75 @@ export default function AIAgentInbox() {
                     }}
                 />
             )}
+
+            {/* ─── DELETE CONFIRMATION MODAL ─── */}
+            <AnimatePresence>
+                {deleteModal.isOpen && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
+                            onClick={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-md bg-[#0b0e14] border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8"
+                        >
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className="h-16 w-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                                    <Trash2 className="h-8 w-8 text-red-500" />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                                        {deleteModal.type === 'LEAD' ? 'Eliminar Lead' : 'Vaciar Conversación'}
+                                    </h3>
+                                    <p className="text-xs font-bold text-white/30 uppercase tracking-widest leading-relaxed">
+                                        {deleteModal.type === 'LEAD' 
+                                            ? '¿Estás seguro de que deseas borrar este lead completamente? Se eliminarán todos sus mensajes y datos de memoria.' 
+                                            : '¿Deseas vaciar todos los mensajes de esta conversación?'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {deleteModal.type === 'CHAT' && (
+                                <div 
+                                    onClick={() => setDeleteModal(prev => ({ ...prev, includeFacts: !prev.includeFacts }))}
+                                    className={cn(
+                                        "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group",
+                                        deleteModal.includeFacts ? "bg-primary/10 border-primary/20" : "bg-white/5 border-white/5 hover:bg-white/10"
+                                    )}
+                                >
+                                    <div className="space-y-0.5">
+                                        <p className={cn("text-[10px] font-black uppercase tracking-widest", deleteModal.includeFacts ? "text-primary" : "text-white/40")}>Borrar Memoria IA</p>
+                                        <p className="text-[9px] font-medium text-white/20">Eliminar variables capturadas (Facts)</p>
+                                    </div>
+                                    <div className={cn(
+                                        "h-5 w-5 rounded flex items-center justify-center border transition-all",
+                                        deleteModal.includeFacts ? "bg-primary border-primary text-white" : "bg-white/5 border-white/10"
+                                    )}>
+                                        {deleteModal.includeFacts && <Check className="h-3 w-3" />}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 pt-4">
+                                <button 
+                                    onClick={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+                                    className="h-14 rounded-2xl bg-white/5 border border-white/5 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={confirmDelete}
+                                    className="h-14 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest text-[10px] hover:bg-red-500 transition-all shadow-lg shadow-red-600/20"
+                                >
+                                    {deleteModal.type === 'LEAD' ? 'Eliminar Todo' : 'Confirmar'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }

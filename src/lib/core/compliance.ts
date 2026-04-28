@@ -22,70 +22,55 @@ export interface ComplianceDecision {
     reason: string;
 }
 
-// ─── Phone Prefix → Timezone mapping ─────────────────────────────
-
-const PHONE_PREFIX_TIMEZONE: Record<string, string> = {
-    "+34": "Europe/Madrid",
-    "+351": "Europe/Lisbon",
-    "+56": "America/Santiago",
-    "+52": "America/Mexico_City",
-    "+57": "America/Bogota",
-    "+51": "America/Lima",
-    "+54": "America/Argentina/Buenos_Aires",
-    "+598": "America/Montevideo",
-    "+595": "America/Asuncion",
-    "+591": "America/La_Paz",
-    "+593": "America/Guayaquil",
-    "+507": "America/Panama",
-    "+502": "America/Guatemala",
-    "+503": "America/El_Salvador",
-    "+504": "America/Tegucigalpa",
-    "+505": "America/Managua",
-    "+506": "America/Costa_Rica",
-    "+1":   "America/New_York", // Default to Eastern, but we refine via area codes if needed
-    "+44":  "Europe/London",
-    "+33":  "Europe/Paris",
-    "+49":  "Europe/Berlin",
-    "+39":  "Europe/Rome",
-    "+55":  "America/Sao_Paulo",
-};
+import { parsePhoneNumber } from "libphonenumber-js";
+import ct from "countries-and-timezones";
 
 /**
- * Resolves timezone from phone prefix, country code, or defaults to Spain.
+ * Resolves timezone from phone prefix, country code, or defaults to a given headquarters timezone.
  */
 export function resolveTimezone(
     phone?: string | null,
     country?: string | null,
-    customPrefixMap?: Record<string, string>
+    defaultTimezone: string = "Europe/Madrid"
 ): string {
-    const prefixMap = { ...PHONE_PREFIX_TIMEZONE, ...customPrefixMap };
-
-    // Explicit country checks (prioritized)
-    if (country) {
-        const c = country.toLowerCase().trim();
-        const ESPAÑA_ALIASES = ["españa", "spain", "esp", "espana"];
-        if (ESPAÑA_ALIASES.includes(c)) return "Europe/Madrid";
-        if (c === "portugal") return "Europe/Lisbon";
-        if (c === "méxico" || c === "mexico" || c === "mex") return "America/Mexico_City";
-        if (c === "usa" || c === "united states" || c === "eeuu") return "Etc/GMT+6";
-        if (c === "chile" || c === "chl") return "America/Santiago";
-        if (c === "colombia" || c === "col") return "America/Bogota";
-        if (c === "perú" || c === "peru" || c === "per") return "America/Lima";
-        if (c === "argentina" || c === "arg") return "America/Argentina/Buenos_Aires";
-    }
-
-    // Try phone prefixes (longest match first for e.g. +598 vs +5)
+    // 1. Try to parse phone number to get ISO country code
     if (phone) {
-        const cleanPhone = phone.replace(/\s|-|\(|\)/g, "");
-        const prefixes = Object.keys(prefixMap).sort((a, b) => b.length - a.length);
-        for (const prefix of prefixes) {
-            if (cleanPhone.startsWith(prefix)) {
-                return prefixMap[prefix];
+        try {
+            const cleanPhone = phone.startsWith("+") ? phone : `+${phone.replace(/\D/g, "")}`;
+            const phoneNumber = parsePhoneNumber(cleanPhone);
+            
+            if (phoneNumber && phoneNumber.country) {
+                const countryInfo = ct.getCountry(phoneNumber.country);
+                if (countryInfo && countryInfo.timezones.length > 0) {
+                    // Return the first/primary timezone of the country
+                    return countryInfo.timezones[0];
+                }
             }
+        } catch (e) {
+            console.warn(`[COMPLIANCE] Failed to parse phone ${phone} for timezone:`, e);
         }
     }
 
-    return "Europe/Madrid";
+    // 2. Try explicit country string
+    if (country) {
+        const c = country.toLowerCase().trim();
+        // Simple mapping for common names to ISO codes if needed, 
+        // but countries-and-timezones mostly uses ISO. 
+        // We can use a search if needed.
+        const allCountries = ct.getAllCountries();
+        const found = Object.values(allCountries).find(
+            cc => cc.name.toLowerCase() === c || cc.id.toLowerCase() === c
+        );
+        if (found && found.timezones.length > 0) return found.timezones[0];
+        
+        // Manual aliases for common Spanish names
+        if (["españa", "spain", "esp"].includes(c)) return "Europe/Madrid";
+        if (["méxico", "mexico", "mex"].includes(c)) return "America/Mexico_City";
+        if (["perú", "peru", "per"].includes(c)) return "America/Lima";
+    }
+
+    // 3. Fallback to Headquarters Timezone
+    return defaultTimezone;
 }
 
 /**
@@ -184,10 +169,11 @@ export function buildComplianceDecision(
         start: string;
         end: string;
         working_days: number[];
+        default_timezone?: string;
         phone_prefix_map?: Record<string, string>;
     }
 ): ComplianceDecision {
-    const timezone = resolveTimezone(phone, country, timezoneRules.phone_prefix_map);
+    const timezone = resolveTimezone(phone, country, timezoneRules.default_timezone || "Europe/Madrid");
 
     const [startH] = timezoneRules.start.split(":").map(Number);
     const [endH] = timezoneRules.end.split(":").map(Number);

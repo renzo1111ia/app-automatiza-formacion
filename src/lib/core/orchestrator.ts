@@ -461,6 +461,16 @@ export class Orchestrator {
                 case "EXTERNAL_ACTION":
                     await provider.executeAction(lead.id_lead_externo || "", type === "BLUEPRINT" ? "BLUEPRINT" : transitionId, { transitionId });
                     break;
+                case "CREATE_EVENT": {
+                    const { subject, startTime, durationMinutes, description } = (step as any).metadata || {};
+                    await provider.createEvent(lead.id_lead_externo || "", {
+                        subject: subject || "Cita Agendada - Esden",
+                        startTime: startTime || new Date().toISOString(),
+                        durationMinutes: durationMinutes || 30,
+                        description: description || `Cita con ${lead.nombre} ${lead.apellido}`
+                    });
+                    break;
+                }
                 default:
                     console.warn(`[ORCHESTRATOR] Unknown CRM action type: ${type}`);
             }

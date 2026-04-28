@@ -28,7 +28,11 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         
         let variantQuery = (supabase.from("ai_agent_variants" as unknown as string) as any)
             .select("*")
-            .eq("is_active", true);
+            .eq("is_active", true)
+            .neq("prompt_text", "")
+            .not("api_key", "is", null)
+            .order("is_variant_b", { ascending: true }) // Prioriza Variant A (false) sobre B (true)
+            .order("updated_at", { ascending: false });
         
         if (agentId) {
             variantQuery = variantQuery.eq("agent_id", agentId);
@@ -39,13 +43,14 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             variantQuery = variantQuery.in("agent_id", agentIds);
         }
 
-        const { data: variants } = await variantQuery.limit(1);
-
+        const { data: variants } = await variantQuery;
+        
         if (!variants || (variants as any[]).length === 0) {
             console.warn(`[AI PROCESSOR] ⚠️ No active AI variant found for lead ${leadId}`);
             return;
         }
 
+        // Si hay varias, intentamos elegir la que tenga prompt_text más largo o simplemente la primera (que por el orden será Variant A si existe)
         const activeVariant = (variants as any[])[0];
         const apiKey = activeVariant.api_key || process.env.OPENAI_API_KEY; // Global fallback
         
@@ -54,33 +59,44 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             return;
         }
 
-        // 3. Get Recent Context (REDIS - Last 10 lines)
-        const recentHistory = await ChatMemoryService.getRecentContext(leadId);
-        const conversationContext = recentHistory.map(m => 
+        // 3-5. Fetch all context data in parallel to reduce latency
+        console.log(`[AI PROCESSOR] ⚡ Fetching context data and credentials in parallel...`);
+        const [recentHistory, chatSummary, localKnowledge, tenantData] = await Promise.all([
+            // 3. Get Recent Context from DB (last 10 messages)
+            ChatMemoryService.getRecentContext(leadId).catch(err => {
+                console.warn("[AI PROCESSOR] Memory fetch skipped:", err);
+                return [];
+            }),
+            // 4. Get Long-Term Memory (SQL Summary)
+            ChatSummaryService.getSummary(leadId).catch(err => {
+                console.warn("[AI PROCESSOR] Summary fetch skipped:", err);
+                return null;
+            }),
+            // 5. Get Local Knowledge (PGVector)
+            (async () => {
+                try {
+                    const openai = new OpenAI({ apiKey });
+                    const embedRes = await openai.embeddings.create({
+                        model: "text-embedding-3-small",
+                        input: incomingMessage,
+                    });
+                    const embedding = embedRes.data[0].embedding;
+                    const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3);
+                    return kbResults.map(r => `- ${r.content}`).join("\n");
+                } catch (kbErr) {
+                    console.warn("[AI PROCESSOR] KB search skipped/failed:", kbErr);
+                    return "";
+                }
+            })(),
+            // 6. Get Tenant WhatsApp Config
+            (supabase.from("tenants" as unknown as string) as any).select("config").eq("id", tenantId).single()
+        ]);
+
+        const waConfig = (tenantData?.data as any)?.config?.whatsapp;
+
+        const conversationContext = recentHistory.map(m =>
             `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`
         ).join("\n");
-
-        // 4. Get Long-Term Memory (SQL Summary)
-        const chatSummary = await ChatSummaryService.getSummary(leadId);
-
-        // 5. Get Local Knowledge (PGVector)
-        // Note: For search, we need embeddings. For now, we assume search might be triggered
-        // if the model name supports external tools or we do it here.
-        // We'll simulate a query if knowledge is enabled.
-        let localKnowledge = "";
-        try {
-            // We'd need an embedding for incomingMessage. Using OpenAI for that.
-            const openai = new OpenAI({ apiKey });
-            const embedRes = await openai.embeddings.create({
-                model: "text-embedding-3-small",
-                input: incomingMessage,
-            });
-            const embedding = embedRes.data[0].embedding;
-            const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3);
-            localKnowledge = kbResults.map(r => `- ${r.content}`).join("\n");
-        } catch (kbErr) {
-            console.warn("[AI PROCESSOR] KB search skipped/failed:", kbErr);
-        }
 
         // 6. Process Dynamic Variables
         const variableMap = {
@@ -138,10 +154,6 @@ ${conversationContext}
             await ChatMemoryService.addMessage(leadId, 'user', incomingMessage);
             await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
 
-            // 10. Send via WhatsApp
-            const { data: tenant } = await (supabase.from("tenants" as unknown as string) as any).select("config").eq("id", tenantId).single();
-            const waConfig = (tenant as any)?.config?.whatsapp;
-
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
                 await whatsappBridge.sendTextMessage((lead as any).telefono!, aiResponse, {
                     accessToken: waConfig.accessToken,
@@ -165,13 +177,16 @@ ${conversationContext}
                 });
 
                 // 12. Autonomous Learning (Fact Extraction)
-                const trackedVars = activeVariant.tracked_variables as string[] || [];
+                const trackedVars = (activeVariant.tracked_variables as string[]) || [];
                 if (trackedVars.length > 0) {
-                    const lastDialogue = `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;
-                    // Non-blocking call for better performance
+                    // Use full recent context so variables mentioned earlier are also captured
+                    const dialogueForExtraction = conversationContext 
+                        ? `${conversationContext}\nUsuario: ${incomingMessage}\nAsistente: ${aiResponse}`
+                        : `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;
+
                     FactExtractionService.extractFromDialogue(
                         leadId, 
-                        lastDialogue, 
+                        dialogueForExtraction, 
                         trackedVars, 
                         apiKey
                     ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));

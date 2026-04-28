@@ -5,12 +5,24 @@ import { Database } from "@/types/database";
 
 /**
  * FACT EXTRACTION SERVICE
- * analyzed conversation text to extract structured data based on tracked variables.
+ * Analyzes conversation to extract structured data based on tracked variables.
+ * Variables are stored with {{}} but keys in metadata are stored without them.
  */
 export class FactExtractionService {
     
     /**
-     * Analyzes the last dialogue exchange to find values for tracked variables.
+     * Strips {{ }} from a variable name: "{{user_name}}" → "user_name"
+     */
+    private static normalizeKey(varName: string): string {
+        return varName.replace(/^\{\{|\}\}$/g, "").trim();
+    }
+
+    /**
+     * Analyzes the conversation to find values for tracked variables.
+     * @param leadId - Lead ID to update
+     * @param dialogue - Full or recent conversation text
+     * @param varsToTrack - Array of variable names, e.g. ["{{user_name}}", "{{user_country}}"]
+     * @param apiKey - OpenAI API key
      */
     static async extractFromDialogue(
         leadId: string, 
@@ -20,36 +32,36 @@ export class FactExtractionService {
     ) {
         if (!varsToTrack || varsToTrack.length === 0) return null;
 
-        console.log(`[FACT EXTRACTOR] 🧠 Analyzing dialogue for lead ${leadId} to extract: ${varsToTrack.join(', ')}`);
+        // Normalize: strip {{ }} so OpenAI returns clean JSON keys
+        const normalizedKeys = varsToTrack.map(v => this.normalizeKey(v));
+
+        console.log(`[FACT EXTRACTOR] 🧠 Extracting for lead ${leadId}: [${normalizedKeys.join(', ')}]`);
 
         try {
             const openai = new OpenAI({ apiKey });
             
-            const systemPrompt = `
-Eres un extractor de datos ultra-preciso. Tu tarea es analizar el diálogo adjunto y extraer SOLO los valores para las siguientes claves: ${varsToTrack.join(', ')}.
+            const systemPrompt = `Eres un extractor de datos ultra-preciso. Analiza el diálogo y extrae SOLO los valores para estas claves: ${normalizedKeys.join(', ')}.
 
-REGLAS:
-1. Si no encuentras información para una clave, NO la incluyas en el resultado.
-2. Devuelve los datos ÚNICAMENTE en formato JSON plano.
-3. Si el usuario corrige un dato previo, usa el más reciente.
-4. Para nombres, capitaliza correctamente.
-5. Para números, extrae solo la cifra si es posible.
+REGLAS ESTRICTAS:
+1. Devuelve ÚNICAMENTE un JSON plano con las claves exactas listadas arriba.
+2. Si no hay información clara para una clave, omítela del JSON.
+3. Si el usuario menciona su nombre, úsalo para "user_name".
+4. Para países o ciudades, normaliza el nombre (ej: "España", "Bolivia").
+5. Para "qualified": usa "SI" si muestra interés claro, "NO" si rechaza, omite si no está claro.
+6. NO inventes datos. Solo extrae lo que el usuario haya dicho explícitamente.
 
-EJEMPLO DE SALIDA:
-{
-  "nombre": "Juan Perez",
-  "sede_interes": "Madrid"
-}
-`;
+EJEMPLO de salida válida:
+{"user_name": "Carlos", "user_country": "Bolivia", "curse_name": "MBA"}`;
 
             const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini", // Use mini for extraction (fast & cheap)
+                model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: systemPrompt },
-                    { role: "user", content: `DIÁLOGO:\n${dialogue}` }
+                    { role: "user", content: `CONVERSACIÓN:\n${dialogue}` }
                 ],
                 response_format: { type: "json_object" },
-                temperature: 0
+                temperature: 0,
+                max_tokens: 200
             });
 
             const rawResult = completion.choices[0]?.message?.content;
@@ -57,15 +69,24 @@ EJEMPLO DE SALIDA:
 
             const extractedData = JSON.parse(rawResult);
             
-            if (Object.keys(extractedData).length > 0) {
-                console.log(`[FACT EXTRACTOR] ✅ Data extracted:`, extractedData);
-                await this.saveToLeadMetadata(leadId, extractedData);
-                return extractedData;
+            // Filter to only keep keys that were actually requested
+            const filtered: Record<string, string> = {};
+            for (const key of normalizedKeys) {
+                if (extractedData[key] !== undefined && extractedData[key] !== null && String(extractedData[key]).trim() !== "") {
+                    filtered[key] = String(extractedData[key]);
+                }
+            }
+            
+            if (Object.keys(filtered).length > 0) {
+                console.log(`[FACT EXTRACTOR] ✅ Captured:`, filtered);
+                await this.saveToLeadMetadata(leadId, filtered);
+                return filtered;
             }
 
+            console.log(`[FACT EXTRACTOR] ℹ️ No new data found in this exchange`);
             return null;
         } catch (err) {
-            console.error("[FACT EXTRACTOR] ❌ Error during extraction:", err);
+            console.error("[FACT EXTRACTOR] ❌ Error:", err);
             return null;
         }
     }
@@ -73,24 +94,53 @@ EJEMPLO DE SALIDA:
     private static async saveToLeadMetadata(leadId: string, newData: Record<string, any>) {
         const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
         const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        const supabase = createClient<Database>(url!, key!);
+        const supabase = createClient<Database>(url!, key!, {
+            auth: { persistSession: false, autoRefreshToken: false }
+        });
 
         // 1. Get current metadata
-        const { data: lead } = await supabase
-            .from("leads")
-            .select("metadata")
+        const { data: leadFound } = await (supabase.from("lead") as any)
+            .select("metadata, nombre, apellido")
             .eq("id", leadId)
             .single();
         
-        const currentMetadata = (lead as any)?.metadata || {};
+        const currentMetadata = (leadFound as any)?.metadata || {};
         
-        // 2. Merge and update
+        // 2. Merge: new data overwrites old values for same keys
         const updatedMetadata = {
             ...currentMetadata,
             ...newData,
             last_fact_update: new Date().toISOString()
         };
 
-        await (supabase.from("leads") as any).update({ metadata: updatedMetadata }).eq("id", leadId);
+        // 3. Propagate name fields to main lead columns
+        const mainUpdate: Record<string, any> = { metadata: updatedMetadata };
+        
+        // If user_name was captured, split into nombre/apellido
+        if (newData.user_name) {
+            const parts = newData.user_name.trim().split(' ');
+            mainUpdate.nombre = parts[0];
+            if (parts.length > 1) mainUpdate.apellido = parts.slice(1).join(' ');
+        }
+        // Legacy support for "nombre" key
+        if (newData.nombre) {
+            const parts = newData.nombre.trim().split(' ');
+            mainUpdate.nombre = parts[0];
+            if (parts.length > 1) mainUpdate.apellido = parts.slice(1).join(' ');
+        }
+        if (newData.apellido) {
+            mainUpdate.apellido = newData.apellido;
+        }
+        // Propagate phone if captured
+        if (newData.user_phone && !(leadFound as any)?.telefono) {
+            mainUpdate.telefono = newData.user_phone;
+        }
+
+        const { error } = await (supabase.from("lead") as any).update(mainUpdate).eq("id", leadId);
+        if (error) {
+            console.error("[FACT EXTRACTOR] ❌ Failed to save metadata:", error.message);
+        } else {
+            console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
+        }
     }
 }

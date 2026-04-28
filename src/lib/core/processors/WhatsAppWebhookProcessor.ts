@@ -24,8 +24,8 @@ interface WebhookMessage {
     [key: string]: unknown;
 }
 
-export async function processIncomingWhatsApp(fromNumber: string, message: WebhookMessage, wabaId: string) {
-    console.log(`[WHATSAPP PROCESSOR] Processing message from ${fromNumber} (WABA ID: ${wabaId})`);
+export async function processIncomingWhatsApp(fromNumber: string, message: WebhookMessage, wabaId: string, contactName?: string | null) {
+    console.log(`[WHATSAPP PROCESSOR] Processing message from ${fromNumber} (WABA ID: ${wabaId}, Name: ${contactName})`);
     
     try {
         const supabase = getAdminSupabase();
@@ -58,14 +58,21 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         let lead = leadFound;
 
         if (leadError || !lead) {
-            console.log(`[WHATSAPP PROCESSOR] Lead not found for ${fromNumber}. Creating anonymous lead.`);
+            console.log(`[WHATSAPP PROCESSOR] Lead not found for ${fromNumber}. Creating lead: ${contactName || 'Anonymous'}`);
+            
+            // Handle name logic: Use contactName if available, else placeholder
+            const fullName = contactName || "Prospecto WhatsApp";
+            const parts = fullName.split(' ');
+            const firstName = parts[0];
+            const lastName = parts.slice(1).join(' ') || (contactName ? "" : "WhatsApp"); // If it's a real name we don't force 'WhatsApp' as surname
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
                     tenant_id: tenantId,
                     telefono: fromNumber,
-                    nombre: "Prospecto",
-                    apellido: "WhatsApp",
+                    nombre: firstName,
+                    apellido: lastName,
                     origen: "WHATSAPP_INBOUND",
                     is_ai_enabled: true
                 })

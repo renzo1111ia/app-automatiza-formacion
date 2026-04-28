@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
     MessageSquare, Key, Phone, Mic, 
-    PhoneCall, Zap, RefreshCw, CheckCircle2, Brain 
+    PhoneCall, Zap, RefreshCw, CheckCircle2, Database
 } from "lucide-react";
 import { syncRetellResources } from "@/lib/actions/retell-sync";
 import { syncWhatsAppTemplates } from "@/lib/actions/whatsapp-sync";
@@ -34,10 +34,11 @@ interface WhatsAppConfig {
     lastSync?: string;
 }
 
-interface AWSConfig {
-    kbId?: string;
-    region?: string;
-    s3Bucket?: string;
+interface MinioConfig {
+    endpoint?: string;
+    bucketName?: string;
+    accessKey?: string;
+    secretKey?: string;
 }
 
 interface IntegrationsManagerProps {
@@ -233,21 +234,26 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                             className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-xs font-bold"
                         >
                             <option value="twilio">Twilio (Recomendado)</option>
-                            <option value="telnyx">Telnyx (Próximamente)</option>
-                            <option value="plivo">Plivo (Próximamente)</option>
+                            <option value="telnyx">Telnyx</option>
+                            <option value="plivo">Plivo</option>
+                            <option value="custom">Personalizado (Custom SIP / Trunk)</option>
                         </select>
                     </div>
                     <div className="space-y-2 text-left">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">Account SID / API Key</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                            {telephony.provider === 'custom' ? 'Custom API Endpoint / SIP URI' : 'Account SID / API Key'}
+                        </Label>
                         <Input 
                             value={telephony.credentials?.accountSid || ""}
                             onChange={(e) => updateField('telephony', { credentials: { ...(telephony.credentials || {}), accountSid: e.target.value } })}
-                            placeholder="AC..."
+                            placeholder={telephony.provider === 'custom' ? "https://api.miproveedor.com..." : "AC..."}
                             className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl font-mono text-xs"
                         />
                     </div>
                     <div className="space-y-2 text-left">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">Auth Token / API Secret</Label>
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                            {telephony.provider === 'custom' ? 'Custom Secret / Bearer Token' : 'Auth Token / API Secret'}
+                        </Label>
                         <Input 
                             value={telephony.credentials?.authToken || ""}
                             onChange={(e) => updateField('telephony', { credentials: { ...(telephony.credentials || {}), authToken: e.target.value } })}
@@ -380,49 +386,6 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                     <p className="text-[11px] text-blue-700/70 dark:text-blue-300/60 font-medium leading-relaxed">
                         Estas credenciales permiten al orquestador central disparar llamadas y mensajes automáticos bajo la identidad de este cliente.
                     </p>
-                </div>
-            </div>
-
-            {/* ── SECTION: AWS BEDROCK & S3 (KNOWLEDGE BASE) ── */}
-            <div className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center border border-orange-500/20">
-                        <Brain className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">AWS Intelligence (Knowledge Base)</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-left">Gestión de cerebro RAG y almacenamiento S3</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2 space-y-2 text-left">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">Default Knowledge Base ID (Bedrock)</Label>
-                        <Input 
-                            value={(config?.aws as AWSConfig)?.kbId || ""}
-                            onChange={(e) => updateField('aws', { kbId: e.target.value })}
-                            placeholder="G9P0FC3S29"
-                            className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl font-mono text-xs"
-                        />
-                    </div>
-                    <div className="space-y-2 text-left">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">AWS Region</Label>
-                        <Input 
-                            value={(config?.aws as AWSConfig)?.region || "us-east-1"}
-                            onChange={(e) => updateField('aws', { region: e.target.value })}
-                            placeholder="us-east-1"
-                            className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
-                        />
-                    </div>
-                    <div className="space-y-2 text-left">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">S3 Bucket Name</Label>
-                        <Input 
-                            value={(config?.aws as AWSConfig)?.s3Bucket || "automatiza-knowledge-base"}
-                            onChange={(e) => updateField('aws', { s3Bucket: e.target.value })}
-                            placeholder="nombre-del-bucket"
-                            className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
-                        />
-                    </div>
                 </div>
             </div>
         </div>

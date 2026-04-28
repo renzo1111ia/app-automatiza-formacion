@@ -19,16 +19,21 @@ const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 
 // ─── LEAD TRIGGER NODE ────────────────────────────────────────────
 export const LeadTriggerNode = memo(({ data, selected }: NodeProps) => {
+  const source = data.config?.source || "Cualquier Origen";
+  const campaign = data.config?.campaignFilter || "Todas las Campañas";
+
   return (
-    <BaseNode label="Entry Lead" icon={<Zap className="h-4 w-4" />} colorClass="bg-orange-500" selected={selected}>
+    <BaseNode label="Disparador (Trigger)" icon={<Zap className="h-4 w-4" />} colorClass="bg-orange-500" selected={selected}>
       <div className="flex flex-col gap-2">
-        <p className="opacity-80 leading-relaxed font-bold">Ingesta vía Webhook</p>
+        <p className="opacity-80 leading-relaxed font-bold text-[11px] truncate">
+          Origen: <span className="text-orange-300">{source}</span>
+        </p>
         <div className="p-2 rounded-lg bg-black/40 border border-white/5 font-mono text-[10px] break-all">
-          /api/webhooks/crm
+          Campaña: {campaign}
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-orange-400/60 font-bold">
           <Globe className="h-3 w-3" />
-          Prefijo → Timezone auto
+          Se activa al entrar el Lead
         </div>
       </div>
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-orange-500 border-2 border-white" />
@@ -125,6 +130,65 @@ export const TimeConditionNode = memo(({ data, selected }: NodeProps) => {
   );
 });
 
+// ─── CONDITION NODE (IF/ELSE) ⭐ NUEVO ────────────────────────────
+export const ConditionNode = memo(({ data, selected }: NodeProps) => {
+  const variable = data.config?.variable || "{{call.answered}}";
+  const operator = data.config?.operator || "==";
+  const value = data.config?.value || "true";
+
+  return (
+    <div className={cn(
+      "min-w-[200px] rounded-2xl bg-black/80 backdrop-blur-xl border-2 transition-all duration-300 shadow-2xl",
+      selected ? "border-indigo-400 ring-4 ring-indigo-400/20 scale-105" : "border-indigo-500/30 hover:border-indigo-500/50",
+    )}>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-4 py-3 rounded-t-2xl border-b border-white/5 bg-indigo-500/10">
+        <div className="h-8 w-8 flex items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400">
+          <GitBranchPlus className="h-4 w-4" />
+        </div>
+        <span className="font-bold text-sm tracking-tight text-white/90 uppercase">Condición (If/Else)</span>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 space-y-2 text-center">
+        <div className="text-[10px] font-mono text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-2 truncate">
+          {variable} {operator} {value}
+        </div>
+        <div className="text-[9px] opacity-40 italic mt-1">Evalúa el estado para bifurcar el flujo</div>
+      </div>
+
+      <div className="h-1 w-1/3 bg-indigo-400/40 mx-auto rounded-full mb-1 opacity-20" />
+
+      {/* Handles */}
+      <Handle type="target" position={Position.Top} className="w-3 h-3 bg-indigo-500 border-2 border-white" />
+
+      {/* Bottom handles row */}
+      <div className="relative w-full h-8">
+        <div className="absolute left-[30%] bottom-0 -translate-x-1/2">
+          <Handle 
+            type="source" 
+            id="true"
+            position={Position.Bottom} 
+            className="!relative !left-0 !bottom-0 w-3 h-3 bg-emerald-500 border-2 border-white"
+          />
+         <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-emerald-400 uppercase tracking-wider">Sí (True)</span>
+        </div>
+
+        <div className="absolute left-[70%] bottom-0 -translate-x-1/2">
+          <Handle 
+            type="source" 
+            id="false"
+            position={Position.Bottom} 
+            className="!relative !left-0 !bottom-0 w-3 h-3 bg-rose-500 border-2 border-white"
+          />
+         <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-rose-400 uppercase tracking-wider">No (False)</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+
 // ─── VOICE CALL NODE ⭐ NUEVO ──────────────────────────────────────
 export const VoiceCallNode = memo(({ data, selected }: NodeProps) => {
   const agentName = data.config?.agentName || "Sin Agente Configurado";
@@ -150,12 +214,6 @@ export const VoiceCallNode = memo(({ data, selected }: NodeProps) => {
           </span>
           <p className="font-bold text-white/90 truncate text-[11px]">{agentName}</p>
         </div>
-        {data.config?.fromNumber && (
-          <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-mono">
-            <Phone className="h-3 w-3" />
-            {data.config.fromNumber}
-          </div>
-        )}
         <div className="text-[9px] opacity-40 italic">Voice AI Agent → Lead qualificación</div>
       </div>
       <Handle type="source" position={Position.Bottom} className="w-2 h-2 bg-white border border-blue-500" />
@@ -405,6 +463,7 @@ export const ActionNode = memo(({ data, selected }: NodeProps) => {
 // ─── Display Names ────────────────────────────────────────────────
 LeadTriggerNode.displayName = 'LeadTriggerNode';
 TimeConditionNode.displayName = 'TimeConditionNode';
+ConditionNode.displayName = 'ConditionNode';
 VoiceCallNode.displayName = 'VoiceCallNode';
 TextAgentNode.displayName = 'TextAgentNode';
 WhatsAppNode.displayName = 'WhatsAppNode';

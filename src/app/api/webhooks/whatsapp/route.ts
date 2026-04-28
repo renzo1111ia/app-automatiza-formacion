@@ -27,8 +27,10 @@ export async function GET(req: Request) {
 
 // Message Receiver (POST)
 export async function POST(req: Request) {
+    console.log("🚀 [WHATSAPP WEBHOOK] Solicitud recibida...");
     try {
         const rawBody = await req.text();
+        console.log("📦 [WHATSAPP WEBHOOK] Body:", JSON.stringify(JSON.parse(rawBody), null, 2));
         const signature = req.headers.get("x-hub-signature-256");
         const appSecret = process.env.WHATSAPP_APP_SECRET;
 
@@ -83,15 +85,19 @@ export async function POST(req: Request) {
 
                 // ── B. Handle Incoming Messages ──
                 if (value.messages) {
+                    // Extract contact name if available
+                    const contactName = value.contacts?.[0]?.profile?.name || null;
+
                     for (const message of value.messages) {
                         const from = message.from; // Phone number (sender)
                         const wabaId = value.metadata?.phone_number_id;
 
-                        // Delegate processing to a core processor to keep the API route clean 
-                        // and handle heavy logic (AI, DB) asynchronously or via worker if needed.
+                        // Delegate processing to a core processor (Non-blocking to avoid Meta timeout)
                         const { processIncomingWhatsApp } = await import("@/lib/core/processors/WhatsAppWebhookProcessor");
                         
-                        await processIncomingWhatsApp(from, message, wabaId);
+                        processIncomingWhatsApp(from, message, wabaId, contactName).catch(err => {
+                            console.error("[WHATSAPP WEBHOOK] Background processing error:", err);
+                        });
                     }
                 }
             }

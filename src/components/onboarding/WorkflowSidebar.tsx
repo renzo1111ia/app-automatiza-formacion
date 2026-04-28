@@ -164,11 +164,11 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
     };
 
     return (
-        <div className="w-72 border-r border-white/5 bg-black/60 backdrop-blur-3xl flex flex-col h-full animate-in slide-in-from-left duration-500">
+        <div className="w-72 border-r border-slate-200 dark:border-white/5 bg-white/80 dark:bg-black/60 backdrop-blur-3xl flex flex-col h-full animate-in slide-in-from-left duration-500">
             
             {/* ── Header ──────────────────────────────────────────── */}
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white/40">
+            <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
                     <FolderTree className="h-4 w-4" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Colecciones</span>
                 </div>
@@ -191,8 +191,8 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                     </div>
                 ) : workflows.length === 0 ? (
                     <div className="text-center py-8 space-y-3">
-                        <Zap className="h-8 w-8 mx-auto text-white/10" />
-                        <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest">Sin workflows</p>
+                        <Zap className="h-8 w-8 mx-auto text-slate-300 dark:text-white/10" />
+                        <p className="text-[10px] text-slate-400 dark:text-white/20 font-bold uppercase tracking-widest">Sin workflows</p>
                         <button
                             onClick={handleCreate}
                             className="text-[10px] font-black text-primary hover:underline"
@@ -206,19 +206,19 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                             "group relative flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
                             selectedWorkflowId === wf.id 
                                 ? "bg-primary/10 border-primary/20 text-primary shadow-lg shadow-primary/5" 
-                                : "bg-white/[0.02] border-white/5 text-white/40 hover:bg-white/5 hover:border-white/10"
+                                : "bg-slate-100 dark:bg-white/[0.02] border-transparent dark:border-white/5 text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5 dark:hover:border-white/10"
                         )}
                     >
                         <div className={cn(
                             "h-8 w-8 flex items-center justify-center rounded-lg transition-colors shrink-0",
-                            selectedWorkflowId === wf.id ? "bg-primary text-primary-foreground" : "bg-white/5 text-white/20 group-hover:text-white/40"
+                            selectedWorkflowId === wf.id ? "bg-primary text-primary-foreground" : "bg-slate-200 dark:bg-white/5 text-slate-400 dark:text-white/20 group-hover:text-slate-600 dark:group-hover:text-white/40"
                         )}>
                             <Zap className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className={cn(
                                 "text-sm font-bold truncate transition-colors",
-                                selectedWorkflowId === wf.id ? "text-white" : "group-hover:text-white/60"
+                                selectedWorkflowId === wf.id ? "text-slate-900 dark:text-white" : "group-hover:text-slate-700 dark:group-hover:text-white/60"
                             )}>
                                 {wf.name}
                             </p>
@@ -244,25 +244,25 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
             </div>
 
             {/* ── Global System Config ─────────────────────────────── */}
-            <div className="border-t border-white/5">
+            <div className="border-t border-slate-200 dark:border-white/5">
                 <button
                     onClick={() => setConfigOpen(!configOpen)}
-                    className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                 >
-                    <div className="flex items-center gap-2 text-white/40">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-white/40">
                         <Settings2 className="h-4 w-4" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Config. Sistema</span>
                     </div>
-                    <ChevronDown className={cn("h-4 w-4 text-white/20 transition-transform duration-300", configOpen && "rotate-180")} />
+                    <ChevronDown className={cn("h-4 w-4 text-slate-400 dark:text-white/20 transition-transform duration-300", configOpen && "rotate-180")} />
                 </button>
 
                 {configOpen && (
                     <div className="px-5 pb-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
                         {/* Time range */}
                         <div className="space-y-2">
-                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Horario de Activación</p>
+                            <p className="text-[9px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">Horario de Activación</p>
                             <div className="grid grid-cols-2 gap-2">
-                                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                                <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2">
                                     <Sun className="h-3 w-3 text-emerald-400 shrink-0" />
                                     <input
                                         type="time"
@@ -272,7 +272,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                                         title="Hora inicio"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+                                <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2">
                                     <Moon className="h-3 w-3 text-blue-400 shrink-0" />
                                     <input
                                         type="time"
@@ -287,7 +287,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
 
                         {/* Working days */}
                         <div className="space-y-2">
-                            <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Días Laborables</p>
+                            <p className="text-[9px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">Días Laborables</p>
                             <div className="flex gap-1">
                                 {DAYS_MAP.map(d => {
                                     const isActive = workingDays.includes(d.value);
@@ -304,7 +304,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                                                 "flex-1 h-8 rounded-lg text-[10px] font-black transition-all border",
                                                 isActive
                                                     ? "bg-primary/20 border-primary/40 text-primary"
-                                                    : "bg-white/5 border-white/10 text-white/20 hover:text-white/40"
+                                                    : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-white/20 hover:text-slate-600 dark:hover:text-white/40"
                                             )}
                                         >
                                             {d.label}
@@ -317,7 +317,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                         {/* Timezone note */}
                         <div className="flex items-start gap-2 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
                             <Globe2 className="h-3.5 w-3.5 text-cyan-500/60 mt-0.5 shrink-0" />
-                            <p className="text-[9px] text-white/30 leading-relaxed">
+                            <p className="text-[9px] text-slate-500 dark:text-white/30 leading-relaxed">
                                 El sistema adapta el horario al huso horario del lead según su prefijo telefónico (+34 España, +52 México, etc.)
                             </p>
                         </div>
@@ -326,7 +326,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                         <button
                             onClick={handleSaveConfig}
                             disabled={savingConfig}
-                            className="w-full h-9 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/50 hover:bg-white/10 hover:text-white/80 transition-all disabled:opacity-40"
+                            className="w-full h-9 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/50 hover:bg-slate-200 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white/80 transition-all disabled:opacity-40"
                         >
                             {savingConfig ? "Guardando..." : "Guardar Configuración"}
                         </button>
@@ -335,7 +335,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
             </div>
 
             {/* ── Deploy Button ────────────────────────────────────── */}
-            <div className="p-4 border-t border-white/5 bg-white/[0.02]">
+            <div className="p-4 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
                 <button
                     onClick={handleDeploy}
                     disabled={deploying}

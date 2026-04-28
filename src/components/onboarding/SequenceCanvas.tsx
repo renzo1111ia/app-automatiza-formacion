@@ -21,14 +21,14 @@ import '@xyflow/react/dist/style.css';
 import { 
   LeadTriggerNode, ActionNode, DelayNode, LLMNode, APINode, 
   SubWorkflowNode, WebhookNode, WebhookResponseNode, WebhookWaitNode,
-  TimeConditionNode, VoiceCallNode, TextAgentNode, WhatsAppNode, EndNode
+  TimeConditionNode, VoiceCallNode, TextAgentNode, WhatsAppNode, EndNode, ConditionNode
 } from './nodes/TriggerNodes';
 import { NodeConfigSidebar } from './NodeConfigSidebar';
 import { 
     Save, Plus, Play, Trash2, 
     Phone, MessageSquare, BrainCircuit, 
     Globe, Clock, GitBranchPlus, Webhook, 
-    Reply, Hourglass, Timer, Bot, CheckCircle2
+    Reply, Hourglass, Timer, Bot, CheckCircle2, MessageCircle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -39,10 +39,12 @@ const nodeTypes = {
   voiceCall: VoiceCallNode,
   textAgent: TextAgentNode,
   whatsapp: WhatsAppNode,
+  condition: ConditionNode,
   end: EndNode,
   // Legacy / generic nodes (keep backward compat)
   leadTrigger: LeadTriggerNode,
   webhookTrigger: WebhookNode,
+  inboundWhatsApp: LeadTriggerNode,
   action: ActionNode,
   delay: DelayNode,
   llm: LLMNode,
@@ -51,6 +53,16 @@ const nodeTypes = {
   webhookResponse: WebhookResponseNode,
   webhookWait: WebhookWaitNode
 };
+
+// ─── MINIMAL FLOW: Only the Entry Lead trigger
+const createMinimalNodes = (): Node[] => [
+  { 
+    id: 'trigger-1', 
+    type: 'leadTrigger', 
+    position: { x: 400, y: 100 }, 
+    data: { label: 'Entry Lead' } 
+  }
+];
 
 // ─── DEFAULT FLOW: Lead → CondiciónHoraria → Llamada/WA → Espera → End
 const createInitialNodes = (): Node[] => [
@@ -196,14 +208,16 @@ const NODE_MENU = [
   {
     section: "🚀 Disparadores",
     items: [
-      { type: 'leadTrigger', label: 'Entry Lead (Webhook)', icon: <Globe className="h-4 w-4" />, color: 'text-orange-400 hover:bg-orange-500/20' },
-      { type: 'webhookTrigger', label: 'Webhook Entrada', icon: <Webhook className="h-4 w-4" />, color: 'text-orange-500 hover:bg-orange-600/20' },
+      { type: 'leadTrigger', label: 'Entry Lead (CRM / Webhook)', icon: <Globe className="h-4 w-4" />, color: 'text-orange-400 hover:bg-orange-500/20' },
+      { type: 'webhookTrigger', label: 'Webhook (Genérico)', icon: <Webhook className="h-4 w-4" />, color: 'text-orange-500 hover:bg-orange-600/20' },
+      { type: 'inboundWhatsApp', label: 'Mensaje Entrante (WhatsApp)', icon: <MessageCircle className="h-4 w-4" />, color: 'text-emerald-400 hover:bg-emerald-500/20' },
     ]
   },
   {
     section: "⚙️ Lógica de Sistema",
     items: [
       { type: 'timeCondition', label: 'Condición Horaria', icon: <Timer className="h-4 w-4" />, color: 'text-yellow-400 hover:bg-yellow-500/20', data: { config: { start: '09:00', end: '20:00', working_days: [1,2,3,4,5] } } },
+      { type: 'condition', label: 'Condición (IF/ELSE)', icon: <GitBranchPlus className="h-4 w-4" />, color: 'text-indigo-400 hover:bg-indigo-500/20' },
       { type: 'delay', label: 'Espera (Wait)', icon: <Clock className="h-4 w-4" />, color: 'text-amber-400 hover:bg-amber-500/20', data: { config: { duration: 2 } } },
     ]
   },
@@ -240,10 +254,11 @@ const NODE_MENU = [
 
 // ─── COMPONENT ────────────────────────────────────────────────────
 export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, workflowId: string }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(createInitialNodes());
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(createInitialEdges());
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(createMinimalNodes());
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
   const { setViewport } = useReactFlow();
 
@@ -267,9 +282,9 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
             setEdges(data.graph_data.edges || []);
             if (data.graph_data.viewport) setViewport(data.graph_data.viewport);
           } else {
-            // No saved graph: use the default flow template
-            setNodes(createInitialNodes());
-            setEdges(createInitialEdges());
+            // No saved graph: start with minimal entry node
+            setNodes(createMinimalNodes());
+            setEdges([]);
           }
         }
       } catch (error) {
@@ -297,17 +312,34 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId, workflowId, graphData: { nodes, edges } })
       });
-      if (res.ok) alert("✅ Secuencia Publicada con Éxito");
-      else console.error("Publish failed");
-    } catch (error) { console.error("Error publishing:", error); }
+      if (res.ok) {
+        alert("✅ Secuencia Publicada con Éxito");
+      } else {
+        const err = await res.json();
+        console.error("Publish failed:", err.error);
+        alert("❌ Error al publicar: " + (err.error || "Error desconocido"));
+      }
+    } catch (error) { 
+      console.error("Error publishing:", error);
+      alert("❌ Error de red al publicar.");
+    }
     finally { setIsPublishing(false); }
   };
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
+    setSelectedEdge(null);
   }, []);
 
-  const onPaneClick = useCallback(() => setSelectedNode(null), []);
+  const onEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
+    setSelectedNode(null);
+  }, []);
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNode(null);
+    setSelectedEdge(null);
+  }, []);
 
   const onConfigSave = (newConfig: Record<string, unknown>) => {
     if (!selectedNode) return;
@@ -333,11 +365,15 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
     setNodes((nds) => nds.concat(newNode));
   };
 
-  const deleteNode = () => {
-    if (!selectedNode) return;
-    setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
-    setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
-    setSelectedNode(null);
+  const deleteSelected = () => {
+    if (selectedNode) {
+      setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
+      setEdges((eds) => eds.filter((edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id));
+      setSelectedNode(null);
+    } else if (selectedEdge) {
+      setEdges((eds) => eds.filter((edge) => edge.id !== selectedEdge.id));
+      setSelectedEdge(null);
+    }
   };
 
   return (
@@ -402,9 +438,12 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
         </div>
 
         <button 
-          onClick={deleteNode}
-          className="p-2 rounded-xl hover:bg-red-500/10 text-white/40 hover:text-red-500 transition-colors" 
-          title="Eliminar nodo seleccionado"
+          onClick={deleteSelected}
+          className={cn(
+            "p-2 rounded-xl transition-colors",
+            (selectedNode || selectedEdge) ? "hover:bg-red-500/10 text-red-500" : "text-white/20 cursor-not-allowed"
+          )} 
+          title="Eliminar seleccionado (Nodo o Conexión)"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -424,6 +463,7 @@ export function SequenceCanvas({ tenantId, workflowId }: { tenantId: string, wor
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         colorMode="dark"

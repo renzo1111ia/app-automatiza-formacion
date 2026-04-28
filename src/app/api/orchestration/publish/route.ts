@@ -82,69 +82,57 @@ export async function POST(req: Request) {
 }
 
 /**
- * HELPER: FLATTEN GRAPH (v3.0 - Multi-Trigger aware)
+ * HELPER: FLATTEN GRAPH (v4.0 - Branching & Specialized Nodes)
  */
-function flattenGraph(nodes: { id: string; type?: string; data?: Record<string, any> }[], edges: { source: string; target: string; sourceHandle?: string }[]) {
-    const triggerNodes = nodes.filter(n => ['flow_trigger', 'leadTrigger', 'webhookTrigger'].includes(n.type || ''));
+function flattenGraph(nodes: any[], edges: any[]) {
+    const triggerNodes = nodes.filter(n => ['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(n.type));
     if (triggerNodes.length === 0) return [];
 
-    const allSteps: { label: string; type: string; config: Record<string, any>; triggerNodeId: string; sequence_order: number }[] = [];
+    const allSteps: any[] = [];
+
+    function traverse(currentNodeId: string, triggerNodeId: string, order: number, visitedPath: Set<string>) {
+        if (visitedPath.has(currentNodeId) || order > 50) return;
+        visitedPath.add(currentNodeId);
+
+        const currentNode = nodes.find(n => n.id === currentNodeId);
+        if (!currentNode) return;
+
+        // Map visual node to execution action
+        let actionType = 'UNKNOWN';
+        const type = currentNode.type;
+        const data = currentNode.data || {};
+
+        if (['voiceCall', 'flow_call'].includes(type)) actionType = 'VOICE_CALL';
+        else if (['whatsapp', 'flow_meta_template'].includes(type)) actionType = 'WHATSAPP_TEMPLATE';
+        else if (['textAgent', 'flow_ai_agent'].includes(type)) actionType = 'TEXT_AGENT';
+        else if (['timeCondition', 'flow_condition'].includes(type)) actionType = 'CONDITION';
+        else if (['delay', 'flow_wait'].includes(type)) actionType = 'WAIT';
+        else if (['api', 'flow_http'].includes(type)) actionType = 'HTTP';
+        else if (['llm', 'flow_ai'].includes(type)) actionType = 'LLM';
+        else if (type === 'end') return; // Stop traversal
+
+        // If it's a step (not the trigger itself), add it
+        if (!['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(type)) {
+            allSteps.push({
+                label: data.label || type,
+                type: actionType,
+                config: { ...data.config, ...data },
+                triggerNodeId,
+                sequence_order: order
+            });
+        }
+
+        // Find outgoing edges
+        const outgoing = edges.filter(e => e.source === currentNodeId);
+        outgoing.forEach((edge, idx) => {
+            // If it's a condition, we might want to attach the handle info to the config of the NEXT step or current?
+            // For now, let's just follow all branches
+            traverse(edge.target, triggerNodeId, order + 1 + idx, new Set(visitedPath));
+        });
+    }
 
     triggerNodes.forEach(trigger => {
-        let currentNode = trigger;
-        let order = 0;
-        const visited = new Set<string>();
-        visited.add(trigger.id);
-
-        while (true) {
-            // Find ALL outgoing edges to handle branching (though execution engine might still be linear)
-            const outgoingEdges = edges.filter(e => e.source === currentNode.id);
-            if (outgoingEdges.length === 0) break;
-
-            // For now, let's follow the first path or handle specific branching nodes
-            const edge = outgoingEdges[0];
-            const nextNode = nodes.find(n => n.id === edge.target);
-            if (!nextNode || visited.has(nextNode.id)) break;
-            
-            visited.add(nextNode.id);
-
-            // MAPPING: Map Flow Builder types to Orchestrator Action Types
-            let actionType = 'UNKNOWN';
-            const type = nextNode.type;
-            const data = nextNode.data || {};
-
-            if (type === 'flow_ai_agent') actionType = 'AI_AGENT';
-            else if (type === 'flow_meta_template') actionType = 'WHATSAPP';
-            else if (type === 'flow_message') actionType = 'WHATSAPP_TEXT';
-            else if (type === 'flow_wait' || type === 'delay') actionType = 'WAIT';
-            else if (type === 'flow_db') actionType = 'DATABASE';
-            else if (type === 'flow_http' || type === 'api') actionType = 'HTTP';
-            else if (type === 'flow_crm') actionType = 'CRM';
-            else if (type === 'flow_condition') actionType = 'CONDITION';
-            else if (type === 'flow_book') actionType = 'APPOINTMENT';
-
-            // Special case for generic 'action' node
-            if (type === 'action') {
-                actionType = (data.action as string)?.toUpperCase() || 'UNKNOWN';
-            }
-
-            allSteps.push({
-                label: (data.label as string) || (data.text as string)?.substring(0, 20) || type || 'Unnamed Step',
-                type: actionType,
-                config: {
-                    ...data,
-                    // Ensure naming consistency
-                    agentId: data.agentId,
-                    templateId: data.templateName,
-                    delay_hours: type === 'flow_wait' ? (data.delay_unit === 'horas' ? data.delay_value : (data.delay_value as number / 60)) : 0
-                },
-                triggerNodeId: trigger.id,
-                sequence_order: order++
-            });
-
-            currentNode = nextNode;
-            if (order > 50) break; 
-        }
+        traverse(trigger.id, trigger.id, 0, new Set());
     });
 
     return allSteps;

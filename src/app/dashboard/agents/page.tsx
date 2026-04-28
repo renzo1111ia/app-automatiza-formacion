@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent, deleteAIAgent } from "@/lib/actions/agents";
+import { getKnowledgeBase, KnowledgeItem } from "@/lib/actions/knowledge";
 import { AIAgent, AIAgentVariant } from "@/types/database";
 import { AgentFlowBuilder } from "@/components/orchestrator/AgentFlowBuilder";
 import { useTenantStore } from "@/store/tenant";
@@ -28,12 +29,15 @@ const AI_MODELS = {
         bg: "bg-emerald-500/10",
         border: "border-emerald-500/20",
         models: [
-            { id: 'gpt-4o', name: 'GPT-4o', description: 'El más inteligente y versátil' },
-            { id: 'gpt-4o-mini', name: 'GPT-4o mini', description: 'Ultra-rápido para tareas simples' },
-            { id: 'o1-preview', name: 'o1-preview', description: 'Razonamiento avanzado' },
+            { id: 'gpt-4.1', name: 'GPT-4.1', description: 'El modelo más avanzado y complejo' },
+            { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', description: 'Versión rápida y eficiente' },
+            { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', description: 'El modelo más avanzado experimental' },
+            { id: 'o3-mini', name: 'o3-mini', description: 'Razonamiento ultra-rápido (Science/Math)' },
+            { id: 'o1', name: 'o1', description: 'Razonamiento profundo avanzado' },
             { id: 'o1-mini', name: 'o1-mini', description: 'Razonamiento rápido y eficaz' },
-            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Alta precisión' },
-            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Legacy estable' }
+            { id: 'gpt-4o', name: 'GPT-4o', description: 'Inteligente, rápido y versátil' },
+            { id: 'gpt-4o-mini', name: 'GPT-4o mini', description: 'Ultra-rápido para tareas simples' },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Alta precisión legacy' }
         ]
     },
     ANTHROPIC: {
@@ -93,6 +97,8 @@ export default function AgentsPage() {
     const [variantA, setVariantA] = useState<Partial<AIAgentVariant>>({});
     const [variantB, setVariantB] = useState<Partial<AIAgentVariant>>({});
 
+    const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeItem[]>([]);
+
     const loadAgents = async () => {
         const res = await getAIAgents();
         if (res.success && res.data) {
@@ -100,6 +106,11 @@ export default function AgentsPage() {
             if (res.data.length > 0 && !selectedAgent) {
                 setSelectedAgent(res.data[0]);
             }
+        }
+        
+        const kbRes = await getKnowledgeBase();
+        if (kbRes.success && kbRes.data) {
+            setKnowledgeBases(kbRes.data);
         }
     };
 
@@ -456,7 +467,7 @@ export default function AgentsPage() {
                                                                 "flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-[10px] font-black uppercase tracking-widest",
                                                                 isActive 
                                                                     ? cn(config.bg, config.color, "border", config.border)
-                                                                    : "text-white/20 hover:text-white/40"
+                                                                    : "text-slate-500 dark:text-white/60 hover:text-slate-700 dark:hover:text-white/80"
                                                             )}
                                                         >
                                                             <Icon className="h-3.5 w-3.5" />
@@ -495,12 +506,12 @@ export default function AgentsPage() {
                                                         )}
                                                         <div className="relative z-10">
                                                             <p className={cn(
-                                                                "text-[10px] font-black uppercase tracking-widest mb-1",
-                                                                isActive ? config.color : "text-white/20"
+                                                                "text-[10px] font-black uppercase tracking-widest mb-1 transition-colors",
+                                                                isActive ? config.color : "text-slate-500 dark:text-white/60 group-hover:text-slate-700 dark:group-hover:text-white/80"
                                                             )}>
                                                                 {model.name}
                                                             </p>
-                                                            <p className="text-[10px] text-white/40 leading-tight group-hover:text-white/60 transition-colors">
+                                                            <p className="text-[10px] text-slate-400 dark:text-white/40 leading-tight group-hover:text-slate-500 dark:group-hover:text-white/60 transition-colors">
                                                                 {model.description}
                                                             </p>
                                                         </div>
@@ -539,30 +550,114 @@ export default function AgentsPage() {
                                                 </div>
                                             </div>
                                             
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {[
-                                                    { id: 'LOCAL_KB_01', name: 'Knowledge Base Esden v1', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-                                                    { id: 'NONE', name: 'Sin Base de Conocimiento', color: 'bg-white/5 text-white/40 border-white/10' }
-                                                ].map((kb) => {
-                                                    const isActive = ((activeTab === 'A' ? variantA : variantB).knowledge_base_id || 'NONE') === kb.id;
-                                                    return (
-                                                        <button
-                                                            key={kb.id}
-                                                            onClick={() => {
-                                                                const val = kb.id === 'NONE' ? null : kb.id;
-                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
-                                                                else setVariantB(prev => ({...prev, knowledge_base_id: val}));
-                                                            }}
-                                                            className={cn(
-                                                                "p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center gap-3",
-                                                                isActive ? kb.color : "bg-white/[0.01] border-white/5 text-white/20 hover:border-white/10"
-                                                            )}
-                                                        >
-                                                            <div className={cn("h-2 w-2 rounded-full", isActive ? "bg-current animate-pulse" : "bg-white/10")} />
-                                                            {kb.name}
-                                                        </button>
-                                                    );
-                                                })}
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        onClick={() => {
+                                                            const currentVal = (activeTab === 'A' ? variantA : variantB).knowledge_base_id;
+                                                            if (!currentVal || currentVal === 'NONE') {
+                                                                // Habilitar con la primera base por defecto si existe
+                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: knowledgeBases[0]?.id || 'NONE'}));
+                                                                else setVariantB(prev => ({...prev, knowledge_base_id: knowledgeBases[0]?.id || 'NONE'}));
+                                                            }
+                                                        }}
+                                                        className={cn(
+                                                            "p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center gap-3",
+                                                            ((activeTab === 'A' ? variantA : variantB).knowledge_base_id && (activeTab === 'A' ? variantA : variantB).knowledge_base_id !== 'NONE')
+                                                                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" 
+                                                                : "bg-white/[0.01] border-white/5 text-white/20 hover:border-white/10"
+                                                        )}
+                                                    >
+                                                        <div className={cn("h-2 w-2 rounded-full", ((activeTab === 'A' ? variantA : variantB).knowledge_base_id && (activeTab === 'A' ? variantA : variantB).knowledge_base_id !== 'NONE') ? "bg-current animate-pulse" : "bg-white/10")} />
+                                                        Conectar MinIO / PGVector
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: null}));
+                                                            else setVariantB(prev => ({...prev, knowledge_base_id: null}));
+                                                        }}
+                                                        className={cn(
+                                                            "p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all text-left flex items-center gap-3",
+                                                            !((activeTab === 'A' ? variantA : variantB).knowledge_base_id) || (activeTab === 'A' ? variantA : variantB).knowledge_base_id === 'NONE'
+                                                                ? "bg-white/5 text-white/40 border-white/10"
+                                                                : "bg-white/[0.01] border-white/5 text-white/20 hover:border-white/10"
+                                                        )}
+                                                    >
+                                                        <div className={cn("h-2 w-2 rounded-full", !((activeTab === 'A' ? variantA : variantB).knowledge_base_id) || (activeTab === 'A' ? variantA : variantB).knowledge_base_id === 'NONE' ? "bg-current animate-pulse" : "bg-white/10")} />
+                                                        Sin Base de Conocimiento
+                                                    </button>
+                                                </div>
+
+                                                {((activeTab === 'A' ? variantA : variantB).knowledge_base_id && (activeTab === 'A' ? variantA : variantB).knowledge_base_id !== 'NONE') && (
+                                                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        {knowledgeBases.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                <select
+                                                                    title="Seleccionar Base de Conocimiento"
+                                                                    aria-label="Seleccionar Base de Conocimiento"
+                                                                    value={
+                                                                        knowledgeBases.some(kb => kb.id === (activeTab === 'A' ? variantA : variantB).knowledge_base_id) 
+                                                                            ? ((activeTab === 'A' ? variantA : variantB).knowledge_base_id || "") 
+                                                                            : "custom"
+                                                                    }
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (val === "custom") {
+                                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: ""}));
+                                                                            else setVariantB(prev => ({...prev, knowledge_base_id: ""}));
+                                                                        } else {
+                                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
+                                                                            else setVariantB(prev => ({...prev, knowledge_base_id: val}));
+                                                                        }
+                                                                    }}
+                                                                    className="w-full h-11 bg-black/40 border border-emerald-500/30 rounded-xl px-4 text-xs font-bold text-emerald-100 focus:border-emerald-400 focus:bg-emerald-500/10 transition-all outline-none"
+                                                                >
+                                                                    <option value="" disabled>Selecciona una Base de Conocimiento...</option>
+                                                                    {knowledgeBases.map((kb) => (
+                                                                        <option key={kb.id} value={kb.id} className="bg-slate-900 text-white">
+                                                                            {kb.name}
+                                                                        </option>
+                                                                    ))}
+                                                                    <option value="custom" className="bg-slate-900 text-emerald-400 font-bold">Configurar Bucket Manualmente...</option>
+                                                                </select>
+
+                                                                {/* Fallback Input for Manual Buckets */}
+                                                                {!knowledgeBases.some(kb => kb.id === (activeTab === 'A' ? variantA : variantB).knowledge_base_id) && (
+                                                                    <input 
+                                                                        type="text"
+                                                                        value={(activeTab === 'A' ? variantA : variantB).knowledge_base_id || ""}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.value;
+                                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
+                                                                            else setVariantB(prev => ({...prev, knowledge_base_id: val}));
+                                                                        }}
+                                                                        placeholder="Ej: nombre-del-bucket-minio"
+                                                                        className="w-full h-11 bg-black/40 border border-emerald-500/30 rounded-xl px-4 text-xs font-mono text-emerald-100 focus:border-emerald-400 focus:bg-emerald-500/10 transition-all outline-none shadow-inner shadow-black/50 animate-in fade-in slide-in-from-top-2"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                <div className="p-4 border border-dashed border-emerald-500/30 rounded-xl bg-emerald-500/5 text-center space-y-2">
+                                                                    <DbIcon className="h-5 w-5 text-emerald-500/50 mx-auto" />
+                                                                    <p className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-widest">No hay bases de datos registradas</p>
+                                                                    <p className="text-[9px] text-emerald-400/50">Puedes subir un PDF en Knowledge Base, o conectar un bucket existente manualmente abajo.</p>
+                                                                </div>
+                                                                <input 
+                                                                    type="text"
+                                                                    value={(activeTab === 'A' ? variantA : variantB).knowledge_base_id || ""}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (activeTab === 'A') setVariantA(prev => ({...prev, knowledge_base_id: val}));
+                                                                        else setVariantB(prev => ({...prev, knowledge_base_id: val}));
+                                                                    }}
+                                                                    placeholder="Ej: nombre-del-bucket-minio"
+                                                                    className="w-full h-11 bg-black/40 border border-emerald-500/30 rounded-xl px-4 text-xs font-mono text-emerald-100 focus:border-emerald-400 focus:bg-emerald-500/10 transition-all outline-none shadow-inner shadow-black/50"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <p className="text-[9px] text-white/20 italic">
@@ -570,56 +665,6 @@ export default function AgentsPage() {
                                             </p>
                                         </div>
 
-                                        {/* Dynamic Variables Section */}
-                                        <div className="pt-4 border-t border-white/5 space-y-4 text-left">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Layers className="h-4 w-4 text-primary" />
-                                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Inyectar Datos (Contexto Estático)</p>
-                                                </div>
-                                                <button 
-                                                    onClick={() => {
-                                                        const key = prompt("Nombre del dato (ej: sede):");
-                                                        if (key) {
-                                                            const val = prompt(`Valor fijo para ${key}:`) || "";
-                                                            const current = (activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {};
-                                                            const updated = { ...current, [key]: val };
-                                                            if (activeTab === 'A') setVariantA(prev => ({...prev, dynamic_variables: updated}));
-                                                            else setVariantB(prev => ({...prev, dynamic_variables: updated}));
-                                                        }
-                                                    }}
-                                                    title="Añadir dato estático al contexto"
-                                                    className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
-                                                >
-                                                    + Añadir Contexto
-                                                </button>
-                                            </div>
-
-                                            <div className="flex flex-wrap gap-2">
-                                                {Object.entries((activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {}).map(([k, v]) => (
-                                                    <div key={k} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg group">
-                                                        <span className="text-[10px] font-bold text-white/40">{"{{"}{k}{"}}"}:</span>
-                                                        <span className="text-[10px] font-medium text-white/80">{v}</span>
-                                                            <button 
-                                                                onClick={() => {
-                                                                    const current = (activeTab === 'A' ? variantA : variantB).dynamic_variables as Record<string, string> || {};
-                                                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                                                    const { [k]: _, ...updated } = current;
-                                                                    if (activeTab === 'A') setVariantA(prev => ({...prev, dynamic_variables: updated}));
-                                                                    else setVariantB(prev => ({...prev, dynamic_variables: updated}));
-                                                                }}
-                                                                title={`Eliminar variable ${k}`}
-                                                                className="opacity-0 group-hover:opacity-100 transition-opacity ml-1"
-                                                            >
-                                                                <RotateCcw className="h-3 w-3 text-red-400 rotate-45" />
-                                                            </button>
-                                                    </div>
-                                                ))}
-                                                {Object.keys((activeTab === 'A' ? variantA : variantB).dynamic_variables || {}).length === 0 && (
-                                                    <p className="text-[10px] text-white/10 italic">Usa esto para datos que nunca cambian durante la charla.</p>
-                                                )}
-                                            </div>
-                                        </div>
 
                                         {/* Tracked Variables (Autonomous CRM) */}
                                         <div className="pt-4 border-t border-white/5 space-y-4 text-left">
@@ -628,22 +673,45 @@ export default function AgentsPage() {
                                                     <Brain className="h-4 w-4 text-amber-400" />
                                                     <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Capturar Datos (Memoria del Agente)</p>
                                                 </div>
-                                                <button 
-                                                    onClick={() => {
-                                                        const key = prompt("¿Qué campo quieres que la IA aprenda? (ej: nombre):");
-                                                        if (key) {
-                                                            const current = (activeTab === 'A' ? variantA : variantB).tracked_variables || [];
-                                                            if (!current.includes(key)) {
-                                                                const updated = [...current, key];
-                                                                if (activeTab === 'A') setVariantA(prev => ({...prev, tracked_variables: updated}));
-                                                                else setVariantB(prev => ({...prev, tracked_variables: updated}));
+                                                <div className="flex items-center gap-2">
+                                                    <select 
+                                                        title="Añadir Etiqueta de Memoria"
+                                                        aria-label="Añadir Etiqueta de Memoria"
+                                                        onChange={(e) => {
+                                                            let key = e.target.value;
+                                                            if (key === "custom") {
+                                                                key = prompt("¿Qué campo personalizado quieres que la IA aprenda? (ej: empresa_actual):") || "";
                                                             }
-                                                        }
-                                                    }}
-                                                    className="text-[10px] font-bold text-amber-400 hover:underline uppercase tracking-widest"
-                                                >
-                                                    + Etiqueta de Memoria
-                                                </button>
+                                                            
+                                                            if (key && key.trim() !== "") {
+                                                                const current = (activeTab === 'A' ? variantA : variantB).tracked_variables || [];
+                                                                if (!current.includes(key.trim())) {
+                                                                    const updated = [...current, key.trim()];
+                                                                    if (activeTab === 'A') setVariantA(prev => ({...prev, tracked_variables: updated}));
+                                                                    else setVariantB(prev => ({...prev, tracked_variables: updated}));
+                                                                }
+                                                            }
+                                                            e.target.value = ""; // Reset dropdown
+                                                        }}
+                                                        className="h-7 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 text-[10px] font-bold text-amber-400 hover:bg-amber-500/20 focus:border-amber-400 transition-all outline-none cursor-pointer uppercase tracking-widest"
+                                                        defaultValue=""
+                                                    >
+                                                        <option value="" disabled>+ ETIQUETA DE MEMORIA</option>
+                                                        <optgroup label="Contacto">
+                                                            <option value="nombre">Nombre</option>
+                                                            <option value="email">Email</option>
+                                                            <option value="telefono">Teléfono</option>
+                                                            <option value="pais">País</option>
+                                                        </optgroup>
+                                                        <optgroup label="Cualificación">
+                                                            <option value="interes">Curso de Interés</option>
+                                                            <option value="presupuesto">Presupuesto</option>
+                                                            <option value="disponibilidad">Disponibilidad</option>
+                                                            <option value="objecion">Objeción Principal</option>
+                                                        </optgroup>
+                                                        <option value="custom">Personalizado (Escribir...)</option>
+                                                    </select>
+                                                </div>
                                             </div>
 
                                             <p className="text-[9px] text-white/30 leading-relaxed">

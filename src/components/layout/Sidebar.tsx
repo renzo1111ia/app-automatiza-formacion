@@ -11,7 +11,7 @@ import {
     LayoutDashboard, Megaphone, MessageCircle, 
     Clock, History, Settings, X, ChevronDown, PlusCircle,
     Workflow, Bot, ShieldCheck, Terminal,
-    Calendar, MessageSquare, FlaskConical, Mic
+    Calendar, MessageSquare, FlaskConical, Mic, Globe, BookOpen
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -39,6 +39,11 @@ const NAV_ITEMS: NavItem[] = [
                 icon: <Bot className="h-4 w-4" strokeWidth={1.8} />
             },
             {
+                label: "Knowledge Base",
+                href: "/dashboard/knowledge",
+                icon: <BookOpen className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
                 label: "Agentes de Voz",
                 href: "/dashboard/voice-agents",
                 icon: <Mic className="h-4 w-4" strokeWidth={1.8} />
@@ -50,9 +55,19 @@ const NAV_ITEMS: NavItem[] = [
                 icon: <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
             },
             {
+                label: "Chatbot Web",
+                href: "/dashboard/web-chatbot",
+                icon: <Globe className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
                 label: "Calendario",
                 href: "/dashboard/calendar",
                 icon: <Calendar className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Simulador",
+                href: "/dashboard/simulator",
+                icon: <FlaskConical className="h-4 w-4" strokeWidth={1.8} />
             },
             {
                 label: "Playground",
@@ -99,6 +114,11 @@ const NAV_ITEMS: NavItem[] = [
                 ]
             },
             {
+                label: "Auditoría de IA",
+                href: "/dashboard/logs",
+                icon: <Terminal className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
                 label: "Historial",
                 href: "/dashboard/historial",
                 icon: <History className="h-4 w-4" strokeWidth={1.8} />
@@ -109,11 +129,6 @@ const NAV_ITEMS: NavItem[] = [
         label: "Config",
         href: "/dashboard/settings",
         icon: <Settings className="h-5 w-5" strokeWidth={1.8} />
-    },
-    {
-        label: "Simulador",
-        href: "/dashboard/demo",
-        icon: <FlaskConical className="h-5 w-5 text-purple-500" strokeWidth={1.8} />
     },
 ];
 
@@ -142,7 +157,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
     };
 
     const visibleNavItems = NAV_ITEMS.filter(item => {
-        if (item.href === "/dashboard/settings" || item.href === "/dashboard/demo") {
+        if (item.href === "/dashboard/settings") {
             return isAdmin;
         }
         return true;

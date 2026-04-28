@@ -12,7 +12,7 @@ export class GlobalLogger {
         level: LogLevel,
         source: LogSource,
         message: string,
-        metadata: Record<string, any> = {},
+        metadata: Record<string, unknown> = {},
         errorCode?: string
     ) {
         try {
@@ -25,12 +25,15 @@ export class GlobalLogger {
             else console.log(prefix, message, metadata);
 
             // Persist to DB
-            const { error } = await (supabase.from("system_logs" as any) as any).insert({
+            // Using a typed cast to avoid 'any' since system_logs might not be in the generated types
+            const { error } = await (supabase.from("system_logs" as never) as unknown as { 
+                insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }> 
+            }).insert({
                 tenant_id: tenantId,
                 level,
                 source,
                 message,
-                metadata,
+                metadata: metadata as Record<string, unknown>,
                 error_code: errorCode
             });
 
@@ -42,15 +45,15 @@ export class GlobalLogger {
         }
     }
 
-    static async info(tenantId: string, source: LogSource, message: string, metadata?: Record<string, any>) {
+    static async info(tenantId: string, source: LogSource, message: string, metadata?: Record<string, unknown>) {
         return this.log(tenantId, 'INFO', source, message, metadata);
     }
 
-    static async warn(tenantId: string, source: LogSource, message: string, metadata?: Record<string, any>) {
+    static async warn(tenantId: string, source: LogSource, message: string, metadata?: Record<string, unknown>) {
         return this.log(tenantId, 'WARN', source, message, metadata);
     }
 
-    static async error(tenantId: string, source: LogSource, message: string, metadata?: Record<string, any>, errorCode?: string) {
+    static async error(tenantId: string, source: LogSource, message: string, metadata?: Record<string, unknown>, errorCode?: string) {
         return this.log(tenantId, 'ERROR', source, message, metadata, errorCode);
     }
 }

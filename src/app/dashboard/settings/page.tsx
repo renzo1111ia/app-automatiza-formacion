@@ -209,8 +209,23 @@ export default function SettingsPage() {
                                         <div className="bg-blue-50/30 p-8 border-b border-blue-100 animate-in slide-in-from-top duration-300">
                                             <form onSubmit={handleSaveNew} className="space-y-6">
                                                 <div className="flex items-center justify-between mb-4">
-                                                    <h3 className="text-sm font-black uppercase tracking-widest text-blue-600">Configurar Nuevo Entorno</h3>
+                                                    <h3 className="text-sm font-black uppercase tracking-widest text-blue-600 flex items-center gap-2">
+                                                        Configurar Nuevo Entorno
+                                                    </h3>
                                                     <div className="flex items-center gap-3">
+                                                        {/* Role Toggle for New Form */}
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => setEditForm({ ...editForm, is_admin: !editForm.is_admin })} 
+                                                            className={cn(
+                                                                "flex items-center gap-2 px-3 h-9 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest shadow-sm", 
+                                                                editForm.is_admin ? "bg-blue-600 border-blue-600 text-white shadow-blue-500/20" : "bg-white border-slate-200 text-slate-400"
+                                                            )}
+                                                            title="Cambiar rol (Admin / Cliente)"
+                                                        >
+                                                            {editForm.is_admin ? <><Shield className="h-3 w-3" /> Admin</> : <><Building2 className="h-3 w-3" /> Cliente</>}
+                                                        </button>
+
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowNewForm(false)}
@@ -362,7 +377,7 @@ export default function SettingsPage() {
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+                                                            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
                                                                 <KpiBuilder 
                                                                     kpis={(editForm.config as Record<string, any>)?.kpis || []} 
                                                                     onChange={(kpis) => { 
@@ -372,9 +387,9 @@ export default function SettingsPage() {
                                                                 />
                                                             </div>
 
-                                                            <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
-                                                                <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 mb-6 flex items-center gap-2">
-                                                                    <Zap className="h-4 w-4 text-blue-600" /> Servidodes Externos e Integraciones
+                                                            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+                                                                <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                                                                    <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" /> Servidodes Externos e Integraciones
                                                                 </h3>
                                                                 <IntegrationsManager 
                                                                     tenantId={isEditing || undefined}
@@ -417,19 +432,19 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nombre del Proyecto</Label><Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="h-11 bg-white font-bold" /></div>
-                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Usuario</Label><Input value={editForm.username} onChange={e => setEditForm({ ...editForm, username: e.target.value })} className="h-11 bg-white font-bold" /></div>
-                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Email</Label><Input value={editForm.client_email} onChange={e => setEditForm({ ...editForm, client_email: e.target.value })} className="h-11 bg-white font-bold" /></div>
-                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Pass</Label><Input value={editForm.password} onChange={e => setEditForm({ ...editForm, password: e.target.value })} className="h-11 bg-white" type="password" placeholder="Opcional" /></div>
+                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nombre del Proyecto</Label><Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold" /></div>
+                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Usuario</Label><Input value={editForm.username} onChange={e => setEditForm({ ...editForm, username: e.target.value })} className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold" /></div>
+                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Email</Label><Input value={editForm.client_email} onChange={e => setEditForm({ ...editForm, client_email: e.target.value })} className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 font-bold" /></div>
+                                                <div className="space-y-2"><Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Pass</Label><Input value={editForm.password} onChange={e => setEditForm({ ...editForm, password: e.target.value })} className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800" type="password" placeholder="Opcional" /></div>
 
                                                 {!editForm.is_admin && (
                                                     <div className="md:col-span-2 space-y-4 pt-4 border-t border-slate-100">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Infraestructura</Label>
                                                         <div className="flex gap-4">
-                                                            <button type="button" onClick={() => setEditForm({...editForm, api_type: 'internal', supabase_url: '', supabase_anon_key: ''})} className={cn("flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest", editForm.api_type === 'internal' ? "bg-blue-600/5 border-blue-600 text-blue-600" : "bg-white border-slate-100 text-slate-400")}>
+                                                            <button type="button" onClick={() => setEditForm({...editForm, api_type: 'internal', supabase_url: '', supabase_anon_key: ''})} className={cn("flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest", editForm.api_type === 'internal' ? "bg-blue-600/5 border-blue-600 text-blue-600" : "bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400")}>
                                                                 <Globe className="h-3 w-3" /> Interna
                                                             </button>
-                                                            <button type="button" onClick={() => setEditForm({...editForm, api_type: 'client'})} className={cn("flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest", editForm.api_type === 'client' ? "bg-blue-600/5 border-blue-600 text-blue-600" : "bg-white border-slate-100 text-slate-400")}>
+                                                            <button type="button" onClick={() => setEditForm({...editForm, api_type: 'client'})} className={cn("flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border-2 transition-all font-black text-[9px] uppercase tracking-widest", editForm.api_type === 'client' ? "bg-blue-600/5 border-blue-600 text-blue-600" : "bg-white dark:bg-slate-950 border-slate-100 dark:border-slate-800 text-slate-400")}>
                                                                 <Shield className="h-3 w-3" /> Externa
                                                             </button>
                                                         </div>
