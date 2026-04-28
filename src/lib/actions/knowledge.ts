@@ -1,8 +1,7 @@
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
-import { uploadToMinio } from "@/lib/integrations/minio";
-import { Database } from "@/types/database";
+import { uploadToMinio, deleteFromMinio } from "@/lib/integrations/minio";
 
 export type KnowledgeItem = {
     id: string;
@@ -73,9 +72,13 @@ export async function uploadKnowledgeDocument(formData: FormData) {
 
         if (error) throw error;
         return { success: true, data };
-    } catch (error: unknown) {
-        const err = error as Error;
-        return { success: false, error: err.message };
+    } catch (error: any) {
+        // eslint-disable-next-line no-console
+        console.error('❌ [UPLOAD_KNOWLEDGE] Critical Error:', error);
+        return { 
+            success: false, 
+            error: error?.message || error?.name || "Error desconocido en el servidor"
+        };
     }
 }
 
@@ -88,6 +91,19 @@ export async function deleteKnowledgeDocument(id: string) {
     
     if (!tenantId) return { success: false, error: "No context." };
 
+    // 1. Get file key first for deletion from MinIO
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: item } = await (supabase
+        .from("knowledge_base" as any) as any)
+        .select("file_key")
+        .eq("id", id)
+        .single();
+
+    if ((item as any)?.file_key) {
+        await deleteFromMinio((item as any).file_key);
+    }
+
+    // 2. Delete from DB
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase
         .from("knowledge_base" as any) as any)
