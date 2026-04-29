@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { getKnowledgeBase, uploadKnowledgeDocument, deleteKnowledgeDocument, KnowledgeItem } from "@/lib/actions/knowledge";
+import { getKnowledgeBase, uploadKnowledgeDocument, deleteKnowledgeDocument } from "@/lib/actions/knowledge";
+import { KnowledgeItem } from "@/types/database";
 
 export default function KnowledgeBasePage() {
-    const [itmes, setItems] = useState<KnowledgeItem[]>([]);
+    const [items, setItems] = useState<KnowledgeItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -62,7 +63,7 @@ export default function KnowledgeBasePage() {
         setUploadProgress({ current: 0, total: files.length });
 
         let successCount = 0;
-        let errors: string[] = [];
+        const errors: string[] = [];
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -70,7 +71,13 @@ export default function KnowledgeBasePage() {
 
             const formData = new FormData();
             formData.append("file", file);
-            formData.append("name", kbName || file.name); // Using custom name if provided, else filename
+            
+            // If bulk uploading (more than 1 file), append filename to custom name to avoid confusion
+            const finalName = files.length > 1 && kbName 
+                ? `${kbName} (${file.name})` 
+                : (kbName || file.name);
+
+            formData.append("name", finalName);
             formData.append("description", description);
 
             const res = await uploadKnowledgeDocument(formData);
@@ -112,10 +119,34 @@ export default function KnowledgeBasePage() {
         setFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const filteredItems = itmes.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Group items by name for the UI
+    const groupedItems = items.reduce((acc, item) => {
+        if (!acc[item.name]) {
+            acc[item.name] = {
+                name: item.name,
+                description: item.description,
+                ids: [item.id],
+                count: 1,
+                created_at: item.created_at,
+                file_keys: [item.file_key]
+            };
+        } else {
+            acc[item.name].ids.push(item.id);
+            acc[item.name].file_keys.push(item.file_key);
+            acc[item.name].count += 1;
+            // Keep the newest description and date
+            if (new Date(item.created_at) > new Date(acc[item.name].created_at)) {
+                acc[item.name].description = item.description;
+                acc[item.name].created_at = item.created_at;
+            }
+        }
+        return acc;
+    }, {} as Record<string, { name: string, description: string | null, ids: string[], count: number, created_at: string, file_keys: string[] }>);
+
+    const displayGroups = Object.values(groupedItems).filter(group => 
+        group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        group.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-950 text-white selection:bg-primary/30">
@@ -162,52 +193,58 @@ export default function KnowledgeBasePage() {
                         <Loader2 className="h-8 w-8 animate-spin" />
                         <p className="text-[10px] font-black uppercase tracking-tighter">Cargando biblioteca...</p>
                     </div>
-                ) : filteredItems.length === 0 ? (
+                ) : displayGroups.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full space-y-6">
                         <div className="h-24 w-24 bg-white/5 rounded-[40px] flex items-center justify-center border border-dashed border-white/10">
                             <Cloud className="h-10 w-10 text-white/10" />
                         </div>
                         <div className="text-center">
-                            <h3 className="text-xl font-bold uppercase tracking-tight">Tu biblioteca está vacía</h3>
-                            <p className="text-sm text-white/30 max-w-xs mx-auto mt-2 font-medium">Sube los PDFs detallados de tus cursos para que la IA pueda responder con precisión.</p>
+                            <h3 className="text-xl font-bold uppercase tracking-tight">Sin coincidencias</h3>
+                            <p className="text-sm text-white/30 max-w-xs mx-auto mt-2 font-medium">No encontramos bases que coincidan con tu búsqueda.</p>
                         </div>
-                        <button 
-                            onClick={() => setIsUploadModalOpen(true)}
-                            className="h-12 px-8 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all font-bold"
-                        >
-                            Subir mi primer archivo
-                        </button>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-                        {filteredItems.map((item) => (
+                        {displayGroups.map((group) => (
                             <motion.div 
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                key={item.id}
+                                key={group.name}
                                 className="group relative bg-white/[0.02] border border-white/5 rounded-[32px] p-6 hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all"
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
-                                        <FileText className="h-6 w-6" />
+                                        <Database className="h-6 w-6" />
                                     </div>
-                                    <button 
-                                        onClick={() => handleDelete(item.id, item.name)}
-                                        className="p-2 rounded-xl text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                                        title={`Eliminar ${item.name}`}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
+                                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button 
+                                            onClick={async () => {
+                                                if (confirm(`¿Eliminar la base "${group.name}" y sus ${group.count} archivos?`)) {
+                                                    setLoading(true);
+                                                    for (const id of group.ids) {
+                                                        await deleteKnowledgeDocument(id);
+                                                    }
+                                                    await loadItems();
+                                                }
+                                            }}
+                                            className="p-2 rounded-xl text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                            title={`Eliminar toda la base ${group.name}`}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-base text-white/90 group-hover:text-white transition-colors line-clamp-1">{item.name}</h3>
+                                    <h3 className="font-bold text-base text-white/90 group-hover:text-white transition-colors line-clamp-1">{group.name}</h3>
                                     <p className="text-xs text-white/30 line-clamp-2 h-8 leading-snug">
-                                        {item.description || "Sin descripción proporcionada."}
+                                        {group.description || "Sin descripción proporcionada."}
                                     </p>
                                 </div>
                                 <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-white/10">ID: {item.id.split('-')[0].toUpperCase()}</span>
-                                    <span className="text-[10px] font-bold text-emerald-400/60 flex items-center gap-1.5">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
+                                        {group.count} {group.count === 1 ? 'Archivo' : 'Archivos'}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-white/10 flex items-center gap-1.5">
                                         <ShieldCheck className="h-3 w-3" />
                                         Indexado
                                     </span>

@@ -10,21 +10,28 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  * Serves as the primary storage for Knowledge Base PDFs.
  */
 
-const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
-const accessKeyId = process.env.MINIO_ACCESS_KEY || '';
-const secretAccessKey = process.env.MINIO_SECRET_KEY || '';
 const bucketName = process.env.MINIO_BUCKET || 'esden-knowledge-base';
-const region = 'us-east-1'; // Minio usually ignores this but SDK requires it
+let _minioClient: S3Client | null = null;
 
-const minioClient = new S3Client({
-    endpoint,
-    region,
-    forcePathStyle: true, // Required for MinIO
-    credentials: {
-        accessKeyId,
-        secretAccessKey,
+function getMinioClient() {
+    if (!_minioClient) {
+        const endpoint = process.env.MINIO_ENDPOINT || 'http://localhost:9000';
+        const accessKeyId = process.env.MINIO_ACCESS_KEY || '';
+        const secretAccessKey = process.env.MINIO_SECRET_KEY || '';
+        const region = 'us-east-1';
+
+        _minioClient = new S3Client({
+            endpoint,
+            region,
+            forcePathStyle: true,
+            credentials: {
+                accessKeyId,
+                secretAccessKey,
+            }
+        });
     }
-});
+    return _minioClient;
+}
 
 /**
  * Ensures the target bucket exists before performing operations.
@@ -32,14 +39,19 @@ const minioClient = new S3Client({
  */
 async function ensureBucketExists(targetBucket: string = bucketName) {
     try {
-        await minioClient.send(new HeadBucketCommand({ Bucket: targetBucket }));
+        await getMinioClient().send(new HeadBucketCommand({ Bucket: targetBucket }));
     } catch (error: any) {
         if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
             console.log(`[MINIO] Bucket '${targetBucket}' no encontrado. Creándolo automáticamente...`);
-            await minioClient.send(new CreateBucketCommand({ Bucket: targetBucket }));
+            await getMinioClient().send(new CreateBucketCommand({ Bucket: targetBucket }));
             console.log(`[MINIO] ✅ Bucket '${targetBucket}' creado exitosamente.`);
         } else {
-            console.error(`[MINIO] Error verificando el bucket '${targetBucket}':`, error);
+            console.error(`[MINIO] Error verificando el bucket '${targetBucket}':`, {
+                name: error.name,
+                message: error.message,
+                httpStatusCode: error.$metadata?.httpStatusCode,
+                requestId: error.$metadata?.requestId
+            });
             throw error;
         }
     }
@@ -59,10 +71,18 @@ export async function uploadToMinio(key: string, body: Buffer | Uint8Array | Blo
             ContentType: contentType,
         });
 
-        await minioClient.send(command);
+        await getMinioClient().send(command);
         return `minio://${bucketName}/${key}`;
-    } catch (error) {
-        console.error('❌ [MINIO] Error uploading:', error);
+    } catch (error: any) {
+        console.error('❌ [MINIO] Error uploading document:', {
+            message: error.message,
+            code: error.code,
+            name: error.name,
+            httpStatusCode: error.$metadata?.httpStatusCode,
+            requestId: error.$metadata?.requestId,
+            endpoint: process.env.MINIO_ENDPOINT,
+            bucket: bucketName
+        });
         throw error;
     }
 }
@@ -77,7 +97,7 @@ export async function getMinioSignedUrl(key: string, expiresIn = 3600) {
             Key: key,
         });
 
-        return await getSignedUrl(minioClient, command, { expiresIn });
+        return await getSignedUrl(getMinioClient(), command, { expiresIn });
     } catch (error) {
         console.error('❌ [MINIO] Error generating signed URL:', error);
         return null;
@@ -94,7 +114,7 @@ export async function deleteFromMinio(key: string) {
             Key: key,
         });
 
-        await minioClient.send(command);
+        await getMinioClient().send(command);
         return true;
     } catch (error) {
         console.error('❌ [MINIO] Error deleting file:', error);
@@ -112,7 +132,7 @@ export async function listFiles(prefix: string) {
             Prefix: prefix,
         });
 
-        const response = await minioClient.send(command);
+        const response = await getMinioClient().send(command);
         return response.Contents || [];
     } catch (error) {
         console.error('❌ [MINIO] Error listing files:', error);

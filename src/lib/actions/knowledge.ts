@@ -41,12 +41,32 @@ export async function uploadKnowledgeDocument(formData: FormData) {
 
     try {
         const buffer = Buffer.from(await file.arrayBuffer());
+        
+        // 1. Generate Content Hash (SHA-256) for deduplication
+        const crypto = await import('crypto');
+        const contentHash = crypto.createHash('sha256').update(buffer).digest('hex');
+
+        // 2. Check if this exact file already exists for this tenant
+        const { data: existing } = await (supabase
+            .from("knowledge_base" as any) as any)
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("content_hash", contentHash)
+            .maybeSingle();
+
+        if (existing) {
+            return { 
+                success: false, 
+                error: "Este documento ya existe en tu base de conocimiento (detectado por duplicidad de contenido)." 
+            };
+        }
+
         const fileKey = `kb/${tenantId}/${Date.now()}_${file.name}`;
         
-        // Upload to MinIO/S3
+        // 3. Upload to MinIO/S3
         const fileUrl = await uploadToMinio(fileKey, buffer, file.type);
 
-        // Save to DB
+        // 4. Save to DB
         const { data, error } = await (supabase
             .from("knowledge_base" as any) as any)
             .insert({
@@ -55,7 +75,7 @@ export async function uploadKnowledgeDocument(formData: FormData) {
                 description,
                 file_key: fileKey,
                 file_url: fileUrl,
-                content_hash: Date.now().toString() // Simple versioning for now
+                content_hash: contentHash
             })
             .select()
             .single();
