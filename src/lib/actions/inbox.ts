@@ -53,6 +53,12 @@ export async function updateLeadSegment(leadId: string, segment: InboxLead['segm
     return { success: true };
 }
 
+interface ChatSummaryRow {
+    lead_id: string;
+    summary: string;
+    last_interaction_at: string | null;
+}
+
 /**
  * Gets the list of ALL leads for the current tenant, attaching their most recent message if it exists.
  * Upgraded to show leads even if they don't have conversation history yet.
@@ -98,33 +104,34 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
         
         // Legacy messages first
         const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
-        msgList.forEach(m => {
+        msgList.forEach((m: { lead_id: string; content: string; created_at: string }) => {
             if (m.lead_id && !latestMsgByLead.has(m.lead_id)) {
                 latestMsgByLead.set(m.lead_id, { content: m.content, time: m.created_at });
             }
         });
 
         // Consolidates summaries override legacy
-        (summaries || []).forEach(s => {
-            const summaryStr = (s as any).summary as string;
+        (summaries || []).forEach((s: unknown) => {
+            const summaryRow = s as unknown as ChatSummaryRow;
+            const summaryStr = summaryRow.summary;
             if (!summaryStr) return;
 
-            const lines = summaryStr.split('\n').filter(l => l.trim());
+            const lines = summaryStr.split('\n').filter((line: string) => line.trim());
             const lastLine = lines[lines.length - 1];
             const match = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
             
-            const leadId = (s as any).lead_id;
+            const leadId = summaryRow.lead_id;
             if (match && leadId) {
-                const [, time, , content] = match;
+                const [, , , content] = match;
                 latestMsgByLead.set(leadId, { 
                     content: content, 
-                    time: (s as any).last_interaction_at || new Date().toISOString() 
+                    time: summaryRow.last_interaction_at || new Date().toISOString() 
                 });
             }
         });
 
         // 4. Transform into InboxLead objects
-        const results: InboxLead[] = leadList.map(l => {
+        const results: InboxLead[] = leadList.map((l: LeadRow) => {
             const msg = latestMsgByLead.get(l.id);
             
             // Normalize phone for UI (always show +)
