@@ -489,24 +489,103 @@ export default function AgentsPage() {
                                 </motion.div>
                             )}
 
-                            {activeTab === 'CRM' && (
-                                <motion.div key="CRM" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-10 pb-20">
-                                    <div className="p-16 bg-white/[0.02] border border-white/5 rounded-[64px] space-y-12 text-center">
-                                        <div className="h-24 w-24 rounded-[32px] bg-blue-500/10 flex items-center justify-center border border-blue-500/20 mx-auto shadow-2xl shadow-blue-500/10">
-                                            <DbIcon className="h-12 w-12 text-blue-400" />
+                            {activeTab === 'INACTIVO' && (
+                                <motion.div key="INACTIVO" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-6xl mx-auto space-y-12 pb-20">
+                                    <div className="p-12 bg-white/[0.02] border border-white/5 rounded-[56px] space-y-12">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-16 w-16 rounded-[24px] bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-2xl shadow-red-500/5">
+                                                    <AlarmClock className="h-8 w-8 text-red-500" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-black uppercase tracking-tight">Gestión de Inactividad</h3>
+                                                    <p className="text-[11px] text-white/40 font-black uppercase tracking-widest mt-1">Reglas automáticas para leads que dejan de responder</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className={cn("h-3 w-3 rounded-full animate-pulse", variantA.automation_rules?.inactivity_enabled ? "bg-emerald-500" : "bg-white/10")} />
+                                                <button 
+                                                    onClick={() => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_enabled: !p.automation_rules?.inactivity_enabled}}))}
+                                                    className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", variantA.automation_rules?.inactivity_enabled ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-white/5 text-white/40 border border-white/10")}
+                                                >
+                                                    {variantA.automation_rules?.inactivity_enabled ? "Sistema Activado" : "Sistema Desactivado"}
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="space-y-4">
-                                            <h3 className="text-3xl font-black uppercase tracking-tight">CRM Bridge (Global)</h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-6">
+                                                <div className="space-y-4">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-4">Tiempo de Espera Máximo</label>
+                                                    <div className="flex items-center gap-4">
+                                                        <input 
+                                                            type="number" 
+                                                            value={variantA.automation_rules?.inactivity_timeout || 30} 
+                                                            onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_timeout: parseInt(e.target.value)}}))}
+                                                            className="flex-1 h-14 bg-black/40 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white outline-none focus:border-primary/40" 
+                                                        />
+                                                        <select title="Unidad de tiempo" className="h-14 px-6 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase text-white/40 outline-none">
+                                                            <option>Minutos</option>
+                                                            <option>Horas</option>
+                                                        </select>
+                                                    </div>
+                                                    <p className="text-[9px] text-white/20 italic ml-4">Pasado este tiempo, el agente ejecutará la acción de rescate.</p>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-4">Acción de Rescate</label>
+                                                    <div className="grid grid-cols-1 gap-3">
+                                                        <button onClick={() => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_action: 'MESSAGE'}}))} className={cn("p-6 rounded-[24px] border text-left transition-all flex items-center justify-between", variantA.automation_rules?.inactivity_action === 'MESSAGE' ? "bg-primary/10 border-primary/20" : "bg-white/[0.01] border-white/5")}>
+                                                            <div className="flex items-center gap-4">
+                                                                <MessageSquareIcon className="h-5 w-5 text-primary/40" />
+                                                                <span className="text-xs font-black uppercase tracking-tight">Enviar Mensaje de Seguimiento</span>
+                                                            </div>
+                                                            {variantA.automation_rules?.inactivity_action === 'MESSAGE' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                                                        </button>
+                                                        <button onClick={() => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_action: 'NOTIFY'}}))} className={cn("p-6 rounded-[24px] border text-left transition-all flex items-center justify-between", variantA.automation_rules?.inactivity_action === 'NOTIFY' ? "bg-primary/10 border-primary/20" : "bg-white/[0.01] border-white/5")}>
+                                                            <div className="flex items-center gap-4">
+                                                                <UserCheck className="h-5 w-5 text-primary/40" />
+                                                                <span className="text-xs font-black uppercase tracking-tight">Notificar a un Asesor</span>
+                                                            </div>
+                                                            {variantA.automation_rules?.inactivity_action === 'NOTIFY' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-4">Mensaje de Rescate (Copy)</label>
+                                                <textarea 
+                                                    value={variantA.automation_rules?.inactivity_message || ""} 
+                                                    onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_message: e.target.value}}))}
+                                                    className="w-full h-[250px] bg-black/60 border border-white/5 rounded-[32px] p-8 text-sm leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-white/80" 
+                                                    placeholder="¡Hola! Sigues ahí? Quería confirmar si tenías alguna duda sobre..." 
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'CRM' && (
+                                <motion.div key="CRM" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-12 pb-20">
+                                    <div className="p-16 bg-white/[0.02] border border-white/5 rounded-[64px] space-y-12">
+                                        <div className="text-center space-y-4">
+                                            <div className="h-20 w-20 rounded-[32px] bg-blue-500/10 flex items-center justify-center border border-blue-500/20 mx-auto shadow-2xl shadow-blue-500/10">
+                                                <DbIcon className="h-10 w-10 text-blue-400" />
+                                            </div>
+                                            <h3 className="text-4xl font-black uppercase tracking-tighter">CRM BRIDGE (GLOBAL)</h3>
                                             <p className="text-sm text-white/40 font-medium max-w-xl mx-auto leading-relaxed">
                                                 Configura la inyección automática de datos cualificados. La IA actualizará los estados de tus leads en tiempo real.
                                             </p>
                                         </div>
                                         
-                                        <div className="flex justify-center pt-6">
+                                        <div className="flex justify-center pt-4">
                                             <select 
+                                                title="Proveedor de CRM"
                                                 value={variantA.crm_config?.provider || 'NONE'} 
                                                 onChange={(e) => setVariantA(p => ({...p, crm_config: {...p.crm_config, provider: e.target.value}}))} 
-                                                className="h-16 px-10 bg-blue-500/10 border border-blue-500/20 rounded-[24px] text-sm font-black uppercase text-blue-400 outline-none hover:bg-blue-500/20 transition-all cursor-pointer shadow-xl shadow-blue-500/5"
+                                                className="h-16 px-10 bg-blue-500/10 border border-blue-500/20 rounded-[24px] text-sm font-black uppercase text-blue-400 outline-none hover:bg-blue-500/20 transition-all cursor-pointer shadow-xl shadow-blue-500/5 w-full max-w-md"
                                             >
                                                 <option value="NONE">Desconectado del CRM</option>
                                                 <option value="ZOHO">Zoho CRM Native</option>
@@ -514,6 +593,96 @@ export default function AgentsPage() {
                                                 <option value="WEBHOOK">Custom Webhook (API)</option>
                                             </select>
                                         </div>
+
+                                        <AnimatePresence mode="wait">
+                                            {variantA.crm_config?.provider === 'WEBHOOK' && (
+                                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8 pt-6 border-t border-white/5">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-4">Webhook Endpoint URL</label>
+                                                            <input 
+                                                                type="text" 
+                                                                value={variantA.crm_config?.webhook_url || ""} 
+                                                                onChange={(e) => setVariantA(p => ({...p, crm_config: {...p.crm_config, webhook_url: e.target.value}}))}
+                                                                className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white outline-none focus:border-blue-400/40" 
+                                                                placeholder="https://tu-api.com/webhook" 
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-4">Authorization Header / Secret</label>
+                                                            <input 
+                                                                type="password" 
+                                                                value={variantA.crm_config?.auth_token || ""} 
+                                                                onChange={(e) => setVariantA(p => ({...p, crm_config: {...p.crm_config, auth_token: e.target.value}}))}
+                                                                className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white outline-none focus:border-blue-400/40" 
+                                                                placeholder="Bearer token o secret..." 
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Mapeo de Campos (Memoria → CRM)</h4>
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const currentMapping = variantA.crm_config?.field_mapping || [];
+                                                                    setVariantA(p => ({...p, crm_config: {...p.crm_config, field_mapping: [...currentMapping, { tag: '', crm_key: '' }]}}));
+                                                                }}
+                                                                className="text-[9px] font-black uppercase text-blue-400 hover:underline"
+                                                            >
+                                                                + Añadir Mapeo
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <div className="space-y-3">
+                                                            {(variantA.crm_config?.field_mapping || []).map((m: any, idx: number) => (
+                                                                <div key={idx} className="flex items-center gap-4 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                                                                    <div className="flex-1 flex items-center gap-3">
+                                                                        <span className="text-[10px] font-black text-white/20">MEMORIA</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            placeholder="USER_NAME" 
+                                                                            value={m.tag}
+                                                                            onChange={(e) => {
+                                                                                const newMapping = [...(variantA.crm_config?.field_mapping || [])];
+                                                                                newMapping[idx].tag = e.target.value;
+                                                                                setVariantA(p => ({...p, crm_config: {...p.crm_config, field_mapping: newMapping}}));
+                                                                            }}
+                                                                            className="flex-1 bg-transparent border-b border-white/10 text-xs font-bold text-white outline-none" 
+                                                                        />
+                                                                    </div>
+                                                                    <Zap className="h-4 w-4 text-white/10" />
+                                                                    <div className="flex-1 flex items-center gap-3">
+                                                                        <span className="text-[10px] font-black text-white/20">CRM KEY</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            placeholder="first_name" 
+                                                                            value={m.crm_key}
+                                                                            onChange={(e) => {
+                                                                                const newMapping = [...(variantA.crm_config?.field_mapping || [])];
+                                                                                newMapping[idx].crm_key = e.target.value;
+                                                                                setVariantA(p => ({...p, crm_config: {...p.crm_config, field_mapping: newMapping}}));
+                                                                            }}
+                                                                            className="flex-1 bg-transparent border-b border-white/10 text-xs font-bold text-white outline-none" 
+                                                                        />
+                                                                    </div>
+                                                                    <button 
+                                                                        title="Eliminar mapeo"
+                                                                        onClick={() => {
+                                                                            const newMapping = (variantA.crm_config?.field_mapping || []).filter((_: any, i: number) => i !== idx);
+                                                                            setVariantA(p => ({...p, crm_config: {...p.crm_config, field_mapping: newMapping}}));
+                                                                        }}
+                                                                        className="text-white/10 hover:text-red-400 transition-all"
+                                                                    >
+                                                                        <XIcon className="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
 
                                         <div className="grid grid-cols-3 gap-6 pt-12">
                                             <div className="p-8 rounded-[40px] bg-white/[0.02] border border-white/5 space-y-3">
