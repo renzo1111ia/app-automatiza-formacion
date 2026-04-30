@@ -254,14 +254,14 @@ export default function AgentsPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             {variantA.model_provider === 'OPENAI' && (
                                                 <>
-                                                    <ModelCard active={variantA.model_name === 'gpt-4o'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o'}))} label="GPT-4o" desc="El modelo más avanzado y complejo" />
-                                                    <ModelCard active={variantA.model_name === 'gpt-4o-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o-mini'}))} label="GPT-4o MINI" desc="Versión rápida y eficiente" />
-                                                    <ModelCard active={variantA.model_name === 'gpt-4.1'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1'}))} label="GPT-4.1 Series" desc="Última versión optimizada (Omni)" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4.1'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1'}))} label="GPT-4.1 (Omni Series)" desc="Última versión optimizada con razonamiento 4.1" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4.1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1-mini'}))} label="GPT-4.1 Mini" desc="Máxima velocidad con inteligencia 4.1" />
-                                                    <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="O3-MINI" desc="Razonamiento ultra-rápido (Science/Math)" />
-                                                    <ModelCard active={variantA.model_name === 'o1'} onClick={() => setVariantA(p => ({...p, model_name: 'o1'}))} label="O1" desc="Razonamiento profundo avanzado" />
-                                                    <ModelCard active={variantA.model_name === 'o1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o1-mini'}))} label="O1-MINI" desc="Razonamiento rápido y eficaz" />
-                                                    <ModelCard active={variantA.model_name === 'gpt-4-turbo'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4-turbo'}))} label="GPT-4 TURBO" desc="Alta precisión legacy" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4o'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o'}))} label="GPT-4o (Standard)" desc="El modelo insignia versátil y rápido" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4o-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o-mini'}))} label="GPT-4o MINI" desc="Económico y ultra-rápido" />
+                                                    <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="o3-mini (Reasoning)" desc="Razonamiento ultra-rápido para lógica compleja" />
+                                                    <ModelCard active={variantA.model_name === 'o1'} onClick={() => setVariantA(p => ({...p, model_name: 'o1'}))} label="o1 (Preview)" desc="Razonamiento profundo avanzado" />
+                                                    <ModelCard active={variantA.model_name === 'o1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o1-mini'}))} label="o1-mini" desc="Razonamiento rápido y eficaz" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4-turbo'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4-turbo'}))} label="GPT-4 Turbo" desc="Precisión legacy demostrada" />
                                                 </>
                                             )}
                                             {variantA.model_provider === 'ANTHROPIC' && (

@@ -94,7 +94,7 @@ export class CalendarService {
         const supabase = await getSupabaseServerClient();
 
         // 1. Insert Agendamiento
-        await supabase
+        await (supabase as any)
             .from("agendamientos")
             .insert({
                 tenant_id: tenantId,

@@ -131,20 +131,35 @@ export class CRMExportProcessor {
     }
 
     private buildMemoriaTag(metadata: Record<string, any>, summary: string, score?: number): string {
+        const timestamp = new Date().toLocaleString('es-ES', { timeZone: 'UTC' });
         const lines = [
-            `🧠 MEMORIA IA - ${new Date().toLocaleDateString()}`,
-            `-----------------------------------`,
-            `📊 PUNTUACIÓN: ${score || 'N/A'}/10`,
-            `📝 RESUMEN: ${summary}`,
-            `-----------------------------------`,
-            `🔍 VARIABLES CAPTURADAS:`
+            `🤖 AGENT MAESTRO - REPORTE DE INTELIGENCIA`,
+            `📅 Fecha de Sincronización: ${timestamp} UTC`,
+            `===========================================`,
+            `📊 CUALIFICACIÓN: ${score ? `${score}/10` : 'PENDIENTE'}`,
+            `📝 RESUMEN EJECUTIVO:`,
+            `${summary}`,
+            `===========================================`,
+            `🔍 DATOS CAPTURADOS (MEMORIA DINÁMICA):`
         ];
 
-        Object.entries(metadata).forEach(([key, value]) => {
-            if (typeof value !== 'object') {
-                lines.push(`• ${key.toUpperCase()}: ${value}`);
-            }
-        });
+        // Filter and sort metadata to show relevant business variables first
+        const entries = Object.entries(metadata)
+            .filter(([key]) => !['last_fact_update', 'chat_summary'].includes(key))
+            .sort(([a], [b]) => a.localeCompare(b));
+
+        if (entries.length > 0) {
+            entries.forEach(([key, value]) => {
+                const cleanKey = key.replace(/_/g, ' ').toUpperCase();
+                const cleanValue = typeof value === 'object' ? JSON.stringify(value) : value;
+                lines.push(`• ${cleanKey}: ${cleanValue}`);
+            });
+        } else {
+            lines.push(`(Sin variables adicionales capturadas)`);
+        }
+
+        lines.push(`===========================================`);
+        lines.push(`✨ Generado automáticamente por Agent Maestro.`);
 
         return lines.join("\n");
     }
