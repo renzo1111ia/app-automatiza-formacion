@@ -7,7 +7,7 @@ import type { KnowledgeItem } from "@/types/database";
 import OpenAI from "openai";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
 
-export type { KnowledgeItem };
+
 
 /**
  * Fetches all knowledge base documents for the active tenant.

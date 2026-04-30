@@ -19,8 +19,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent, deleteAIAgent, getAdvisors } from "@/lib/actions/agents";
 import { getKnowledgeBase } from "@/lib/actions/knowledge";
-import type { KnowledgeItem } from "@/lib/actions/knowledge";
-import type { AIAgent, AIAgentVariant } from "@/types/database";
+import type { AIAgent, AIAgentVariant, KnowledgeItem } from "@/types/database";
 
 interface Advisor {
     id: string;
