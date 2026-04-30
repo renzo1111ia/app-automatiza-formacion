@@ -37,12 +37,20 @@ export interface OrchestratorEscalationConfig {
     handoff_on_qualified_not_booked: boolean; // Derivar si está cualificado pero no agendó
 }
 
+export interface OrchestratorSchedulingConfig {
+    reminder_hours: number;
+    reminder_template: string;
+    slot_pacing_minutes: number;
+    messages_per_slot: number;
+}
+
 export interface TenantOrchestratorConfig {
     timezone_rules: OrchestratorTimezoneRules;
     sequence: OrchestratorSequenceStep[];
     ab_testing: OrchestratorABConfig;
     retell: OrchestratorRetellConfig;
     escalation: OrchestratorEscalationConfig;
+    scheduling: OrchestratorSchedulingConfig;
     flow_graph?: { nodes: unknown[]; edges: unknown[] };
     company_name?: string;
 }
@@ -80,6 +88,12 @@ const DEFAULT_CONFIG: TenantOrchestratorConfig = {
         notify_human_whatsapp: "",
         trigger_max_attempts: 3,
         handoff_on_qualified_not_booked: true
+    },
+    scheduling: {
+        reminder_hours: 24,
+        reminder_template: "appointment_reminder_es",
+        slot_pacing_minutes: 30,
+        messages_per_slot: 5
     },
     flow_graph: { nodes: [], edges: [] },
     company_name: "Automatiza Formación"

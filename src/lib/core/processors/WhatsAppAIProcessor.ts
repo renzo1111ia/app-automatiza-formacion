@@ -81,7 +81,8 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
                         input: incomingMessage,
                     });
                     const embedding = embedRes.data[0].embedding;
-                    const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3);
+                    const kbIds = (activeVariant as any).knowledge_base_ids || [];
+                    const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3, kbIds);
                     return kbResults.map(r => `- ${r.content}`).join("\n");
                 } catch (kbErr) {
                     console.warn("[AI PROCESSOR] KB search skipped/failed:", kbErr);

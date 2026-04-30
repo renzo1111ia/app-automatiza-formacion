@@ -126,10 +126,10 @@ const TriggerNode = ({ data, selected }: { data: { event?: string }; selected?: 
 );
 
 const MessageNode = ({ data, selected }: { data: { text?: string }; selected?: boolean }) => (
-    <NodeWrapper title="Mensaje AI" icon={MessageSquare} color="bg-blue-500/20 text-blue-400" headerColor="bg-blue-500" selected={selected} type="SALIDA">
+    <NodeWrapper title="Respuesta Agente" icon={MessageSquare} color="bg-blue-500/20 text-blue-400" headerColor="bg-blue-500" selected={selected} type="SALIDA">
         <Handle type="target" position={Position.Top} className="w-3 h-3 bg-blue-500 border-2 border-slate-900" />
         <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 italic text-[10px] text-white/70 line-clamp-3">
-            &quot;{data.text || "Escribiendo respuesta..."}&quot;
+            &quot;{data.text || "El agente responderá usando su conocimiento..."}&quot;
         </div>
         <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-blue-500 border-2 border-slate-900" />
     </NodeWrapper>
@@ -159,15 +159,15 @@ const DatabaseNode = ({ data, selected }: { data: { action?: string; target?: st
 );
 
 const AITaskNode = ({ data, selected }: { data: { task?: string; instructions?: string }; selected?: boolean }) => (
-    <NodeWrapper title="Cerebro Neural" icon={Brain} color="bg-purple-500/20 text-purple-400" headerColor="bg-purple-500" selected={selected} type="CEREBRO">
+    <NodeWrapper title="Procesador IA" icon={Brain} color="bg-purple-500/20 text-purple-400" headerColor="bg-purple-500" selected={selected} type="CEREBRO">
         <Handle type="target" position={Position.Top} className="w-3 h-3 bg-purple-500 border-2 border-slate-900" />
         <div className="space-y-2">
             <div className="flex items-center gap-2 text-[10px] text-purple-200/60 font-black uppercase tracking-widest">
                 <Sparkles className="w-3 h-3" />
-                {data.task || "PROCESAMIENTO IA"}
+                {data.task || "ANÁLISIS DE DATOS"}
             </div>
             <div className="p-2 bg-purple-500/5 rounded-lg border border-purple-500/10 text-[9px] text-white/50 italic line-clamp-3">
-                {data.instructions || "Sin instrucciones personalizadas..."}
+                {data.instructions || "Extraer información o validar criterios..."}
             </div>
         </div>
         <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-purple-500 border-2 border-slate-900" />
@@ -191,13 +191,13 @@ const QuestionNode = ({ data, selected }: { data: { text?: string; validation?: 
 );
 
 const AIAgentNode = ({ data, selected }: { data: { agentId?: string; agentName?: string }; selected?: boolean }) => (
-    <NodeWrapper title="Cerebro Agente" icon={Brain} color="bg-indigo-500/20 text-indigo-400" headerColor="bg-indigo-500" selected={selected} type="IA_ADVANCED">
+    <NodeWrapper title="Llamar otro Agente" icon={Brain} color="bg-indigo-500/20 text-indigo-400" headerColor="bg-indigo-500" selected={selected} type="CROSS_AGENT">
         <Handle type="target" position={Position.Top} className="w-3 h-3 bg-indigo-500 border-2 border-slate-900" />
         <div className="space-y-2">
             <div className="p-2 bg-indigo-500/5 rounded-lg border border-indigo-500/10 text-[10px] font-bold text-indigo-300">
-                Agente: {data.agentName || "No seleccionado"}
+                Delegar a: {data.agentName || "Seleccionar..."}
             </div>
-            <p className="text-[8px] text-white/30 uppercase tracking-widest font-black">Memory Enabled • KB Sync</p>
+            <p className="text-[8px] text-white/30 uppercase tracking-widest font-black">Transfiere el control a otro experto</p>
         </div>
         <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-indigo-500 border-2 border-slate-900" />
     </NodeWrapper>
@@ -477,8 +477,8 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
             title: "Interacción",
             icon: MessageSquare,
             items: [
-                { type: "flow_message", label: "Mensaje Simple", desc: "Texto fijo predefinido.", icon: MessageSquare },
-                { type: "flow_ai_agent", label: "Agente IA (Cerebro)", desc: "Invoca un agente con memoria y cualificación.", icon: Brain },
+                { type: "flow_message", label: "Respuesta Agente", desc: "El agente responde usando su configuración.", icon: MessageSquare },
+                { type: "flow_ai_agent", label: "Llamar otro Agente", desc: "Delega la conversación a otro agente experto.", icon: Brain },
                 { type: "flow_meta_template", label: "Plantilla WhatsApp", desc: "Envía plantilla oficial de Meta.", icon: FileText },
                 { type: "flow_question", label: "Hacer Pregunta", desc: "Solicita datos específicos.", icon: HelpCircle },
                 { type: "flow_wait", label: "Esperar", desc: "Pausa el flujo temporalmente.", icon: Timer },
@@ -499,7 +499,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
             items: [
                 { type: "flow_http", label: "Petición HTTP", desc: "Conecta con cualquier API.", icon: Terminal },
                 { type: "flow_db", label: "Acción DB", desc: "Guarda o lee de la base de datos.", icon: Activity },
-                { type: "flow_ai", label: "Cerebro Neural", desc: "Instrucciones de IA personalizadas.", icon: Brain },
+                { type: "flow_ai", label: "Procesador IA", desc: "Análisis y validación de datos avanzada.", icon: Brain },
                 { type: "flow_crm", label: "Integración CRM", desc: "Tag, Owner, Mapeo personalizado.", icon: Database },
                 { type: "flow_crm_connect", label: "Conectar BD / CRM", desc: "Sincroniza con Zoho, HubSpot, Salesforce, Pipedrive o API propia.", icon: Link2 },
             ]
@@ -565,12 +565,12 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                         </div>
                     </div>
                     <QuickActionButton onClick={() => addNode('flow_trigger')} title="Inicio" color="text-yellow-400 bg-yellow-400/10" icon={Zap} />
-                    <QuickActionButton onClick={() => addNode('flow_message')} title="Mensaje" color="text-blue-400 bg-blue-400/10" icon={MessageSquare} />
+                    <QuickActionButton onClick={() => addNode('flow_message')} title="Respuesta Agente" color="text-blue-400 bg-blue-400/10" icon={MessageSquare} />
                     <QuickActionButton onClick={() => addNode('flow_question')} title="Pregunta" color="text-emerald-400 bg-emerald-400/10" icon={HelpCircle} />
                     <QuickActionButton onClick={() => addNode('flow_condition')} title="Condición" color="text-pink-400 bg-pink-400/10" icon={GitBranch} />
                     <QuickActionButton onClick={() => addNode('flow_http')} title="API / HTTP" color="text-orange-400 bg-orange-400/10" icon={Globe} />
                     <QuickActionButton onClick={() => addNode('flow_db')} title="Base de Datos" color="text-cyan-400 bg-cyan-400/10" icon={Database} />
-                    <QuickActionButton onClick={() => addNode('flow_ai')} title="IA Cognitiva" color="text-purple-400 bg-purple-400/10" icon={Brain} />
+                    <QuickActionButton onClick={() => addNode('flow_ai')} title="Procesador IA" color="text-purple-400 bg-purple-400/10" icon={Brain} />
                     <QuickActionButton onClick={() => addNode('flow_crm_connect')} title="BD / CRM" color="text-violet-400 bg-violet-400/10" icon={Link2} />
                     
                     <div className="mt-2 pt-2 border-t border-white/5">

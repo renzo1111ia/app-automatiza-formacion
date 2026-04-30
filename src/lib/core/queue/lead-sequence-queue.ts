@@ -59,7 +59,8 @@ export interface LeadSequenceJob {
     tenantId: string;
     workflowId?: string;
     step?: number;
-    action: "call" | "whatsapp" | "ai_agent" | "zoho" | "ZOHO_POLLING" | "QUALIFY_ANALYSIS" | "WATCHDOG_SCAN"; 
+    action: "call" | "whatsapp" | "ai_agent" | "zoho" | "ZOHO_POLLING" | "QUALIFY_ANALYSIS" | "WATCHDOG_SCAN" | "APPOINTMENT_REMINDER"; 
+    appointmentId?: string;
     agentId?: string;
     template?: string;
     abVariant?: "A" | "B";

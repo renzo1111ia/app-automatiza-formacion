@@ -4,7 +4,7 @@ export class KnowledgeBaseService {
     /**
      * Semantic search using PGVector match_knowledge_base RPC
      */
-    static async search(tenantId: string, queryEmbedding: number[], threshold = 0.5, count = 5) {
+    static async search(tenantId: string, queryEmbedding: number[], threshold = 0.5, count = 5, knowledgeBaseIds?: string[]) {
         const supabase = await getSupabaseServerClient();
 
         // Using unknown cast to bypass RPC type definition issues in legacy schemas
@@ -12,7 +12,8 @@ export class KnowledgeBaseService {
             query_embedding: queryEmbedding,
             match_threshold: threshold,
             match_count: count,
-            p_tenant_id: tenantId
+            p_tenant_id: tenantId,
+            p_knowledge_base_ids: knowledgeBaseIds && knowledgeBaseIds.length > 0 ? knowledgeBaseIds : null
         });
 
         if (error) {
@@ -26,7 +27,7 @@ export class KnowledgeBaseService {
     /**
      * Saves a text chunk with its embedding into PostgreSQL
      */
-    static async addEmbedding(tenantId: string, content: string, embedding: number[], metadata: Record<string, unknown> = {}) {
+    static async addEmbedding(tenantId: string, content: string, embedding: number[], metadata: Record<string, unknown> = {}, knowledgeBaseId?: string) {
         const supabase = await getSupabaseServerClient();
 
         // Using unknown cast to bypass 'never' type in dynamic tables
@@ -35,12 +36,37 @@ export class KnowledgeBaseService {
                 tenant_id: tenantId,
                 content,
                 embedding,
-                metadata
+                metadata,
+                knowledge_base_id: knowledgeBaseId
             });
 
         if (error) {
             const msg = (error as unknown as { message: string }).message;
             console.error('❌ [PGVECTOR_ADD] Error:', msg);
+            throw new Error(msg);
+        }
+    }
+
+    /**
+     * Saves multiple text chunks with their embeddings in a single transaction
+     */
+    static async addEmbeddingsBatch(tenantId: string, items: Array<{ content: string, embedding: number[], metadata: Record<string, unknown>, knowledgeBaseId?: string }>) {
+        if (items.length === 0) return;
+        
+        const supabase = await getSupabaseServerClient();
+
+        const { error } = await (supabase.from('knowledge_base_embeddings' as unknown as string) as unknown as { insert: (d: unknown[]) => Promise<{ error: unknown }> })
+            .insert(items.map(item => ({
+                tenant_id: tenantId,
+                content: item.content,
+                embedding: item.embedding,
+                metadata: item.metadata,
+                knowledge_base_id: item.knowledgeBaseId
+            })));
+
+        if (error) {
+            const msg = (error as unknown as { message: string }).message;
+            console.error('❌ [PGVECTOR_ADD_BATCH] Error:', msg);
             throw new Error(msg);
         }
     }

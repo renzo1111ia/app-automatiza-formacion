@@ -62,46 +62,84 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     const time = args.time as string | undefined;
     const notes = args.notes as string | undefined;
     
-    // 1. Format date (ISO 8601)
-    let scheduledAt = date;
-    if (time) {
-        scheduledAt = `${date}T${time}:00Z`;
-    }
-
-    // 2. Assign an advisor (Pick the first active one for the tenant)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: advisorData } = await (supabase as any)
-        .from("advisors")
-        .select("id")
-        .eq("tenant_id", tenantId)
-        .eq("is_active", true)
-        .limit(1)
+    // 1. Get Lead context (Course of interest)
+    const { data: lead } = await supabase
+        .from("lead")
+        .select(`
+            *,
+            lead_programas (
+                id_programa,
+                programas ( nombre )
+            )
+        `)
+        .eq("id", leadId)
         .single();
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const advisor = advisorData as any;
+    const leadData = lead as any;
+    const programId = leadData?.lead_programas?.[0]?.id_programa;
+    const programName = leadData?.lead_programas?.[0]?.programas?.nombre;
 
-    if (!advisor) {
-        throw new Error("No available advisors to assign the appointment.");
+    // 2. Format date (ISO 8601)
+    let scheduledAt = date;
+    if (time) {
+        // Handle HH:MM or HH:MM:SS
+        const timeStr = time.includes(':') ? (time.split(':').length === 2 ? `${time}:00` : time) : `${time}:00:00`;
+        scheduledAt = `${date}T${timeStr}Z`;
     }
 
-    // 3. Insert record
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // 3. Smart Advisor Assignment
+    // Try to find an advisor that specializes in this program
+    const advisorQuery = (supabase as any)
+        .from("advisors")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true);
+    
+    const { data: allAdvisors } = await advisorQuery;
+    
+    let selectedAdvisor = null;
+    if (allAdvisors && allAdvisors.length > 0) {
+        // Priority 1: Specialist for this program
+        selectedAdvisor = allAdvisors.find((a: any) => a.specialties?.includes(programId) || a.specialties?.includes(programName));
+        
+        // Priority 2: Matches lead type (e.g. "nuevo")
+        if (!selectedAdvisor) {
+            selectedAdvisor = allAdvisors.find((a: any) => a.handled_lead_types?.includes(leadData?.tipo_lead));
+        }
+
+        // Priority 3: First available
+        if (!selectedAdvisor) {
+            selectedAdvisor = allAdvisors[0];
+        }
+    }
+
+    if (!selectedAdvisor) {
+        throw new Error("No hay asesores disponibles para asignar la cita.");
+    }
+
+    // 4. Check for overlaps (informational for now as per request "debe salir al momento de agendar")
+    const { count: overlaps } = await (supabase as any)
+        .from("appointments")
+        .select("*", { count: 'exact', head: true })
+        .eq("advisor_id", selectedAdvisor.id)
+        .eq("scheduled_at", scheduledAt)
+        .neq("status", "CANCELLED");
+
+    // 5. Insert record
     const { data: appointmentData, error } = await (supabase as any)
         .from("appointments")
         .insert({
             tenant_id: tenantId,
             lead_id: leadId,
-            advisor_id: advisor.id,
+            advisor_id: selectedAdvisor.id,
             scheduled_at: scheduledAt,
             status: "SCHEDULED",
-            notes: notes || "Agendado automáticamente por el Agente de Voz (Retell AI)",
+            notes: notes || `Agendado por IA. Programa: ${programName}. ${overlaps && overlaps > 0 ? '(⚠️ Solapado)' : ''}`,
             watchdog_processed: false
         })
         .select()
         .single();
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = appointmentData as any;
 
     if (error) {
@@ -109,12 +147,42 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         throw error;
     }
 
-    console.log(`[RETELL TOOLS] Appointment booked for lead ${leadId} at ${scheduledAt}`);
+    // 6. Enqueue Appointment Reminder
+    try {
+        const { getOrchestratorConfigForTenant } = await import("@/lib/actions/orchestrator-config");
+        const { enqueueLeadStep } = await import("@/lib/core/queue/lead-sequence-queue");
+        
+        const config = await getOrchestratorConfigForTenant(tenantId);
+        const reminderLeadTimeHours = config.scheduling?.reminder_hours || 24;
+        
+        const appointmentTime = new Date(scheduledAt).getTime();
+        const reminderTime = appointmentTime - (reminderLeadTimeHours * 60 * 60 * 1000);
+        const now = Date.now();
+        const delayMs = Math.max(0, reminderTime - now);
+
+        if (delayMs > 0 || Math.abs(reminderTime - now) < 1000 * 60 * 5) { // If it's in the future or very soon
+            await enqueueLeadStep({
+                leadId,
+                tenantId,
+                action: "APPOINTMENT_REMINDER",
+                appointmentId: data.id,
+                template: config.scheduling?.reminder_template || "appointment_reminder_es"
+            }, delayMs);
+            
+            console.log(`[RETELL TOOLS] Reminder queued for ${new Date(reminderTime).toISOString()}`);
+        }
+    } catch (reminderErr) {
+        console.error("Failed to queue reminder:", reminderErr);
+    }
+
+    console.log(`[RETELL TOOLS] Appointment booked for lead ${leadId} at ${scheduledAt} with advisor ${selectedAdvisor.name}`);
 
     return NextResponse.json({ 
         success: true, 
         message: "Cita agendada correctamente",
-        appointment_id: data?.id 
+        appointment_id: data?.id,
+        advisor_name: selectedAdvisor.name,
+        is_overlap: (overlaps || 0) > 0
     });
 }
 

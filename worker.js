@@ -53,24 +53,12 @@ const worker = createLeadWorker(async (job) => {
     }
 
     // 4. HANDLER: Standard Lead Sequence Step (Calls, WhatsApp, Zoho Update)
-    if (action === "call" || action === "whatsapp" || action === "ai_agent" || action === "zoho") {
-        // Fetch the lead
-        const { data: lead, error } = await supabase
-            .from("lead")
-            .select("*")
-            .eq("id", leadId)
-            .single();
-
-        if (error || !lead) throw new Error(`Lead ${leadId} not found`);
-
-        // Load tenant config
-        const { getOrchestratorConfigForTenant } = await import("./src/lib/actions/orchestrator-config.js");
-        const config = await getOrchestratorConfigForTenant(tenantId);
-        const sequence = config.sequence;
-
-        // Execute step
-        if (step !== undefined) {
-            await orchestrator.executeSequenceStep(lead, tenantId, sequence, step, config);
+    if (action === "call" || action === "whatsapp" || action === "ai_agent" || action === "zoho" || action === "APPOINTMENT_REMINDER") {
+        try {
+            await orchestrator.executeSequenceStep(job.data);
+        } catch (err) {
+            console.error(`[WORKER] Execution failed for job ${job.id}:`, err);
+            throw err; // Re-queue
         }
     }
 });

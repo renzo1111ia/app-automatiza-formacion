@@ -90,6 +90,15 @@ export class Orchestrator {
             return;
         }
 
+        // ── RATE LIMITING / PACING CHECK ──────────────────────────
+        const canExecute = await this.checkPacing(tenantId, config);
+        if (!canExecute) {
+            const pacingDelay = (config.scheduling?.slot_pacing_minutes || 5) * 60 * 1000;
+            console.log(`[ORCHESTRATOR] ⏳ Pacing limit reached for tenant ${tenantId}. Requeuing job with ${pacingDelay/1000}s delay.`);
+            await this.queueStep(lead, tenantId, sequence[stepIndex], stepIndex, config, pacingDelay);
+            return;
+        }
+
         const step = sequence[stepIndex];
         console.log(`[ORCHESTRATOR] Lead ${lead.id} → Step ${step.step}: ${step.action}`);
 
@@ -770,6 +779,76 @@ export class Orchestrator {
         };
 
         await this.executeSequenceStep(lead, action.tenant_id, [step], 0, config);
+    }
+
+    /**
+     * Automated Appointment Reminder Logic
+     */
+    public async handleAppointmentReminder(leadId: string, tenantId: string, appointmentId: string, template: string) {
+        const supabase = await getSupabaseServerClient();
+        const { data: lead } = await (supabase.from("lead" as any) as any).select("*").eq("id", leadId).single();
+        const { data: appointment } = await (supabase.from("appointments" as any) as any).select("*, advisor:advisors(*)").eq("id", appointmentId).single();
+        
+        if (!lead || !appointment || appointment.status === 'CANCELLED') {
+            console.log(`[ORCHESTRATOR] Reminder skipped: Appointment ${appointmentId} cancelled or lead not found.`);
+            return;
+        }
+
+        // Format Date for template
+        const dateObj = new Date(appointment.scheduled_at);
+        const formattedDate = dateObj.toLocaleString('es-ES', { 
+            weekday: 'long', 
+            day: 'numeric', 
+            month: 'long', 
+            hour: '2-digit', 
+            minute: '2-digit',
+            timeZone: 'Europe/Madrid' // Default to Madrid as per Esden usage
+        });
+
+        // Resolve Course Name
+        const courseCtx = await this.getCourseContext(leadId);
+
+        const step: OrchestratorSequenceStep = {
+            step: 99,
+            action: "whatsapp",
+            template: template,
+            delay_hours: 0,
+            variableMappings: {
+                "1": lead.nombre || "Estudiante",
+                "2": courseCtx.course_name || "su programa de interés",
+                "3": formattedDate,
+                "4": appointment.advisor?.name || "un asesor de admisiones"
+            }
+        };
+
+        await this.executeWhatsAppStep(lead as Lead, tenantId, step);
+        
+        await (supabase.from("appointments" as any) as any)
+            .update({ reminder_sent_at: new Date().toISOString() })
+            .eq("id", appointmentId);
+            
+        console.log(`[ORCHESTRATOR] ✅ Reminder sent for appointment ${appointmentId}`);
+    }
+
+    /**
+     * Checks if the tenant has capacity to send another message in the current slot
+     */
+    private async checkPacing(tenantId: string, config: TenantOrchestratorConfig): Promise<boolean> {
+        const pacing = config.scheduling;
+        if (!pacing || !pacing.messages_per_slot) return true;
+
+        const supabase = await getSupabaseServerClient();
+        const now = new Date();
+        const slotStart = new Date(now.getTime() - (pacing.slot_pacing_minutes * 60 * 1000)).toISOString();
+
+        const { count } = await (supabase
+            .from("orchestration_logs" as any) as any)
+            .select("*", { count: 'exact', head: true })
+            .eq("tenant_id", tenantId)
+            .in("action_type", ["WHATSAPP", "CALL"])
+            .gte("executed_at", slotStart);
+
+        return (count || 0) < pacing.messages_per_slot;
     }
 
     /**

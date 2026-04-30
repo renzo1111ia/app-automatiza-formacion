@@ -258,7 +258,11 @@ export interface AIAgent {
     flow_config: {
         nodes: unknown[];
         edges: unknown[];
+        automation_rules?: Record<string, any>;
+        crm_config?: Record<string, any>;
     } | null;
+    automation_rules?: Record<string, any>;
+    crm_config?: Record<string, any>;
     created_at: string;
     updated_at: string;
 }
@@ -278,6 +282,9 @@ export interface AIAgentVariant {
     metrics: Record<string, unknown> | null;
     dynamic_variables?: Record<string, string> | string[]; // Support for both KV and keys list
     tracked_variables?: string[]; // Keys to extract autonomously
+    automation_rules?: Record<string, any>;
+    crm_config?: Record<string, any>;
+    knowledge_base_ids?: string[];
     created_at: string;
     updated_at: string;
 }
@@ -314,6 +321,38 @@ export interface KnowledgeItem {
     file_url: string | null;
     content_hash: string | null;
     created_at: string;
+}
+
+export interface Advisor {
+    id: string;
+    tenant_id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    is_active: boolean;
+    specialties?: string[];
+    handled_lead_types?: string[];
+    created_at: string;
+}
+
+export interface Appointment {
+    id: string;
+    tenant_id: string;
+    advisor_id: string;
+    lead_id: string | null;
+    scheduled_at: string;
+    duration_minutes: number;
+    status: string;
+    notes: string | null;
+    agent_used: string | null;
+    ab_variant: string | null;
+    reminder_sent_at?: string | null;
+    reminder_scheduled_at?: string | null;
+    watchdog_processed: boolean;
+    created_at: string;
+    updated_at: string;
+    // Joined
+    lead?: Lead;
 }
 
 export interface KnowledgeEmbedding {

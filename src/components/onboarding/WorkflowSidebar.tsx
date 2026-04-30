@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { 
     Plus, FolderTree, Zap, ChevronRight, Trash2,
-    Settings2, Sun, Moon, Rocket, Globe2, ChevronDown
+    Settings2, Sun, Moon, Rocket, Globe2, ChevronDown, Timer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getOrchestratorConfig, saveOrchestratorConfig } from "@/lib/actions/orchestrator-config";
@@ -43,6 +43,9 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
     const [startTime, setStartTime] = useState("09:00");
     const [endTime, setEndTime] = useState("20:00");
     const [workingDays, setWorkingDays] = useState<number[]>([1, 2, 3, 4, 5]);
+    const [pacingMinutes, setPacingMinutes] = useState(60);
+    const [messagesPerSlot, setMessagesPerSlot] = useState(10);
+    const [reminderHours, setReminderHours] = useState(24);
 
     useEffect(() => {
         const loadWorkflows = async () => {
@@ -74,6 +77,9 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                 setStartTime(res.data.timezone_rules.start || "09:00");
                 setEndTime(res.data.timezone_rules.end || "20:00");
                 setWorkingDays(res.data.timezone_rules.working_days || [1,2,3,4,5]);
+                setPacingMinutes(res.data.scheduling?.slot_pacing_minutes || 60);
+                setMessagesPerSlot(res.data.scheduling?.messages_per_slot || 10);
+                setReminderHours(res.data.scheduling?.reminder_hours || 24);
             }
         }
         loadConfig();
@@ -97,6 +103,12 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                     "+1":  "America/New_York",
                     "+44": "Europe/London",
                 }
+            },
+            scheduling: {
+                slot_pacing_minutes: pacingMinutes,
+                messages_per_slot: messagesPerSlot,
+                reminder_hours: reminderHours,
+                reminder_template: "appointment_reminder_es"
             }
         });
         setSavingConfig(false);
@@ -320,6 +332,46 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                             <p className="text-[9px] text-slate-500 dark:text-white/30 leading-relaxed">
                                 El sistema adapta el horario al huso horario del lead según su prefijo telefónico (+34 España, +52 México, etc.)
                             </p>
+                        </div>
+
+                        {/* Pacing Config */}
+                        <div className="p-4 rounded-xl bg-orange-500/5 border border-orange-500/10 space-y-4">
+                            <p className="text-[9px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                                <Timer className="h-3 w-3" /> Pacing & Control
+                            </p>
+                            
+                            <div className="space-y-3">
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase text-white/30 tracking-widest">Ventana (min)</label>
+                                    <input 
+                                        type="number" 
+                                        value={pacingMinutes} 
+                                        onChange={e => setPacingMinutes(parseInt(e.target.value))}
+                                        className="w-full h-8 bg-black/20 border border-white/5 rounded-lg px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                                        title="Ventana de tiempo en minutos"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase text-white/30 tracking-widest">Límite</label>
+                                    <input 
+                                        type="number" 
+                                        value={messagesPerSlot} 
+                                        onChange={e => setMessagesPerSlot(parseInt(e.target.value))}
+                                        className="w-full h-8 bg-black/20 border border-white/5 rounded-lg px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                                        title="Límite de mensajes por ventana"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[8px] font-black uppercase text-white/30 tracking-widest">Recordatorio (h)</label>
+                                    <input 
+                                        type="number" 
+                                        value={reminderHours} 
+                                        onChange={e => setReminderHours(parseInt(e.target.value))}
+                                        className="w-full h-8 bg-black/20 border border-white/5 rounded-lg px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                                        title="Horas antes para enviar recordatorio"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Save config */}

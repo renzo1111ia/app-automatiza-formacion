@@ -120,3 +120,23 @@ export async function deleteAIAgent(agentId: string) {
     if (error) return { success: false, error: error.message };
     return { success: true };
 }
+
+/**
+ * Fetches all advisors for the active tenant.
+ */
+export async function getAdvisors() {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
+    
+    if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
+
+    const { data, error } = await supabase
+        .from("advisors")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+}

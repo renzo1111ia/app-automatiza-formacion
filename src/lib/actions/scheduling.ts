@@ -8,6 +8,8 @@ export interface Advisor {
     email: string | null;
     phone: string | null;
     is_active: boolean;
+    specialties?: string[];
+    handled_lead_types?: string[];
 }
 
 export interface AvailabilitySlot {

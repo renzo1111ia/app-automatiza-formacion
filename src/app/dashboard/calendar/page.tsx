@@ -14,8 +14,9 @@ import {
     type Advisor, type Appointment
 } from "@/lib/actions/scheduling";
 
-const DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-const DAYS_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const DAYS_FULL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+const DAYS_DB_MAP = [1, 2, 3, 4, 5, 6, 0]; // Monday=1, Sunday=0 for DB
 
 const STATUS_CONFIG = {
     PENDING:   { label: "Pendiente",  color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
@@ -73,7 +74,10 @@ export default function CalendarPage() {
 
     const getAppointmentsForDay = (date: Date) => appointments.filter(apt => {
         const aptDate = new Date(apt.scheduled_at);
-        return aptDate.toDateString() === date.toDateString();
+        // Compare year, month, date to be precise
+        return aptDate.getFullYear() === date.getFullYear() &&
+               aptDate.getMonth() === date.getMonth() &&
+               aptDate.getDate() === date.getDate();
     });
 
     async function handleSaveAdvisor() {
@@ -150,7 +154,7 @@ export default function CalendarPage() {
                                 {" — "}
                                 {weekDays[6].toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
                             </h2>
-                            <div className="flex gap-2">
+                        <div className="flex gap-2">
                                 <button onClick={() => setWeekOffset(0)} title="Semana actual" className="h-9 px-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white/40">Hoy</button>
                                 <button onClick={() => setWeekOffset(w => w + 1)} title="Semana siguiente" className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
                                     <ChevronRight className="h-4 w-4" />
@@ -163,13 +167,24 @@ export default function CalendarPage() {
                             {weekDays.map((day, i) => {
                                 const dayApts = getAppointmentsForDay(day);
                                 const isToday = day.toDateString() === new Date().toDateString();
+                                
+                                // Group by time to detect overlaps visually
+                                const timeGroups: Record<string, Appointment[]> = {};
+                                dayApts.forEach(apt => {
+                                    const time = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+                                    if (!timeGroups[time]) timeGroups[time] = [];
+                                    timeGroups[time].push(apt);
+                                });
+
                                 return (
                                     <div key={i} className={cn(
                                         "rounded-2xl border p-4 space-y-2 min-h-[160px]",
                                         isToday ? "border-primary/30 bg-primary/5" : "border-white/5 bg-white/[0.02]"
                                     )}>
                                         <div className="text-center mb-3">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">{DAYS[i]}</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                                                {day.toLocaleDateString("es-ES", { weekday: 'short' })}
+                                            </p>
                                             <p className={cn("text-xl font-black", isToday ? "text-primary" : "text-white/70")}>
                                                 {day.getDate()}
                                             </p>
@@ -177,22 +192,27 @@ export default function CalendarPage() {
                                         {dayApts.length === 0 && (
                                             <p className="text-[9px] text-white/10 text-center">Sin citas</p>
                                         )}
-                                        {dayApts.map(apt => {
-                                            const time = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-                                            const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
-                                            return (
-                                                <div key={apt.id} className={cn("p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all", sc.color)}>
-                                                    <div className="font-black">{time}</div>
-                                                    <div className="truncate opacity-80">{(apt.lead as any)?.nombre} {(apt.lead as any)?.apellido}</div>
-                                                    <div className="opacity-60">{(apt.advisors as any)?.name}</div>
-                                                    {apt.ab_variant && (
-                                                        <div className="flex items-center gap-1 mt-1">
-                                                            <Bot className="h-2.5 w-2.5" />
-                                                            <span>Variante {apt.ab_variant}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
+                                        {Object.entries(timeGroups).map(([time, apts]) => {
+                                            const hasOverlap = apts.length > 1;
+                                            return apts.map((apt, idx) => {
+                                                const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
+                                                return (
+                                                    <div key={apt.id} className={cn(
+                                                        "p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all relative", 
+                                                        sc.color,
+                                                        hasOverlap && "border-red-500/50 shadow-[0_0_5px_rgba(239,68,68,0.3)]"
+                                                    )}>
+                                                        {hasOverlap && idx === 0 && (
+                                                            <div className="absolute -top-1.5 -right-1.5 h-4 px-1 rounded-full bg-red-500 text-[8px] text-white flex items-center justify-center font-black animate-pulse z-10">
+                                                                ! CONFLICTO
+                                                            </div>
+                                                        )}
+                                                        <div className="font-black">{time}</div>
+                                                        <div className="truncate opacity-80">{(apt.lead as any)?.nombre} {(apt.lead as any)?.apellido}</div>
+                                                        <div className="opacity-60">{(apt.advisors as any)?.name}</div>
+                                                    </div>
+                                                );
+                                            });
                                         })}
                                     </div>
                                 );
@@ -309,6 +329,26 @@ export default function CalendarPage() {
                                             aria-label="Teléfono del asesor"
                                         />
                                     </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Especialidad (Cursos)</label>
+                                        <input
+                                            value={editingAdvisor.specialties?.join(", ") || ""}
+                                            onChange={e => setEditingAdvisor(p => ({ ...p, specialties: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
+                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 text-primary font-bold"
+                                            placeholder="MBA, Big Data, etc."
+                                            title="Lista de programas separados por coma"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Tipos de Lead</label>
+                                        <input
+                                            value={editingAdvisor.handled_lead_types?.join(", ") || ""}
+                                            onChange={e => setEditingAdvisor(p => ({ ...p, handled_lead_types: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
+                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                            placeholder="nuevo, ilocalizable, etc."
+                                            title="Tipos de lead separados por coma"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex gap-3">
                                     <button onClick={handleSaveAdvisor} disabled={saving} title="Guardar asesor"
@@ -396,22 +436,26 @@ export default function CalendarPage() {
                             <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-6">
                                 <p className="text-xs text-white/40 font-bold">Configura los días en que <span className="text-white font-black">{selectedAdvisor.name}</span> está disponible para recibir citas (09:00 - 20:00).</p>
                                 <div className="grid grid-cols-7 gap-3">
-                                    {DAYS_FULL.map((day, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setSlots(s => ({ ...s, [i]: !s[i] }))}
-                                            title={`Toggle ${day}`}
-                                            className={cn(
-                                                "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
-                                                slots[i] ? "bg-primary/10 border-primary/30 text-primary" : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40"
-                                            )}
-                                        >
-                                            <span className="text-[9px] font-black uppercase tracking-widest">{DAYS[i]}</span>
-                                            <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", slots[i] ? "bg-primary border-primary" : "border-white/10")}>
-                                                {slots[i] && <Check className="h-3 w-3 text-primary-foreground" />}
-                                            </div>
-                                        </button>
-                                    ))}
+                                    {DAYS_FULL.map((dayLabel, i) => {
+                                        const dbDay = DAYS_DB_MAP[i];
+                                        const isActive = slots[dbDay];
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => setSlots(s => ({ ...s, [dbDay]: !s[dbDay] }))}
+                                                title={`Toggle ${dayLabel}`}
+                                                className={cn(
+                                                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
+                                                    isActive ? "bg-primary/10 border-primary/30 text-primary" : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40"
+                                                )}
+                                            >
+                                                <span className="text-[9px] font-black uppercase tracking-widest">{DAYS[i]}</span>
+                                                <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", isActive ? "bg-primary border-primary" : "border-white/10")}>
+                                                    {isActive && <Check className="h-3 w-3 text-primary-foreground" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 <div className="flex items-center justify-between pt-2">
