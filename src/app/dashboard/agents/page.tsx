@@ -220,147 +220,317 @@ export default function AgentsPage() {
                     <div className="flex-1 p-10 overflow-y-auto no-scrollbar">
                         <AnimatePresence mode="wait">
                             {activeTab === 'BRAIN' && (
-                                <motion.div key="BRAIN" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-5xl mx-auto space-y-10">
-                                    <div className="grid grid-cols-1 gap-10">
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20"><Terminal className="h-5 w-5 text-primary" /></div>
-                                                    <div>
-                                                        <h3 className="text-lg font-black uppercase tracking-tight">Prompt Maestro</h3>
-                                                        <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">Instrucciones únicas para cualificación y cierre</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-4">
-                                                    <select title="Modelo de IA" value={variantA.model_name} onChange={(e) => setVariantA(p => ({...p, model_name: e.target.value}))} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase text-white/60 outline-none hover:border-primary/40 transition-all">
-                                                        <option value="gpt-4o">GPT-4o (Standard)</option>
-                                                        <option value="gpt-4o-mini">GPT-4o mini (Fast)</option>
-                                                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <textarea value={variantA.prompt_text || ""} onChange={(e) => setVariantA(p => ({...p, prompt_text: e.target.value}))} className="w-full h-[350px] bg-black/60 border border-white/5 rounded-[40px] p-10 text-base leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-white/80 shadow-2xl backdrop-blur-xl" placeholder="Escribe aquí el ADN de tu agente..." />
-                                         </div>
-
-                                         <div className="space-y-6">
-                                             <div className="flex items-center gap-3">
-                                                 <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"><DbIcon className="h-5 w-5 text-emerald-400" /></div>
-                                                 <div>
-                                                     <h3 className="text-lg font-black uppercase tracking-tight">Biblioteca de Conocimiento</h3>
-                                                     <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">Selecciona los documentos que este agente puede consultar</p>
-                                                 </div>
-                                             </div>
-                                             
-                                             <div className="grid grid-cols-2 gap-4">
-                                                 {knowledgeBases.length === 0 ? (
-                                                     <div className="col-span-2 p-10 border border-dashed border-white/10 rounded-[32px] text-center space-y-4">
-                                                         <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">No hay documentos en la biblioteca</p>
-                                                         <button onClick={() => window.location.href='/dashboard/knowledge'} className="px-6 h-10 bg-emerald-500/10 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-500/20 transition-all border border-emerald-500/20 text-emerald-400">Ir a Biblioteca</button>
-                                                     </div>
-                                                 ) : (
-                                                     knowledgeBases.map((kb) => {
-                                                         const isSelected = variantA.knowledge_base_ids?.includes(kb.id) || variantA.knowledge_base_id === kb.id;
-                                                         return (
-                                                             <button 
-                                                                 key={kb.id}
-                                                                 onClick={() => {
-                                                                     const currentIds = variantA.knowledge_base_ids || [];
-                                                                     const newIds = isSelected 
-                                                                         ? currentIds.filter(id => id !== kb.id)
-                                                                         : [...currentIds, kb.id];
-                                                                     setVariantA(p => ({ ...p, knowledge_base_ids: newIds }));
-                                                                 }}
-                                                                 className={cn(
-                                                                     "p-5 rounded-2xl border text-left transition-all flex items-center justify-between group",
-                                                                     isSelected ? "bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
-                                                                 )}
-                                                             >
-                                                                 <div className="flex items-center gap-4 overflow-hidden">
-                                                                     <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all", isSelected ? "bg-emerald-500 text-white" : "bg-white/5 text-white/20")}>
-                                                                         <DbIcon className="h-5 w-5" />
-                                                                     </div>
-                                                                     <div className="overflow-hidden">
-                                                                         <h4 className={cn("text-xs font-black uppercase tracking-tight truncate", isSelected ? "text-white" : "text-white/40")}>{kb.name}</h4>
-                                                                         <p className="text-[8px] text-white/20 font-bold uppercase truncate">{kb.description || "Sin descripción"}</p>
-                                                                     </div>
-                                                                 </div>
-                                                                 {isSelected && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] flex-shrink-0 ml-4" />}
-                                                             </button>
-                                                         );
-                                                     })
-                                                 )}
-                                             </div>
-                                         </div>
-                                    </div>
-                                </motion.div>
-                            )}
-
-                            {activeTab === 'AUTOMATION' && (
-                                <motion.div key="AUTOMATION" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-5xl mx-auto space-y-10">
-                                    <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[48px] space-y-10">
+                                <motion.div key="BRAIN" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-6xl mx-auto space-y-12 pb-20">
+                                    
+                                    {/* SECCIÓN 1: CEREBRO DEL AGENTE */}
+                                    <div className="space-y-8">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-14 w-14 rounded-[20px] bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-xl shadow-amber-500/5"><UserCheck className="h-7 w-7 text-amber-500" /></div>
+                                                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
+                                                    <Cpu className="h-6 w-6 text-primary" />
+                                                </div>
                                                 <div>
-                                                    <h3 className="text-xl font-black uppercase tracking-tight">Round Robin Monitor</h3>
-                                                    <p className="text-[10px] text-white/20 font-black uppercase tracking-widest mt-1">Asesores activos y disponibilidad real</p>
+                                                    <h3 className="text-xl font-black uppercase tracking-tight">Cerebro del Agente</h3>
+                                                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Selecciona el motor de inteligencia para este maestro</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                                                <Activity className="h-3 w-3 text-emerald-500 animate-pulse" />
-                                                <span className="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Sincronizado</span>
+                                            
+                                            <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl">
+                                                <button onClick={() => setVariantA(p => ({...p, model_provider: 'OPENAI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'OPENAI' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-white/40 hover:text-white")}>
+                                                    <Zap className="h-3 w-3" /> OpenAI
+                                                </button>
+                                                <button onClick={() => setVariantA(p => ({...p, model_provider: 'ANTHROPIC'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'ANTHROPIC' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-white/40 hover:text-white")}>
+                                                    <Brain className="h-3 w-3" /> Claude
+                                                </button>
+                                                <button onClick={() => setVariantA(p => ({...p, model_provider: 'GEMINI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'GEMINI' ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-white/40 hover:text-white")}>
+                                                    <Zap className="h-3 w-3" /> Gemini
+                                                </button>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-6">
-                                            {advisors.map(adv => (
-                                                <div key={adv.id} className="p-6 bg-black/40 border border-white/5 rounded-[32px] flex items-center justify-between group hover:bg-primary/5 hover:border-primary/20 transition-all">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center font-black text-white/40 uppercase border border-white/10">{adv.name.charAt(0)}</div>
-                                                        <div>
-                                                            <h4 className="text-sm font-black uppercase tracking-tight">{adv.name}</h4>
-                                                            <p className="text-[10px] text-white/20 font-bold">{adv.email}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {variantA.model_provider === 'OPENAI' && (
+                                                <>
+                                                    <ModelCard active={variantA.model_name === 'gpt-4o'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o'}))} label="GPT-4o" desc="El modelo más avanzado y complejo" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4o-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o-mini'}))} label="GPT-4o MINI" desc="Versión rápida y eficiente" />
+                                                    <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="O3-MINI" desc="Razonamiento ultra-rápido (Science/Math)" />
+                                                    <ModelCard active={variantA.model_name === 'o1'} onClick={() => setVariantA(p => ({...p, model_name: 'o1'}))} label="O1" desc="Razonamiento profundo avanzado" />
+                                                    <ModelCard active={variantA.model_name === 'o1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o1-mini'}))} label="O1-MINI" desc="Razonamiento rápido y eficaz" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4-turbo'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4-turbo'}))} label="GPT-4 TURBO" desc="Alta precisión legacy" />
+                                                </>
+                                            )}
+                                            {variantA.model_provider === 'ANTHROPIC' && (
+                                                <>
+                                                    <ModelCard active={variantA.model_name === 'claude-3-5-sonnet-20241022'} onClick={() => setVariantA(p => ({...p, model_name: 'claude-3-5-sonnet-20241022'}))} label="Claude 3.5 Sonnet" desc="Balance perfecto entre velocidad e inteligencia" />
+                                                    <ModelCard active={variantA.model_name === 'claude-3-5-haiku-20241022'} onClick={() => setVariantA(p => ({...p, model_name: 'claude-3-5-haiku-20241022'}))} label="Claude 3.5 Haiku" desc="El más rápido de la familia Anthropic" />
+                                                    <ModelCard active={variantA.model_name === 'claude-3-opus-20240229'} onClick={() => setVariantA(p => ({...p, model_name: 'claude-3-opus-20240229'}))} label="Claude 3 Opus" desc="Máximo razonamiento y matices" />
+                                                </>
+                                            )}
+                                            {variantA.model_provider === 'GEMINI' && (
+                                                <>
+                                                    <ModelCard active={variantA.model_name === 'gemini-1.5-pro'} onClick={() => setVariantA(p => ({...p, model_name: 'gemini-1.5-pro'}))} label="Gemini 1.5 Pro" desc="Gran ventana de contexto y alta fidelidad" />
+                                                    <ModelCard active={variantA.model_name === 'gemini-1.5-flash'} onClick={() => setVariantA(p => ({...p, model_name: 'gemini-1.5-flash'}))} label="Gemini 1.5 Flash" desc="Optimizado para velocidad y escala" />
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-4 flex items-center gap-2">
+                                                <Edit3 className="h-3 w-3" /> O introduce un ID de modelo manual
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                value={variantA.model_name || ""} 
+                                                onChange={(e) => setVariantA(p => ({...p, model_name: e.target.value}))}
+                                                className="w-full h-14 bg-black/60 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white/80 focus:border-primary/40 outline-none transition-all"
+                                                placeholder="ej: gpt-4.1-mini"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN 2: ADN DEL AGENTE (PROMPT) */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                                                <Terminal className="h-6 w-6 text-amber-500" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black uppercase tracking-tight">ADN del Agente</h3>
+                                                <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Define el comportamiento y objetivos del maestro</p>
+                                            </div>
+                                        </div>
+                                        <textarea 
+                                            value={variantA.prompt_text || ""} 
+                                            onChange={(e) => setVariantA(p => ({...p, prompt_text: e.target.value}))} 
+                                            className="w-full h-[400px] bg-black/60 border border-white/5 rounded-[40px] p-10 text-base leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-white/80 shadow-2xl backdrop-blur-xl border-t-primary/20" 
+                                            placeholder="Eres un agente experto en cualificación de leads..." 
+                                        />
+                                    </div>
+
+                                    {/* SECCIÓN 3: CAPTURAR DATOS (MEMORIA) */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-12 w-12 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                                    <Brain className="h-6 w-6 text-purple-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black uppercase tracking-tight text-amber-500">Capturar Datos (Memoria del Agente)</h3>
+                                                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">La IA detectará estos datos en la charla y los guardará automáticamente</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex items-center gap-3">
+                                                <input 
+                                                    title="Nueva etiqueta de memoria"
+                                                    type="text" 
+                                                    placeholder="Nueva Etiqueta..." 
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            const val = (e.target as HTMLInputElement).value.trim().toUpperCase();
+                                                            if (val) {
+                                                                const current = variantA.tracked_variables || [];
+                                                                if (!current.includes(val)) {
+                                                                    setVariantA(p => ({...p, tracked_variables: [...current, val]}));
+                                                                }
+                                                                (e.target as HTMLInputElement).value = '';
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="h-11 px-6 bg-white/5 border border-white/10 rounded-xl text-xs font-bold outline-none focus:border-amber-500/40"
+                                                />
+                                                <div className="h-11 w-11 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-500">
+                                                    <PlusCircle className="h-4 w-4" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-3 p-8 bg-black/20 border border-white/5 rounded-[32px]">
+                                            {(variantA.tracked_variables || ['USER_NAME', 'ID_LEAD', 'USER_COUNTRY', 'USER_PHONE', 'COURSE_NAME', 'QUALIFIED', 'CORRECTO']).map(tag => (
+                                                <div key={tag} className="flex items-center gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/20 rounded-xl group hover:border-amber-500/50 transition-all cursor-pointer">
+                                                    <DbIcon className="h-3 w-3 text-amber-500/40" />
+                                                    <span className="text-xs font-black text-amber-500 tracking-wider">{"{{"}{tag}{"}}"}</span>
+                                                    <button 
+                                                        title={`Eliminar etiqueta ${tag}`}
+                                                        onClick={() => setVariantA(p => ({...p, tracked_variables: (p.tracked_variables || []).filter(t => t !== tag)}))}
+                                                        className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400"
+                                                    >
+                                                        <XIcon className="h-3 w-3" />
+                                                    </button>
                                                 </div>
                                             ))}
-                                            {advisors.length === 0 && (
-                                                <div className="col-span-2 p-10 border border-dashed border-white/10 rounded-[32px] text-center space-y-4">
-                                                    <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">No hay asesores configurados para el Round Robin</p>
-                                                    <button title="Ir a configuración de asesores" className="px-6 h-10 bg-white/5 text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all border border-white/5">Configurar Asesores</button>
-                                                </div>
+                                            {(variantA.tracked_variables || []).length === 0 && (
+                                                <p className="text-[10px] font-black uppercase text-white/10 tracking-[0.3em] py-4">No hay etiquetas de memoria configuradas</p>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-6">
-                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'auto'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'auto'}}))} icon={Zap} label="Auto-Efectivo" desc="Llama o escribe según probabilidad." />
-                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'call'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'call'}}))} icon={Cpu} label="Prioridad Voz" desc="Inicia siempre con llamada de IA." />
-                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'whatsapp'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'whatsapp'}}))} icon={MessageSquareIcon} label="WhatsApp First" desc="Ideal para leads nocturnos." />
+                                    {/* SECCIÓN 4: CREDENCIALES */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-12 w-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                                                    <Zap className="h-6 w-6 text-blue-400" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black uppercase tracking-tight">Credenciales de Acceso (Model Provider)</h3>
+                                                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Llave API exclusiva para este agente maestro</p>
+                                                </div>
+                                            </div>
+                                            <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Mostrar</button>
+                                        </div>
+                                        
+                                        <div className="relative group">
+                                            <input 
+                                                type="password" 
+                                                value={variantA.api_key || ""} 
+                                                onChange={(e) => setVariantA(p => ({...p, api_key: e.target.value}))}
+                                                className="w-full h-20 bg-black/40 border border-white/10 rounded-[32px] px-10 text-lg tracking-[0.5em] text-primary focus:border-primary/40 outline-none transition-all shadow-2xl"
+                                                placeholder="••••••••••••••••••••••••••••••••••••••••••••••••"
+                                            />
+                                            <p className="text-[9px] text-white/20 mt-4 italic ml-4">
+                                                * Esta llave se usará exclusivamente para las llamadas procesadas por este agente. Si se deja vacía, se usará la llave global del sistema.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN 5: KNOWLEDGE BASE */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                                <DbIcon className="h-6 w-6 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black uppercase tracking-tight">Biblioteca de Conocimiento</h3>
+                                                <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Entrena al agente con tus documentos PDF</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {knowledgeBases.map((kb) => {
+                                                const isSelected = variantA.knowledge_base_ids?.includes(kb.id);
+                                                return (
+                                                    <button 
+                                                        key={kb.id}
+                                                        onClick={() => {
+                                                            const currentIds = variantA.knowledge_base_ids || [];
+                                                            const newIds = isSelected 
+                                                                ? currentIds.filter(id => id !== kb.id)
+                                                                : [...currentIds, kb.id];
+                                                            setVariantA(p => ({ ...p, knowledge_base_ids: newIds }));
+                                                        }}
+                                                        className={cn(
+                                                            "p-6 rounded-[32px] border text-left transition-all flex items-center justify-between group h-24",
+                                                            isSelected ? "bg-emerald-500/10 border-emerald-500/40 shadow-xl shadow-emerald-500/10" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center gap-4 overflow-hidden">
+                                                            <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-all", isSelected ? "bg-emerald-500 text-white" : "bg-white/5 text-white/20")}>
+                                                                <DbIcon className="h-6 w-6" />
+                                                            </div>
+                                                            <div className="overflow-hidden">
+                                                                <h4 className={cn("text-sm font-black uppercase tracking-tight truncate", isSelected ? "text-white" : "text-white/40")}>{kb.name}</h4>
+                                                                <p className="text-[10px] text-white/20 font-bold uppercase truncate">{kb.description || "Documento indexado"}</p>
+                                                            </div>
+                                                        </div>
+                                                        {isSelected && <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'AUTOMATION' && (
+                                <motion.div key="AUTOMATION" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-6xl mx-auto space-y-10 pb-20">
+                                    <div className="p-12 bg-white/[0.02] border border-white/5 rounded-[56px] space-y-12">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-16 w-16 rounded-[24px] bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-2xl shadow-amber-500/5">
+                                                    <UserCheck className="h-8 w-8 text-amber-500" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-2xl font-black uppercase tracking-tight">Round Robin Monitor</h3>
+                                                    <p className="text-[11px] text-white/40 font-black uppercase tracking-widest mt-1">Gestión de flujo de leads para asesores humanos</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                                                <Activity className="h-4 w-4 text-emerald-500 animate-pulse" />
+                                                <span className="text-[10px] font-black uppercase text-emerald-500 tracking-[0.2em]">Sincronización en Vivo</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {advisors.map(adv => (
+                                                <div key={adv.id} className="p-8 bg-black/40 border border-white/5 rounded-[40px] flex items-center justify-between group hover:bg-primary/5 hover:border-primary/20 transition-all cursor-pointer">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="h-14 w-14 rounded-2xl bg-white/5 flex items-center justify-center font-black text-white/40 uppercase border border-white/10 text-xl">{adv.name.charAt(0)}</div>
+                                                        <div>
+                                                            <h4 className="text-base font-black uppercase tracking-tight">{adv.name}</h4>
+                                                            <p className="text-xs text-white/20 font-bold tracking-wider">{adv.email}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
+                                                        <span className="text-[8px] font-black uppercase text-emerald-500/60">Disponible</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'auto'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'auto'}}))} icon={Zap} label="Auto-Efectivo" desc="Llama o escribe según probabilidad de éxito calculada por IA." />
+                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'call'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'call'}}))} icon={Cpu} label="Prioridad Voz" desc="Inicia siempre con llamada de IA cualificadora." />
+                                        <PolicyCard active={variantA.automation_rules?.contact_policy === 'whatsapp'} onClick={() => setVariantA(prev => ({...prev, automation_rules: {...prev.automation_rules, contact_policy: 'whatsapp'}}))} icon={MessageSquareIcon} label="WhatsApp First" desc="Ideal para leads nocturnos o baja señal telefónica." />
                                     </div>
                                 </motion.div>
                             )}
 
                             {activeTab === 'CRM' && (
-                                <motion.div key="CRM" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-5xl mx-auto space-y-10">
-                                    <div className="p-10 bg-white/[0.02] border border-white/5 rounded-[48px] space-y-10 text-left">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-14 w-14 rounded-[20px] bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><DbIcon className="h-7 w-7 text-blue-400" /></div>
-                                                <div>
-                                                    <h3 className="text-xl font-black uppercase tracking-tight">CRM Bridge</h3>
-                                                    <p className="text-[10px] text-white/20 font-black uppercase tracking-widest">Sincronización bidireccional automática</p>
-                                                </div>
-                                            </div>
-                                            <select title="Proveedor CRM" value={variantA.crm_config?.provider || 'NONE'} onChange={(e) => setVariantA(p => ({...p, crm_config: {...p.crm_config, provider: e.target.value}}))} className="bg-blue-500/10 border border-blue-500/20 rounded-2xl px-6 py-3 text-xs font-black uppercase text-blue-400 outline-none">
-                                                <option value="NONE">Desconectado</option>
-                                                <option value="ZOHO">Zoho CRM</option>
-                                                <option value="WEBHOOK">Webhook (Global)</option>
+                                <motion.div key="CRM" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-10 pb-20">
+                                    <div className="p-16 bg-white/[0.02] border border-white/5 rounded-[64px] space-y-12 text-center">
+                                        <div className="h-24 w-24 rounded-[32px] bg-blue-500/10 flex items-center justify-center border border-blue-500/20 mx-auto shadow-2xl shadow-blue-500/10">
+                                            <DbIcon className="h-12 w-12 text-blue-400" />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <h3 className="text-3xl font-black uppercase tracking-tight">CRM Bridge (Global)</h3>
+                                            <p className="text-sm text-white/40 font-medium max-w-xl mx-auto leading-relaxed">
+                                                Configura la inyección automática de datos cualificados. La IA actualizará los estados de tus leads en tiempo real.
+                                            </p>
+                                        </div>
+                                        
+                                        <div className="flex justify-center pt-6">
+                                            <select 
+                                                value={variantA.crm_config?.provider || 'NONE'} 
+                                                onChange={(e) => setVariantA(p => ({...p, crm_config: {...p.crm_config, provider: e.target.value}}))} 
+                                                className="h-16 px-10 bg-blue-500/10 border border-blue-500/20 rounded-[24px] text-sm font-black uppercase text-blue-400 outline-none hover:bg-blue-500/20 transition-all cursor-pointer shadow-xl shadow-blue-500/5"
+                                            >
+                                                <option value="NONE">Desconectado del CRM</option>
+                                                <option value="ZOHO">Zoho CRM Native</option>
+                                                <option value="HUBSPOT">HubSpot Integration</option>
+                                                <option value="WEBHOOK">Custom Webhook (API)</option>
                                             </select>
                                         </div>
-                                        <div className="p-10 bg-black/40 border border-white/5 rounded-[32px] text-center space-y-4">
-                                            <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">Configura tu puente de datos para que la IA inyecte los prospectos cualificados.</p>
+
+                                        <div className="grid grid-cols-3 gap-6 pt-12">
+                                            <div className="p-8 rounded-[40px] bg-white/[0.02] border border-white/5 space-y-3">
+                                                <UserCheck className="h-6 w-6 text-blue-400/40 mx-auto" />
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest">Sincronizar Contacto</h4>
+                                                <div className="h-1 w-8 bg-blue-400/20 mx-auto rounded-full" />
+                                            </div>
+                                            <div className="p-8 rounded-[40px] bg-white/[0.02] border border-white/5 space-y-3">
+                                                <Activity className="h-6 w-6 text-blue-400/40 mx-auto" />
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest">Update de Estados</h4>
+                                                <div className="h-1 w-8 bg-blue-400/20 mx-auto rounded-full" />
+                                            </div>
+                                            <div className="p-8 rounded-[40px] bg-white/[0.02] border border-white/5 space-y-3">
+                                                <BarChart3 className="h-6 w-6 text-blue-400/40 mx-auto" />
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest">Inyección de Notas</h4>
+                                                <div className="h-1 w-8 bg-blue-400/20 mx-auto rounded-full" />
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -478,6 +648,26 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, on
         <button title={label} onClick={onClick} className={cn("flex items-center gap-3 px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative group", active ? "text-primary" : "text-white/20 hover:text-white/40")}>
             <Icon className={cn("h-4 w-4 transition-all", active ? "text-primary scale-110" : "text-white/20")} /> {label}
             {active && <motion.div layoutId="tabUnderline" className="absolute bottom-0 left-4 right-4 h-1 bg-primary rounded-t-full shadow-[0_-4px_12px_rgba(var(--primary-rgb),0.5)]" />}
+        </button>
+    );
+}
+
+function ModelCard({ active, onClick, label, desc }: { active: boolean, onClick: () => void, label: string, desc: string }) {
+    return (
+        <button 
+            onClick={onClick}
+            title={`Seleccionar modelo ${label}`}
+            className={cn(
+                "p-6 rounded-[32px] border text-left transition-all relative group overflow-hidden h-32 flex flex-col justify-between",
+                active ? "bg-emerald-500/10 border-emerald-500/40 shadow-2xl shadow-emerald-500/10" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
+            )}
+        >
+            <div className="flex items-center justify-between">
+                <h4 className={cn("text-sm font-black uppercase tracking-tight", active ? "text-emerald-400" : "text-white/40 group-hover:text-white/60")}>{label}</h4>
+                {active && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
+            </div>
+            <p className="text-[10px] text-white/20 font-bold uppercase tracking-tight leading-tight line-clamp-2">{desc}</p>
+            {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />}
         </button>
     );
 }
