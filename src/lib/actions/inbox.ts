@@ -107,13 +107,16 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
         // Consolidates summaries override legacy
         (summaries || []).forEach(s => {
             const summaryStr = (s as any).summary as string;
+            if (!summaryStr) return;
+
             const lines = summaryStr.split('\n').filter(l => l.trim());
             const lastLine = lines[lines.length - 1];
             const match = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
             
-            if (match && s.lead_id) {
+            const leadId = (s as any).lead_id;
+            if (match && leadId) {
                 const [, time, , content] = match;
-                latestMsgByLead.set(s.lead_id, { 
+                latestMsgByLead.set(leadId, { 
                     content: content, 
                     time: (s as any).last_interaction_at || new Date().toISOString() 
                 });
