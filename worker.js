@@ -61,6 +61,13 @@ const worker = createLeadWorker(async (job) => {
             throw err; // Re-queue
         }
     }
+
+    // 5. HANDLER: CRM Export / Sync (One by One)
+    if (action === "CRM_SYNC") {
+        const { crmExportProcessor } = await import("./src/lib/core/processors/CRMExportProcessor.js");
+        await crmExportProcessor.exportLead(leadId, tenantId);
+        return;
+    }
 });
 
 // Initialize Cron for Watchdog & Zoho (If running as a background process)

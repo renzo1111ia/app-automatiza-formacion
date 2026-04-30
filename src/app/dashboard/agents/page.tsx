@@ -12,7 +12,8 @@ import {
     UserCheck,
     Terminal,
     Play,
-    Cpu, Brain, Database as DbIcon
+    Cpu, Brain, Database as DbIcon,
+    X
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -253,6 +254,8 @@ export default function AgentsPage() {
                                                 <>
                                                     <ModelCard active={variantA.model_name === 'gpt-4o'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o'}))} label="GPT-4o" desc="El modelo más avanzado y complejo" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4o-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o-mini'}))} label="GPT-4o MINI" desc="Versión rápida y eficiente" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4.1'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1'}))} label="GPT-4.1 Series" desc="Última versión optimizada (Omni)" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4.1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1-mini'}))} label="GPT-4.1 Mini" desc="Máxima velocidad con inteligencia 4.1" />
                                                     <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="O3-MINI" desc="Razonamiento ultra-rápido (Science/Math)" />
                                                     <ModelCard active={variantA.model_name === 'o1'} onClick={() => setVariantA(p => ({...p, model_name: 'o1'}))} label="O1" desc="Razonamiento profundo avanzado" />
                                                     <ModelCard active={variantA.model_name === 'o1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o1-mini'}))} label="O1-MINI" desc="Razonamiento rápido y eficaz" />
@@ -355,7 +358,7 @@ export default function AgentsPage() {
                                                         onClick={() => setVariantA(p => ({...p, tracked_variables: (p.tracked_variables || []).filter(t => t !== tag)}))}
                                                         className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400"
                                                     >
-                                                        <XIcon className="h-3 w-3" />
+                                                        <X className="h-3 w-3" />
                                                     </button>
                                                 </div>
                                             ))}
@@ -383,6 +386,7 @@ export default function AgentsPage() {
                                         <div className="relative group">
                                             <input 
                                                 type="password" 
+                                                title="API Key del Proveedor"
                                                 value={variantA.api_key || ""} 
                                                 onChange={(e) => setVariantA(p => ({...p, api_key: e.target.value}))}
                                                 className="w-full h-20 bg-black/40 border border-white/10 rounded-[32px] px-10 text-lg tracking-[0.5em] text-primary focus:border-primary/40 outline-none transition-all shadow-2xl"
@@ -520,6 +524,8 @@ export default function AgentsPage() {
                                                     <div className="flex items-center gap-4">
                                                         <input 
                                                             type="number" 
+                                                            title="Tiempo de espera en minutos"
+                                                            placeholder="30"
                                                             value={variantA.automation_rules?.inactivity_timeout || 30} 
                                                             onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_timeout: parseInt(e.target.value)}}))}
                                                             className="flex-1 h-14 bg-black/40 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white outline-none focus:border-primary/40" 
@@ -739,7 +745,7 @@ export default function AgentsPage() {
                                                             }}
                                                             className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400"
                                                         >
-                                                            <XIcon className="h-4 w-4" />
+                                                            <X className="h-4 w-4" />
                                                         </button>
                                                     </div>
                                                 ))}
@@ -806,7 +812,7 @@ export default function AgentsPage() {
                                             <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">Prueba el Cerebro en Tiempo Real</p>
                                         </div>
                                     </div>
-                                    <button title="Cerrar Simulador" onClick={() => setIsSimulatorOpen(false)} className="h-10 w-10 rounded-xl hover:bg-white/5 flex items-center justify-center transition-all text-white/20 hover:text-white"><XIcon className="h-5 w-5" /></button>
+                                    <button title="Cerrar Simulador" onClick={() => setIsSimulatorOpen(false)} className="h-10 w-10 rounded-xl hover:bg-white/5 flex items-center justify-center transition-all text-white/20 hover:text-white"><X className="h-5 w-5" /></button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-thin scrollbar-thumb-white/5">
@@ -947,4 +953,4 @@ function LogItem({ status, label }: { status: 'success' | 'pending' | 'error', l
     );
 }
 
-function XIcon({ className }: { className?: string }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>; }
+

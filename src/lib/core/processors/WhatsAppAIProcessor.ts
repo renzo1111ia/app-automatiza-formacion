@@ -197,7 +197,8 @@ ${conversationContext}
                         leadId, 
                         dialogueForExtraction, 
                         trackedVars, 
-                        apiKey
+                        apiKey,
+                        tenantId
                     ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));
                 }
 

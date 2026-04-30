@@ -994,9 +994,9 @@ export default function AIAgentInbox() {
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20">Variables Capturadas</p>
                                         <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-tighter animate-pulse">Live</span>
                                     </div>
-                                    {selectedLead.metadata?.last_fact_update && typeof selectedLead.metadata.last_fact_update === 'string' && (
+                                    {typeof selectedLead.metadata?.last_fact_update === 'string' && (
                                         <span className="text-[8px] font-bold text-slate-400 dark:text-white/10 italic">
-                                            Actualizado: {new Date(selectedLead.metadata.last_fact_update).toLocaleTimeString()}
+                                            Actualizado: {new Date(selectedLead.metadata.last_fact_update as string).toLocaleTimeString()}
                                         </span>
                                     )}
                                     <button 

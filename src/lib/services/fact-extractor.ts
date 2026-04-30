@@ -2,6 +2,7 @@
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
 
 /**
  * FACT EXTRACTION SERVICE
@@ -28,7 +29,8 @@ export class FactExtractionService {
         leadId: string, 
         dialogue: string, 
         varsToTrack: string[],
-        apiKey: string
+        apiKey: string,
+        tenantId?: string
     ) {
         if (!varsToTrack || varsToTrack.length === 0) return null;
 
@@ -52,7 +54,7 @@ REGLAS ESTRICTAS:
 7. NO inventes datos. Solo extrae lo que se haya mencionado explícitamente en el diálogo.
 
 EJEMPLO de salida válida:
-{"USER_NAME": "Carlos", "USER_COUNTRY": "Bolivia", "CURSE_NAME": "MBA"}`;
+{"USER_NAME": "Carlos", "USER_COUNTRY": "Bolivia", "CURSE_NAME": "MBA", "QUALIFICATION_SUMMARY": "Interesado en MBA para el próximo semestre."}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -81,6 +83,18 @@ EJEMPLO de salida válida:
             if (Object.keys(filtered).length > 0) {
                 console.log(`[FACT EXTRACTOR] ✅ Captured:`, filtered);
                 await this.saveToLeadMetadata(leadId, filtered);
+
+                // 🟢 TRIGGER CRM SYNC (ONE BY ONE LOGIC)
+                if (tenantId) {
+                    await enqueueLeadStep({
+                        leadId,
+                        tenantId,
+                        action: "CRM_SYNC" as any,
+                        step: 0
+                    });
+                    console.log(`[FACT EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
+                }
+
                 return filtered;
             }
 
