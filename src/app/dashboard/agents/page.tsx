@@ -775,6 +775,7 @@ export default function AgentsPage() {
                                                         <p className="text-[10px] text-white/20 font-bold uppercase mt-1">Verificar existencia antes de crear</p>
                                                     </div>
                                                     <button 
+                                                        title="Alternar evitar duplicados"
                                                         onClick={() => setVariantA(p => ({...p, crm_config: {...p.crm_config, prevent_duplicates: !p.crm_config?.prevent_duplicates}}))}
                                                         className={cn("h-6 w-12 rounded-full transition-all relative", variantA.crm_config?.prevent_duplicates ? "bg-purple-500" : "bg-white/10")}
                                                     >
