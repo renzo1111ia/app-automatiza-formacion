@@ -226,11 +226,12 @@ export default function AIAgentInbox() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'chat_summaries', filter: `tenant_id=eq.${tenantId}` },
                 (payload) => {
-                    const newSummary = (payload.new as any).summary as string;
-                    const leadId = (payload.new as any).lead_id;
+                    const row = payload.new as { summary: string; lead_id: string };
+                    const newSummary = row.summary;
+                    const leadId = row.lead_id;
 
                     if (selectedLeadRef.current?.id === leadId) {
-                        const lines = newSummary.split('\n').filter(l => l.trim());
+                        const lines = newSummary.split('\n').filter((l: string) => l.trim());
                         const messages: ChatMessage[] = lines.map((line, idx) => {
                             const match = line.match(/^\[(.*?)\] (.*?): (.*)$/);
                             if (match) {
@@ -256,12 +257,12 @@ export default function AIAgentInbox() {
                     }
 
                     // Update the preview in the leads list
-                    const lines = newSummary.split('\n').filter(l => l.trim());
+                    const lines = newSummary.split('\n').filter((l: string) => l.trim());
                     const lastLine = lines[lines.length - 1];
                     const lastMatch = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
                     
                     if (lastMatch) {
-                        const [, time, , content] = lastMatch;
+                        const [, , , content] = lastMatch;
                         setLeads((prev) => {
                             const updated = prev.map(l =>
                                 l.id === leadId
@@ -522,7 +523,7 @@ export default function AIAgentInbox() {
         <div className="h-full flex text-slate-900 dark:text-white selection:bg-primary/30 font-sans overflow-hidden">
             
             {/* ─── COLUMN 1: CONVERSATION LIST (Standard 320px) ───────────────────────── */}
-            <div className="w-80 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 backdrop-blur-3xl z-20">
+            <div className="w-80 flex-shrink-0 flex flex-col border-r border-slate-200 dark:border-white/5 bg-white dark:bg-black/20 backdrop-blur-3xl z-20">
                 <div className="h-16 px-6 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-white dark:bg-black/20">
                     <div className="flex items-center gap-3">
                         <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-primary">Conversaciones</h2>
@@ -548,7 +549,7 @@ export default function AIAgentInbox() {
                                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    className="absolute top-full right-0 mt-2 w-56 bg-[#0b0e14] border border-white/10 rounded-2xl shadow-2xl p-4 z-50 space-y-4"
+                                    className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 z-50 space-y-4"
                                 >
                                     <div className="space-y-2">
                                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">Segmentación</p>
@@ -627,12 +628,12 @@ export default function AIAgentInbox() {
                             placeholder="Buscar prospectos..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-10 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-300 dark:text-white/10 text-slate-900 dark:text-white"
+                            className="w-full h-10 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-300 text-slate-900 dark:text-white"
                         />
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar bg-black/5">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 dark:bg-black/5">
                     {loading ? (
                         <div className="flex justify-center py-20 opacity-30"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                     ) : (
@@ -655,23 +656,23 @@ export default function AIAgentInbox() {
                                 onClick={() => setSelectedLead(lead)}
                                 className={cn(
                                     "w-full px-6 py-4 flex items-center gap-4 transition-all text-left relative group border-b border-slate-100 dark:border-white/[0.02]",
-                                    selectedLead?.id === lead.id ? "bg-slate-50 dark:bg-primary/10" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"
+                                    selectedLead?.id === lead.id ? "bg-blue-50 dark:bg-primary/10" : "hover:bg-slate-50 dark:hover:bg-white/[0.03]"
                                 )}
                             >
                                 {selectedLead?.id === lead.id && <div className="absolute left-0 top-3 bottom-3 w-1 bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.6)] rounded-r-full" />}
                                 
-                                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-2xl group-hover:scale-105 transition-transform duration-300">
+                                <div className="h-12 w-12 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-sm group-hover:scale-105 transition-transform duration-300">
                                     {lead.foto_url ? (
                                         <Image src={lead.foto_url} alt={lead.nombre || ""} width={48} height={48} className="h-full w-full object-cover" unoptimized />
                                     ) : (
                                         <User className="h-6 w-6 text-slate-400 dark:text-white/20" />
                                     )}
-                                    <div className="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#030712]" title="WhatsApp Activo" />
+                                    <div className="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#030712]" title="WhatsApp Activo" />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-0.5">
-                                        <p className="text-[13px] font-black truncate tracking-tight text-slate-900 dark:text-slate-900 dark:text-white/90">
+                                        <p className="text-[13px] font-black truncate tracking-tight text-slate-900 dark:text-white/90">
                                             {lead.nombre || lead.apellido ? `${lead.nombre || ''} ${lead.apellido || ''}` : lead.telefono || "Sin Nombre"}
                                         </p>
                                         <span className="text-[9px] font-bold text-slate-400 dark:text-slate-400 dark:text-white/20 uppercase tracking-tighter">
@@ -680,7 +681,7 @@ export default function AIAgentInbox() {
                                     </div>
                                     <p className={cn(
                                         "text-[11px] truncate font-medium",
-                                        lead.unread_count ? "text-blue-600 dark:text-white font-black" : "text-slate-500 dark:text-slate-500 dark:text-white/40"
+                                        lead.unread_count ? "text-blue-600 dark:text-white font-black" : "text-slate-400 dark:text-white/40"
                                     )}>
                                         {lead.last_message || "Esperando interacción..."}
                                     </p>
@@ -736,7 +737,7 @@ export default function AIAgentInbox() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 dark:text-white/40">
+                                    <div className="flex items-center gap-2 text-slate-400 dark:text-white/40">
                                         <span className="text-[9px] font-bold tracking-wider truncate">{selectedLead.telefono}</span>
                                         {!showDetails && (
                                             <div className="flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
@@ -784,7 +785,7 @@ export default function AIAgentInbox() {
                                     onChange={(e) => handleAssignAgent(e.target.value || null)}
                                     title="Vincular este lead a un agente específico"
                                     className={cn(
-                                        "h-9 bg-black/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-primary/20 appearance-none cursor-pointer disabled:opacity-50 transition-all",
+                                        "h-9 bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-primary focus:outline-none focus:border-primary/20 appearance-none cursor-pointer disabled:opacity-50 transition-all",
                                         showDetails ? "w-9 px-0 text-center flex items-center justify-center" : "px-4 pr-8"
                                     )}
                                 >
@@ -855,7 +856,7 @@ export default function AIAgentInbox() {
                                 </button>
                                 <button 
                                     title="Añadir nota privada"
-                                    className="h-9 px-4 rounded-xl bg-white/5 border border-white/5 flex items-center gap-2 hover:bg-white/10 transition-all text-[9px] font-black uppercase tracking-widest text-white/30"
+                                    className="h-9 px-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30"
                                 >
                                     <Archive className="h-3.5 w-3.5" /> Nota Privada
                                 </button>
@@ -904,7 +905,7 @@ export default function AIAgentInbox() {
                             <button 
                                 title="Cerrar detalles"
                                 onClick={() => setShowDetails(false)} 
-                                className="text-slate-400 dark:text-white/20 hover:text-white h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-all"
+                                className="text-slate-400 dark:text-white/20 hover:text-primary h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                             >
                                 <X className="h-4 w-4"/>
                             </button>
@@ -958,7 +959,7 @@ export default function AIAgentInbox() {
                                                     "px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
                                                     selectedLead.segmentacion === seg 
                                                         ? "bg-primary border-primary/20 text-white shadow-lg shadow-primary/20" 
-                                                        : "bg-white/5 border-white/5 text-slate-500 dark:text-white/40 hover:bg-white/10"
+                                                        : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10"
                                                 )}
                                             >
                                                 {seg}
@@ -1151,7 +1152,7 @@ export default function AIAgentInbox() {
                         />
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-xl bg-[#0b0e14] border border-white/10 rounded-[40px] p-10 shadow-[0_0_100px_rgba(0,0,0,0.5)] space-y-8"
+                            className="relative w-full max-w-xl bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8 text-slate-900 dark:text-white"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="space-y-1">
@@ -1208,17 +1209,17 @@ export default function AIAgentInbox() {
                         />
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-md bg-[#0b0e14] border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8"
+                            className="relative w-full max-w-md bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8"
                         >
                             <div className="flex flex-col items-center text-center space-y-4">
                                 <div className="h-16 w-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
                                     <Trash2 className="h-8 w-8 text-red-500" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                                    <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
                                         {deleteModal.type === 'LEAD' ? 'Eliminar Lead' : 'Vaciar Conversación'}
                                     </h3>
-                                    <p className="text-xs font-bold text-white/30 uppercase tracking-widest leading-relaxed">
+                                    <p className="text-xs font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest leading-relaxed">
                                         {deleteModal.type === 'LEAD' 
                                             ? '¿Estás seguro de que deseas borrar este lead completamente? Se eliminarán todos sus mensajes y datos de memoria.' 
                                             : '¿Deseas vaciar todos los mensajes de esta conversación?'}
@@ -1231,7 +1232,7 @@ export default function AIAgentInbox() {
                                     onClick={() => setDeleteModal(prev => ({ ...prev, includeFacts: !prev.includeFacts }))}
                                     className={cn(
                                         "p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group",
-                                        deleteModal.includeFacts ? "bg-primary/10 border-primary/20" : "bg-white/5 border-white/5 hover:bg-white/10"
+                                        deleteModal.includeFacts ? "bg-primary/10 border-primary/20" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10"
                                     )}
                                 >
                                     <div className="space-y-0.5">
@@ -1250,7 +1251,7 @@ export default function AIAgentInbox() {
                             <div className="grid grid-cols-2 gap-4 pt-4">
                                 <button 
                                     onClick={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
-                                    className="h-14 rounded-2xl bg-white/5 border border-white/5 font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all"
+                                    className="h-14 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 font-black uppercase tracking-widest text-[10px] text-slate-600 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
                                 >
                                     Cancelar
                                 </button>
@@ -1269,8 +1270,10 @@ export default function AIAgentInbox() {
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
             `}</style>
         </div>
     );
@@ -1303,7 +1306,7 @@ function TemplateCard({ name, description, status, onClick }: { name: string, de
         <button 
             title={`Usar plantilla ${name}`}
             onClick={onClick}
-            className="w-full p-6 rounded-3xl bg-white/[0.03] border border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left flex flex-col gap-3 group"
+            className="w-full p-6 rounded-3xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 hover:border-primary/40 hover:bg-primary/5 transition-all text-left flex flex-col gap-3 group"
         >
             <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black text-primary uppercase tracking-widest">{name}</span>
@@ -1441,7 +1444,7 @@ function ChatMessageBubble({ message, templates = [] }: { message: ChatMessage; 
     if (message.message_type === "SYSTEM_LOG") {
         return (
             <div className="flex justify-center my-6">
-                <div className="max-w-md px-5 py-3 bg-white/[0.01] border border-white/[0.03] rounded-2xl text-[10px] font-bold tracking-widest text-slate-300 dark:text-white/10 flex items-center gap-4 group/log hover:bg-white/[0.03] transition-all">
+                <div className="max-w-md px-5 py-3 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/[0.03] rounded-2xl text-[10px] font-bold tracking-widest text-slate-400 dark:text-white/10 flex items-center gap-4 group/log hover:bg-slate-100 dark:hover:bg-white/[0.03] transition-all">
                     <div className="h-[1px] w-6 bg-white/5 rounded-full" />
                     <div className="flex items-center gap-2">
                         <Zap className="h-3 w-3 text-primary/20 group-hover/log:text-primary/40 transition-colors" />
@@ -1486,10 +1489,10 @@ function ChatMessageBubble({ message, templates = [] }: { message: ChatMessage; 
                 </div>
 
                 <div className={cn(
-                    "px-6 py-4 rounded-[28px] shadow-2xl relative group/bubble transition-all duration-300",
+                    "px-6 py-4 rounded-[28px] shadow-lg relative group/bubble transition-all duration-300",
                     isOut 
-                        ? (isTemplate ? "bg-emerald-50 dark:bg-[#0b1410] border border-emerald-500/20 rounded-tr-none text-slate-900 dark:text-white/90" : "bg-slate-100 dark:bg-[#111622] border border-slate-200 dark:border-white/10 rounded-tr-none text-slate-900 dark:text-white/90 hover:border-slate-300 dark:hover:border-white/20")
-                        : "bg-blue-600 dark:bg-primary rounded-tl-none text-white font-medium shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]"
+                        ? "bg-primary dark:bg-primary rounded-tr-none text-white font-medium shadow-[0_10px_40px_rgba(var(--primary-rgb),0.2)]"
+                        : (isTemplate ? "bg-emerald-50 dark:bg-[#0b1410] border border-emerald-500/20 rounded-tl-none text-slate-900 dark:text-white/90" : "bg-slate-100 dark:bg-[#111622] border border-slate-200 dark:border-white/10 rounded-tl-none text-slate-900 dark:text-white/90 hover:border-slate-300 dark:hover:border-white/20")
                 )}>
                     {isTemplate && (
                         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-emerald-500/10 text-[9px] font-black uppercase tracking-widest text-emerald-500/50">
