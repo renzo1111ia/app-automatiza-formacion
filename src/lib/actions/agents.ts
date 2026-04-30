@@ -1,7 +1,7 @@
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
-import { AIAgent, AIAgentVariant, Database } from "@/types/database";
+import type { AIAgent, AIAgentVariant, Database } from "@/types/database";
 
 /**
  * Fetches all AI Agents for the active tenant.

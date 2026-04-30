@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { getKnowledgeBase, uploadKnowledgeDocument, deleteKnowledgeDocument } from "@/lib/actions/knowledge";
-import { KnowledgeItem } from "@/types/database";
+import type { KnowledgeItem } from "@/types/database";
 
 export default function KnowledgeBasePage() {
     const [items, setItems] = useState<KnowledgeItem[]>([]);

@@ -3,7 +3,7 @@
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
 import { uploadToMinio, deleteFromMinio } from "@/lib/integrations/minio";
-import { KnowledgeItem } from "@/types/database";
+import type { KnowledgeItem } from "@/types/database";
 import OpenAI from "openai";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
 

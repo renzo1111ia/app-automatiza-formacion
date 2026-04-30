@@ -9,7 +9,7 @@ import { getAgentVariants } from "../actions/agents";
 import { getOrchestratorConfigForTenant, TenantOrchestratorConfig, OrchestratorSequenceStep } from "../actions/orchestrator-config";
 import { enqueueLeadStep, LeadSequenceJob } from "./queue/lead-sequence-queue";
 import { logOrchestrationStep } from "./scheduler";
-import { Lead, PlannedAction, AIAgentVariant, Programa, VoiceAgent, VoiceAgentVariant } from "@/types/database";
+import type { Lead, PlannedAction, AIAgentVariant, Programa, VoiceAgent, VoiceAgentVariant } from "@/types/database";
 import { CRMFactory } from "../integrations/crm/factory";
 import { TelephonyFactory } from "../integrations/telephony/factory";
 import { queryKnowledgeBase } from "../integrations/aws/bedrock";

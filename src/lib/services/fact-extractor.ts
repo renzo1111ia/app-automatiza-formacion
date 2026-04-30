@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
-import { Database } from "@/types/database";
+import type { Database } from "@/types/database";
 
 /**
  * FACT EXTRACTION SERVICE
