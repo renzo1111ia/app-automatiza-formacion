@@ -47,7 +47,6 @@ export default function AgentsPage() {
     const [newAgentDescription, setNewAgentDescription] = useState("");
     
     const [variantA, setVariantA] = useState<Partial<AIAgentVariant>>({});
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeItem[]>([]);
 
     const loadData = useCallback(async () => {
@@ -81,7 +80,7 @@ export default function AgentsPage() {
                         max_retries: 3
                     },
                     scheduling_config: { enabled: false, duration: 30, buffer: 15 }
-                } as any);
+                } as Partial<AIAgentVariant>);
                 
                 const res = await getAgentVariants(agentId);
                 if (res.success && res.data) {
@@ -144,7 +143,10 @@ export default function AgentsPage() {
             } as AIAgentVariant);
             if (!res.success) throw new Error(res.error || "Error al guardar");
             alert("¡Agente Maestro actualizado con éxito!");
-        } catch (err: any) { alert("Error: " + err.message); } 
+        } catch (err: unknown) { 
+            const error = err as Error;
+            alert("Error: " + error.message); 
+        } 
         finally { setIsSaving(false); }
     };
 
@@ -704,7 +706,7 @@ export default function AgentsPage() {
                                             </div>
                                             
                                             <div className="grid grid-cols-1 gap-3">
-                                                {(variantA.crm_config?.field_mapping || []).map((m: any, idx: number) => (
+                                                {(variantA.crm_config?.field_mapping || []).map((m: { tag: string, crm_key: string }, idx: number) => (
                                                     <div key={idx} className="flex items-center gap-4 bg-black/40 p-4 rounded-2xl border border-white/5 group">
                                                         <div className="flex-1 flex items-center gap-3">
                                                             <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-white/20">IA</div>
@@ -740,7 +742,7 @@ export default function AgentsPage() {
                                                         <button 
                                                             title="Eliminar atributo"
                                                             onClick={() => {
-                                                                const newMapping = (variantA.crm_config?.field_mapping || []).filter((_: any, i: number) => i !== idx);
+                                                                const newMapping = (variantA.crm_config?.field_mapping || []).filter((_: unknown, i: number) => i !== idx);
                                                                 setVariantA(p => ({...p, crm_config: {...p.crm_config, field_mapping: newMapping}}));
                                                             }}
                                                             className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400"
@@ -902,7 +904,7 @@ export default function AgentsPage() {
     );
 }
 
-function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, onClick: () => void, icon: any, label: string }) {
+function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, onClick: () => void, icon: React.ElementType, label: string }) {
     return (
         <button title={label} onClick={onClick} className={cn("flex items-center gap-3 px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative group", active ? "text-primary" : "text-white/20 hover:text-white/40")}>
             <Icon className={cn("h-4 w-4 transition-all", active ? "text-primary scale-110" : "text-white/20")} /> {label}
@@ -931,7 +933,7 @@ function ModelCard({ active, onClick, label, desc }: { active: boolean, onClick:
     );
 }
 
-function PolicyCard({ active, onClick, icon: Icon, label, desc }: { active: boolean, onClick: () => void, icon: any, label: string, desc: string }) {
+function PolicyCard({ active, onClick, icon: Icon, label, desc }: { active: boolean, onClick: () => void, icon: React.ElementType, label: string, desc: string }) {
     return (
         <button title={`Seleccionar política: ${label}`} onClick={onClick} className={cn("p-8 rounded-[40px] border text-left transition-all relative group overflow-hidden h-full", active ? "bg-primary/10 border-primary/20 shadow-2xl" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]")}>
             <div className={cn("h-12 w-12 rounded-2xl mb-6 flex items-center justify-center transition-all", active ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20" : "bg-white/5 text-white/20")}>
