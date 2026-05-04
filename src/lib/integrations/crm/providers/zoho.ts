@@ -161,4 +161,27 @@ export class ZohoCRMProvider implements ICRMProvider {
             })
         });
     }
+
+    /**
+     * CREATE TASK (Zoho Tasks)
+     */
+    async createTask(leadId: string, taskData: { subject: string; description?: string; dueDate?: string; priority?: string }) {
+        return this.request(`/Tasks`, {
+            method: "POST",
+            body: JSON.stringify({
+                data: [{
+                    Subject: taskData.subject,
+                    Description: taskData.description || "",
+                    Due_Date: taskData.dueDate || new Date().toISOString().split("T")[0],
+                    Priority: taskData.priority || "Normal",
+                    Status: "Not Started",
+                    What_Id: {
+                        id: leadId,
+                        name: "Leads"
+                    },
+                    $se_module: "Leads"
+                }]
+            })
+        });
+    }
 }

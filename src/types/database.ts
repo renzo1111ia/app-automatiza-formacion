@@ -211,6 +211,7 @@ export interface OrchestrationRule {
     action_type: string;
     sequence_order: number;
     config?: Record<string, unknown> | null;
+    trigger_node_id?: string | null;
     is_active?: boolean;
     created_at?: string;
 }
@@ -258,11 +259,11 @@ export interface AIAgent {
     flow_config: {
         nodes: unknown[];
         edges: unknown[];
-        automation_rules?: Record<string, any>;
-        crm_config?: Record<string, any>;
+        automation_rules?: Record<string, unknown>;
+        crm_config?: Record<string, unknown>;
     } | null;
-    automation_rules?: Record<string, any>;
-    crm_config?: Record<string, any>;
+    automation_rules?: Record<string, unknown>;
+    crm_config?: Record<string, unknown>;
     created_at: string;
     updated_at: string;
 }
@@ -282,8 +283,8 @@ export interface AIAgentVariant {
     metrics: Record<string, unknown> | null;
     dynamic_variables?: Record<string, string> | string[]; // Support for both KV and keys list
     tracked_variables?: string[]; // Keys to extract autonomously
-    automation_rules?: Record<string, any>;
-    crm_config?: Record<string, any>;
+    automation_rules?: Record<string, unknown>;
+    crm_config?: Record<string, unknown>;
     knowledge_base_ids?: string[];
     created_at: string;
     updated_at: string;
@@ -338,7 +339,7 @@ export interface Advisor {
 export interface Appointment {
     id: string;
     tenant_id: string;
-    advisor_id: string;
+    advisor_id: string | null;
     lead_id: string | null;
     scheduled_at: string;
     duration_minutes: number;
@@ -536,10 +537,10 @@ export type Database = {
             voice_agents: { Row: VoiceAgent; Insert: Omit<VoiceAgent, "id" | "created_at" | "updated_at">; Update: Partial<VoiceAgent>; };
             voice_agent_variants: { Row: VoiceAgentVariant; Insert: Omit<VoiceAgentVariant, "id" | "created_at" | "updated_at">; Update: Partial<VoiceAgentVariant>; };
             tenant_orchestrator_config: { Row: { id: string; tenant_id: string; config: Record<string, unknown>; created_at: string; updated_at: string }; Insert: { tenant_id: string; config: Record<string, unknown> }; Update: { config?: Record<string, unknown> }; };
-            advisors: { Row: { id: string; tenant_id: string; name: string; email: string | null; phone: string | null; is_active: boolean; created_at: string }; Insert: { tenant_id: string; name: string; email?: string | null; phone?: string | null; is_active?: boolean }; Update: Partial<{ name: string; email: string | null; phone: string | null; is_active: boolean }>; };
+            advisors: { Row: { id: string; tenant_id: string; name: string; email: string | null; phone: string | null; is_active: boolean; specialties: string[] | null; handled_lead_types: string[] | null; origins: string[] | null; campaigns: string[] | null; countries: string[] | null; courses: string[] | null; created_at: string }; Insert: { tenant_id: string; name: string; email?: string | null; phone?: string | null; is_active?: boolean; specialties?: string[] | null; handled_lead_types?: string[] | null; origins?: string[] | null; campaigns?: string[] | null; countries?: string[] | null; courses?: string[] | null }; Update: Partial<{ name: string; email: string | null; phone: string | null; is_active: boolean; specialties: string[] | null; handled_lead_types: string[] | null; origins: string[] | null; campaigns: string[] | null; countries: string[] | null; courses: string[] | null }>; };
             client_configs: { Row: ClientConfig; Insert: Omit<ClientConfig, "id" | "created_at" | "updated_at">; Update: Partial<ClientConfig>; };
             availability_slots: { Row: { id: string; advisor_id: string; day_of_week: number; start_time: string; end_time: string; slot_duration_minutes: number }; Insert: { advisor_id: string; day_of_week: number; start_time: string; end_time: string; slot_duration_minutes?: number }; Update: Partial<{ day_of_week: number; start_time: string; end_time: string }>; };
-            appointments: { Row: { id: string; tenant_id: string; advisor_id: string; lead_id: string | null; scheduled_at: string; duration_minutes: number; status: string; notes: string | null; agent_used: string | null; ab_variant: string | null; created_at: string; updated_at: string; watchdog_processed: boolean }; Insert: { tenant_id: string; advisor_id: string; lead_id?: string | null; scheduled_at: string; duration_minutes?: number; status?: string; notes?: string | null; agent_used?: string | null; ab_variant?: string | null; watchdog_processed?: boolean }; Update: Partial<{ status: string; notes: string | null; updated_at: string; watchdog_processed: boolean }>; };
+            appointments: { Row: { id: string; tenant_id: string; advisor_id: string | null; lead_id: string | null; scheduled_at: string; duration_minutes: number; status: string; notes: string | null; agent_used: string | null; ab_variant: string | null; created_at: string; updated_at: string; watchdog_processed: boolean }; Insert: { tenant_id: string; advisor_id?: string | null; lead_id?: string | null; scheduled_at: string; duration_minutes?: number; status?: string; notes?: string | null; agent_used?: string | null; ab_variant?: string | null; watchdog_processed?: boolean }; Update: Partial<{ advisor_id: string | null; status: string; notes: string | null; updated_at: string; watchdog_processed: boolean }>; };
             orchestration_logs: { Row: { id: string; tenant_id: string; lead_id: string | null; workflow_id: string | null; step_number: number; action_type: string; agent_used: string | null; ab_variant: string | null; result: string; error_message: string | null; metadata: Record<string, unknown>; executed_at: string }; Insert: { tenant_id: string; lead_id?: string | null; workflow_id?: string | null; step_number: number; action_type: string; agent_used?: string | null; ab_variant?: string | null; result: string; error_message?: string | null; metadata?: Record<string, unknown> }; Update: Partial<{ result: string }>; };
             chat_messages: { Row: { id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }; Insert: Omit<{ id: string; tenant_id: string; lead_id: string; direction: string; message_type: string; content: string; sent_by: string | null; status: string; created_at: string; metadata: Record<string, unknown> }, 'id' | 'created_at'>; Update: Partial<{ status: string; metadata: Record<string, unknown> }>; };
             web_widgets: { Row: WebWidget; Insert: Omit<WebWidget, "id" | "created_at" | "updated_at">; Update: Partial<WebWidget>; };

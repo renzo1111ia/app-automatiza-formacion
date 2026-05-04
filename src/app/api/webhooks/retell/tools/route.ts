@@ -75,7 +75,14 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         .eq("id", leadId)
         .single();
     
-    const leadData = lead as any;
+    const leadData = lead as unknown as { 
+        id: string; 
+        tipo_lead: string | null; 
+        lead_programas: { 
+            id_programa: string; 
+            programas: { nombre: string } | null 
+        }[] | null 
+    };
     const programId = leadData?.lead_programas?.[0]?.id_programa;
     const programName = leadData?.lead_programas?.[0]?.programas?.nombre;
 
@@ -89,58 +96,57 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
 
     // 3. Smart Advisor Assignment
     // Try to find an advisor that specializes in this program
-    const advisorQuery = (supabase as any)
+    type AdvisorRow = Database['public']['Tables']['advisors']['Row'];
+    const { data: allAdvisors } = await supabase
         .from("advisors")
         .select("*")
         .eq("tenant_id", tenantId)
-        .eq("is_active", true);
+        .eq("is_active", true) as { data: AdvisorRow[] | null };
     
-    const { data: allAdvisors } = await advisorQuery;
-    
-    let selectedAdvisor = null;
+    let selectedAdvisor: AdvisorRow | null = null;
     if (allAdvisors && allAdvisors.length > 0) {
         // Priority 1: Specialist for this program
-        selectedAdvisor = allAdvisors.find((a: any) => a.specialties?.includes(programId) || a.specialties?.includes(programName));
+        selectedAdvisor = allAdvisors.find((a) => a.specialties?.includes(programId || "") || a.specialties?.includes(programName || "")) || null;
         
         // Priority 2: Matches lead type (e.g. "nuevo")
         if (!selectedAdvisor) {
-            selectedAdvisor = allAdvisors.find((a: any) => a.handled_lead_types?.includes(leadData?.tipo_lead));
+            selectedAdvisor = allAdvisors.find((a) => a.handled_lead_types?.includes(leadData?.tipo_lead || "")) || null;
         }
 
         // Priority 3: First available
         if (!selectedAdvisor) {
-            selectedAdvisor = allAdvisors[0];
+            selectedAdvisor = allAdvisors[0] || null;
         }
     }
 
-    if (!selectedAdvisor) {
-        throw new Error("No hay asesores disponibles para asignar la cita.");
+    // 4. Check for overlaps (informational for now)
+    let overlaps = 0;
+    if (selectedAdvisor) {
+        const { count } = await supabase
+            .from("appointments")
+            .select("*", { count: 'exact', head: true })
+            .eq("advisor_id", selectedAdvisor.id)
+            .eq("scheduled_at", scheduledAt)
+            .neq("status", "CANCELLED");
+        overlaps = count || 0;
     }
 
-    // 4. Check for overlaps (informational for now as per request "debe salir al momento de agendar")
-    const { count: overlaps } = await (supabase as any)
-        .from("appointments")
-        .select("*", { count: 'exact', head: true })
-        .eq("advisor_id", selectedAdvisor.id)
-        .eq("scheduled_at", scheduledAt)
-        .neq("status", "CANCELLED");
-
     // 5. Insert record
-    const { data: appointmentData, error } = await (supabase as any)
+    const { data: appointmentData, error } = await supabase
         .from("appointments")
         .insert({
             tenant_id: tenantId,
             lead_id: leadId,
-            advisor_id: selectedAdvisor.id,
+            advisor_id: selectedAdvisor?.id || null,
             scheduled_at: scheduledAt,
             status: "SCHEDULED",
-            notes: notes || `Agendado por IA. Programa: ${programName}. ${overlaps && overlaps > 0 ? '(⚠️ Solapado)' : ''}`,
+            notes: notes || `Agendado por IA. Programa: ${programName}. ${overlaps > 0 ? '(⚠️ Solapado)' : ''}`,
             watchdog_processed: false
-        })
+        } as any) // Cast to any for the insert payload to avoid deep type issues
         .select()
         .single();
     
-    const data = appointmentData as any;
+    const data = appointmentData as unknown as { id: string };
 
     if (error) {
         console.error("DB Error booking appointment:", error);
@@ -175,13 +181,13 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         console.error("Failed to queue reminder:", reminderErr);
     }
 
-    console.log(`[RETELL TOOLS] Appointment booked for lead ${leadId} at ${scheduledAt} with advisor ${selectedAdvisor.name}`);
+    console.log(`[RETELL TOOLS] Appointment booked for lead ${leadId} at ${scheduledAt} with advisor ${selectedAdvisor?.name || 'Sin asignar'}`);
 
     return NextResponse.json({ 
         success: true, 
         message: "Cita agendada correctamente",
-        appointment_id: data?.id,
-        advisor_name: selectedAdvisor.name,
+        appointment_id: (data as any)?.id,
+        advisor_name: selectedAdvisor?.name || "Sin asignar",
         is_overlap: (overlaps || 0) > 0
     });
 }

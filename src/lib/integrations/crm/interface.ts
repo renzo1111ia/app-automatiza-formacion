@@ -54,4 +54,10 @@ export interface ICRMProvider {
      * Creates a meeting or event in the CRM's calendar.
      */
     createEvent(leadId: string, eventData: { subject: string; startTime: string; durationMinutes: number; description?: string }): Promise<any>;
+
+    /**
+     * CREATE TASK
+     * Creates a task or activity in the CRM.
+     */
+    createTask(leadId: string, taskData: { subject: string; description?: string; dueDate?: string; priority?: string }): Promise<any>;
 }

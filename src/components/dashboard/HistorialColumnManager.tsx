@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Tenant } from "@/types/tenant";
 import { updateTenant } from "@/lib/actions/tenant";
 import { useRouter } from "next/navigation";
-import { 
-    GripVertical, Trash2, Plus, Save, X, 
+import {
+    GripVertical, Trash2, Plus, Save, X,
     Table, Check, ChevronRight, Info, Settings
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
     DndContext,
@@ -25,7 +26,6 @@ import {
     verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface ColumnConfig {
     key: string;
@@ -64,20 +64,21 @@ function SortableColumn({ col, onRemove, onLabelChange }: SortableColumnProps) {
         listeners,
         setNodeRef,
         transform,
-        transition,
         isDragging
     } = useSortable({ id: col.key });
 
 
-    const style = {
-        transform: CSS.Translate.toString(transform),
-        transition,
-    } as React.CSSProperties;
 
     return (
-        <div
+        <motion.div
             ref={setNodeRef}
-            style={style}
+            animate={{
+                x: transform ? transform.x : 0,
+                y: transform ? transform.y : 0,
+                scale: isDragging ? 1.05 : 1,
+                zIndex: isDragging ? 50 : 1
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={cn(
                 "flex items-center gap-3 p-3 bg-card border border-border rounded-2xl shadow-sm group",
                 isDragging && "opacity-50 z-50 bg-muted/50 border-primary/50 shadow-2xl"
@@ -108,7 +109,7 @@ function SortableColumn({ col, onRemove, onLabelChange }: SortableColumnProps) {
             >
                 <Trash2 className="h-4 w-4" />
             </button>
-        </div>
+        </motion.div>
     );
 }
 
@@ -257,7 +258,7 @@ export function HistorialColumnManager({ tenant, sampleKeys = [] }: { tenant: Te
             <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-3">
                 <Info className="h-4 w-4 text-primary mt-0.5" />
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">
-                    <span className="text-primary">TIP:</span> Arrastra las columnas para cambiar su orden en la tabla. 
+                    <span className="text-primary">TIP:</span> Arrastra las columnas para cambiar su orden en la tabla.
                     Haz clic en el nombre para editar la etiqueta que verá el cliente.
                 </p>
             </div>
@@ -265,7 +266,7 @@ export function HistorialColumnManager({ tenant, sampleKeys = [] }: { tenant: Te
             {/* Modal de añadir columna */}
             {isAdding && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                    <div 
+                    <div
                         className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300"
                         onClick={() => setIsAdding(false)}
                     />
@@ -277,7 +278,7 @@ export function HistorialColumnManager({ tenant, sampleKeys = [] }: { tenant: Te
                                     Selecciona un campo disponible de la base de datos
                                 </p>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setIsAdding(false)}
                                 className="p-2 hover:bg-muted rounded-xl transition-all"
                                 title="Cerrar"
@@ -297,8 +298,8 @@ export function HistorialColumnManager({ tenant, sampleKeys = [] }: { tenant: Te
                                             onClick={() => addColumn(f.key, f.label)}
                                             className={cn(
                                                 "p-4 text-left border rounded-2xl transition-all flex items-center justify-between group",
-                                                exists 
-                                                    ? "bg-muted/50 border-border opacity-50 cursor-not-allowed" 
+                                                exists
+                                                    ? "bg-muted/50 border-border opacity-50 cursor-not-allowed"
                                                     : "bg-card border-border hover:border-primary/40 hover:bg-primary/5 cursor-pointer"
                                             )}
                                         >
@@ -329,13 +330,13 @@ export function HistorialColumnManager({ tenant, sampleKeys = [] }: { tenant: Te
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Key en Supabase</label>
                                 <div className="flex gap-2">
-                                    <input 
+                                    <input
                                         id="custom-key"
                                         type="text"
                                         placeholder="ej: mi_campo_custom"
                                         className="flex-1 bg-muted border border-border rounded-xl px-4 py-3 text-xs font-bold text-foreground outline-none focus:border-primary transition-all"
                                     />
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             const el = document.getElementById('custom-key') as HTMLInputElement;
                                             if (el.value) addColumn(el.value, el.value.replace(/_/g, ' ').toUpperCase());

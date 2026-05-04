@@ -52,10 +52,10 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // Si hay varias, intentamos elegir la que tenga prompt_text más largo o simplemente la primera (que por el orden será Variant A si existe)
         const activeVariant = (variants as any[])[0];
-        const apiKey = activeVariant.api_key || process.env.OPENAI_API_KEY; // Global fallback
+        const apiKey = activeVariant.api_key || process.env.OPENAI_API_KEY;
         
-        if (!apiKey) {
-            console.error(`[AI PROCESSOR] ❌ API Key missing for response`);
+        if (!apiKey || apiKey === "your_api_key_here") {
+            console.error(`[AI PROCESSOR] ❌ OpenAI API Key missing or invalid for lead ${leadId}`);
             return;
         }
 

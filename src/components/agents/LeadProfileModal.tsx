@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { 
     X, User, Mail, Phone, Globe, 
     Calendar, Save, Loader2, Trash2,
-    Plus, AlertCircle, MapPin, Target
+    Plus, AlertCircle, MapPin, Target, Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -144,12 +144,38 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                         <div className="space-y-8">
                             <div className="flex items-center justify-between">
                                 <SectionHeader icon={Target} title="Datos Capturados (IA / Sistema)" />
-                                <button 
-                                    onClick={addMetadataKey}
-                                    className="h-8 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all flex items-center gap-2"
-                                >
-                                    <Plus className="h-3 w-3" /> Añadir Campo
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={async () => {
+                                            if (isSaving) return;
+                                            setIsSaving(true);
+                                            try {
+                                                const { runManualAnalysis } = await import("@/lib/actions/analysis");
+                                                const res = await runManualAnalysis(lead.id, lead.tenant_id);
+                                                if (res.success) {
+                                                    alert("Análisis completado. Los datos se han sincronizado con Zoho.");
+                                                    if (res.data?.extracted_data) {
+                                                        setMetadata(prev => ({ ...prev, ...res.data?.extracted_data }));
+                                                    }
+                                                } else {
+                                                    alert("Error en análisis: " + res.error);
+                                                }
+                                            } finally {
+                                                setIsSaving(false);
+                                            }
+                                        }}
+                                        disabled={isSaving}
+                                        className="h-8 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-2"
+                                    >
+                                        <Zap className="h-3 w-3" /> {isSaving ? "Analizando..." : "Analizar Conversación"}
+                                    </button>
+                                    <button 
+                                        onClick={addMetadataKey}
+                                        className="h-8 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all flex items-center gap-2"
+                                    >
+                                        <Plus className="h-3 w-3" /> Añadir Campo
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-6 space-y-6">

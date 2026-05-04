@@ -116,10 +116,9 @@ export async function uploadKnowledgeDocument(formData: FormData) {
                 apiKey = (variants as any)?.[0]?.api_key;
             }
 
-            if (!apiKey) {
-                throw new Error("No se encontró una API Key de OpenAI para realizar el indexado.");
+            if (!apiKey || apiKey === "your_api_key_here") {
+                throw new Error("No se encontró una API Key de OpenAI válida para realizar el indexado.");
             }
-
             const openai = new OpenAI({ apiKey });
 
             // Process chunks in batches to avoid rate limits/timeouts

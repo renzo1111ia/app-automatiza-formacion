@@ -4,6 +4,7 @@ import {
     HeadBucketCommand, CreateBucketCommand
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Readable } from 'stream';
 
 /**
  * MINIO INTEGRATION (S3 Compatible)
@@ -40,17 +41,21 @@ function getMinioClient() {
 async function ensureBucketExists(targetBucket: string = bucketName) {
     try {
         await getMinioClient().send(new HeadBucketCommand({ Bucket: targetBucket }));
-    } catch (error: any) {
-        if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+    } catch (error: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const s3Error = error as any; // Temporary cast for metadata access
+        if (s3Error.name === 'NotFound' || s3Error.$metadata?.httpStatusCode === 404) {
             console.log(`[MINIO] Bucket '${targetBucket}' no encontrado. Creándolo automáticamente...`);
             await getMinioClient().send(new CreateBucketCommand({ Bucket: targetBucket }));
             console.log(`[MINIO] ✅ Bucket '${targetBucket}' creado exitosamente.`);
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const s3Error = error as any;
             console.error(`[MINIO] Error verificando el bucket '${targetBucket}':`, {
-                name: error.name,
-                message: error.message,
-                httpStatusCode: error.$metadata?.httpStatusCode,
-                requestId: error.$metadata?.requestId
+                name: s3Error.name,
+                message: s3Error.message,
+                httpStatusCode: s3Error.$metadata?.httpStatusCode,
+                requestId: s3Error.$metadata?.requestId
             });
             throw error;
         }
@@ -73,13 +78,15 @@ export async function uploadToMinio(key: string, body: Buffer | Uint8Array | Blo
 
         await getMinioClient().send(command);
         return `minio://${bucketName}/${key}`;
-    } catch (error: any) {
+    } catch (error: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const s3Error = error as any;
         console.error('❌ [MINIO] Error uploading document:', {
-            message: error.message,
-            code: error.code,
-            name: error.name,
-            httpStatusCode: error.$metadata?.httpStatusCode,
-            requestId: error.$metadata?.requestId,
+            message: s3Error.message,
+            code: s3Error.code,
+            name: s3Error.name,
+            httpStatusCode: s3Error.$metadata?.httpStatusCode,
+            requestId: s3Error.$metadata?.requestId,
             endpoint: process.env.MINIO_ENDPOINT,
             bucket: bucketName
         });
@@ -101,6 +108,32 @@ export async function getMinioSignedUrl(key: string, expiresIn = 3600) {
     } catch (error) {
         console.error('❌ [MINIO] Error generating signed URL:', error);
         return null;
+    }
+}
+
+/**
+ * Downloads a file from MinIO directly as a Buffer
+ */
+export async function downloadFromMinio(key: string): Promise<Buffer> {
+    try {
+        const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+        });
+
+        const response = await getMinioClient().send(command);
+        const stream = response.Body as Readable;
+
+        // Convert Stream to Buffer
+        return new Promise((resolve, reject) => {
+            const chunks: Uint8Array[] = [];
+            stream.on('data', (chunk: Uint8Array) => chunks.push(chunk));
+            stream.on('error', (err: Error) => reject(err));
+            stream.on('end', () => resolve(Buffer.concat(chunks)));
+        });
+    } catch (error) {
+        console.error('❌ [MINIO] Error downloading file:', error);
+        throw error;
     }
 }
 

@@ -31,7 +31,6 @@ import {
     arrayMove,
     useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { restrictToFirstScrollableAncestor } from '@dnd-kit/modifiers';
 
 interface SectionHeaderProps {
@@ -108,7 +107,6 @@ function SortableKpi({ k, isEditing, cycleSize, updateKpi, removeKpi, val, onCon
         listeners,
         setNodeRef,
         transform,
-        transition,
         isDragging
     } = useSortable({ id: k.id, disabled: !isEditing });
 
@@ -116,15 +114,17 @@ function SortableKpi({ k, isEditing, cycleSize, updateKpi, removeKpi, val, onCon
     const colSpanClass = COL_SPAN_MAP[k.size || "4"] || "md:col-span-4";
     const IconComponent = ICON_MAP[k.icon] || TrendingUp;
 
-    const style = {
-        transform: CSS.Translate.toString(transform),
-        transition,
-    } as React.CSSProperties;
 
     return (
-        <div
+        <motion.div
             ref={setNodeRef}
-            style={style}
+            animate={{
+                x: transform ? transform.x : 0,
+                y: transform ? transform.y : 0,
+                scale: isDragging ? 1.05 : 1,
+                zIndex: isDragging ? 50 : 1
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={cn(
                 colSpanClass,
                 "relative group transition-all duration-300 w-full min-w-0 font-outfit",
@@ -189,7 +189,7 @@ function SortableKpi({ k, isEditing, cycleSize, updateKpi, removeKpi, val, onCon
                     </div>
                 )}
             </div>
-        </div>
+        </motion.div>
     );
 }
 
@@ -761,6 +761,7 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                             value={effLabel}
                                             onChange={e => setEffLabel(e.target.value)}
                                             placeholder="Descripción de la conversión..."
+                                            title="Etiqueta de efectividad"
                                             className="flex-1 bg-transparent text-[12px] font-semibold text-slate-700 dark:text-slate-200 outline-none"
                                         />
                                     </div>

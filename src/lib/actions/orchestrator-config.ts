@@ -18,6 +18,7 @@ export interface OrchestratorTimezoneRules {
     end: string;                // "20:00"
     working_days: number[];     // [1,2,3,4,5] = Lun-Vie
     phone_prefix_map: Record<string, string>; // "+34" → "Europe/Madrid"
+    country?: string;           // "España", "México", etc.
 }
 
 export interface OrchestratorABConfig {
@@ -60,6 +61,7 @@ const DEFAULT_CONFIG: TenantOrchestratorConfig = {
         start: "09:00",
         end: "20:00",
         working_days: [1, 2, 3, 4, 5],
+        country: "España",
         phone_prefix_map: {
             "+34": "Europe/Madrid",
             "+56": "America/Santiago",

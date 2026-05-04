@@ -22,6 +22,7 @@ export interface ChatMessage {
 
 export interface InboxLead {
     id: string;
+    tenant_id: string;
     nombre: string | null;
     apellido: string | null;
     telefono: string | null;
@@ -142,6 +143,7 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
 
             return {
                 id: l.id,
+                tenant_id: l.tenant_id,
                 nombre: l.nombre || null,
                 apellido: l.apellido || null,
                 telefono: phone,

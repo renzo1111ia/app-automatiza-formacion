@@ -10,6 +10,10 @@ export interface Advisor {
     is_active: boolean;
     specialties?: string[];
     handled_lead_types?: string[];
+    origins?: string[];
+    campaigns?: string[];
+    countries?: string[];
+    courses?: string[];
 }
 
 export interface AvailabilitySlot {
@@ -23,7 +27,7 @@ export interface AvailabilitySlot {
 
 export interface Appointment {
     id: string;
-    advisor_id: string;
+    advisor_id: string | null;
     lead_id: string | null;
     scheduled_at: string;
     duration_minutes: number;
@@ -41,9 +45,10 @@ export async function getAdvisors() {
     const tenantId = await getActiveTenantId();
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
-    const supabase = await getAdminSupabaseClient();
-    const { data, error } = await (supabase
-        .from("advisors" as any) as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { data, error } = await supabase
+        .from("advisors")
         .select("*")
         .eq("tenant_id", tenantId)
         .order("name");
@@ -56,20 +61,36 @@ export async function saveAdvisor(advisor: Partial<Advisor> & { id?: string }) {
     const tenantId = await getActiveTenantId();
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
-    const supabase = await getAdminSupabaseClient();
-    const payload = { ...advisor, tenant_id: tenantId };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    
+    // Clean payload: remove 'id' for inserts and ensure tenant_id is set
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: advisorId, ...cleanData } = advisor;
+    
+    const payload = { 
+        ...cleanData, 
+        tenant_id: tenantId 
+    };
+
+    console.log(`[SCHEDULING] Saving advisor: ${advisor.id ? 'UPDATE' : 'INSERT'}`, { id: advisor.id, name: advisor.name });
 
     const { data, error } = advisor.id
-        ? await (supabase.from("advisors" as any) as any).update(payload as any).eq("id", advisor.id).select().single()
-        : await (supabase.from("advisors" as any) as any).insert(payload as any).select().single();
+        ? await supabase.from("advisors").update(payload).eq("id", advisor.id).select().single()
+        : await supabase.from("advisors").insert(payload).select().single();
 
-    if (error) return { error: error.message };
+    if (error) {
+        console.error("[SCHEDULING] Error saving advisor:", error);
+        return { error: error.message };
+    }
+    
     return { success: true, data };
 }
 
 export async function deleteAdvisor(advisorId: string) {
-    const supabase = await getAdminSupabaseClient();
-    const { error } = await (supabase.from("advisors" as any) as any).delete().eq("id", advisorId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { error } = await supabase.from("advisors").delete().eq("id", advisorId);
     if (error) return { error: error.message };
     return { success: true };
 }
@@ -77,9 +98,10 @@ export async function deleteAdvisor(advisorId: string) {
 // ─── Availability Slots ───────────────────────────────────────────
 
 export async function getAdvisorSlots(advisorId: string) {
-    const supabase = await getAdminSupabaseClient();
-    const { data, error } = await (supabase
-        .from("availability_slots" as any) as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { data, error } = await supabase
+        .from("availability_slots")
         .select("*")
         .eq("advisor_id", advisorId)
         .order("day_of_week");
@@ -89,14 +111,15 @@ export async function getAdvisorSlots(advisorId: string) {
 }
 
 export async function saveAdvisorSlots(advisorId: string, slots: Partial<AvailabilitySlot>[]) {
-    const supabase = await getAdminSupabaseClient();
-    await (supabase.from("availability_slots" as any) as any).delete().eq("advisor_id", advisorId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    await supabase.from("availability_slots").delete().eq("advisor_id", advisorId);
 
     if (slots.length === 0) return { success: true };
 
-    const { error } = await (supabase
-        .from("availability_slots" as any) as any)
-        .insert(slots.map(s => ({ ...s, advisor_id: advisorId })) as any);
+    const { error } = await supabase
+        .from("availability_slots")
+        .insert(slots.map(s => ({ ...s, advisor_id: advisorId })));
 
     if (error) return { error: error.message };
     return { success: true };
@@ -113,9 +136,10 @@ export async function getAppointments(options?: {
     const tenantId = await getActiveTenantId();
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
-    const supabase = await getAdminSupabaseClient();
-    let query = (supabase
-        .from("appointments" as any) as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    let query = supabase
+        .from("appointments")
         .select("*, advisors(name), lead(nombre, apellido, telefono)")
         .eq("tenant_id", tenantId)
         .order("scheduled_at", { ascending: true });
@@ -131,14 +155,120 @@ export async function getAppointments(options?: {
 }
 
 export async function updateAppointmentStatus(appointmentId: string, status: string) {
-    const supabase = await getAdminSupabaseClient();
-    const { error } = await (supabase
-        .from("appointments" as any) as any)
-        .update({ status, updated_at: new Date().toISOString() } as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { error } = await supabase
+        .from("appointments")
+        .update({ status, updated_at: new Date().toISOString() })
         .eq("id", appointmentId);
 
     if (error) return { error: error.message };
     return { success: true };
+}
+
+// ─── Appointment Tools (for AI Agents) ───────────────────────────
+
+export async function createAppointment(data: {
+    lead_id: string;
+    advisor_id?: string | null;
+    scheduled_at: string;
+    duration_minutes?: number;
+    status?: string;
+    agent_used?: string;
+    ab_variant?: string;
+}) {
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return { error: "No hay un cliente seleccionado." };
+
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { data: res, error } = await supabase
+        .from("appointments")
+        .insert({
+            ...data,
+            tenant_id: tenantId,
+            duration_minutes: data.duration_minutes || 30,
+            status: data.status || "PENDING"
+        })
+        .select()
+        .single();
+
+    if (error) return { error: error.message };
+    return { success: true, data: res };
+}
+
+export async function cancelAppointment(appointmentId: string, reason?: string) {
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { error } = await supabase
+        .from("appointments")
+        .update({ 
+            status: "CANCELLED", 
+            notes: reason ? `Cancelado por IA: ${reason}` : "Cancelado por IA",
+            updated_at: new Date().toISOString() 
+        })
+        .eq("id", appointmentId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+export async function rescheduleAppointment(appointmentId: string, newDate: string) {
+    const supabase = (await getAdminSupabaseClient()) as any;
+    const { error } = await supabase
+        .from("appointments")
+        .update({ 
+            scheduled_at: newDate,
+            status: "PENDING", // Back to pending if rescheduled
+            updated_at: new Date().toISOString() 
+        })
+        .eq("id", appointmentId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+export async function checkAvailability(advisorId: string, date: string) {
+    const supabase = (await getAdminSupabaseClient()) as any;
+    
+    // 1. Get advisor's configured day availability
+    const d = new Date(date);
+    const dayOfWeek = d.getDay(); // 0=Sunday, 1=Monday...
+    
+    const { data: slots, error: slotErr } = await supabase
+        .from("availability_slots")
+        .select("*")
+        .eq("advisor_id", advisorId)
+        .eq("day_of_week", dayOfWeek);
+
+    if (slotErr) return { error: slotErr.message };
+    
+    if (!slots || slots.length === 0) {
+        return { success: true, available: false, message: "Asesor no disponible este día de la semana." };
+    }
+
+    // 2. Get existing appointments for that day
+    const dayStart = new Date(date);
+    dayStart.setHours(0,0,0,0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23,59,59,999);
+
+    const { data: existing, error: aptErr } = await supabase
+        .from("appointments")
+        .select("scheduled_at, duration_minutes")
+        .eq("advisor_id", advisorId)
+        .neq("status", "CANCELLED")
+        .gte("scheduled_at", dayStart.toISOString())
+        .lte("scheduled_at", dayEnd.toISOString());
+
+    if (aptErr) return { error: aptErr.message };
+
+    return { 
+        success: true, 
+        config: slots[0], 
+        busy_slots: (existing || []).map((e: any) => ({
+            start: e.scheduled_at,
+            end: new Date(new Date(e.scheduled_at).getTime() + (e.duration_minutes || 30) * 60000).toISOString()
+        }))
+    };
 }
 
 // ─── AB Metrics ───────────────────────────────────────────────────
@@ -147,9 +277,10 @@ export async function getABMetrics(agentId?: string) {
     const tenantId = await getActiveTenantId();
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
-    const supabase = await getAdminSupabaseClient();
-    let query = (supabase
-        .from("orchestration_logs" as any) as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const supabase = (await getAdminSupabaseClient()) as any;
+    let query = supabase
+        .from("orchestration_logs")
         .select("ab_variant, result, action_type, agent_used, executed_at")
         .eq("tenant_id", tenantId)
         .not("ab_variant", "is", null);

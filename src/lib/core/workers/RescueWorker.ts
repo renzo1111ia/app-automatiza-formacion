@@ -1,26 +1,25 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { whatsappBridge } from "@/lib/integrations/whatsapp";
 import { GlobalLogger } from "../logger";
+import { AIRescueService } from "@/lib/services/ai-rescue";
+import { AIAgent, AIAgentVariant, Lead, Database } from "@/types/database";
 
 interface InactivityRules {
-    timeout_minutes?: number;
+    inactivity_enabled?: boolean;
+    inactivity_timeout?: number;
+    inactivity_action?: 'MESSAGE' | 'NOTIFY';
+    inactivity_message?: string;
+    inactivity_ai_enabled?: boolean;
     max_retries?: number;
-    action?: 'template' | 'agent_message' | string;
-    mode?: 'fixed' | 'smart' | string;
-    template_name?: string;
-    agent_message?: string;
 }
 
-interface TenantConfig {
-    whatsapp?: {
-        accessToken: string;
-        phoneNumberId: string;
-    };
-}
+type LeadWithAgent = Lead & {
+    ai_agents: AIAgent | null;
+};
 
 /**
- * DYNAMIC RESCUE WORKER v2.0
- * Resonates with each AI Agent's specific inactivity rules.
+ * DYNAMIC RESCUE WORKER v2.1
+ * Resonates with each AI Agent's specific inactivity rules from their active variant.
  */
 export async function runRescueCheck() {
     const supabase = await getSupabaseServerClient();
@@ -29,89 +28,82 @@ export async function runRescueCheck() {
     // 1. Fetch leads that are: 
     // - Assigned to an AI text agent
     // - Not paused
-    const { data: leads, error } = await (supabase
-        .from("lead" as unknown as string) as unknown as { select: (s: string) => { not: (f: string, o: string, v: null) => { eq: (f: string, v: boolean) => Promise<{ data: unknown[], error: unknown }> } } })
-        .select("*, ai_agents!lead_ai_agent_id_fkey(*)")
+    const { data: leadsRaw, error } = await supabase
+        .from("lead")
+        .select("*, ai_agents(*)")
         .not("ai_agent_id", "is", null)
         .eq("is_ai_paused", false);
 
-    if (error || !leads) return;
+    if (error || !leadsRaw) return;
 
-    console.log(`[RESCUE v2.0] Checking ${leads.length} leads with active agents.`);
+    const leads = leadsRaw as unknown as LeadWithAgent[];
 
-    for (const leadData of leads) {
-        // Use unknown cast to access joined properties
-        const lead = leadData as unknown as { 
-            id: string;
-            tenant_id: string;
-            telefono: string;
-            last_interaction_at: string;
-            fecha_actualizacion: string;
-            inactivity_sent_count: number;
-            metadata: Record<string, unknown>;
-            ai_agents: { id: string; flow_config: unknown };
-        };
+    console.log(`[RESCUE v2.1] Checking ${leads.length} leads with active agents.`);
 
+    for (const lead of leads) {
         try {
             const agent = lead.ai_agents;
             if (!agent) continue;
 
-            // 2. Extract rules from agent's flow_config
-            const rules = (agent.flow_config as unknown as { inactivity_rules?: InactivityRules })?.inactivity_rules;
-            if (!rules) continue;
+            // 2. Fetch the active variant for this agent to get the latest rules
+            const { data: variantRaw } = await supabase
+                .from("ai_agent_variants")
+                .select("*")
+                .eq("agent_id", agent.id)
+                .eq("is_active", true)
+                .eq("is_variant_b", false) // Assuming A is primary for now
+                .single();
 
-            const timeoutMins = rules.timeout_minutes || 4;
+            if (!variantRaw) continue;
+            const variant = variantRaw as unknown as AIAgentVariant;
+
+            // 3. Extract rules from variant's automation_rules
+            const rules = (variant.automation_rules as unknown as InactivityRules);
+            if (!rules || !rules.inactivity_enabled) continue;
+
+            const timeoutMins = rules.inactivity_timeout || 30;
             const maxRetries = rules.max_retries || 1;
-            const action = rules.action || "agent_message";
-            const mode = rules.mode || "fixed"; // 'fixed' | 'smart'
+            const action = rules.inactivity_action || "MESSAGE";
+            const isAIEnabled = rules.inactivity_ai_enabled || false;
             
-            // 3. Time check
+            // 4. Time check
             const lastTouch = new Date(lead.last_interaction_at || lead.fecha_actualizacion || new Date().toISOString());
             const diffMins = (now.getTime() - lastTouch.getTime()) / (1000 * 60);
 
             if (diffMins < timeoutMins) continue;
 
-            // 4. Frequency check
+            // 5. Frequency check
             const sentCount = lead.inactivity_sent_count || 0;
             if (sentCount >= maxRetries) continue;
 
-            // 5. Fetch Tenant Credentials for WhatsApp
-            const { data: tenant } = await (supabase
-                .from("tenants" as unknown as string) as unknown as { select: (s: string) => { eq: (f: string, v: string) => { single: () => Promise<{ data: unknown }> } } })
+            // 6. Fetch Tenant Credentials for WhatsApp
+            const { data: tenantRaw } = await supabase
+                .from("tenants")
                 .select("config")
                 .eq("id", lead.tenant_id)
                 .single();
             
-            const typedTenant = tenant as unknown as { config: TenantConfig } | null;
-            const waConfig = typedTenant?.config?.whatsapp;
+            const tenantConfig = (tenantRaw as unknown as { config: Record<string, unknown> })?.config;
+            const waConfig = tenantConfig?.whatsapp as { accessToken: string; phoneNumberId: string } | undefined;
 
             if (!waConfig || !waConfig.accessToken || !waConfig.phoneNumberId) {
                 await GlobalLogger.warn(lead.tenant_id, 'RESCUE', `Missing WhatsApp credentials for tenant`, { leadId: lead.id });
                 continue;
             }
 
-            console.log(`[RESCUE] Triggering rescue for Lead ${lead.id} (Attempt ${sentCount + 1}/${maxRetries})`);
-            await GlobalLogger.info(lead.tenant_id, 'RESCUE', `Inactivity rescue triggered (Attempt ${sentCount + 1}/${maxRetries})`, { leadId: lead.id, agentId: agent.id });
+            console.log(`[RESCUE] Triggering ${isAIEnabled ? 'AI' : 'Static'} rescue for Lead ${lead.id} (Attempt ${sentCount + 1}/${maxRetries})`);
+            
+            // 7. Execute Action
+            if (action === "MESSAGE") {
+                let finalMessage = rules.inactivity_message || "¡Hola! ¿Sigues ahí?";
 
-            // 6. Execute Action
-            if (action === "template") {
-                await whatsappBridge.sendTemplateMessage(
-                    lead.telefono || "",
-                    rules.template_name || "rescue_v1",
-                    "es",
-                    [],
-                    {
-                        accessToken: waConfig.accessToken,
-                        phoneNumberId: waConfig.phoneNumberId
-                    }
-                );
-            } else {
-                // AGENT MESSAGE
-                let finalMessage = rules.agent_message || "Hola, ¿sigues ahí?";
-
-                if (mode === "smart") {
-                    // Logic to generate a nudge based on context
-                    finalMessage = `🚀 [Smart Nudge] ${finalMessage}`;
+                if (isAIEnabled) {
+                    // GENERATE SMART NUDGE
+                    finalMessage = await AIRescueService.generateSmartNudge({
+                        leadId: lead.id,
+                        instructions: finalMessage,
+                        agentPrompt: variant.prompt_text
+                    });
                 }
 
                 await whatsappBridge.sendTextMessage(
@@ -122,27 +114,33 @@ export async function runRescueCheck() {
                         phoneNumberId: waConfig.phoneNumberId
                     }
                 );
+            } else if (action === "NOTIFY") {
+                // Future: Add notification logic here
+                console.log(`[RESCUE] Notify action for lead ${lead.id} - Not implemented yet`);
             }
 
-            // 7. Update tracking
-            await (supabase.from("lead" as unknown as string) as unknown as { update: (d: unknown) => { eq: (f: string, v: string) => Promise<unknown> } })
-                .update({ 
-                    last_interaction_at: now.toISOString(),
-                    inactivity_sent_count: sentCount + 1,
-                    metadata: { 
-                        ...(lead.metadata || {}), 
-                        last_rescue_at: now.toISOString(),
-                        last_rescue_agent: agent.id
-                    }
-                })
+            // 8. Update tracking
+            const updateData: Database["public"]["Tables"]["lead"]["Update"] = { 
+                last_interaction_at: now.toISOString(),
+                inactivity_sent_count: sentCount + 1,
+                metadata: { 
+                    ...(lead.metadata as Record<string, unknown> || {}), 
+                    last_rescue_at: now.toISOString(),
+                    last_rescue_agent: agent.id,
+                    last_rescue_type: isAIEnabled ? 'AI' : 'STATIC'
+                }
+            };
+
+            await (supabase
+                .from("lead")
+                .update(updateData as any) as any)
                 .eq("id", lead.id);
+
+            await GlobalLogger.info(lead.tenant_id, 'RESCUE', `Inactivity rescue sent (${isAIEnabled ? 'AI' : 'Static'})`, { leadId: lead.id, agentId: agent.id });
 
         } catch (err: unknown) {
             const error = err as Error;
-            const tenantId = (leadData as unknown as { tenant_id: string }).tenant_id;
-            const leadId = (leadData as unknown as { id: string }).id;
-            console.error(`[RESCUE] Failed to process lead ${leadId}:`, error.message);
-            await GlobalLogger.error(tenantId, 'RESCUE', `Failed to process rescue: ${error.message}`, { leadId, error });
+            console.error(`[RESCUE] Failed to process lead ${lead.id}:`, error.message);
         }
     }
 }

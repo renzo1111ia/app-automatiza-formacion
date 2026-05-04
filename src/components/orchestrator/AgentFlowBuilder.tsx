@@ -42,6 +42,7 @@ import {
     ArrowRight,
     Save,
     FileText,
+    AlarmClock,
     LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -251,6 +252,26 @@ const CommandNode = ({ data, selected }: { data: { command_type?: string }; sele
     </NodeWrapper>
 );
 
+const InactivityNode = ({ data, selected }: { data: { timeout?: number; max_retries?: number; message?: string }; selected?: boolean }) => (
+    <NodeWrapper title="Inactividad" icon={AlarmClock} color="bg-red-500/20 text-red-400" headerColor="bg-red-500" selected={selected} type="RESCATE">
+        <Handle type="target" position={Position.Top} className="w-3 h-3 bg-red-500 border-2 border-slate-900" />
+        <div className="space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-bold">
+                <span className="text-white/40">ESPERA:</span>
+                <span className="text-red-400">{data.timeout || 30} min</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-bold">
+                <span className="text-white/40">REINTENTOS:</span>
+                <span className="text-red-400">{data.max_retries || 1}</span>
+            </div>
+            <div className="p-2 bg-red-500/5 rounded-lg border border-red-500/10 text-[9px] text-white/50 italic line-clamp-2">
+                &quot;{data.message || "Enviando mensaje de rescate..."}&quot;
+            </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-red-500 border-2 border-slate-900" />
+    </NodeWrapper>
+);
+
 const CollectorNode = ({ data, selected }: { data: { fields?: string[]; target_variable?: string }; selected?: boolean }) => (
     <NodeWrapper title="Colector" icon={Database} color="bg-cyan-500/20 text-cyan-400" headerColor="bg-cyan-500" selected={selected} type="DATOS">
         <Handle type="target" position={Position.Top} className="w-3 h-3 bg-cyan-500 border-2 border-slate-900" />
@@ -407,6 +428,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
         flow_crm_connect: CrmConnectNode,
         flow_ai_agent: AIAgentNode,
         flow_meta_template: MetaTemplateNode,
+        flow_inactivity: InactivityNode,
     }), []);
 
     const onConnect = useCallback(
@@ -489,6 +511,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
             icon: GitBranch,
             items: [
                 { type: "flow_condition", label: "Filtrar (IF)", desc: "Ramifica según condiciones.", icon: Layers },
+                { type: "flow_inactivity", label: "Inactividad", desc: "Seguimiento automático si no responden.", icon: AlarmClock },
                 { type: "flow_collector", label: "Colector JSON", desc: "Agrupa variables en un objeto.", icon: Database },
                 { type: "flow_book", label: "Agendar Cita", desc: "Cierra el flujo agendando.", icon: Calendar },
             ]
@@ -792,6 +815,42 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                                 </button>
                                             ))}
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedNode.type === 'flow_inactivity' && (
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Tiempo de Espera (min)</label>
+                                        <input 
+                                            type="number"
+                                            value={selectedNode.data.timeout || 30}
+                                            onChange={(e) => updateNodeData(selectedNode.id, { timeout: parseInt(e.target.value) })}
+                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-6 text-xs text-white outline-none focus:border-red-500/40"
+                                            title="Tiempo de espera en minutos"
+                                            placeholder="30"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Máximo de Reintentos</label>
+                                        <input 
+                                            type="number"
+                                            value={selectedNode.data.max_retries || 1}
+                                            onChange={(e) => updateNodeData(selectedNode.id, { max_retries: parseInt(e.target.value) })}
+                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-6 text-xs text-white outline-none focus:border-red-500/40"
+                                            title="Máximo de reintentos"
+                                            placeholder="1"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Mensaje de Rescate</label>
+                                        <textarea 
+                                            value={selectedNode.data.message || ""}
+                                            onChange={(e) => updateNodeData(selectedNode.id, { message: e.target.value })}
+                                            className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-white/80 leading-relaxed focus:border-red-500/40 focus:ring-4 focus:ring-red-500/10 outline-none transition-all"
+                                            placeholder="Ej: Hola, ¿sigues ahí? Quería confirmar..."
+                                        />
                                     </div>
                                 </div>
                             )}
@@ -1342,6 +1401,77 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                 </div>
                             )}
 
+                            {selectedNode.type === 'flow_book' && (
+                                <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="p-5 rounded-[32px] bg-amber-500/5 border border-amber-500/10 space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-amber-500" />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Configuración de Agendado</p>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Horario Disponible</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] text-white/20 uppercase font-bold">Desde</span>
+                                                    <input 
+                                                        type="time" 
+                                                        title="Hora de inicio disponible"
+                                                        value={selectedNode.data.start_time as string || "09:00"}
+                                                        onChange={(e) => updateNodeData(selectedNode.id, { start_time: e.target.value })}
+                                                        className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-xs text-white outline-none"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <span className="text-[8px] text-white/20 uppercase font-bold">Hasta</span>
+                                                    <input 
+                                                        type="time" 
+                                                        title="Hora de fin disponible"
+                                                        value={selectedNode.data.end_time as string || "18:00"}
+                                                        onChange={(e) => updateNodeData(selectedNode.id, { end_time: e.target.value })}
+                                                        className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-xs text-white outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Intervalo de Citas</label>
+                                            <select 
+                                                title="Duración de la cita"
+                                                value={selectedNode.data.slot_duration as number || 30}
+                                                onChange={(e) => updateNodeData(selectedNode.id, { slot_duration: parseInt(e.target.value) })}
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white outline-none"
+                                            >
+                                                <option value="15">15 Minutos</option>
+                                                <option value="30">30 Minutos</option>
+                                                <option value="45">45 Minutos</option>
+                                                <option value="60">1 Hora</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-tight">Requiere Asesor</p>
+                                                <p className="text-[8px] text-white/20 font-bold uppercase mt-0.5">Asignar automáticamente</p>
+                                            </div>
+                                            <button 
+                                                title={selectedNode.data.require_advisor ? "Desactivar requerimiento de asesor" : "Activar requerimiento de asesor"}
+                                                onClick={() => updateNodeData(selectedNode.id, { require_advisor: !selectedNode.data.require_advisor })}
+                                                className={cn("h-5 w-10 rounded-full transition-all relative", selectedNode.data.require_advisor ? "bg-amber-500" : "bg-white/10")}
+                                            >
+                                                <div className={cn("h-3 w-3 rounded-full bg-white absolute top-1 transition-all", selectedNode.data.require_advisor ? "right-1" : "left-1")} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                                        <p className="text-[10px] text-amber-200/60 leading-relaxed font-medium">
+                                            Este bloque cerrará la conversación y confirmará la cita según la disponibilidad detectada en este rango horario.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                             {/* ── CRM Connect Node Properties ── */}
                             {selectedNode.type === 'flow_crm_connect' && (
                                 <div className="space-y-6">

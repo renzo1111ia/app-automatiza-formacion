@@ -75,14 +75,20 @@ export async function POST(req: Request) {
              console.error("[RETELL WEBHOOK] Error saving llamada:", llamadaError);
         }
 
-        // 2. Delegate Deep Qualification Analysis to Background Worker
-        const { enqueueQualificationAnalysis } = await import("@/lib/core/queue/lead-sequence-queue");
-        await enqueueQualificationAnalysis({
+        // 2. Delegate Deep Qualification Analysis to Background Service
+        const { PostAnalysisService } = await import("@/lib/services/post-analysis");
+        
+        // We trigger it without awaiting if we want it to be fully background, 
+        // but for now, we'll let it run so we can see logs in the dashboard.
+        PostAnalysisService.processInteraction({
             leadId,
             tenantId,
             transcript,
-            callId: llamadaInsert?.id
-        });
+            channel: 'CALL',
+            externalId: callData.call_id,
+            durationMs: duration ? parseInt(duration, 10) * 1000 : 0,
+            disconnectionReason: callData.disconnection_reason || null
+        }).catch(err => console.error("[RETELL WEBHOOK] Post-Analysis Error:", err));
 
         // 3. Insert as a system log type message in the Inbox
         const { error: insertError } = await (supabaseAdmin

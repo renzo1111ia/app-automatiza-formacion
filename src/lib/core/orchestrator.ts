@@ -12,7 +12,6 @@ import { logOrchestrationStep } from "./scheduler";
 import type { Lead, PlannedAction, AIAgentVariant, Programa, VoiceAgent, VoiceAgentVariant } from "@/types/database";
 import { CRMFactory } from "../integrations/crm/factory";
 import { TelephonyFactory } from "../integrations/telephony/factory";
-import { queryKnowledgeBase } from "../integrations/aws/bedrock";
 
 /**
  * ORCHESTRATOR CORE v3.0
@@ -30,6 +29,69 @@ export class Orchestrator {
             Orchestrator.instance = new Orchestrator();
         }
         return Orchestrator.instance;
+    }
+
+    /**
+     * POST-QUALIFICATION LOGIC (Miro Flow)
+     * - Changes owner to Virginia (Zoho ID: 781577000032471016)
+     * - Adds "Cualificado_Virginia" tag
+     * - Changes stage to SCHEDULING
+     * - Creates Zoho Task for the appointment
+     */
+    public async handleLeadQualification(leadId: string, tenantId: string, reason: string) {
+        console.log(`[ORCHESTRATOR] 🏆 Lead ${leadId} QUALIFIED. Triggering CRM Sync.`);
+        
+        const supabase = await getSupabaseServerClient();
+        const config = await getOrchestratorConfigForTenant(tenantId);
+        const provider = CRMFactory.getProvider(tenantId, config);
+
+        // 1. Get Lead Details
+        const { data: lead } = await (supabase.from("lead") as any).select("*").eq("id", leadId).single();
+        if (!lead) return;
+
+        try {
+            // 2. Update CRM (Owner & Stage)
+            const virginiaOwnerId = (config as any).zoho?.ai_owner_id || "781577000032471016";
+            await provider.updateLead(lead.id_lead_externo || "", {
+                "Owner": { id: virginiaOwnerId },
+                "Etapa": "SCHEDULING" 
+            });
+
+            // 3. Add Tag
+            await provider.addTags(lead.id_lead_externo || "", ["Cualificado_Virginia"]);
+
+            // 4. Update Supabase Stage
+            await (supabase.from("lead") as any).update({ 
+                current_stage: "SCHEDULING",
+                assigned_advisor_id: null 
+            }).eq("id", leadId);
+
+            // 5. Create Zoho Task if appointment data exists in metadata
+            const meta = lead.metadata || {};
+            const fecha = meta.fecha_cita || meta.appointment_date;
+            const hora = meta.hora_cita || meta.appointment_time;
+
+            if (fecha && hora) {
+                // FORMAT: fecha hora tarea/nombre lead
+                const taskSubject = `${fecha} ${hora} Cita Cualificada / ${lead.nombre} ${lead.apellido || ""}`;
+                await provider.createTask(lead.id_lead_externo || "", {
+                    subject: taskSubject,
+                    description: `Lead cualificado por Virginia. Razón: ${reason}. Curso: ${meta.course_name || 'Desconocido'}`,
+                    dueDate: fecha,
+                    priority: "High"
+                });
+                console.log(`[ORCHESTRATOR] ✅ Zoho Task created: ${taskSubject}`);
+            }
+
+            await logOrchestrationStep({
+                tenantId, leadId: lead.id, step: 0,
+                actionType: "QUALIFICATION", result: "SUCCESS",
+                metadata: { qualified: true, reason }
+            });
+
+        } catch (err) {
+            console.error("[ORCHESTRATOR] handleLeadQualification Error:", err);
+        }
     }
 
     // ─── MAIN ENTRY POINTS ─────────────────────────────────────────
@@ -118,6 +180,17 @@ export class Orchestrator {
 
         const activeLead = (freshLead as Lead) || lead;
 
+        // ── STOP CONDITION: Lead responded ────────────────────────
+        const { count: msgCount } = await (supabase.from("chat_messages") as any)
+            .select("*", { count: 'exact', head: true })
+            .eq("lead_id", activeLead.id)
+            .eq("direction", "inbound");
+
+        if (msgCount && msgCount > 0) {
+            console.log(`[ORCHESTRATOR] Lead ${activeLead.id} already responded. Stopping outbound sequence.`);
+            return;
+        }
+
         // ── COMPLIANCE GUARD ──────────────────────────────────────
         const decision = buildComplianceDecision(
             activeLead.telefono || "",
@@ -160,20 +233,32 @@ export class Orchestrator {
                     try {
                         const callResult = await this.executeCallStep(activeLead, tenantId, step, config) as any;
                         
+                        // ── INVALID PHONE / FAILED DESTINATION ──────────────────────
+                        if (callResult?.status === "FAILED" || callResult?.last_error?.code === "invalid_destination") {
+                             console.log(`[ORCHESTRATOR] ❌ Invalid Destination for lead ${activeLead.id}. Triggering Zoho Anulacion.`);
+                             const provider = CRMFactory.getProvider(tenantId, config);
+                             await provider.executeAction(activeLead.id_lead_externo || "", "781577000002647388", { 
+                                 transitionId: "781577000002647388",
+                                 data: {
+                                     "Description": "Anulado automáticamente por IA - Número Inválido",
+                                     "NO_CONTACTAR": "teléfono falso"
+                                 }
+                             });
+                             return;
+                        }
+
                         // ── ESCALATION CHECK: Qualified but no appointment ──────────
                         if (config.escalation?.handoff_on_qualified_not_booked) {
                             const { data: updatedLead } = await supabase.from("lead").select("current_stage, metadata").eq("id", activeLead.id).single();
                             const ul = updatedLead as any;
                             if (ul && ul.current_stage === "SCHEDULING") {
-                                // If stage is scheduling but no appointment was recorded in this session (or call)
-                                // We wait a bit or trigger if call result indicates no booking
                                 if (callResult?.outcome !== "BOOKED") {
                                     await this.triggerHumanEscalation(activeLead, tenantId, config, "Qualified Lead - No Appointment Booked");
                                 }
                             }
                         }
-                    } catch {
-                        console.error(`[ORCHESTRATOR] Call failed. Attempting WhatsApp fallback.`);
+                    } catch (err: any) {
+                        console.error(`[ORCHESTRATOR] Call failed: ${err.message}. Attempting WhatsApp fallback.`);
                         await this.executeWhatsAppStep(activeLead, tenantId, {
                             ...step,
                             action: "whatsapp",
@@ -219,15 +304,10 @@ export class Orchestrator {
      */
     public async executeWorkflow(workflowId: string, lead: Lead, tenantId: string, context: Record<string, unknown>, triggerNodeId?: string) {
         const supabase = await getSupabaseServerClient();
-        let query = (supabase
+        const { data: rules } = await (supabase
             .from("orchestration_rules" as any) as any).select("*")
-            .eq("workflow_id", workflowId).eq("is_active", true);
-
-        if (triggerNodeId) {
-            query = query.eq("trigger_node_id", triggerNodeId);
-        }
-
-        const { data: rules } = await query.order("sequence_order", { ascending: true });
+            .eq("workflow_id", workflowId).eq("is_active", true)
+            .order("sequence_order", { ascending: true });
 
         if (!rules || rules.length === 0) {
             console.warn(`[ORCHESTRATOR] No rules found for workflow ${workflowId}${triggerNodeId ? ` and trigger ${triggerNodeId}` : ""}`);
@@ -289,15 +369,29 @@ export class Orchestrator {
             }
         }
 
-        // 3. CONSTRUCT CONTEXT
+        // 3. CONSTRUCT CONTEXT (Miro & n8n compliant)
         const courseContext = await this.getCourseContext(lead.id);
         
         const dynamicVariables: Record<string, string> = {
-            lead_name: lead.nombre || "Cliente",
-            lead_phone: lead.telefono || "",
+            id_lead: lead.id_lead_externo || lead.id,
+            user_name: lead.nombre || "Cliente",
+            user_phone: lead.telefono || "",
+            user_country: lead.pais || "España",
             company_name: config.company_name || "Esden",
-            system_prompt_override: selectedPrompt, // If configured in Retell dashboard to use this var
-            ...courseContext
+            
+            // Course Specifics (from n8n flow)
+            master_name: courseContext.course_name || "",
+            description_hype: courseContext.description_hype || "",
+            price_range: courseContext.price_range || "",
+            modalities: courseContext.modalities || "",
+            start_dates: courseContext.start_dates || "",
+            practices_info: courseContext.practices_info || "",
+            extra_benefits: courseContext.extra_benefits || "",
+            
+            // Backward compatibility / System
+            system_prompt_override: selectedPrompt,
+            course_info: courseContext.course_info,
+            qualification_rules: courseContext.qualification_rules
         };
 
         // 4. INITIATE CALL
@@ -528,15 +622,9 @@ export class Orchestrator {
 
         const promptVariantData = variants[0] as AIAgentVariant;
         
-        // 2. Fetch Course Context from AWS RAG (v2.0 Logic)
+        // 2. Course Context from DB (v3.0 Native Logic)
         const courseContext = await this.getCourseContext(lead.id);
-        const kbId = promptVariantData.knowledge_base_id || (config as any).aws?.kbId;
-        
-        let ragContext = "";
-        if (kbId) {
-            const results = await queryKnowledgeBase(`Info sobre ${courseContext.course_name}`, kbId);
-            ragContext = results.map(r => r.text).join("\n\n");
-        }
+        const ragContext = ""; // AWS RAG disabled as per user request
 
         // 3. Prompt Construction with Memory & Stages
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -564,8 +652,7 @@ export class Orchestrator {
             abVariant: variant, result: "SUCCESS",
             metadata: { 
                 stage: lead.current_stage,
-                promptVersion: promptVariantData.version_label,
-                ragUsed: !!ragContext
+                promptVersion: promptVariantData.version_label
             }
         });
     }
@@ -618,6 +705,12 @@ export class Orchestrator {
 
         return {
             course_name: p.nombre,
+            description_hype: p.presentacion || "",
+            price_range: p.precio || "",
+            modalities: p.metodologia || "",
+            start_dates: p.fechas_inicio || "",
+            practices_info: p.practicas || "",
+            extra_benefits: p.beneficios || "",
             course_info: details || "Sin detalles específicos.",
             qualification_rules: p.requisitos_cualificacion || "Cualificación estándar basada en interés y disponibilidad."
         };

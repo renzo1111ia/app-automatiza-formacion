@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database, Lead } from "@/types/database";
 import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
+import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
+import { orchestrator } from "@/lib/core/orchestrator";
 
 /**
  * FACT EXTRACTION SERVICE
@@ -40,21 +41,25 @@ export class FactExtractionService {
         console.log(`[FACT EXTRACTOR] 🧠 Extracting for lead ${leadId}: [${normalizedKeys.join(', ')}]`);
 
         try {
+            if (!apiKey || apiKey === "your_api_key_here") {
+                console.error(`[FACT EXTRACTOR] ❌ OpenAI API Key missing or invalid for lead ${leadId}`);
+                return null;
+            }
             const openai = new OpenAI({ apiKey });
             
-            const systemPrompt = `Eres un extractor de datos ultra-preciso. Analiza el diálogo y extrae SOLO los valores para estas claves: ${normalizedKeys.join(', ')}.
+            const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
+Analiza el diálogo y extrae la información para estas claves: ${normalizedKeys.join(', ')}.
 
-REGLAS ESTRICTAS:
-1. Devuelve ÚNICAMENTE un JSON plano con las claves exactas listadas arriba.
-2. Si no hay información clara para una clave, omítela del JSON.
-3. PRIORIDAD: El diálogo puede contener patrones como {clave}=valor o {CLAVE}=valor. Si los ves, úsalos como fuente principal de verdad.
-4. Si el usuario menciona su nombre, úsalo para "user_name" o "nombre".
-5. Para países o ciudades, normaliza el nombre (ej: "España", "Bolivia").
-6. Para "qualified": usa "SI" si muestra interés claro, "NO" si rechaza, omite si no está claro.
-7. NO inventes datos. Solo extrae lo que se haya mencionado explícitamente en el diálogo.
+REGLAS DE ORO:
+1. Devuelve ÚNICAMENTE un JSON plano con las claves solicitadas.
+2. Sé inteligente: si el usuario describe su trabajo, extráelo para "profesion". Si explica por qué quiere estudiar, extráelo para "motivations".
+3. NO inventes datos. Si una información no está en el diálogo, NO incluyas esa clave en el JSON.
+4. Si ves patrones como {clave}=valor, tienen prioridad máxima.
+5. Normaliza textos cortos (ej: nombres propios con mayúsculas, países correctos).
+6. Para la clave "qualified": usa "SI" si el lead es apto e interesado, "NO" si rechaza explícitamente.
 
-EJEMPLO de salida válida:
-{"USER_NAME": "Carlos", "USER_COUNTRY": "Bolivia", "CURSE_NAME": "MBA", "QUALIFICATION_SUMMARY": "Interesado en MBA para el próximo semestre."}`;
+EJEMPLO:
+{"USER_NAME": "Lucía Pérez", "USER_PROFESION": "Ingeniera de Software", "USER_MOTIVATIONS": "Ascenso laboral", "USER_STUDIES": "Grado en Informática"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -70,13 +75,19 @@ EJEMPLO de salida válida:
             const rawResult = completion.choices[0]?.message?.content;
             if (!rawResult) return null;
 
-            const extractedData = JSON.parse(rawResult);
+            const extractedData = JSON.parse(rawResult) as Record<string, unknown>;
             
-            // Filter to only keep keys that were actually requested
+            // Case-insensitive lookup for better robustness
+            const lowerExtractedData: Record<string, unknown> = {};
+            Object.keys(extractedData).forEach(k => {
+                lowerExtractedData[k.toLowerCase()] = extractedData[k];
+            });
+
             const filtered: Record<string, string> = {};
             for (const key of normalizedKeys) {
-                if (extractedData[key] !== undefined && extractedData[key] !== null && String(extractedData[key]).trim() !== "") {
-                    filtered[key] = String(extractedData[key]);
+                const val = lowerExtractedData[key.toLowerCase()];
+                if (val !== undefined && val !== null && String(val).trim() !== "") {
+                    filtered[key] = String(val);
                 }
             }
             
@@ -89,7 +100,7 @@ EJEMPLO de salida válida:
                     await enqueueLeadStep({
                         leadId,
                         tenantId,
-                        action: "CRM_SYNC" as any,
+                        action: "CRM_SYNC",
                         step: 0
                     });
                     console.log(`[FACT EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
@@ -106,7 +117,7 @@ EJEMPLO de salida válida:
         }
     }
 
-    private static async saveToLeadMetadata(leadId: string, newData: Record<string, any>) {
+    private static async saveToLeadMetadata(leadId: string, newData: Record<string, string>) {
         const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
         const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
         const supabase = createClient<Database>(url!, key!, {
@@ -114,12 +125,12 @@ EJEMPLO de salida válida:
         });
 
         // 1. Get current metadata
-        const { data: leadFound } = await (supabase.from("lead") as any)
-            .select("metadata, nombre, apellido")
+        const { data: leadFound } = await (supabase.from("lead") as unknown as { select: (s: string) => { eq: (k: string, v: string) => { single: () => Promise<{ data: Lead | null }> } } })
+            .select("metadata, nombre, apellido, telefono")
             .eq("id", leadId)
             .single();
         
-        const currentMetadata = (leadFound as any)?.metadata || {};
+        const currentMetadata = (leadFound?.metadata as Record<string, unknown>) || {};
         
         // 2. Merge: new data overwrites old values for same keys
         const updatedMetadata = {
@@ -129,7 +140,7 @@ EJEMPLO de salida válida:
         };
 
         // 3. Propagate name fields to main lead columns
-        const mainUpdate: Record<string, any> = { metadata: updatedMetadata };
+        const mainUpdate: Record<string, unknown> = { metadata: updatedMetadata };
         
         // If user_name was captured, split into nombre/apellido
         if (newData.user_name) {
@@ -147,15 +158,40 @@ EJEMPLO de salida válida:
             mainUpdate.apellido = newData.apellido;
         }
         // Propagate phone if captured
-        if (newData.user_phone && !(leadFound as any)?.telefono) {
+        if (newData.user_phone && !leadFound?.telefono) {
             mainUpdate.telefono = newData.user_phone;
         }
 
-        const { error } = await (supabase.from("lead") as any).update(mainUpdate).eq("id", leadId);
+        const { error } = await (supabase.from("lead") as unknown as { update: (d: object) => { eq: (k: string, v: string) => Promise<{ error: { message: string } | null }> } })
+            .update(mainUpdate)
+            .eq("id", leadId);
+
         if (error) {
             console.error("[FACT EXTRACTOR] ❌ Failed to save metadata:", error.message);
         } else {
             console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
+            
+            // 🟣 AUTO-QUALIFICATION CHECK
+            const meta = updatedMetadata as any;
+            const studies = meta.estudios || meta.nivel_estudios;
+            const exp = meta.experiencia || meta.years_experience;
+
+            if (studies && exp) {
+                const result = evaluateLeadQualification({
+                    nivel_estudios: String(studies),
+                    years_experience: exp as any
+                });
+
+                if (result.status === "cualificado") {
+                    // Get lead to find tenant_id if not passed
+                    const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
+                    if (lead) {
+                        await orchestrator.handleLeadQualification(leadId, lead.tenant_id, result.reason);
+                    }
+                } else {
+                    console.log(`[FACT EXTRACTOR] ℹ️ Lead ${leadId} evaluated but NOT qualified yet: ${result.reason}`);
+                }
+            }
         }
     }
 }

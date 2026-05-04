@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { Node, Edge } from "@xyflow/react";
 
 const publishSchema = z.object({
     tenantId: z.string().uuid(),
@@ -17,34 +18,44 @@ const publishSchema = z.object({
  * Saves the visual graph and flattens it for the execution engine.
  */
 
+interface VisualNodeData {
+    label?: string;
+    config?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+
 export async function POST(req: Request) {
+    console.log("[DEBUG] PUBLISH ENDPOINT HIT");
     try {
         const body = await req.json();
+        console.log("[DEBUG] BODY:", JSON.stringify(body).substring(0, 500));
         const { tenantId, workflowId, graphData } = publishSchema.parse(body);
 
         const supabase = await getAdminSupabaseClient();
 
         // 1. Save the visual graph state
-        const { error: graphError } = await (supabase
-            .from("orchestration_graphs" as any) as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: graphError } = await (supabase as any)
+            .from("orchestration_graphs")
             .upsert({
                 tenant_id: tenantId,
                 workflow_id: workflowId,
                 graph_data: graphData,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'workflow_id' });
-
+// ... (omitting lines between 36 and 41 for context match if possible, but I'll use a larger block)
         if (graphError) {
             console.error("[PUBLISH] Graph Error:", graphError);
             throw graphError;
         }
 
         // 2. Flatten the graph into execution rules
-        const executionSteps = flattenGraph(graphData.nodes as any, graphData.edges as any);
+        const executionSteps = flattenGraph(graphData.nodes as Node[], graphData.edges as Edge[]);
 
         // 3. Clear existing rules for THIS workflow and insert new ones
-        const { error: deleteError } = await (supabase
-            .from("orchestration_rules" as any) as any)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: deleteError } = await (supabase as any)
+            .from("orchestration_rules")
             .delete()
             .eq("workflow_id", workflowId);
 
@@ -53,16 +64,17 @@ export async function POST(req: Request) {
         }
 
         if (executionSteps.length > 0) {
-            const { error: rulesError } = await (supabase
-                .from("orchestration_rules" as any) as any)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { error: rulesError } = await (supabase as any)
+                .from("orchestration_rules")
                 .insert(executionSteps.map((step, index) => ({
                     tenant_id: tenantId,
                     workflow_id: workflowId,
                     step_name: step.label,
                     action_type: step.type,
                     sequence_order: step.sequence_order || index,
-                    config: step.config,
-                    trigger_node_id: step.triggerNodeId,
+                    config: step.config as Record<string, unknown>,
+                    trigger_node_id: (step.config as any)?.trigger_node_id || null,
                     is_active: true
                 })));
             
@@ -84,8 +96,8 @@ export async function POST(req: Request) {
 /**
  * HELPER: FLATTEN GRAPH (v4.0 - Branching & Specialized Nodes)
  */
-function flattenGraph(nodes: any[], edges: any[]) {
-    const triggerNodes = nodes.filter(n => ['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(n.type));
+function flattenGraph(nodes: Node[], edges: Edge[]) {
+    const triggerNodes = nodes.filter(n => ['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(n.type || ''));
     if (triggerNodes.length === 0) return [];
 
     const allSteps: any[] = [];
@@ -93,15 +105,15 @@ function flattenGraph(nodes: any[], edges: any[]) {
     function traverse(currentNodeId: string, triggerNodeId: string, order: number, visitedPath: Set<string>) {
         if (visitedPath.has(currentNodeId) || order > 50) return;
         visitedPath.add(currentNodeId);
-
+  
         const currentNode = nodes.find(n => n.id === currentNodeId);
         if (!currentNode) return;
-
+  
         // Map visual node to execution action
         let actionType = 'UNKNOWN';
-        const type = currentNode.type;
-        const data = currentNode.data || {};
-
+        const type = currentNode.type || 'unknown';
+        const data = (currentNode.data || {}) as VisualNodeData;
+  
         if (['voiceCall', 'flow_call'].includes(type)) actionType = 'VOICE_CALL';
         else if (['whatsapp', 'flow_meta_template'].includes(type)) actionType = 'WHATSAPP_TEMPLATE';
         else if (['textAgent', 'flow_ai_agent'].includes(type)) actionType = 'TEXT_AGENT';
@@ -110,14 +122,13 @@ function flattenGraph(nodes: any[], edges: any[]) {
         else if (['api', 'flow_http'].includes(type)) actionType = 'HTTP';
         else if (['llm', 'flow_ai'].includes(type)) actionType = 'LLM';
         else if (type === 'end') return; // Stop traversal
-
+  
         // If it's a step (not the trigger itself), add it
         if (!['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(type)) {
             allSteps.push({
                 label: data.label || type,
                 type: actionType,
-                config: { ...data.config, ...data },
-                triggerNodeId,
+                config: { ...(data.config || {}), ...data, trigger_node_id: triggerNodeId },
                 sequence_order: order
             });
         }

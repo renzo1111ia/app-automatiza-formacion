@@ -389,29 +389,33 @@ export default function CostsPage() {
                                         </div>
 
                                         {/* Bar */}
-                                        <div 
+                                        <motion.div 
                                             className="w-full bg-slate-50 dark:bg-white/5 group-hover:bg-slate-100 dark:group-hover:bg-white/10 rounded-t-xl transition-all cursor-pointer relative overflow-hidden"
-                                            style={{ height: `${Math.max(heightPerc, 2)}%` } as React.CSSProperties}
+                                            initial={{ height: "2%" }}
+                                            animate={{ height: `${Math.max(heightPerc, 2)}%` }}
                                         >
-                                            <div 
+                                            <motion.div 
                                                 className="absolute inset-x-0 bottom-0 bg-blue-500" 
-                                                style={{ height: `${metaPerc}%` } as React.CSSProperties} 
+                                                initial={{ height: 0 }}
+                                                animate={{ height: `${metaPerc}%` }}
                                             />
-                                            <div 
+                                            <motion.div 
                                                 className="absolute inset-x-0 bg-purple-500" 
-                                                style={{ 
+                                                initial={{ height: 0 }}
+                                                animate={{ 
                                                     height: `${aiPerc}%`, 
                                                     bottom: `${metaPerc}%` 
-                                                } as React.CSSProperties} 
+                                                }}
                                             />
-                                            <div 
+                                            <motion.div 
                                                 className="absolute inset-x-0 bg-orange-500" 
-                                                style={{ 
+                                                initial={{ height: 0 }}
+                                                animate={{ 
                                                     height: `${telephonyPerc}%`, 
                                                     bottom: `${metaPerc + aiPerc}%` 
-                                                } as React.CSSProperties} 
+                                                }}
                                             />
-                                        </div>
+                                        </motion.div>
 
                                         {/* Date Label */}
                                         <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[9px] font-black text-slate-400 uppercase tracking-tighter transition-colors group-hover:text-blue-500">

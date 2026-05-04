@@ -46,6 +46,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
     const [pacingMinutes, setPacingMinutes] = useState(60);
     const [messagesPerSlot, setMessagesPerSlot] = useState(10);
     const [reminderHours, setReminderHours] = useState(24);
+    const [country, setCountry] = useState("España");
 
     useEffect(() => {
         const loadWorkflows = async () => {
@@ -80,6 +81,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                 setPacingMinutes(res.data.scheduling?.slot_pacing_minutes || 60);
                 setMessagesPerSlot(res.data.scheduling?.messages_per_slot || 10);
                 setReminderHours(res.data.scheduling?.reminder_hours || 24);
+                setCountry(res.data.timezone_rules.country || "España");
             }
         }
         loadConfig();
@@ -102,7 +104,8 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                     "+598": "America/Montevideo",
                     "+1":  "America/New_York",
                     "+44": "Europe/London",
-                }
+                },
+                country: country
             },
             scheduling: {
                 slot_pacing_minutes: pacingMinutes,
@@ -324,6 +327,27 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
                                     );
                                 })}
                             </div>
+                        </div>
+
+                        {/* Default Country Selector */}
+                        <div className="space-y-2">
+                            <p className="text-[9px] font-black text-slate-400 dark:text-white/30 uppercase tracking-widest">País del Cliente (Base Horaria)</p>
+                            <select 
+                                value={country}
+                                onChange={(e) => setCountry(e.target.value)}
+                                title="Seleccionar país base del cliente"
+                                className="w-full h-10 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-xs font-black text-slate-700 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
+                            >
+                                <option value="España">España 🇪🇸</option>
+                                <option value="México">México 🇲🇽</option>
+                                <option value="Chile">Chile 🇨🇱</option>
+                                <option value="Colombia">Colombia 🇨🇴</option>
+                                <option value="Perú">Perú 🇵🇪</option>
+                                <option value="Argentina">Argentina 🇦🇷</option>
+                                <option value="Uruguay">Uruguay 🇺🇾</option>
+                                <option value="USA">USA 🇺🇸</option>
+                                <option value="Portugal">Portugal 🇵🇹</option>
+                            </select>
                         </div>
 
                         {/* Timezone note */}
