@@ -488,8 +488,8 @@ export default function AgentsPage() {
                                                                 type="number" 
                                                                 title="Tiempo de espera en minutos"
                                                                 placeholder="30"
-                                                                value={variantA.automation_rules?.inactivity_timeout || 30} 
-                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_timeout: parseInt(e.target.value)}}))}
+                                                                value={(variantA.automation_rules as any)?.inactivity_timeout || 30} 
+                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as any), inactivity_timeout: parseInt(e.target.value)}}))}
                                                                 className="flex-1 h-14 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/40 shadow-inner" 
                                                             />
                                                             <div className="h-14 px-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center text-[9px] font-black uppercase text-slate-500 dark:text-white/40 tracking-widest">
@@ -507,8 +507,8 @@ export default function AgentsPage() {
                                                                 type="number" 
                                                                 title="Máximo de reintentos"
                                                                 placeholder="1"
-                                                                value={variantA.automation_rules?.max_retries || 1} 
-                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, max_retries: parseInt(e.target.value)}}))}
+                                                                value={(variantA.automation_rules as any)?.max_retries || 1} 
+                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as any), max_retries: parseInt(e.target.value)}}))}
                                                                 className="flex-1 h-14 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/40 shadow-inner" 
                                                             />
                                                             <div className="h-14 px-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center text-[9px] font-black uppercase text-slate-500 dark:text-white/40 tracking-widest">
