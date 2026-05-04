@@ -555,38 +555,38 @@ export default function AgentsPage() {
                                             <div className="lg:col-span-7 space-y-6">
                                                 <div className="flex items-center justify-between ml-4">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
-                                                        {variantA.automation_rules?.inactivity_ai_enabled ? "Instrucción Estratégica (IA)" : "Mensaje de Rescate Estático"}
+                                                        {(variantA.automation_rules as any)?.inactivity_ai_enabled ? "Instrucción Estratégica (IA)" : "Mensaje de Rescate Estático"}
                                                     </label>
                                                     <button 
-                                                        title={variantA.automation_rules?.inactivity_ai_enabled ? "Usar mensaje estático" : "Usar Inteligencia Artificial para personalizar"}
-                                                        onClick={() => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_ai_enabled: !p.automation_rules?.inactivity_ai_enabled}}))}
+                                                        title={(variantA.automation_rules as any)?.inactivity_ai_enabled ? "Usar mensaje estático" : "Usar Inteligencia Artificial para personalizar"}
+                                                        onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as any), inactivity_ai_enabled: !(p.automation_rules as any)?.inactivity_ai_enabled}}))}
                                                         className={cn(
                                                             "flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm",
-                                                            variantA.automation_rules?.inactivity_ai_enabled 
+                                                            (variantA.automation_rules as any)?.inactivity_ai_enabled 
                                                                 ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
                                                                 : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-white/40 hover:text-white"
                                                         )}
                                                     >
-                                                        <Sparkles className={cn("h-3 w-3", variantA.automation_rules?.inactivity_ai_enabled && "animate-pulse")} />
-                                                        {variantA.automation_rules?.inactivity_ai_enabled ? "IA Personalizada" : "Mejorar con IA"}
+                                                        <Sparkles className={cn("h-3 w-3", (variantA.automation_rules as any)?.inactivity_ai_enabled && "animate-pulse")} />
+                                                        {(variantA.automation_rules as any)?.inactivity_ai_enabled ? "IA Personalizada" : "Mejorar con IA"}
                                                     </button>
                                                 </div>
                                                 
                                                 <div className="relative h-[480px] group">
                                                     <textarea 
-                                                        value={variantA.automation_rules?.inactivity_message || ""} 
-                                                        onChange={(e) => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_message: e.target.value}}))}
+                                                        value={(variantA.automation_rules as any)?.inactivity_message || ""} 
+                                                        onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as any), inactivity_message: e.target.value}}))}
                                                         className={cn(
                                                             "w-full h-full border rounded-[48px] p-10 text-base leading-relaxed font-medium focus:ring-8 transition-all resize-none outline-none shadow-2xl backdrop-blur-sm",
-                                                            variantA.automation_rules?.inactivity_ai_enabled
+                                                            (variantA.automation_rules as any)?.inactivity_ai_enabled
                                                                 ? "bg-primary/5 border-primary/30 text-white focus:ring-primary/5 border-t-primary/40"
                                                                 : "bg-white dark:bg-black/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/90 focus:ring-primary/5"
                                                         )}
-                                                        placeholder={variantA.automation_rules?.inactivity_ai_enabled 
+                                                        placeholder={(variantA.automation_rules as any)?.inactivity_ai_enabled 
                                                             ? "Ej: Detecta que el usuario no responde y envíale un mensaje empático preguntando si necesita más detalles sobre el programa, manteniendo un tono profesional..." 
                                                             : "Hola, sigues ahí? Quería ver si habías podido revisar la información que te envié..."} 
                                                     />
-                                                    {variantA.automation_rules?.inactivity_ai_enabled && (
+                                                    {(variantA.automation_rules as any)?.inactivity_ai_enabled && (
                                                         <div className="absolute top-8 right-8 flex items-center gap-2">
                                                             <span className="text-[8px] font-black uppercase tracking-widest text-primary animate-pulse">Procesamiento IA</span>
                                                             <div className="h-2 w-2 rounded-full bg-primary animate-ping" />
@@ -594,7 +594,7 @@ export default function AgentsPage() {
                                                     )}
                                                 </div>
 
-                                                {variantA.automation_rules?.inactivity_ai_enabled ? (
+                                                    {(variantA.automation_rules as any)?.inactivity_ai_enabled ? (
                                                     <div className="flex items-start gap-4 p-6 bg-primary/10 border border-primary/20 rounded-[32px] shadow-lg shadow-primary/5">
                                                         <div className="h-10 w-10 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0">
                                                             <Sparkles className="h-5 w-5 text-primary" />
