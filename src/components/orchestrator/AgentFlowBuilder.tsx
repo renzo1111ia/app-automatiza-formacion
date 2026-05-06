@@ -77,6 +77,20 @@ interface FlowNodeData {
     label?: string;
     validation?: string;
     config?: Record<string, unknown>;
+    // Inactivity properties
+    timeout?: number;
+    max_retries?: number;
+    message?: string;
+    // Condition properties
+    condition_variable?: string;
+    condition_operator?: string;
+    condition_value?: string;
+    // CRM properties
+    type?: string;
+    mappings?: Record<string, string>;
+    ownerId?: string;
+    tagName?: string;
+    transitionId?: string;
     [key: string]: unknown;
 }
 
