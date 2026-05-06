@@ -8,39 +8,100 @@ export class AppointmentService {
         return createClient<Database>(url!, key!);
     }
 
+    private static normalizeDate(dateStr: string): string {
+        if (!dateStr) return dateStr;
+        const lower = dateStr.toLowerCase().trim();
+        // Simple normalization for common Spanish relative dates
+        if (lower === 'mañana' || lower === 'mañana') {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return d.toISOString().split('T')[0];
+        }
+        if (lower === 'hoy') {
+            return new Date().toISOString().split('T')[0];
+        }
+        // Match YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+            return dateStr.split('T')[0];
+        }
+        return dateStr;
+    }
+
     static async bookAppointment(tenantId: string, leadId: string, date: string, time?: string, notes?: string) {
+        const cleanDate = this.normalizeDate(date);
+        console.log(`[BOOK APPOINTMENT] Starting for lead ${leadId} on ${cleanDate} (original: ${date}) at ${time}`);
         const supabase = this.getSupabase();
-        let scheduledAt = date;
+        let scheduledAt = cleanDate;
+        
+        // Handle ISO date if only date is provided
         if (time) {
             const timeStr = time.includes(':') ? (time.split(':').length === 2 ? `${time}:00` : time) : `${time}:00:00`;
-            scheduledAt = `${date}T${timeStr}Z`;
+            scheduledAt = `${cleanDate}T${timeStr}Z`;
         }
 
-        // 1. Get Lead context
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lead } = await (supabase.from("lead") as any).select("*, lead_programas(id_programa, programas(nombre))").eq("id", leadId).single();
-        const programId = lead?.lead_programas?.[0]?.id_programa;
-        const programName = lead?.lead_programas?.[0]?.programas?.nombre;
+        try {
+            // 1. Get Lead context
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: lead, error: leadError } = await (supabase.from("lead") as any)
+                .select("*, lead_programas(id_programa, programas(nombre))")
+                .eq("id", leadId)
+                .single();
+            
+            if (leadError) {
+                console.error(`[BOOK APPOINTMENT] Lead fetch error:`, leadError);
+                throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
+            }
 
-        // 2. Advisor Assignment
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: advisors } = await (supabase.from("advisors") as any).select("*").eq("tenant_id", tenantId).eq("is_active", true);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const selectedAdvisor = advisors?.find((a: any) => a.specialties?.includes(programId) || a.specialties?.includes(programName)) || advisors?.[0];
+            const programId = lead?.lead_programas?.[0]?.id_programa;
+            const programName = lead?.lead_programas?.[0]?.programas?.nombre;
 
-        // 3. Insert
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase.from("appointments") as any).insert({
-            tenant_id: tenantId,
-            lead_id: leadId,
-            advisor_id: selectedAdvisor?.id || null,
-            scheduled_at: scheduledAt,
-            status: "SCHEDULED",
-            notes: notes || `Agendado por IA. Programa: ${programName}`
-        }).select().single();
+            // 2. Advisor Assignment
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: advisors, error: advError } = await (supabase.from("advisors") as any)
+                .select("*")
+                .eq("tenant_id", tenantId)
+                .eq("is_active", true);
 
-        if (error) throw error;
-        return data;
+            if (advError) {
+                console.error(`[BOOK APPOINTMENT] Advisor fetch error:`, advError);
+                throw new Error(`Error al obtener asesores: ${advError.message}`);
+            }
+
+            // Logic: Try to match by "specialties" (which we might need to update or use courses/countries)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const selectedAdvisor = advisors?.find((a: any) => 
+                (a.specialties && (a.specialties.includes(programId) || a.specialties.includes(programName))) ||
+                (a.courses && a.courses.includes(programName))
+            ) || advisors?.[0];
+
+            if (!selectedAdvisor) {
+                throw new Error("No hay asesores disponibles para asignar la cita.");
+            }
+
+            console.log(`[BOOK APPOINTMENT] Selected Advisor: ${selectedAdvisor.name} (${selectedAdvisor.id})`);
+
+            // 3. Insert
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error: insertError } = await (supabase.from("appointments") as any).insert({
+                tenant_id: tenantId,
+                lead_id: leadId,
+                advisor_id: selectedAdvisor.id,
+                scheduled_at: scheduledAt,
+                status: "SCHEDULED",
+                notes: notes || `Agendado por IA. Programa: ${programName || 'No especificado'}`
+            }).select().single();
+
+            if (insertError) {
+                console.error(`[BOOK APPOINTMENT] Insert error:`, insertError);
+                throw new Error(`Error en base de datos al agendar: ${insertError.message}`);
+            }
+
+            console.log(`[BOOK APPOINTMENT] Success! Appointment ID: ${data.id}`);
+            return data;
+        } catch (err: any) {
+            console.error(`[BOOK APPOINTMENT] Critical failure:`, err);
+            throw err;
+        }
     }
 
     static async cancelAppointment(appointmentId: string) {
@@ -70,8 +131,10 @@ export class AppointmentService {
     }
 
     static async checkAvailability(tenantId: string, date: string) {
+        const cleanDate = this.normalizeDate(date);
+        console.log(`[CHECK AVAILABILITY] Checking for ${cleanDate} (original: ${date})`);
         const supabase = this.getSupabase();
-        const dayOfWeek = new Date(date).getUTCDay(); // 0-6 (Sun-Sat)
+        const dayOfWeek = new Date(cleanDate).getUTCDay(); // 0-6 (Sun-Sat)
         
         // Get slots for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

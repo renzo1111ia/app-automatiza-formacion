@@ -128,15 +128,15 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
                 type: "function",
                 function: {
                     name: "book_appointment",
-                    description: "Agendar una nueva cita o reunión.",
+                    description: "Agendar una nueva cita con un asesor. IMPORTANTE: El argumento 'date' DEBE ser una fecha en formato ISO (YYYY-MM-DD).",
                     parameters: {
                         type: "object",
                         properties: {
-                            date: { type: "string", description: "Fecha en formato YYYY-MM-DD" },
-                            time: { type: "string", description: "Hora en formato HH:MM" },
-                            notes: { type: "string", description: "Notas adicionales o motivo" }
+                            date: { type: "string", description: "Fecha de la cita (formato YYYY-MM-DD)" },
+                            time: { type: "string", description: "Hora de la cita (formato HH:MM)" },
+                            notes: { type: "string", description: "Notas adicionales sobre el interés del lead" }
                         },
-                        required: ["date"]
+                        required: ["date", "time"]
                     }
                 }
             },
@@ -236,6 +236,7 @@ ${conversationContext}
 
                 const name = toolCall.function.name;
                 const args = JSON.parse(toolCall.function.arguments);
+                console.log(`[AI PROCESSOR] 🛠️ Executing tool: ${name}`, args);
                 let result = "";
 
                 try {
