@@ -122,7 +122,11 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 [CONTEXTO TEMPORAL]
 Zona Horaria del Sistema: ${TZ} (España).
 País del Lead: ${variableMap.pais}.
-IMPORTANTE: Si el lead menciona una hora de su país, calcula la equivalencia con España usando tu conocimiento general de zonas horarias y verifica disponibilidad en hora de España. Al usar herramientas (book_appointment, check_availability), usa SIEMPRE la hora de España.
+IMPORTANTE: El lead SIEMPRE hablará desde su horario local. Si el lead dice "a las 11:30", se refiere a las 11:30 de SU país (${variableMap.pais}). 
+Tu tarea es:
+1. Calcular a qué hora corresponde eso en España (${TZ}).
+2. Verificar disponibilidad o agendar usando SIEMPRE la hora resultante en España.
+3. Confirmar al lead mencionando AMBAS horas para evitar confusiones (ej: "Perfecto, agendado para las 11:30 de tu país, que son las 17:30 aquí en España").
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
