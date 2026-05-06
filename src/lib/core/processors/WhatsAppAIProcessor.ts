@@ -108,6 +108,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             fecha: now.toLocaleDateString('es-ES', { timeZone: TZ }),
             hora: now.toLocaleTimeString('es-ES', { timeZone: TZ }),
             now: now.toLocaleString('es-ES', { timeZone: TZ }),
+            pais: (lead as any).pais || 'Desconocido',
             "$now": now.toLocaleString('es-ES', { timeZone: TZ }),
             "$date": now.toLocaleDateString('es-ES', { timeZone: TZ }),
             "$time": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
@@ -116,7 +117,14 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };
 
-        let finalPrompt = activeVariant.prompt_text;
+        // Add implicit context about timezones
+        const timezoneContext = `
+[CONTEXTO TEMPORAL]
+Zona Horaria del Sistema: ${TZ} (España).
+País del Lead: ${variableMap.pais}.
+IMPORTANTE: Si el lead menciona una hora de su país, calcula la equivalencia con España usando tu conocimiento general de zonas horarias y verifica disponibilidad en hora de España. Al usar herramientas (book_appointment, check_availability), usa SIEMPRE la hora de España.
+`;
+        let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
         // Replace patterns like {{nombre}}
         Object.keys(variableMap).forEach(key => {
