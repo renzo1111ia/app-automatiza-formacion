@@ -132,8 +132,8 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     }
 
     // 5. Insert record
-    const { data: appointmentData, error } = await supabase
-        .from("appointments")
+    const { data: appointmentData, error } = await (supabase
+        .from("appointments") as any)
         .insert({
             tenant_id: tenantId,
             lead_id: leadId,
@@ -142,7 +142,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
             status: "SCHEDULED",
             notes: notes || `Agendado por IA. Programa: ${programName}. ${overlaps > 0 ? '(⚠️ Solapado)' : ''}`,
             watchdog_processed: false
-        } as any) // Cast to any for the insert payload to avoid deep type issues
+        })
         .select()
         .single();
     

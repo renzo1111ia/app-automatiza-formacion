@@ -132,8 +132,8 @@ export async function runRescueCheck() {
             };
 
             await (supabase
-                .from("lead")
-                .update(updateData as any) as any)
+                .from("lead") as any)
+                .update(updateData)
                 .eq("id", lead.id);
 
             await GlobalLogger.info(lead.tenant_id, 'RESCUE', `Inactivity rescue sent (${isAIEnabled ? 'AI' : 'Static'})`, { leadId: lead.id, agentId: agent.id });

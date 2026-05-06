@@ -125,7 +125,7 @@ EJEMPLO:
         });
 
         // 1. Get current metadata
-        const { data: leadFound } = await (supabase.from("lead") as unknown as { select: (s: string) => { eq: (k: string, v: string) => { single: () => Promise<{ data: Lead | null }> } } })
+        const { data: leadFound } = await (supabase.from("lead") as any)
             .select("metadata, nombre, apellido, telefono")
             .eq("id", leadId)
             .single();
@@ -162,7 +162,7 @@ EJEMPLO:
             mainUpdate.telefono = newData.user_phone;
         }
 
-        const { error } = await (supabase.from("lead") as unknown as { update: (d: object) => { eq: (k: string, v: string) => Promise<{ error: { message: string } | null }> } })
+        const { error } = await (supabase.from("lead") as any)
             .update(mainUpdate)
             .eq("id", leadId);
 
