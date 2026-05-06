@@ -95,6 +95,7 @@ interface FlowNodeData {
     ownerId?: string;
     tagName?: string;
     transitionId?: string;
+    timeout?: number;
     [key: string]: unknown;
 }
 
