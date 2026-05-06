@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { updateTenant } from "@/lib/actions/tenant";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { getSingleDynamicKpi, type AnalyticsFilters } from "@/lib/actions/analytics";
 import { AVAILABLE_COLORS, COL_SPAN_MAP, SCHEMA_COLUMNS, AVAILABLE_ICONS, ICON_MAP } from "@/lib/constants/schema";
 
