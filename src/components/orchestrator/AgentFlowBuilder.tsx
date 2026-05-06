@@ -88,6 +88,11 @@ interface FlowNodeData {
     // CRM properties
     type?: string;
     mappings?: Record<string, string>;
+    crm_mappings?: string;
+    api_url?: string;
+    api_key?: string;
+    operation?: string;
+    platform?: string;
     ownerId?: string;
     tagName?: string;
     transitionId?: string;
@@ -150,18 +155,27 @@ const MessageNode = ({ data, selected }: { data: { text?: string }; selected?: b
     </NodeWrapper>
 );
 
-const HTTPRequestNode = ({ data, selected }: { data: { method?: string; url?: string }; selected?: boolean }) => (
-    <NodeWrapper title="HTTP Request" icon={Globe} color="bg-orange-500/20 text-orange-400" headerColor="bg-orange-500" selected={selected} type="INTEGRACIÓN">
-        <Handle type="target" position={Position.Top} className="w-3 h-3 bg-orange-500 border-2 border-slate-900" />
-        <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-                <span className="text-[9px] font-black text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded">{data.method || "POST"}</span>
-                <span className="text-[10px] text-white/40 truncate flex-1">{data.url || "https://api..."}</span>
+const HTTPRequestNode = ({ data, selected }: { data: { method?: string; url?: string }; selected?: boolean }) => {
+    const sim = (data as any).simulation;
+    return (
+        <NodeWrapper title="HTTP Request" icon={Globe} color="bg-orange-500/20 text-orange-400" headerColor="bg-orange-500" selected={selected} type="INTEGRACIÓN">
+            <Handle type="target" position={Position.Top} className="w-3 h-3 bg-orange-500 border-2 border-slate-900" />
+            <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded">{data.method || "POST"}</span>
+                    <span className="text-[10px] text-white/40 truncate flex-1">{data.url || "https://api..."}</span>
+                </div>
+                {sim && sim.status === 'success' && (
+                    <div className="mt-2 p-1.5 bg-emerald-500/10 rounded border border-emerald-500/20 flex items-center gap-2 animate-in fade-in zoom-in-95">
+                        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        <span className="text-[8px] font-bold text-emerald-400 uppercase">Respuesta: 200 OK</span>
+                    </div>
+                )}
             </div>
-        </div>
-        <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-orange-500 border-2 border-slate-900" />
-    </NodeWrapper>
-);
+            <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-orange-500 border-2 border-slate-900" />
+        </NodeWrapper>
+    );
+};
 
 const DatabaseNode = ({ data, selected }: { data: { action?: string; target?: string }; selected?: boolean }) => (
     <NodeWrapper title="Acción DB" icon={Database} color="bg-cyan-500/20 text-cyan-400" headerColor="bg-cyan-500" selected={selected} type="DATOS">
@@ -343,6 +357,7 @@ const CrmConnectNode = ({ data, selected }: { data: { platform?: string; operati
         zoho: "Zoho CRM", hubspot: "HubSpot", salesforce: "Salesforce",
         pipedrive: "Pipedrive", custom: "API Custom"
     };
+    const sim = (data as any).simulation;
     return (
         <NodeWrapper title="Conectar BD / CRM" icon={Link2} color={`${palette.bg} ${palette.color}`} headerColor={palette.bg.replace("/10", "")} selected={selected} type="CONECTOR">
             <Handle type="target" position={Position.Top} className="w-3 h-3 bg-violet-500 border-2 border-slate-900" />
@@ -351,7 +366,13 @@ const CrmConnectNode = ({ data, selected }: { data: { platform?: string; operati
                     {platformLabel[platform] || "Plataforma"}
                 </div>
                 <p className="text-[9px] text-white/40 line-clamp-1 uppercase tracking-wide">{data.operation || "OPERACIÓN"}</p>
-                {data.api_url && <p className="text-[8px] text-white/20 font-mono truncate">{data.api_url}</p>}
+                
+                {sim && sim.status === 'success' && (
+                    <div className="p-1.5 bg-emerald-500/10 rounded border border-emerald-500/20 flex items-center justify-between animate-in fade-in zoom-in-95">
+                        <span className="text-[8px] font-bold text-emerald-400 uppercase">Sincronizado</span>
+                        <Check className="h-2 w-2 text-emerald-400" />
+                    </div>
+                )}
             </div>
             <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-violet-500 border-2 border-slate-900" />
         </NodeWrapper>
@@ -374,6 +395,83 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const [searchQuery, setSearchQuery] = useState("");
     const [aiAgents, setAiAgents] = useState<AIAgent[]>([]);
     const [precedingVariables, setPrecedingVariables] = useState<string[]>([]);
+    const [nodeSimulations, setNodeSimulations] = useState<Record<string, {
+        status: 'idle' | 'loading' | 'success' | 'error';
+        result?: any;
+        request?: any;
+        error?: string;
+        timestamp?: string;
+    }>>({});
+
+    const handleTestNode = async (node: Node<FlowNodeData>) => {
+        const id = node.id;
+        setNodeSimulations(prev => ({
+            ...prev,
+            [id]: { status: 'loading' }
+        }));
+
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        try {
+            let result: any = null;
+            let request: any = null;
+
+            if (node.type === 'flow_http') {
+                const headersStr = (node.data.headers as string) || '{}';
+                const payloadStr = (node.data.payload as string) || '{}';
+                
+                request = {
+                    method: node.data.method || 'POST',
+                    url: node.data.url || 'https://api.example.com',
+                    headers: JSON.parse(headersStr),
+                    body: JSON.parse(payloadStr)
+                };
+                // Mock result
+                result = {
+                    status: 200,
+                    data: {
+                        success: true,
+                        id: "res_" + Math.random().toString(36).substr(2, 9),
+                        message: "Request processed successfully",
+                        received_at: new Date().toISOString()
+                    }
+                };
+            } else if (node.type === 'flow_crm_connect') {
+                const mappingsStr = (node.data.crm_mappings as string) || '{}';
+                request = {
+                    platform: node.data.platform,
+                    operation: node.data.operation,
+                    mappings: JSON.parse(mappingsStr)
+                };
+                result = {
+                    success: true,
+                    crm_id: "CRM_" + Math.random().toString(36).substr(2, 9),
+                    sync_status: "COMPLETED",
+                    platform: node.data.platform
+                };
+            }
+
+            setNodeSimulations(prev => ({
+                ...prev,
+                [id]: { 
+                    status: 'success', 
+                    result, 
+                    request,
+                    timestamp: new Date().toLocaleTimeString()
+                }
+            }));
+        } catch (err: any) {
+            setNodeSimulations(prev => ({
+                ...prev,
+                [id]: { 
+                    status: 'error', 
+                    error: err.message,
+                    timestamp: new Date().toLocaleTimeString()
+                }
+            }));
+        }
+    };
 
     useEffect(() => {
         const loadAgents = async () => {
@@ -453,6 +551,16 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
         setSelectedNodeId(node.id);
     }, []);
+
+    // Update nodes with simulation data when they change
+    useEffect(() => {
+        setNodes(nds => nds.map(n => {
+            if (nodeSimulations[n.id]) {
+                return { ...n, data: { ...n.data, simulation: nodeSimulations[n.id] } };
+            }
+            return n;
+        }));
+    }, [nodeSimulations, setNodes]);
 
     const updateNodeData = (id: string, newData: Partial<FlowNodeData>) => {
         setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, ...newData } } : n));
@@ -1207,6 +1315,57 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                             className="w-full min-h-[120px] bg-black/40 border border-white/5 rounded-2xl p-4 text-[10px] font-mono text-white/40 focus:text-white/80 transition-all outline-none"
                                         />
                                     </div>
+
+                                    {/* Simulation Panel for HTTP */}
+                                    <div className="pt-6 border-t border-white/5 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-orange-400">Prueba de Ejecución</label>
+                                            {nodeSimulations[selectedNode.id]?.timestamp && (
+                                                <span className="text-[8px] text-white/20">Last: {nodeSimulations[selectedNode.id].timestamp}</span>
+                                            )}
+                                        </div>
+                                        
+                                        <button 
+                                            onClick={() => handleTestNode(selectedNode)}
+                                            disabled={nodeSimulations[selectedNode.id]?.status === 'loading'}
+                                            className="w-full h-11 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-black uppercase tracking-widest hover:bg-orange-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {nodeSimulations[selectedNode.id]?.status === 'loading' ? (
+                                                <div className="h-3 w-3 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <Activity className="w-3 h-3" />
+                                            )}
+                                            {nodeSimulations[selectedNode.id]?.status === 'loading' ? "Ejecutando..." : "Simular Petición"}
+                                        </button>
+
+                                        {nodeSimulations[selectedNode.id]?.status === 'success' && (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">Resultado: 200 OK</span>
+                                                        <Check className="h-3 w-3 text-emerald-400" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Respuesta Recibida:</p>
+                                                        <pre className="text-[9px] font-mono text-emerald-200/60 bg-black/20 p-2 rounded-lg overflow-x-auto">
+                                                            {JSON.stringify(nodeSimulations[selectedNode.id].result, null, 2)}
+                                                        </pre>
+                                                    </div>
+                                                </div>
+
+                                                <div className="p-3 bg-white/5 rounded-xl border border-white/5">
+                                                    <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest mb-2">Variables Generadas:</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {Object.keys(nodeSimulations[selectedNode.id].result?.data || {}).map(key => (
+                                                            <div key={key} className="px-2 py-0.5 bg-white/5 rounded border border-white/5 text-[8px] text-orange-200/50 font-mono">
+                                                                {"{{" + key + "}}"}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -1554,20 +1713,51 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                         />
                                         <p className="text-[8px] text-white/20 italic">Authorization: Bearer &#123;token&#125;</p>
                                     </div>
-                                    <div className="space-y-3">
+
+                                    {/* Simulation Panel for CRM */}
+                                    <div className="pt-6 border-t border-white/5 space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-violet-400">Mapeo de Campos (JSON)</label>
-                                            <Link2 className="w-3 h-3 text-violet-400" />
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-violet-400">Test de Sincronización</label>
+                                            {nodeSimulations[selectedNode.id]?.timestamp && (
+                                                <span className="text-[8px] text-white/20">Sync: {nodeSimulations[selectedNode.id].timestamp}</span>
+                                            )}
                                         </div>
-                                        <textarea
-                                            value={selectedNode.data.crm_mappings as string || '{}'}
-                                            onChange={(e) => updateNodeData(selectedNode.id, { crm_mappings: e.target.value })}
-                                            className="w-full min-h-[140px] bg-violet-500/5 border border-violet-500/20 rounded-2xl p-4 text-[10px] font-mono text-violet-200/70 outline-none focus:border-violet-500/50 transition-all"
-                                            placeholder={'{\n  "nombre": "{{nombre}}",\n  "email": "{{email}}",\n  "telefono": "{{telefono}}"\n}'}
-                                        />
-                                        <p className="text-[8px] text-white/20 leading-relaxed">
-                                            Usa <span className="text-violet-400 font-black">&#123;&#123;variable&#125;&#125;</span> para inyectar datos del lead.
-                                        </p>
+                                        
+                                        <button 
+                                            onClick={() => handleTestNode(selectedNode)}
+                                            disabled={nodeSimulations[selectedNode.id]?.status === 'loading'}
+                                            className="w-full h-11 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-[10px] font-black uppercase tracking-widest hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {nodeSimulations[selectedNode.id]?.status === 'loading' ? (
+                                                <div className="h-3 w-3 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <Link2 className="w-3 h-3" />
+                                            )}
+                                            {nodeSimulations[selectedNode.id]?.status === 'loading' ? "Probando..." : "Verificar Conexión"}
+                                        </button>
+
+                                        {nodeSimulations[selectedNode.id]?.status === 'success' && (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                                <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">Sincronización Exitosa</span>
+                                                        <Sparkles className="h-3 w-3 text-indigo-400" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Payload Enviado:</p>
+                                                        <pre className="text-[9px] font-mono text-indigo-200/60 bg-black/20 p-2 rounded-lg overflow-x-auto max-h-[100px]">
+                                                            {JSON.stringify(nodeSimulations[selectedNode.id].request?.mappings, null, 2)}
+                                                        </pre>
+                                                    </div>
+                                                    <div className="pt-2 border-t border-white/5">
+                                                        <div className="flex items-center justify-between text-[8px] font-bold">
+                                                            <span className="text-white/20 uppercase tracking-widest">ID Generado:</span>
+                                                            <span className="text-indigo-400 font-mono">{nodeSimulations[selectedNode.id].result?.crm_id}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
