@@ -875,6 +875,32 @@ export class Orchestrator {
     }
 
     /**
+     * Resolves the best timezone for a lead based on metadata or country
+     */
+    private getLeadTimezone(lead: any): string {
+        if (lead.metadata?.timezone) return lead.metadata.timezone;
+        
+        const countryMap: Record<string, string> = {
+            'bolivia': 'America/La_Paz',
+            'méxico': 'America/Mexico_City',
+            'mexico': 'America/Mexico_City',
+            'colombia': 'America/Bogota',
+            'argentina': 'America/Argentina/Buenos_Aires',
+            'chile': 'America/Santiago',
+            'perú': 'America/Lima',
+            'peru': 'America/Lima',
+            'ecuador': 'America/Guayaquil',
+            'panamá': 'America/Panama',
+            'panama': 'America/Panama',
+            'españa': 'Europe/Madrid',
+            'spain': 'Europe/Madrid'
+        };
+
+        const country = (lead.pais || '').toLowerCase().trim();
+        return countryMap[country] || 'Europe/Madrid';
+    }
+
+    /**
      * Automated Appointment Reminder Logic
      */
     public async handleAppointmentReminder(leadId: string, tenantId: string, appointmentId: string, template: string) {
@@ -887,7 +913,11 @@ export class Orchestrator {
             return;
         }
 
-        // Format Date for template
+        // 1. Resolve Timezone for the Lead
+        const leadTZ = this.getLeadTimezone(lead);
+        console.log(`[ORCHESTRATOR] Formatting reminder for lead in ${leadTZ} (Country: ${lead.pais})`);
+
+        // 2. Format Date for template using Lead's Timezone
         const dateObj = new Date(appointment.scheduled_at);
         const formattedDate = dateObj.toLocaleString('es-ES', { 
             weekday: 'long', 
@@ -895,8 +925,8 @@ export class Orchestrator {
             month: 'long', 
             hour: '2-digit', 
             minute: '2-digit',
-            timeZone: 'Europe/Madrid' // Default to Madrid as per Esden usage
-        });
+            timeZone: leadTZ
+        }) + (leadTZ !== 'Europe/Madrid' ? ` (hora de ${lead.pais || 'su país'})` : '');
 
         // Resolve Course Name
         const courseCtx = await this.getCourseContext(leadId);
