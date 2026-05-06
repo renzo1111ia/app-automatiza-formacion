@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
-import { toZonedTime } from "date-fns-tz";
+import { fromZonedTime } from "date-fns-tz";
 
 export class AppointmentService {
     private static DEFAULT_TIMEZONE = "Europe/Madrid";
@@ -45,8 +45,8 @@ export class AppointmentService {
             
             // Create a date object interpreting it as Madrid time, then get ISO UTC
             try {
-                const zonedDate = toZonedTime(fullLocalString, this.DEFAULT_TIMEZONE);
-                scheduledAt = zonedDate.toISOString();
+                const utcDate = fromZonedTime(fullLocalString, this.DEFAULT_TIMEZONE);
+                scheduledAt = utcDate.toISOString();
             } catch (e) {
                 console.warn(`[BOOK APPOINTMENT] Timezone conversion failed for ${fullLocalString}, falling back to UTC`, e);
                 scheduledAt = `${cleanDate}T${timeStr}Z`;
