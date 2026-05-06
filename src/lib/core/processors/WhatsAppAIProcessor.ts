@@ -106,6 +106,10 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             telefono: (lead as any).telefono || '',
             fecha: new Date().toLocaleDateString(),
             hora: new Date().toLocaleTimeString(),
+            now: new Date().toLocaleString(),
+            "$now": new Date().toLocaleString(),
+            "$date": new Date().toLocaleDateString(),
+            "$time": new Date().toLocaleTimeString(),
             ...((lead as any).metadata || {}), // CAPTURED MEMORY
             ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };

@@ -71,26 +71,48 @@ export class PostAnalysisService {
                 tenant_id: tenantId,
                 id_lead: leadId,
                 cualificacion: analysis.qualified,
-                motivo_anulacion: analysis.extracted_data.motivo_anulacion,
-                anios_experiencia: analysis.extracted_data.años_experiencia,
-                nivel_estudios: analysis.extracted_data.nivel_estudios,
+                motivo_anulacion: analysis.extracted_data.MOTIVO_DESCARTE || analysis.extracted_data.motivo_anulacion,
+                anios_experiencia: analysis.extracted_data["YEARS_ EXPERIENCIE"] || analysis.extracted_data.años_experiencia,
+                nivel_estudios: analysis.extracted_data.USER_ESTUDIES || analysis.extracted_data.nivel_estudios,
                 calificacion_score: analysis.lead_score,
                 analisis_profundo: {
                     reasons: analysis.reasons,
                     interest_level: analysis.student_interest_level,
-                    titulacion: analysis.extracted_data.titulacion_lead,
+                    titulacion: analysis.extracted_data.USER_PROFESION || analysis.extracted_data.titulacion_lead,
                     disponibilidad: analysis.extracted_data.disponibilidad,
                     external_id: externalId
                 }
             });
 
+            // 4b. PERSIST METADATA IN LEAD TABLE
+            const currentMetadata = (leadRaw as any).metadata || {};
+            const updatedMetadata = {
+                ...currentMetadata,
+                ...analysis.extracted_data,
+                QUALIFIED: analysis.qualified === "si" ? "SI" : "NO",
+                last_fact_update: new Date().toISOString()
+            };
+
+            const mainUpdate: Record<string, any> = { metadata: updatedMetadata };
+            if (analysis.extracted_data.USER_NAME) {
+                 const parts = String(analysis.extracted_data.USER_NAME).trim().split(' ');
+                 mainUpdate.nombre = parts[0];
+                 if (parts.length > 1) mainUpdate.apellido = parts.slice(1).join(' ');
+            }
+            if (analysis.extracted_data.USER_COUNTRY) {
+                mainUpdate.pais = analysis.extracted_data.USER_COUNTRY;
+            }
+
+            await (supabase.from("lead") as any).update(mainUpdate).eq("id", leadId);
+
             // 5. Handle Scheduling / Retries
-            if (analysis.qualified === "si" && analysis.scheduled_call_confirmed && analysis.extracted_data.date_time_preferred) {
+            if (analysis.qualified === "si" && (analysis.scheduled_call_confirmed || analysis.extracted_data.date_time_preferred)) {
                 // Lead is qualified and scheduled a call
+                const fechaCita = analysis.extracted_data.date_time_preferred || new Date().toISOString();
                 await (supabase.from("agendamientos" as any) as any).insert({
                     tenant_id: tenantId,
                     id_lead: leadId,
-                    fecha_agendada_lead: analysis.extracted_data.date_time_preferred,
+                    fecha_agendada_lead: fechaCita,
                     confirmado: true
                 });
             } else if (analysis.qualified !== "si") {

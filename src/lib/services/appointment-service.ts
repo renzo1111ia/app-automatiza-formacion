@@ -75,7 +75,7 @@ export class AppointmentService {
         
         // Get slots for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: slots } = await (supabase.from("availability_slots") as any)
+        const { data: ranges } = await (supabase.from("availability_slots") as any)
             .select("*, advisors!inner(tenant_id)")
             .eq("day_of_week", dayOfWeek)
             .eq("advisors.tenant_id", tenantId);
@@ -89,15 +89,49 @@ export class AppointmentService {
             .lte("scheduled_at", `${date}T23:59:59Z`)
             .neq("status", "CANCELLED");
 
-        // Simple logic: return slots that don't have an appointment
-        // In a real app, this would be more complex (checking per advisor)
+        const availableSlots: { time: string, advisor_id: string }[] = [];
+
+        if (ranges) {
+            for (const range of ranges) {
+                const startTime = range.start_time;
+                const endTime = range.end_time;
+                const duration = range.slot_duration_minutes || 30;
+
+                let current = this.parseTimeToMinutes(startTime);
+                const end = this.parseTimeToMinutes(endTime);
+
+                while (current < end) {
+                    const timeString = this.minutesToTimeString(current);
+                    
+                    // Check if already booked
+                    const isBooked = (existing as { scheduled_at: string; advisor_id: string }[])?.some((e) => 
+                        e.scheduled_at.includes(timeString) && e.advisor_id === range.advisor_id
+                    );
+
+                    if (!isBooked) {
+                        availableSlots.push({
+                            time: timeString,
+                            advisor_id: range.advisor_id
+                        });
+                    }
+                    current += duration;
+                }
+            }
+        }
+
         return {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            available_slots: slots?.map((s: any) => ({
-                time: s.start_time,
-                advisor_id: s.advisor_id
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            })).filter((s: any) => !existing?.some((e: any) => e.scheduled_at.includes(s.time) && e.advisor_id === s.advisor_id))
+            available_slots: availableSlots
         };
+    }
+
+    private static parseTimeToMinutes(timeStr: string): number {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    }
+
+    private static minutesToTimeString(totalMinutes: number): string {
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
     }
 }

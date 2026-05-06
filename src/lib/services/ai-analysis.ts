@@ -25,6 +25,16 @@ export interface ConversationAnalysis {
     student_interest_level: number; // 1-10
     lead_score: number; // 1-100
     extracted_data: {
+        USER_NAME?: string;
+        USER_AGE?: string;
+        USER_PROFESION?: string;
+        USER_ESTUDIES?: string;
+        "YEARS_ EXPERIENCIE"?: string;
+        USER_MOTIVATIONS?: string;
+        USER_COUNTRY?: string;
+        CURSE_NAME?: string;
+        MOTIVO_DESCARTE?: string;
+        "FECHA_ AGENDA"?: string;
         pais?: string;
         programa?: string;
         presupuesto?: string;
@@ -60,14 +70,20 @@ export async function analyzeConversation(transcript: string): Promise<Conversat
 Extrae la información clave en formato JSON.
 
 Reglas de cualificación:
-- qualified: "si" si el estudiante muestra interés genuino y cumple con el perfil mínimo. "no" si rechaza la oferta. "anulado" si hay algún motivo específico de exclusión.
+- qualified: "si" si el estudiante muestra interés genuino y cumple con el perfil mínimo. "no" si rechaza la oferta o no cumple. "anulado" si hay algún motivo específico de exclusión.
 - scheduled_call_confirmed: true si se ha agendado o confirmado una cita/llamada de seguimiento.
 - extracted_data:
-    * años_experiencia: "0-5 años", "5-10 años", "10-20 años", "+20 años" o "N/A".
-    * nivel_estudios: "Estudios Universitarios", "Estudios Postgrado", "Estudios Técnicos", "Bachillerato" o "N/A".
-    * titulacion_lead: Profesión o carrera estudiada.
-    * motivo_anulacion: Si qualified es "anulado", indicar por qué (ej: "No le encaja horario", "Precio", "Ya estudia en competencia").
-    * date_time_preferred: Si se acordó una cita, extraer en formato ISO.
+    * USER_NAME: Nombre del lead.
+    * USER_AGE: Edad.
+    * USER_PROFESION: Trabajo o cargo actual.
+    * USER_ESTUDIES: Estudios universitarios o técnicos realizados.
+    * "YEARS_ EXPERIENCIE": Años de experiencia profesional (incluye el espacio).
+    * USER_MOTIVATIONS: Por qué quiere hacer el curso.
+    * USER_COUNTRY: País.
+    * CURSE_NAME: Nombre del master por el que pregunta.
+    * MOTIVO_DESCARTE: Si qualified es "no" o "anulado", indicar por qué.
+    * "FECHA_ AGENDA": Si se acordó una cita, extraer en formato ISO.
+    * date_time_preferred: Alias para FECHA_ AGENDA.
 
 Responde ÚNICAMENTE con el objeto JSON.`
                 },

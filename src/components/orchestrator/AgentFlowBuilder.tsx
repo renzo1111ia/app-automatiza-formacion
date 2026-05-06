@@ -77,10 +77,11 @@ interface FlowNodeData {
     label?: string;
     validation?: string;
     config?: Record<string, unknown>;
-    // Inactivity properties
-    timeout?: number;
-    max_retries?: number;
-    message?: string;
+    // Wait properties
+    delay_value?: number;
+    delay_unit?: string;
+    interrupt_on_reply?: boolean;
+    wait_condition_variable?: string;
     // Condition properties
     condition_variable?: string;
     condition_operator?: string;
@@ -1093,6 +1094,45 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                             <option value="horas">Horas</option>
                                             <option value="dias">Días</option>
                                         </select>
+                                    </div>
+
+                                    {/* Smart Wait Extensions */}
+                                    <div className="pt-6 border-t border-white/5 space-y-6">
+                                        <div className="flex items-center justify-between p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-tight text-amber-200">Interrumpir al responder</p>
+                                                <p className="text-[8px] text-white/20 font-bold uppercase mt-0.5">Si el lead escribe, saltar espera</p>
+                                            </div>
+                                            <button 
+                                                title={selectedNode.data.interrupt_on_reply ? "Desactivar interrupción" : "Activar interrupción"}
+                                                onClick={() => updateNodeData(selectedNode.id, { interrupt_on_reply: !selectedNode.data.interrupt_on_reply })}
+                                                className={cn("h-5 w-10 rounded-full transition-all relative", selectedNode.data.interrupt_on_reply ? "bg-amber-500" : "bg-white/10")}
+                                            >
+                                                <div className={cn("h-3 w-3 rounded-full bg-white absolute top-1 transition-all", selectedNode.data.interrupt_on_reply ? "right-1" : "left-1")} />
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2">
+                                                <Sparkles className="w-3 h-3 text-amber-500" />
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-white/40">Condiciones Inteligentes</label>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                <select 
+                                                    value={selectedNode.data.wait_condition_variable as string || ""}
+                                                    onChange={(e) => updateNodeData(selectedNode.id, { wait_condition_variable: e.target.value })}
+                                                    title="Variable a monitorear durante la espera"
+                                                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
+                                                >
+                                                    <option value="">-- No interrumpir por datos --</option>
+                                                    {precedingVariables.map(v => (
+                                                        <option key={v} value={v}>Saltar si se captura: {v}</option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[8px] text-white/20 italic">La espera terminará inmediatamente si esta variable es capturada por la IA durante el intervalo.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}

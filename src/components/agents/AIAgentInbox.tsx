@@ -984,10 +984,21 @@ export default function AIAgentInbox() {
                                     <div className="flex items-center gap-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20">Variables Capturadas</p>
                                         <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-tighter animate-pulse">Live</span>
+                                        {Object.keys(selectedLead.metadata || {}).filter(k => k !== 'last_fact_update').length > trackedVariables.length && (
+                                            <button 
+                                                onClick={() => setIsProfileModalOpen(true)}
+                                                className="px-1.5 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-[8px] font-black uppercase tracking-tighter hover:bg-primary/20 transition-all"
+                                            >
+                                                +{Object.keys(selectedLead.metadata || {}).filter(k => k !== 'last_fact_update').length - trackedVariables.filter(v => {
+                                                    const k = v.replace(/^\{\{|\}\}$/g, '').trim();
+                                                    return (selectedLead.metadata || {})[k] !== undefined;
+                                                }).length} ocultas
+                                            </button>
+                                        )}
                                     </div>
                                     {typeof selectedLead.metadata?.last_fact_update === 'string' && (
                                         <span className="text-[8px] font-bold text-slate-400 dark:text-white/10 italic">
-                                            Actualizado: {new Date(selectedLead.metadata.last_fact_update as string).toLocaleTimeString()}
+                                            v{new Date(selectedLead.metadata.last_fact_update as string).toLocaleTimeString()}
                                         </span>
                                     )}
                                     <button 
@@ -1061,6 +1072,12 @@ export default function AIAgentInbox() {
                                                 </div>
                                             );
                                         })}
+                                        <button 
+                                            onClick={() => setIsProfileModalOpen(true)}
+                                            className="w-full py-2 rounded-xl border border-dashed border-slate-200 dark:border-white/5 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 hover:bg-white/5 hover:text-primary transition-all"
+                                        >
+                                            Ver Perfil Completo
+                                        </button>
                                     </div>
                                 ) : (
                                     <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 border-dashed text-center">

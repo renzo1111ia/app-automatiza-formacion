@@ -34,6 +34,18 @@ export async function POST(req: Request) {
             case "agendar_cita":
                 return await handleBookAppointment(supabase, tenantId, leadId, args);
             
+            case "cancel_appointment":
+            case "cancelar_cita":
+                return await handleCancelAppointment(supabase, args);
+
+            case "reschedule_appointment":
+            case "reprogramar_cita":
+                return await handleRescheduleAppointment(supabase, args);
+
+            case "check_availability":
+            case "consultar_disponibilidad":
+                return await handleCheckAvailability(supabase, tenantId, args);
+            
             case "get_lead_info":
             case "consultar_datos":
                 return await handleGetLeadInfo(supabase, leadId);
@@ -176,6 +188,65 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         advisor_name: selectedAdvisor?.name || "Sin asignar",
         is_overlap: (overlaps || 0) > 0
     });
+}
+
+/**
+ * Tool: cancel_appointment
+ */
+async function handleCancelAppointment(supabase: SupabaseClient<Database>, args: Record<string, unknown>) {
+    const { AppointmentService } = await import("@/lib/services/appointment-service");
+    const appointmentId = args.appointmentId as string;
+    
+    if (!appointmentId) {
+        return NextResponse.json({ error: "appointmentId is required" }, { status: 400 });
+    }
+
+    try {
+        const result = await AppointmentService.cancelAppointment(appointmentId);
+        return NextResponse.json(result);
+    } catch (e) {
+        return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    }
+}
+
+/**
+ * Tool: reschedule_appointment
+ */
+async function handleRescheduleAppointment(supabase: SupabaseClient<Database>, args: Record<string, unknown>) {
+    const { AppointmentService } = await import("@/lib/services/appointment-service");
+    const appointmentId = args.appointmentId as string;
+    const newDate = args.newDate as string;
+    const newTime = args.newTime as string | undefined;
+
+    if (!appointmentId || !newDate) {
+        return NextResponse.json({ error: "appointmentId and newDate are required" }, { status: 400 });
+    }
+
+    try {
+        const result = await AppointmentService.rescheduleAppointment(appointmentId, newDate, newTime);
+        return NextResponse.json(result);
+    } catch (e) {
+        return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    }
+}
+
+/**
+ * Tool: check_availability
+ */
+async function handleCheckAvailability(supabase: SupabaseClient<Database>, tenantId: string, args: Record<string, unknown>) {
+    const { AppointmentService } = await import("@/lib/services/appointment-service");
+    const date = args.date as string;
+
+    if (!date) {
+        return NextResponse.json({ error: "date is required" }, { status: 400 });
+    }
+
+    try {
+        const result = await AppointmentService.checkAvailability(tenantId, date);
+        return NextResponse.json(result);
+    } catch (e) {
+        return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    }
 }
 
 /**
