@@ -131,8 +131,8 @@ export async function runRescueCheck() {
                 }
             };
 
-            await (supabase
-                .from("lead") as any)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from("lead") as any)
                 .update(updateData)
                 .eq("id", lead.id);
 

@@ -132,8 +132,8 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     }
 
     // 5. Insert record
-    const { data: appointmentData, error } = await (supabase
-        .from("appointments") as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: appointmentData, error } = await (supabase.from("appointments") as any)
         .insert({
             tenant_id: tenantId,
             lead_id: leadId,
@@ -186,6 +186,7 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
     return NextResponse.json({ 
         success: true, 
         message: "Cita agendada correctamente",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         appointment_id: (data as any)?.id,
         advisor_name: selectedAdvisor?.name || "Sin asignar",
         is_overlap: (overlaps || 0) > 0

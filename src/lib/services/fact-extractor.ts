@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
-import type { Database, Lead } from "@/types/database";
+import type { Database } from "@/types/database";
 import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
 import { orchestrator } from "@/lib/core/orchestrator";
@@ -125,6 +125,7 @@ EJEMPLO:
         });
 
         // 1. Get current metadata
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: leadFound } = await (supabase.from("lead") as any)
             .select("metadata, nombre, apellido, telefono")
             .eq("id", leadId)
@@ -162,6 +163,7 @@ EJEMPLO:
             mainUpdate.telefono = newData.user_phone;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase.from("lead") as any)
             .update(mainUpdate)
             .eq("id", leadId);
@@ -172,6 +174,7 @@ EJEMPLO:
             console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
             
             // 🟣 AUTO-QUALIFICATION CHECK
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const meta = updatedMetadata as any;
             const studies = meta.estudios || meta.nivel_estudios;
             const exp = meta.experiencia || meta.years_experience;
@@ -179,11 +182,13 @@ EJEMPLO:
             if (studies && exp) {
                 const result = evaluateLeadQualification({
                     nivel_estudios: String(studies),
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     years_experience: exp as any
                 });
 
                 if (result.status === "cualificado") {
                     // Get lead to find tenant_id if not passed
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
                     if (lead) {
                         await orchestrator.handleLeadQualification(leadId, lead.tenant_id, result.reason);
