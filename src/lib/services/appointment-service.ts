@@ -80,48 +80,50 @@ export class AppointmentService {
             const programId = lead?.lead_programas?.[0]?.id_programa;
             const programName = lead?.lead_programas?.[0]?.programas?.nombre;
 
-            // 2. Advisor Assignment
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.log(`[BOOK APPOINTMENT] 🔍 Searching advisors for tenant ${tenantId}...`);
             const { data: advisors, error: advError } = await (supabase.from("advisors") as any)
                 .select("*")
                 .eq("tenant_id", tenantId)
                 .eq("is_active", true);
 
             if (advError) {
-                console.error(`[BOOK APPOINTMENT] Advisor fetch error:`, advError);
+                console.error(`[BOOK APPOINTMENT] ❌ Advisor fetch error:`, advError);
                 throw new Error(`Error al obtener asesores: ${advError.message}`);
             }
 
-            // Logic: Try to match by "specialties" (which we might need to update or use courses/countries)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.log(`[BOOK APPOINTMENT] 📊 Found ${advisors?.length || 0} active advisors.`);
+
+            // 2. Advisor Assignment
             const selectedAdvisor = advisors?.find((a: any) => 
                 (a.specialties && (a.specialties.includes(programId) || a.specialties.includes(programName))) ||
                 (a.courses && a.courses.includes(programName))
             ) || advisors?.[0];
 
             if (!selectedAdvisor) {
-                throw new Error("No hay asesores disponibles para asignar la cita.");
+                console.warn(`[BOOK APPOINTMENT] ⚠️ No advisor found for tenant ${tenantId}. Proceeding with null advisor as requested.`);
+            } else {
+                console.log(`[BOOK APPOINTMENT] ✅ Selected Advisor: ${selectedAdvisor.name} (${selectedAdvisor.id})`);
             }
 
-            console.log(`[BOOK APPOINTMENT] Selected Advisor: ${selectedAdvisor.name} (${selectedAdvisor.id})`);
-
             // 3. Insert
+            console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data, error: insertError } = await (supabase.from("appointments") as any).insert({
                 tenant_id: tenantId,
                 lead_id: leadId,
-                advisor_id: selectedAdvisor.id,
+                advisor_id: selectedAdvisor?.id || null,
                 scheduled_at: scheduledAt,
+                duration_minutes: 30, // Ensure duration is provided
                 status: "SCHEDULED",
                 notes: notes || `Agendado por IA. Programa: ${programName || 'No especificado'}`
             }).select().single();
 
             if (insertError) {
-                console.error(`[BOOK APPOINTMENT] Insert error:`, insertError);
+                console.error(`[BOOK APPOINTMENT] ❌ Insert error:`, insertError);
                 throw new Error(`Error en base de datos al agendar: ${insertError.message}`);
             }
 
-            console.log(`[BOOK APPOINTMENT] Success! Appointment ID: ${data.id}`);
+            console.log(`[BOOK APPOINTMENT] 🎉 Success! Appointment ID: ${data.id}`);
             return data;
         } catch (err: unknown) {
             console.error(`[BOOK APPOINTMENT] Critical failure:`, err);

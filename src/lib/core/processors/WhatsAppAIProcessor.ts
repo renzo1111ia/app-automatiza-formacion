@@ -270,7 +270,11 @@ ${conversationContext}
                         result = JSON.stringify(res);
                     }
                 } catch (e) {
-                    result = JSON.stringify({ error: (e as Error).message });
+                    console.error(`[AI PROCESSOR] ❌ Error executing tool ${name}:`, e);
+                    result = JSON.stringify({ 
+                        error: (e as Error).message,
+                        details: "Si el error persiste, contacta a soporte técnico." 
+                    });
                 }
 
                 messages.push({
