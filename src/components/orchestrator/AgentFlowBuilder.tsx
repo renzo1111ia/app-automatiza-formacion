@@ -78,8 +78,6 @@ interface FlowNodeData {
     validation?: string;
     config?: Record<string, unknown>;
     // Wait properties
-    delay_value?: number;
-    delay_unit?: string;
     interrupt_on_reply?: boolean;
     wait_condition_variable?: string;
     // Condition properties
