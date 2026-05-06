@@ -114,7 +114,7 @@ export class AppointmentService {
 
             console.log(`[BOOK APPOINTMENT] Success! Appointment ID: ${data.id}`);
             return data;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(`[BOOK APPOINTMENT] Critical failure:`, err);
             throw err;
         }
