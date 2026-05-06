@@ -304,6 +304,7 @@ export default function AIAgentInbox() {
 
                     const inboxLead: InboxLead = {
                         id: newLead.id as string,
+                        tenant_id: tenantId as string,
                         nombre: (newLead.nombre as string) || null,
                         apellido: (newLead.apellido as string) || null,
                         telefono: phone,
