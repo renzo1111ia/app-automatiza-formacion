@@ -127,6 +127,8 @@ Tu tarea es:
 1. Calcular a qué hora corresponde eso en España (${TZ}).
 2. Verificar disponibilidad o agendar usando SIEMPRE la hora resultante en España.
 3. Confirmar al lead mencionando AMBAS horas para evitar confusiones (ej: "Perfecto, agendado para las 11:30 de tu país, que son las 17:30 aquí en España").
+
+IMPORTANTE: NO confirmes una cita al lead (no digas "Cita confirmada" o similares) HASTA que hayas llamado exitosamente a la herramienta 'book_appointment'. Si el lead acepta una hora, llama primero a la herramienta y luego responde confirmando.
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
@@ -276,6 +278,7 @@ ${conversationContext}
                     tool_call_id: toolCall.id,
                     content: result
                 });
+                console.log(`[AI PROCESSOR] ✅ Tool ${name} result:`, result);
             }
 
             // Get final response after tool execution

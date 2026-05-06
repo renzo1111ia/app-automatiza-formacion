@@ -32,7 +32,7 @@ export class AppointmentService {
 
     static async bookAppointment(tenantId: string, leadId: string, date: string, time?: string, notes?: string) {
         const cleanDate = this.normalizeDate(date);
-        console.log(`[BOOK APPOINTMENT] Starting for lead ${leadId} on ${cleanDate} (original: ${date}) at ${time}`);
+        console.log(`[BOOK APPOINTMENT] 🚀 Starting! Tenant: ${tenantId}, Lead: ${leadId}, Date: ${cleanDate}, Time: ${time}`);
         const supabase = this.getSupabase();
         
         let scheduledAt: string;
@@ -56,6 +56,15 @@ export class AppointmentService {
         }
 
         try {
+            // 0. Auto-cancel previous appointments for this lead on the same day to avoid duplicates
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from("appointments") as any)
+                .update({ status: "CANCELLED", notes: "Cancelado automáticamente por nuevo agendamiento" })
+                .eq("lead_id", leadId)
+                .gte("scheduled_at", `${cleanDate}T00:00:00Z`)
+                .lte("scheduled_at", `${cleanDate}T23:59:59Z`)
+                .neq("status", "CANCELLED");
+
             // 1. Get Lead context
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: lead, error: leadError } = await (supabase.from("lead") as any)
