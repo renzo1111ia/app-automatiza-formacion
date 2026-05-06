@@ -118,7 +118,70 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             finalPrompt = finalPrompt.replace(regex, variableMap[key]);
         });
 
-        // 7. Build System Prompt
+        // 7. Define Tools
+        const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+            {
+                type: "function",
+                function: {
+                    name: "book_appointment",
+                    description: "Agendar una nueva cita o reunión.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            date: { type: "string", description: "Fecha en formato YYYY-MM-DD" },
+                            time: { type: "string", description: "Hora en formato HH:MM" },
+                            notes: { type: "string", description: "Notas adicionales o motivo" }
+                        },
+                        required: ["date"]
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "cancel_appointment",
+                    description: "Cancelar una cita existente.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            appointmentId: { type: "string", description: "ID de la cita a cancelar" }
+                        },
+                        required: ["appointmentId"]
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "reschedule_appointment",
+                    description: "Cambiar la fecha u hora de una cita existente.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            appointmentId: { type: "string", description: "ID de la cita" },
+                            newDate: { type: "string", description: "Nueva fecha YYYY-MM-DD" },
+                            newTime: { type: "string", description: "Nueva hora HH:MM" }
+                        },
+                        required: ["appointmentId", "newDate"]
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: "check_availability",
+                    description: "Consultar huecos libres para citas.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            date: { type: "string", description: "Fecha a consultar" }
+                        }
+                    }
+                }
+            }
+        ];
+
+        // 8. Build System Prompt
         const systemPrompt = `
 ${finalPrompt}
 
@@ -132,29 +195,83 @@ CONTEXTO RECIENTE (Últimas 10 líneas):
 ${conversationContext}
 `;
 
-        // 8. Call OpenAI
+        // 9. Call OpenAI with Tools
         let modelName = activeVariant.model_name || "gpt-4o";
         if (modelName === "gpt-4.1") modelName = "gpt-4o";
         if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
         
         const openai = new OpenAI({ apiKey });
         
-        console.log(`[AI PROCESSOR] 🧠 Calling ${modelName}...`);
+        console.log(`[AI PROCESSOR] 🧠 Calling ${modelName} with Tools...`);
+        const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+            { role: "system", content: systemPrompt },
+            ...recentHistory.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
+            { role: "user", content: incomingMessage }
+        ];
+
         const completion = await openai.chat.completions.create({
             model: modelName,
-            messages: [
-                { role: "system", content: systemPrompt },
-                ...recentHistory.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-                { role: "user", content: incomingMessage }
-            ],
+            messages,
+            tools,
+            tool_choice: "auto",
             temperature: 0.7,
             max_tokens: 500
         });
 
-        const aiResponse = completion.choices[0]?.message?.content || "";
+        let aiMessage = completion.choices[0]?.message;
+        
+        // 10. Handle Tool Calls
+        if (aiMessage?.tool_calls) {
+            console.log(`[AI PROCESSOR] 🛠️ Tool calls detected: ${aiMessage.tool_calls.length}`);
+            messages.push(aiMessage);
+
+            const { AppointmentService } = await import("@/lib/services/appointment-service");
+
+            for (const toolCall of aiMessage.tool_calls) {
+                if (toolCall.type !== 'function') continue;
+
+                const name = toolCall.function.name;
+                const args = JSON.parse(toolCall.function.arguments);
+                let result = "";
+
+                try {
+                    if (name === "book_appointment") {
+                        const appt = await AppointmentService.bookAppointment(tenantId, leadId, args.date, args.time, args.notes);
+                        result = JSON.stringify({ success: true, appointment: appt });
+                    } else if (name === "cancel_appointment") {
+                        const res = await AppointmentService.cancelAppointment(args.appointmentId);
+                        result = JSON.stringify(res);
+                    } else if (name === "reschedule_appointment") {
+                        const res = await AppointmentService.rescheduleAppointment(args.appointmentId, args.newDate, args.newTime);
+                        result = JSON.stringify(res);
+                    } else if (name === "check_availability") {
+                        const res = await AppointmentService.checkAvailability(tenantId, args.date);
+                        result = JSON.stringify(res);
+                    }
+                } catch (e) {
+                    result = JSON.stringify({ error: (e as Error).message });
+                }
+
+                messages.push({
+                    role: "tool",
+                    tool_call_id: toolCall.id,
+                    content: result
+                });
+            }
+
+            // Get final response after tool execution
+            const secondCompletion = await openai.chat.completions.create({
+                model: modelName,
+                messages,
+                temperature: 0.7
+            });
+            aiMessage = secondCompletion.choices[0]?.message;
+        }
+
+        const aiResponse = aiMessage?.content || "";
 
         if (aiResponse) {
-            // 9. Update Redis Memory (Short-term)
+            // 11. Update Redis Memory (Short-term)
             await ChatMemoryService.addMessage(leadId, 'user', incomingMessage);
             await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
 
@@ -164,7 +281,7 @@ ${conversationContext}
                     phoneNumberId: waConfig.phoneNumberId
                 });
 
-                // 11. Log Outbound Message (Consolidated)
+                // 12. Log Outbound Message (Consolidated)
                 await ChatSummaryService.appendMessage(tenantId, leadId, "Asistente", aiResponse);
 
                 /*

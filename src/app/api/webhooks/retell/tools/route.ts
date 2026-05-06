@@ -131,25 +131,15 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         overlaps = count || 0;
     }
 
-    // 5. Insert record
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: appointmentData, error } = await (supabase.from("appointments") as any)
-        .insert({
-            tenant_id: tenantId,
-            lead_id: leadId,
-            advisor_id: selectedAdvisor?.id || null,
-            scheduled_at: scheduledAt,
-            status: "SCHEDULED",
-            notes: notes || `Agendado por IA. Programa: ${programName}. ${overlaps > 0 ? '(⚠️ Solapado)' : ''}`,
-            watchdog_processed: false
-        })
-        .select()
-        .single();
+    // 5. Insert record (REFACTORED to use AppointmentService)
+    const { AppointmentService } = await import("@/lib/services/appointment-service");
     
-    const data = appointmentData as unknown as { id: string };
-
-    if (error) {
-        console.error("DB Error booking appointment:", error);
+    let appointmentData;
+    try {
+        appointmentData = await AppointmentService.bookAppointment(tenantId, leadId, date, time, notes);
+    } catch (e) {
+        const error = e as Error;
+        console.error("DB Error booking appointment:", error.message);
         throw error;
     }
 
@@ -161,33 +151,28 @@ async function handleBookAppointment(supabase: SupabaseClient<Database>, tenantI
         const config = await getOrchestratorConfigForTenant(tenantId);
         const reminderLeadTimeHours = config.scheduling?.reminder_hours || 24;
         
-        const appointmentTime = new Date(scheduledAt).getTime();
+        const appointmentTime = new Date(appointmentData.scheduled_at).getTime();
         const reminderTime = appointmentTime - (reminderLeadTimeHours * 60 * 60 * 1000);
         const now = Date.now();
         const delayMs = Math.max(0, reminderTime - now);
 
-        if (delayMs > 0 || Math.abs(reminderTime - now) < 1000 * 60 * 5) { // If it's in the future or very soon
+        if (delayMs > 0 || Math.abs(reminderTime - now) < 1000 * 60 * 5) {
             await enqueueLeadStep({
                 leadId,
                 tenantId,
                 action: "APPOINTMENT_REMINDER",
-                appointmentId: data.id,
+                appointmentId: appointmentData.id,
                 template: config.scheduling?.reminder_template || "appointment_reminder_es"
             }, delayMs);
-            
-            console.log(`[RETELL TOOLS] Reminder queued for ${new Date(reminderTime).toISOString()}`);
         }
     } catch (reminderErr) {
         console.error("Failed to queue reminder:", reminderErr);
     }
 
-    console.log(`[RETELL TOOLS] Appointment booked for lead ${leadId} at ${scheduledAt} with advisor ${selectedAdvisor?.name || 'Sin asignar'}`);
-
     return NextResponse.json({ 
         success: true, 
         message: "Cita agendada correctamente",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        appointment_id: (data as any)?.id,
+        appointment_id: appointmentData.id,
         advisor_name: selectedAdvisor?.name || "Sin asignar",
         is_overlap: (overlaps || 0) > 0
     });
