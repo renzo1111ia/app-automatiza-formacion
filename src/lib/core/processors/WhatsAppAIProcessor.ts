@@ -99,17 +99,19 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`
         ).join("\n");
 
-        // 6. Process Dynamic Variables
+        const TZ = "Europe/Madrid";
+        const now = new Date();
         const variableMap = {
             nombre: (lead as any).nombre || 'estudiante',
             email: (lead as any).email || '',
             telefono: (lead as any).telefono || '',
-            fecha: new Date().toLocaleDateString(),
-            hora: new Date().toLocaleTimeString(),
-            now: new Date().toLocaleString(),
-            "$now": new Date().toLocaleString(),
-            "$date": new Date().toLocaleDateString(),
-            "$time": new Date().toLocaleTimeString(),
+            fecha: now.toLocaleDateString('es-ES', { timeZone: TZ }),
+            hora: now.toLocaleTimeString('es-ES', { timeZone: TZ }),
+            now: now.toLocaleString('es-ES', { timeZone: TZ }),
+            "$now": now.toLocaleString('es-ES', { timeZone: TZ }),
+            "$date": now.toLocaleDateString('es-ES', { timeZone: TZ }),
+            "$time": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
+            "$timezone": "Europe/Madrid (CET/CEST)",
             ...((lead as any).metadata || {}), // CAPTURED MEMORY
             ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };

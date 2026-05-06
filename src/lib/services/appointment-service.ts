@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
+import { toZonedTime } from "date-fns-tz";
 
 export class AppointmentService {
+    private static DEFAULT_TIMEZONE = "Europe/Madrid";
+
     private static getSupabase() {
         const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
         const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -31,12 +34,25 @@ export class AppointmentService {
         const cleanDate = this.normalizeDate(date);
         console.log(`[BOOK APPOINTMENT] Starting for lead ${leadId} on ${cleanDate} (original: ${date}) at ${time}`);
         const supabase = this.getSupabase();
-        let scheduledAt = cleanDate;
         
-        // Handle ISO date if only date is provided
+        let scheduledAt: string;
+        
         if (time) {
+            // If time is provided, we assume it's in Spain's timezone (Europe/Madrid)
+            // unless it already has an offset (which the AI usually doesn't send)
             const timeStr = time.includes(':') ? (time.split(':').length === 2 ? `${time}:00` : time) : `${time}:00:00`;
-            scheduledAt = `${cleanDate}T${timeStr}Z`;
+            const fullLocalString = `${cleanDate} ${timeStr}`;
+            
+            // Create a date object interpreting it as Madrid time, then get ISO UTC
+            try {
+                const zonedDate = toZonedTime(fullLocalString, this.DEFAULT_TIMEZONE);
+                scheduledAt = zonedDate.toISOString();
+            } catch (e) {
+                console.warn(`[BOOK APPOINTMENT] Timezone conversion failed for ${fullLocalString}, falling back to UTC`, e);
+                scheduledAt = `${cleanDate}T${timeStr}Z`;
+            }
+        } else {
+            scheduledAt = `${cleanDate}T00:00:00Z`;
         }
 
         try {
