@@ -96,6 +96,8 @@ interface FlowNodeData {
     tagName?: string;
     transitionId?: string;
     timeout?: number;
+    max_retries?: number;
+    message?: string;
     [key: string]: unknown;
 }
 
@@ -155,8 +157,16 @@ const MessageNode = ({ data, selected }: { data: { text?: string }; selected?: b
     </NodeWrapper>
 );
 
-const HTTPRequestNode = ({ data, selected }: { data: { method?: string; url?: string }; selected?: boolean }) => {
-    const sim = (data as any).simulation;
+interface NodeSimulation {
+    status: 'idle' | 'loading' | 'success' | 'error';
+    result?: unknown;
+    request?: unknown;
+    error?: string;
+    timestamp?: string;
+}
+
+const HTTPRequestNode = ({ data, selected }: { data: { method?: string; url?: string; simulation?: NodeSimulation }; selected?: boolean }) => {
+    const sim = data.simulation;
     return (
         <NodeWrapper title="HTTP Request" icon={Globe} color="bg-orange-500/20 text-orange-400" headerColor="bg-orange-500" selected={selected} type="INTEGRACIÓN">
             <Handle type="target" position={Position.Top} className="w-3 h-3 bg-orange-500 border-2 border-slate-900" />
@@ -350,14 +360,14 @@ const CRM_PLATFORM_COLORS: Record<string, { color: string; bg: string; border: s
     custom:     { color: "text-slate-300",  bg: "bg-slate-500/10",  border: "border-slate-500/20" },
 };
 
-const CrmConnectNode = ({ data, selected }: { data: { platform?: string; operation?: string; api_url?: string }; selected?: boolean }) => {
+const CrmConnectNode = ({ data, selected }: { data: { platform?: string; operation?: string; api_url?: string; simulation?: NodeSimulation }; selected?: boolean }) => {
     const platform = data.platform || "zoho";
     const palette = CRM_PLATFORM_COLORS[platform] || CRM_PLATFORM_COLORS.custom;
     const platformLabel: Record<string, string> = {
         zoho: "Zoho CRM", hubspot: "HubSpot", salesforce: "Salesforce",
         pipedrive: "Pipedrive", custom: "API Custom"
     };
-    const sim = (data as any).simulation;
+    const sim = data.simulation;
     return (
         <NodeWrapper title="Conectar BD / CRM" icon={Link2} color={`${palette.bg} ${palette.color}`} headerColor={palette.bg.replace("/10", "")} selected={selected} type="CONECTOR">
             <Handle type="target" position={Position.Top} className="w-3 h-3 bg-violet-500 border-2 border-slate-900" />
@@ -395,13 +405,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const [searchQuery, setSearchQuery] = useState("");
     const [aiAgents, setAiAgents] = useState<AIAgent[]>([]);
     const [precedingVariables, setPrecedingVariables] = useState<string[]>([]);
-    const [nodeSimulations, setNodeSimulations] = useState<Record<string, {
-        status: 'idle' | 'loading' | 'success' | 'error';
-        result?: any;
-        request?: any;
-        error?: string;
-        timestamp?: string;
-    }>>({});
+    const [nodeSimulations, setNodeSimulations] = useState<Record<string, NodeSimulation>>({});
 
     const handleTestNode = async (node: Node<FlowNodeData>) => {
         const id = node.id;
@@ -414,8 +418,8 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         try {
-            let result: any = null;
-            let request: any = null;
+            let result: unknown = null;
+            let request: unknown = null;
 
             if (node.type === 'flow_http') {
                 const headersStr = (node.data.headers as string) || '{}';
@@ -461,12 +465,12 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                     timestamp: new Date().toLocaleTimeString()
                 }
             }));
-        } catch (err: any) {
+        } catch (err: unknown) {
             setNodeSimulations(prev => ({
                 ...prev,
                 [id]: { 
                     status: 'error', 
-                    error: err.message,
+                    error: err instanceof Error ? err.message : String(err),
                     timestamp: new Date().toLocaleTimeString()
                 }
             }));
