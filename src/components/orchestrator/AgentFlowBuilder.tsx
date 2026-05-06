@@ -1399,7 +1399,8 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                                 <div className="p-3 bg-white/5 rounded-xl border border-white/5">
                                                     <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest mb-2">Variables Generadas:</p>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {Object.keys(nodeSimulations[selectedNode.id].result?.data || {}).map(key => (
+                                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                        {Object.keys((nodeSimulations[selectedNode.id].result as any)?.data || {}).map(key => (
                                                             <div key={key} className="px-2 py-0.5 bg-white/5 rounded border border-white/5 text-[8px] text-orange-200/50 font-mono">
                                                                 {"{{" + key + "}}"}
                                                             </div>
@@ -1789,13 +1790,15 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                                                     <div className="space-y-2">
                                                         <p className="text-[8px] text-white/30 uppercase font-black tracking-widest">Payload Enviado:</p>
                                                         <pre className="text-[9px] font-mono text-indigo-200/60 bg-black/20 p-2 rounded-lg overflow-x-auto max-h-[100px]">
-                                                            {JSON.stringify(nodeSimulations[selectedNode.id].request?.mappings, null, 2)}
+                                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                            {JSON.stringify((nodeSimulations[selectedNode.id].request as any)?.mappings, null, 2)}
                                                         </pre>
                                                     </div>
                                                     <div className="pt-2 border-t border-white/5">
                                                         <div className="flex items-center justify-between text-[8px] font-bold">
                                                             <span className="text-white/20 uppercase tracking-widest">ID Generado:</span>
-                                                            <span className="text-indigo-400 font-mono">{nodeSimulations[selectedNode.id].result?.crm_id}</span>
+                                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                                            <span className="text-indigo-400 font-mono">{(nodeSimulations[selectedNode.id].result as any)?.crm_id}</span>
                                                         </div>
                                                     </div>
                                                 </div>
