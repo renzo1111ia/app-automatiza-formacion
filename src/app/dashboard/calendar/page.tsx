@@ -105,10 +105,22 @@ export default function CalendarPage() {
         return () => { isMounted = false; };
     }, []);
 
+interface TenantConfig {
+    scheduling?: {
+        reminders?: {
+            enabled: boolean;
+            lead_time_minutes: number;
+            repetitions: number;
+            mode: 'manual' | 'ai';
+            template: string;
+        }
+    }
+}
+
     useEffect(() => {
         const loadReminderConfig = async () => {
             const tenant = await getActiveTenantConfig();
-            const config = (tenant as any)?.config;
+            const config = (tenant as { config: TenantConfig } | null)?.config;
             if (config?.scheduling?.reminders) {
                 setReminderConfig(config.scheduling.reminders);
             }
