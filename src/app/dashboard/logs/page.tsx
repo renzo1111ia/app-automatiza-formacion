@@ -277,7 +277,7 @@ export default function LogsPage() {
                                         </div>
                                         
                                         <div className="bg-card/60 rounded-2xl border border-border p-4 font-mono text-[10px] overflow-auto max-h-[400px] custom-scrollbar">
-                                            <pre className="text-blue-400">
+                                            <pre className="text-blue-600 dark:text-blue-400">
                                                 {JSON.stringify(selectedLog.metadata, null, 2)}
                                             </pre>
                                         </div>
@@ -310,8 +310,4 @@ export default function LogsPage() {
             </div>
         </div>
     );
-}
-
- function X({ className }: { className?: string }) {
-    return <AlertCircle className={className} />; // Will use imported X instead
 }

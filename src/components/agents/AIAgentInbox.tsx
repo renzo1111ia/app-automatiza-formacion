@@ -528,7 +528,7 @@ export default function AIAgentInbox() {
                 <div className="h-16 px-6 border-b border-border flex items-center justify-between bg-card/20">
                     <div className="flex items-center gap-3">
                         <h2 className="text-sm font-black uppercase tracking-widest text-foreground dark:text-primary">Conversaciones</h2>
-                        <div className="px-2 py-0.5 rounded-full bg-card/40 text-[10px] font-black text-muted-foreground dark:text-primary border border-border dark:border-primary/20">{leads.length}</div>
+                        <div className="px-2 py-0.5 rounded-full bg-background/80 text-[10px] font-black text-foreground/60 dark:text-primary border border-border dark:border-primary/20">{leads.length}</div>
                     </div>
                     <div className="flex items-center gap-1 relative">
                         <button 
@@ -915,7 +915,7 @@ export default function AIAgentInbox() {
                                 </div>
                                 <div>
                                     <h3 className="text-[16px] font-black tracking-tight text-foreground">{selectedLead.nombre ? `${selectedLead.nombre} ${selectedLead.apellido || ''}` : selectedLead.telefono}</h3>
-                                    <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-[0.2em] mt-1">{selectedLead.tipo_lead || 'LEAD SIN REVISAR'}</p>
+                                    <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-[0.2em] mt-1">{selectedLead.tipo_lead || 'LEAD SIN REVISAR'}</p>
                                 </div>
                             </div>
 

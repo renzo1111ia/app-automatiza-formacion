@@ -87,7 +87,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                         </div>
                         <div>
                             <h2 className="text-2xl font-black uppercase tracking-tight text-foreground">Perfil del Lead</h2>
-                            <p className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-[0.3em] mt-1">Gestión y Datos Capturados</p>
+                            <p className="text-[11px] font-bold text-foreground/50 uppercase tracking-[0.3em] mt-1">Gestión y Datos Capturados</p>
                         </div>
                     </div>
                     <button 

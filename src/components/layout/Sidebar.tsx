@@ -180,7 +180,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                     "flex items-center gap-1 rounded-xl px-1 text-sm font-semibold transition-all duration-200 group",
                     isActive && !hasSubItems
                         ? "bg-grad-primary text-primary-foreground shadow-lg shadow-primary/30"
-                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
+                        : "text-foreground/60 hover:bg-card/60 hover:text-foreground",
                     depth > 0 && !collapsed && "ml-4"
                 )}>
                 {/* Main Link Area (Icon + Label) */}
