@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 
 interface ReminderAppointment {
     id: string;
-    lead_id: string;
+    lead_id: string | null;
     advisor_id: string | null;
     scheduled_at: string;
     status: string;
     reminder_scheduled_at: string | null;
     reminder_sent_at: string | null;
     tenant_id: string;
-    lead: { id: string; nombre: string | null; apellido: string | null; telefono: string } | null;
+    lead: { id: string; nombre: string | null; apellido: string | null; telefono: string | null } | null;
     tenant: { id: string; config: Record<string, any> } | null;
     advisors: { name: string } | null;
 }
@@ -34,9 +34,8 @@ export async function GET() {
         console.log("[REMINDER CRON] 🕒 Checking for pending reminders...");
 
         // 1. Fetch appointments due for reminder
-        // We cast to unknown first to safely bypass strict DB types if 'appointments' is missing from schema
-        const { data, error: fetchError } = await (supabase
-            .from("appointments" as any)
+        const { data, error: fetchError } = await supabase
+            .from("appointments")
             .select(`
                 *,
                 lead:leads(id, nombre, apellido, telefono),
@@ -46,7 +45,7 @@ export async function GET() {
             .in("status", ["PENDING", "CONFIRMED"])
             .lte("reminder_scheduled_at", now)
             .is("reminder_sent_at", null)
-            .limit(20) as unknown as { data: ReminderAppointment[] | null; error: any });
+            .limit(20);
 
         if (fetchError) throw fetchError;
         
@@ -55,8 +54,9 @@ export async function GET() {
         }
 
         const results = [];
+        const appts = data as unknown as ReminderAppointment[];
 
-        for (const apt of data) {
+        for (const apt of appts) {
             try {
                 const lead = apt.lead;
                 const tenant = apt.tenant;
@@ -66,7 +66,7 @@ export async function GET() {
                 // Skip if reminders are disabled for this tenant
                 if (config && config.enabled === false) {
                     // Mark as "sent" (skipped) so we don't process it again
-                    await (supabase.from("appointments" as any) as any).update({ reminder_sent_at: now }).eq("id", apt.id);
+                    await supabase.from("appointments").update({ reminder_sent_at: now }).eq("id", apt.id);
                     continue;
                 }
 
@@ -127,8 +127,8 @@ export async function GET() {
                 });
 
                 // 4. Mark as sent
-                await (supabase
-                    .from("appointments" as any) as any)
+                await supabase
+                    .from("appointments")
                     .update({ reminder_sent_at: now })
                     .eq("id", apt.id);
 
@@ -141,7 +141,7 @@ export async function GET() {
             }
         }
 
-        return NextResponse.json({ success: true, processed: data.length, results });
+        return NextResponse.json({ success: true, processed: appts.length, results });
 
     } catch (error) {
         console.error("[REMINDER CRON] 💀 Critical error:", error);
