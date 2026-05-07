@@ -81,23 +81,23 @@ export default function AgentSimulatorPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] bg-slate-950 text-white overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-80px)] bg-background text-foreground overflow-hidden transition-colors duration-500">
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 bg-white/[0.02] border-b border-white/5">
+            <div className="flex items-center justify-between px-8 py-6 bg-card/20 border-b border-border">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
                         <BrainCircuit className="h-6 w-6 text-orange-500" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight">Simulador de Variables</h1>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-none mt-1">Prueba la memoria y extracción de datos de tu IA.</p>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">Prueba la memoria y extracción de datos de tu IA.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={handleReset}
                         title="Reiniciar Sesión"
-                        className="flex items-center gap-2 h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+                        className="flex items-center gap-2 h-10 px-4 bg-card/40 border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-card/60 transition-all text-foreground"
                     >
                         <RotateCcw className="h-4 w-4" /> Reiniciar Sesión
                     </button>
@@ -106,9 +106,9 @@ export default function AgentSimulatorPage() {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar: Agents */}
-                <div className="w-80 border-r border-white/5 bg-black/40 flex flex-col">
+                <div className="w-80 border-r border-border bg-card/40 flex flex-col">
                     <div className="p-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Seleccionar Agente</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Seleccionar Agente</span>
                     </div>
                     <div className="flex-1 overflow-y-auto px-4 space-y-2 custom-scrollbar">
                         {agents.map(agent => (
@@ -118,19 +118,19 @@ export default function AgentSimulatorPage() {
                                 title={`Seleccionar agente ${agent.name}`}
                                 className={cn(
                                     "w-full p-4 rounded-2xl border text-left transition-all group",
-                                    selectedAgent?.id === agent.id ? "bg-orange-500/10 border-orange-500/20" : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
+                                    selectedAgent?.id === agent.id ? "bg-orange-500/10 border-orange-500/20" : "bg-card/40 border-border hover:bg-card/60"
                                 )}
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={cn(
                                         "h-8 w-8 rounded-lg flex items-center justify-center border transition-all",
-                                        selectedAgent?.id === agent.id ? "bg-orange-500 text-white border-orange-500" : "bg-white/5 border-white/10 text-white/40"
+                                        selectedAgent?.id === agent.id ? "bg-orange-500 text-white border-orange-500" : "bg-card/40 border-border text-muted-foreground"
                                     )}>
                                         <Bot className="h-4 w-4" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-bold truncate">{agent.name}</p>
-                                        <p className="text-[10px] text-white/30 truncate">{agent.description || "Agente de Texto"}</p>
+                                        <p className="text-[10px] text-muted-foreground/40 truncate">{agent.description || "Agente de Texto"}</p>
                                     </div>
                                 </div>
                             </button>
@@ -139,7 +139,7 @@ export default function AgentSimulatorPage() {
                 </div>
 
                 {/* Main Chat Area */}
-                <div className="flex-1 flex flex-col bg-slate-900/50">
+                <div className="flex-1 flex flex-col bg-background/50">
                     <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
                         {messages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-20">
@@ -159,13 +159,13 @@ export default function AgentSimulatorPage() {
                                 >
                                     <div className={cn(
                                         "h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 border",
-                                        m.role === 'user' ? "bg-white/10 border-white/10" : "bg-orange-500/10 border-orange-500/20"
+                                        m.role === 'user' ? "bg-card/40 border-border" : "bg-orange-500/10 border-orange-500/20"
                                     )}>
-                                        {m.role === 'user' ? <User className="h-5 w-5 text-white/60" /> : <Bot className="h-5 w-5 text-orange-500" />}
+                                        {m.role === 'user' ? <User className="h-5 w-5 text-muted-foreground" /> : <Bot className="h-5 w-5 text-orange-500" />}
                                     </div>
                                     <div className={cn(
                                         "p-5 rounded-[24px] text-sm leading-relaxed shadow-sm",
-                                        m.role === 'user' ? "bg-white/5 text-white rounded-tr-none" : "bg-white/[0.03] text-white/80 rounded-tl-none border border-white/5"
+                                        m.role === 'user' ? "bg-card/60 text-foreground rounded-tr-none border border-border" : "bg-card text-foreground rounded-tl-none border border-border"
                                     )}>
                                         {m.content}
                                     </div>
@@ -177,16 +177,16 @@ export default function AgentSimulatorPage() {
                                 <div className="h-10 w-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center animate-pulse">
                                     <Bot className="h-5 w-5 text-orange-500" />
                                 </div>
-                                <div className="p-5 bg-white/[0.03] rounded-[24px] rounded-tl-none border border-white/5 flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce" />
-                                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-delay:0.2s]" />
-                                    <span className="w-1.5 h-1.5 bg-white/20 rounded-full animate-bounce [animation-delay:0.4s]" />
+                                <div className="p-5 bg-card rounded-[24px] rounded-tl-none border border-border flex gap-1">
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/20 rounded-full animate-bounce" />
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/20 rounded-full animate-bounce [animation-delay:0.2s]" />
+                                    <span className="w-1.5 h-1.5 bg-muted-foreground/20 rounded-full animate-bounce [animation-delay:0.4s]" />
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="p-8 bg-black/40 border-t border-white/5">
+                    <div className="p-8 bg-card/20 border-t border-border">
                         <div className="max-w-3xl mx-auto relative">
                             <input 
                                 value={input}
@@ -195,7 +195,7 @@ export default function AgentSimulatorPage() {
                                 placeholder={selectedAgent ? `Hablar con ${selectedAgent.name}...` : "Selecciona un agente a la izquierda"}
                                 title="Mensaje"
                                 disabled={!selectedAgent || isTyping}
-                                className="w-full h-16 bg-white/[0.02] border border-white/10 rounded-2xl px-6 pr-16 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40 transition-all disabled:opacity-50"
+                                className="w-full h-16 bg-card/40 border border-border rounded-2xl px-6 pr-16 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/40 transition-all disabled:opacity-50 text-foreground"
                             />
                             <button 
                                 onClick={handleSend}
@@ -210,8 +210,8 @@ export default function AgentSimulatorPage() {
                 </div>
 
                 {/* Sidebar: Memory Monitor */}
-                <div className="w-96 border-l border-white/5 bg-black/60 flex flex-col">
-                    <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                <div className="w-96 border-l border-border bg-card/60 flex flex-col">
+                    <div className="p-8 border-b border-border flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Database className="h-4 w-4 text-orange-500" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Monitor de Memoria</span>
@@ -221,7 +221,7 @@ export default function AgentSimulatorPage() {
                     
                     <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                         <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 mb-4">Variables Capturadas</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-4">Variables Capturadas</p>
                             <div className="space-y-3">
                                 {Object.keys(memory).length > 0 ? (
                                     Object.entries(memory).map(([key, value]) => (
@@ -233,13 +233,13 @@ export default function AgentSimulatorPage() {
                                         >
                                             <div>
                                                 <p className="text-[9px] font-black uppercase text-orange-500 mb-0.5 tracking-widest">{key}</p>
-                                                <p className="text-sm font-bold text-white/80">{String(value)}</p>
+                                                <p className="text-sm font-bold text-foreground/80">{String(value)}</p>
                                             </div>
                                             <CheckCircle2 className="h-4 w-4 text-orange-500" />
                                         </motion.div>
                                     ))
                                 ) : (
-                                    <div className="p-8 border border-dashed border-white/5 rounded-2xl text-center space-y-3 opacity-20">
+                                    <div className="p-8 border border-dashed border-border rounded-2xl text-center space-y-3 opacity-20">
                                         <Info className="h-8 w-8 mx-auto" />
                                         <p className="text-[10px] font-bold uppercase tracking-widest">Memoria vacía</p>
                                     </div>
@@ -248,7 +248,7 @@ export default function AgentSimulatorPage() {
                         </div>
 
                         <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 mb-4">Estado del Sistema</p>
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 mb-4">Estado del Sistema</p>
                             <div className="space-y-4">
                                 <StatusRow label="Extracción en Tiempo Real" status="Activo" ok />
                                 <StatusRow label="Detección de Intención" status="Activo" ok />
@@ -268,13 +268,13 @@ export default function AgentSimulatorPage() {
     );
 }
 
-function StatusRow({ label, status, ok }: { label: string, status: string, ok: boolean }) {
+ function StatusRow({ label, status, ok }: { label: string, status: string, ok: boolean }) {
     return (
         <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-white/40">{label}</span>
+            <span className="text-[10px] font-bold text-muted-foreground/40">{label}</span>
             <span className={cn(
                 "text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border",
-                ok ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-white/5 text-white/40 border-white/10"
+                ok ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-card/40 text-muted-foreground/40 border-border"
             )}>{status}</span>
         </div>
     );

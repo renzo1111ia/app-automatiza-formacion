@@ -146,7 +146,7 @@ export default function OrchestratorPlaygroundPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-8 space-y-8">
+        <div className="min-h-screen bg-background text-foreground p-8 space-y-8 transition-colors duration-500">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -155,7 +155,7 @@ export default function OrchestratorPlaygroundPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight">Orchestrator Playground</h1>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest">Simula el motor de orquestación en tiempo real con leads reales</p>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Simula el motor de orquestación en tiempo real con leads reales</p>
                     </div>
                 </div>
                 <button
@@ -166,7 +166,7 @@ export default function OrchestratorPlaygroundPage() {
                         setSelectedLead(null);
                     }}
                     title="Reiniciar todo el laboratorio"
-                    className="flex items-center gap-2 h-10 px-4 border border-white/10 rounded-xl text-white/40 hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition-all hover:text-white"
+                    className="flex items-center gap-2 h-10 px-4 border border-border rounded-xl text-muted-foreground hover:bg-card/40 text-xs font-bold uppercase tracking-widest transition-all hover:text-foreground"
                 >
                     <RotateCcw className="h-3.5 w-3.5" /> Reiniciar Laboratorio
                 </button>
@@ -177,11 +177,11 @@ export default function OrchestratorPlaygroundPage() {
                 <div className="md:col-span-1 bg-primary/10 border border-primary/20 p-6 rounded-3xl flex flex-col justify-between">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Health Score</p>
-                        <h2 className="text-4xl font-black text-white">
+                        <h2 className="text-4xl font-black text-foreground">
                             {historicalLogs.filter(l => l.level === 'ERROR').length > 5 ? '72%' : '98%'}
                         </h2>
                     </div>
-                    <p className="text-[10px] text-white/40 font-bold uppercase mt-4">Sistema Estable</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mt-4">Sistema Estable</p>
                 </div>
                 
                 <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -211,8 +211,8 @@ export default function OrchestratorPlaygroundPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* ── LEFT: Config Panel ── */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-4">
-                        <div className="flex items-center gap-2 text-white/60">
+                    <div className="bg-card/40 border border-border rounded-3xl p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-muted-foreground">
                             <WorkflowIcon className="h-4 w-4" />
                             <span className="text-[10px] font-black uppercase tracking-widest">1. Seleccionar Workflow</span>
                         </div>
@@ -228,7 +228,7 @@ export default function OrchestratorPlaygroundPage() {
                                         "w-full p-3 rounded-xl text-left border transition-all",
                                         selectedWorkflow?.id === wf.id
                                             ? "bg-primary/10 border-primary/30 text-primary"
-                                            : "bg-white/[0.01] border-white/5 text-white/60 hover:bg-white/[0.03]"
+                                            : "bg-card/20 border-border text-muted-foreground hover:bg-card/40"
                                     )}
                                 >
                                     <div className="flex items-center justify-between">
@@ -241,24 +241,24 @@ export default function OrchestratorPlaygroundPage() {
                     </div>
 
                     {rules.length > 0 && (
-                        <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-3">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Pasos del Workflow</span>
+                        <div className="bg-card/40 border border-border rounded-3xl p-6 space-y-3">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Pasos del Workflow</span>
                             <div className="space-y-2">
                                 {rules.map((rule, i) => (
                                     <div key={rule.id} className="flex items-center gap-3">
-                                        <div className="h-5 w-5 rounded-full bg-white/5 flex items-center justify-center text-[8px] font-black text-white/30 flex-shrink-0">{i + 1}</div>
-                                        <div className={cn("flex-1 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider", actionColors[rule.action_type] || "text-white/40 bg-white/5 border-white/10")}>
+                                        <div className="h-5 w-5 rounded-full bg-card/40 flex items-center justify-center text-[8px] font-black text-muted-foreground flex-shrink-0">{i + 1}</div>
+                                        <div className={cn("flex-1 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider", actionColors[rule.action_type] || "text-muted-foreground/40 bg-card/20 border-border")}>
                                             {rule.step_name || rule.action_type}
                                         </div>
-                                        {i < rules.length - 1 && <ChevronRight className="h-3 w-3 text-white/10" />}
+                                        {i < rules.length - 1 && <ChevronRight className="h-3 w-3 text-muted-foreground/10" />}
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-4">
-                        <div className="flex items-center gap-2 text-white/60">
+                    <div className="bg-card/40 border border-border rounded-3xl p-6 space-y-4">
+                        <div className="flex items-center gap-2 text-muted-foreground">
                             <Users className="h-4 w-4" />
                             <span className="text-[10px] font-black uppercase tracking-widest">2. Seleccionar Lead</span>
                         </div>
@@ -274,11 +274,11 @@ export default function OrchestratorPlaygroundPage() {
                                         "w-full p-3 rounded-xl text-left border transition-all",
                                         selectedLead?.id === lead.id
                                             ? "bg-emerald-500/10 border-emerald-500/30"
-                                            : "bg-white/[0.01] border-white/5 hover:bg-white/[0.03]"
+                                            : "bg-card/20 border-border hover:bg-card/40"
                                     )}
                                 >
                                     <div className="text-sm font-bold truncate">{lead.nombre} {lead.apellido}</div>
-                                    <div className="text-[10px] text-white/30 font-mono truncate">{lead.telefono || lead.id.slice(0, 12)}</div>
+                                    <div className="text-[10px] text-muted-foreground font-mono truncate">{lead.telefono || lead.id.slice(0, 12)}</div>
                                 </button>
                             ))}
                         </div>
@@ -287,7 +287,7 @@ export default function OrchestratorPlaygroundPage() {
 
                 {/* ── RIGHT: Execution Panel ── */}
                 <div className="lg:col-span-2 flex flex-col gap-6">
-                    <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 flex items-center justify-between gap-6">
+                    <div className="bg-card/40 border border-border rounded-3xl p-6 flex items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                             <div className={cn("h-3 w-3 rounded-full flex-shrink-0", {
                                 "bg-white/10": status === "idle",
@@ -302,7 +302,7 @@ export default function OrchestratorPlaygroundPage() {
                                     {status === "success" && "Ejecución completada"}
                                     {status === "error" && "Error en ejecución"}
                                 </p>
-                                <p className="text-[10px] text-white/30">
+                                <p className="text-[10px] text-muted-foreground">
                                     {selectedLead
                                         ? `Lead: ${selectedLead.nombre} / Workflow: ${selectedWorkflow?.name || "—"}`
                                         : "Selecciona un lead y un workflow para comenzar"
@@ -316,7 +316,7 @@ export default function OrchestratorPlaygroundPage() {
                             className={cn(
                                 "flex items-center gap-3 h-14 px-8 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl flex-shrink-0",
                                 (!selectedLead || !selectedWorkflow || status === "loading")
-                                    ? "bg-white/5 text-white/20 cursor-not-allowed"
+                                    ? "bg-card/20 text-muted-foreground cursor-not-allowed border border-border"
                                     : "bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] shadow-primary/20"
                             )}
                         >
@@ -327,18 +327,18 @@ export default function OrchestratorPlaygroundPage() {
                         </button>
                     </div>
 
-                    <div className="flex-1 bg-black/60 border border-white/5 rounded-3xl overflow-hidden flex flex-col min-h-[500px]">
-                        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                    <div className="flex-1 bg-card/60 border border-border rounded-3xl overflow-hidden flex flex-col min-h-[500px]">
+                        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/20">
                             <div className="flex items-center gap-6">
                                 <button 
                                     onClick={() => setLogTab('live')}
-                                    className={cn("text-[10px] font-black uppercase tracking-widest pb-1 transition-all", logTab === 'live' ? "text-primary border-b-2 border-primary" : "text-white/20 hover:text-white/40")}
+                                    className={cn("text-[10px] font-black uppercase tracking-widest pb-1 transition-all", logTab === 'live' ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground")}
                                 >
                                     Console (Live)
                                 </button>
                                 <button 
                                     onClick={() => setLogTab('history')}
-                                    className={cn("text-[10px] font-black uppercase tracking-widest pb-1 transition-all", logTab === 'history' ? "text-primary border-b-2 border-primary" : "text-white/20 hover:text-white/40")}
+                                    className={cn("text-[10px] font-black uppercase tracking-widest pb-1 transition-all", logTab === 'history' ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground")}
                                 >
                                     System History (DB)
                                 </button>
@@ -350,7 +350,7 @@ export default function OrchestratorPlaygroundPage() {
                                         <button 
                                             key={lvl}
                                             onClick={() => setFilterLevel(lvl)}
-                                            className={cn("px-2 py-1 rounded text-[8px] font-black uppercase border", filterLevel === lvl ? "bg-primary text-black border-primary" : "text-white/20 border-white/5")}
+                                            className={cn("px-2 py-1 rounded text-[8px] font-black uppercase border", filterLevel === lvl ? "bg-primary text-primary-foreground border-primary" : "text-muted-foreground border-border")}
                                         >
                                             {lvl}
                                         </button>
@@ -363,14 +363,14 @@ export default function OrchestratorPlaygroundPage() {
                             {logTab === 'live' ? (
                                 <>
                                     {logs.length === 0 && (
-                                        <div className="h-full flex flex-col items-center justify-center gap-4 text-white/10 py-20">
+                                        <div className="h-full flex flex-col items-center justify-center gap-4 text-muted-foreground/20 py-20">
                                             <Terminal className="h-12 w-12" />
                                             <p className="font-bold uppercase tracking-widest text-[11px]">Esperando ejecución...</p>
                                         </div>
                                     )}
                                     {logs.map((log, i) => (
-                                        <div key={i} className={cn("leading-relaxed p-2 rounded bg-white/[0.01]", {
-                                            "text-white/50": log.includes("[INFO]"),
+                                        <div key={i} className={cn("leading-relaxed p-2 rounded bg-card/20", {
+                                            "text-muted-foreground": log.includes("[INFO]"),
                                             "text-purple-400": log.includes("[ORCHESTRATOR]"),
                                             "text-red-400 bg-red-500/5": log.includes("[ERROR]"),
                                             "text-emerald-400 font-bold": log.includes("✅"),
@@ -386,7 +386,7 @@ export default function OrchestratorPlaygroundPage() {
                                         .filter(l => filterLevel === 'ALL' || l.level === filterLevel)
                                         .map((log) => (
                                         <div key={log.id} className={cn("p-3 rounded-xl border flex gap-4 transition-all", {
-                                            "bg-white/[0.02] border-white/5": log.level === 'INFO',
+                                            "bg-card/40 border-border": log.level === 'INFO',
                                             "bg-red-500/5 border-red-500/10": log.level === 'ERROR',
                                             "bg-amber-500/5 border-amber-500/10": log.level === 'WARN',
                                         })}>
@@ -409,13 +409,13 @@ export default function OrchestratorPlaygroundPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className={cn("text-xs", log.level === 'ERROR' ? "text-red-200" : "text-white/80")}>
+                                                <p className={cn("text-xs", log.level === 'ERROR' ? "text-red-200" : "text-foreground/80")}>
                                                     {log.message}
                                                 </p>
                                                 {log.level === 'ERROR' && (
-                                                    <div className="mt-2 p-2 bg-black/40 rounded-lg border border-red-500/20">
+                                                    <div className="mt-2 p-2 bg-card/60 rounded-lg border border-red-500/20">
                                                         <p className="text-[10px] text-red-400 font-black uppercase mb-1">💡 Explicación Simple:</p>
-                                                        <p className="text-[11px] text-white/60 italic">{translateError(log.message)}</p>
+                                                        <p className="text-[11px] text-muted-foreground italic">{translateError(log.message)}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -432,11 +432,11 @@ export default function OrchestratorPlaygroundPage() {
                             { label: "Leads Disponibles", value: leads.length, icon: Users, color: "text-emerald-400" },
                             { label: "Pasos en Workflow", value: rules.length, icon: Zap, color: "text-purple-400" },
                         ].map(stat => (
-                            <div key={stat.label} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex items-center gap-3">
+                            <div key={stat.label} className="bg-card/40 border border-border rounded-2xl p-4 flex items-center gap-3">
                                 <stat.icon className={cn("h-5 w-5", stat.color)} />
                                 <div>
                                     <p className="text-xl font-black">{stat.value}</p>
-                                    <p className="text-[9px] text-white/30 uppercase tracking-widest">{stat.label}</p>
+                                    <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{stat.label}</p>
                                 </div>
                             </div>
                         ))}
@@ -449,7 +449,7 @@ export default function OrchestratorPlaygroundPage() {
 
 function HealthCard({ icon: Icon, title, status, desc, isError }: any) {
     return (
-        <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl flex items-start gap-3">
+        <div className="bg-card/40 border border-border p-4 rounded-2xl flex items-start gap-3">
             <div className={cn(
                 "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
                 isError ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"
@@ -458,7 +458,7 @@ function HealthCard({ icon: Icon, title, status, desc, isError }: any) {
             </div>
             <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{title}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{title}</span>
                     <span className={cn(
                         "text-[8px] font-black px-1.5 py-0.5 rounded border uppercase tracking-tighter",
                         isError ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
@@ -466,7 +466,7 @@ function HealthCard({ icon: Icon, title, status, desc, isError }: any) {
                         {status}
                     </span>
                 </div>
-                <p className="text-[11px] font-bold text-white/80 leading-tight">{desc}</p>
+                <p className="text-[11px] font-bold text-foreground/80 leading-tight">{desc}</p>
             </div>
         </div>
     );

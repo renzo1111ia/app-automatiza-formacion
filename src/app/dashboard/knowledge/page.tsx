@@ -149,29 +149,29 @@ export default function KnowledgeBasePage() {
     ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-950 text-white selection:bg-primary/30">
+        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-background text-foreground selection:bg-primary/30 transition-colors duration-500">
             {/* Header Area */}
-            <div className="flex items-center justify-between px-8 py-6 bg-white/[0.02] border-b border-white/5">
+            <div className="flex items-center justify-between px-8 py-6 bg-card/20 border-b border-border">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                         <Database className="h-6 w-6 text-emerald-400" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight">Base de Conocimiento</h1>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-none mt-1">
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">
                             Gestiona los documentos PDF que entrenan a tus agentes.
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                         <input 
                             type="text"
                             placeholder="Buscar documentos..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-white/5 border border-white/10 rounded-xl pl-12 pr-6 h-11 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all w-64"
+                            className="bg-card/40 border border-border rounded-xl pl-12 pr-6 h-11 text-sm outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all w-64 text-foreground"
                         />
                     </div>
                     <button 
@@ -195,12 +195,12 @@ export default function KnowledgeBasePage() {
                     </div>
                 ) : displayGroups.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full space-y-6">
-                        <div className="h-24 w-24 bg-white/5 rounded-[40px] flex items-center justify-center border border-dashed border-white/10">
-                            <Cloud className="h-10 w-10 text-white/10" />
+                        <div className="h-24 w-24 bg-card/40 rounded-[40px] flex items-center justify-center border border-dashed border-border">
+                            <Cloud className="h-10 w-10 text-muted-foreground/20" />
                         </div>
                         <div className="text-center">
                             <h3 className="text-xl font-bold uppercase tracking-tight">Sin coincidencias</h3>
-                            <p className="text-sm text-white/30 max-w-xs mx-auto mt-2 font-medium">No encontramos bases que coincidan con tu búsqueda.</p>
+                            <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2 font-medium">No encontramos bases que coincidan con tu búsqueda.</p>
                         </div>
                     </div>
                 ) : (
@@ -210,7 +210,7 @@ export default function KnowledgeBasePage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 key={group.name}
-                                className="group relative bg-white/[0.02] border border-white/5 rounded-[32px] p-6 hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all"
+                                className="group relative bg-card/40 border border-border rounded-[32px] p-6 hover:bg-card/60 hover:border-emerald-500/20 transition-all"
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
@@ -227,7 +227,7 @@ export default function KnowledgeBasePage() {
                                                     await loadItems();
                                                 }
                                             }}
-                                            className="p-2 rounded-xl text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                            className="p-2 rounded-xl text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
                                             title={`Eliminar toda la base ${group.name}`}
                                         >
                                             <Trash2 className="h-4 w-4" />
@@ -235,16 +235,16 @@ export default function KnowledgeBasePage() {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-base text-white/90 group-hover:text-white transition-colors line-clamp-1">{group.name}</h3>
-                                    <p className="text-xs text-white/30 line-clamp-2 h-8 leading-snug">
+                                    <h3 className="font-bold text-base text-foreground/90 group-hover:text-foreground transition-colors line-clamp-1">{group.name}</h3>
+                                    <p className="text-xs text-muted-foreground line-clamp-2 h-8 leading-snug">
                                         {group.description || "Sin descripción proporcionada."}
                                     </p>
                                 </div>
-                                <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
+                                <div className="mt-6 pt-6 border-t border-border flex items-center justify-between">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60 bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
                                         {group.count} {group.count === 1 ? 'Archivo' : 'Archivos'}
                                     </span>
-                                    <span className="text-[10px] font-bold text-white/10 flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold text-muted-foreground/20 flex items-center gap-1.5">
                                         <ShieldCheck className="h-3 w-3" />
                                         Indexado
                                     </span>
@@ -261,29 +261,29 @@ export default function KnowledgeBasePage() {
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
                         <motion.div 
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
                             onClick={() => !uploading && setIsUploadModalOpen(false)}
                         />
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto"
+                            className="relative w-full max-w-lg bg-card border border-border rounded-[40px] p-10 shadow-2xl space-y-8 max-h-[90vh] overflow-y-auto"
                         >
                             <div className="text-center space-y-4">
                                 <div className="h-16 w-16 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                                     <FileUp className="h-8 w-8 text-emerald-500" />
                                 </div>
                                 <h3 className="text-3xl font-black uppercase tracking-tight">Sincronizar Conocimiento</h3>
-                                <p className="text-white/40 text-sm font-medium leading-relaxed px-4">
+                                <p className="text-muted-foreground text-sm font-medium leading-relaxed px-4">
                                     Selecciona varios PDFs. Se guardarán en MinIO y se indexarán automáticamente.
                                 </p>
                             </div>
 
                             <form onSubmit={handleUpload} className="space-y-6">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Archivos PDF</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 ml-4">Archivos PDF</label>
                                     <div className={cn(
                                         "relative h-32 border-2 border-dashed rounded-[24px] transition-all flex flex-col items-center justify-center gap-2 overflow-hidden",
-                                        files.length > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-white/10 hover:border-white/20 bg-white/[0.02]"
+                                        files.length > 0 ? "border-emerald-500/50 bg-emerald-500/5" : "border-border hover:border-primary/20 bg-card/40"
                                     )}>
                                         <input 
                                             type="file"
@@ -298,8 +298,8 @@ export default function KnowledgeBasePage() {
                                                 }
                                             }}
                                         />
-                                        <Upload className={cn("h-8 w-8 mb-1", files.length > 0 ? "text-emerald-400" : "text-white/10")} />
-                                        <p className="text-[10px] font-bold uppercase tracking-tight">
+                                        <Upload className={cn("h-8 w-8 mb-1", files.length > 0 ? "text-emerald-400" : "text-muted-foreground/20")} />
+                                        <p className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">
                                             {files.length > 0 ? `${files.length} archivos seleccionados` : "Click o arrastra varios archivos (PDF máx 10MB)"}
                                         </p>
                                     </div>
@@ -308,10 +308,10 @@ export default function KnowledgeBasePage() {
                                     {files.length > 0 && (
                                         <div className="max-h-32 overflow-y-auto space-y-2 mt-4 px-2 custom-scrollbar">
                                             {files.map((f, i) => (
-                                                <div key={i} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                                                <div key={i} className="flex items-center justify-between bg-card/40 p-3 rounded-xl border border-border">
                                                     <div className="flex items-center gap-3 overflow-hidden">
                                                         <FileText className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                                                        <span className="text-xs font-bold truncate opacity-80">{f.name}</span>
+                                                        <span className="text-xs font-bold truncate text-foreground/80">{f.name}</span>
                                                     </div>
                                                     {!uploading && (
                                                         <button 
@@ -330,25 +330,25 @@ export default function KnowledgeBasePage() {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Nombre de la Base (Opcional)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 ml-4">Nombre de la Base (Opcional)</label>
                                     <input 
                                         type="text"
                                         value={kbName}
                                         disabled={uploading}
                                         onChange={(e) => setKbName(e.target.value)}
-                                        className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all disabled:opacity-50"
+                                        className="w-full h-12 bg-card/40 border border-border rounded-2xl px-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all disabled:opacity-50 text-foreground"
                                         placeholder="Ej: Manual de Ventas 2025..."
                                     />
-                                    <p className="text-[8px] text-white/20 italic ml-4">Si se deja vacío, se usará el nombre del archivo PDF.</p>
+                                    <p className="text-[8px] text-muted-foreground/40 italic ml-4">Si se deja vacío, se usará el nombre del archivo PDF.</p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-4">Descripción General (Opcional)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 ml-4">Descripción General (Opcional)</label>
                                     <textarea 
                                         value={description}
                                         disabled={uploading}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full h-20 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all resize-none disabled:opacity-50"
+                                        className="w-full h-20 bg-card/40 border border-border rounded-2xl p-4 text-sm font-medium focus:border-emerald-500/40 outline-none transition-all resize-none disabled:opacity-50 text-foreground"
                                         placeholder="Descripción común para este lote de documentos..."
                                     />
                                 </div>
@@ -358,7 +358,7 @@ export default function KnowledgeBasePage() {
                                         type="button"
                                         disabled={uploading}
                                         onClick={() => setIsUploadModalOpen(false)}
-                                        className="flex-1 h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all font-bold disabled:opacity-50"
+                                        className="flex-1 h-14 rounded-2xl bg-card/40 border border-border text-[10px] font-black uppercase tracking-widest hover:bg-card/60 transition-all font-bold disabled:opacity-50 text-foreground"
                                     >
                                         Cancelar
                                     </button>

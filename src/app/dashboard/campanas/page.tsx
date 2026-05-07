@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic";
 function HeroStat({ label, value, color }: { label: string; value: string; color: string }) {
     return (
         <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{label}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
             <p className={`text-3xl font-black tracking-tighter leading-none ${color}`}>{value}</p>
         </div>
     );
@@ -90,10 +90,10 @@ async function CampanasKpis({
             filters={filters}
             title={
                 <div className="mb-2">
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-1">
+                    <h1 className="text-3xl font-black text-foreground tracking-tight mb-1">
                         Campañas <span className="text-blue-600">IA</span>
                     </h1>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                         Rendimiento y conversión por campaña en el período seleccionado
                     </p>
                     <CampaignSelector 
@@ -102,13 +102,13 @@ async function CampanasKpis({
                     />
                     {/* Hero metrics */}
                     <div className="mt-6 flex flex-wrap gap-8">
-                        <HeroStat label="Total Leads"      value={kpi.total_leads.toLocaleString("es-ES")}        color="text-slate-900 dark:text-white" />
+                        <HeroStat label="Total Leads"      value={kpi.total_leads.toLocaleString("es-ES")}        color="text-foreground" />
                         <HeroStat label="Llamadas"         value={kpi.total_llamadas.toLocaleString("es-ES")}      color="text-blue-600" />
                         <HeroStat label="Contactados"      value={kpi.total_contactados.toLocaleString("es-ES")}   color="text-emerald-600" />
                         <HeroStat label="Agendados"        value={kpi.total_agendados.toLocaleString("es-ES")}     color="text-teal-600" />
                         <HeroStat label="Cualificados"     value={kpi.total_cualificados.toLocaleString("es-ES")}  color="text-violet-600" />
                         <HeroStat label="Minutos IA"       value={formattedMinutos} color="text-amber-600" />
-                        <HeroStat label="Campañas"         value={kpi.campanas.length.toString()}                   color="text-slate-500" />
+                        <HeroStat label="Campañas"         value={kpi.campanas.length.toString()}                   color="text-muted-foreground/60" />
                     </div>
                 </div>
             }
@@ -174,14 +174,14 @@ async function CampanasFunnel({
     return (
         <div className="mt-12 mb-8">
             <div className="flex items-center gap-4 mb-8">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-[20px]">
+                <div className="bg-blue-500/10 p-3 rounded-[20px] border border-blue-500/20">
                     <Target className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                    <h2 className="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    <h2 className="text-[32px] font-bold text-foreground tracking-tight leading-tight">
                         Embudo de <span className="text-blue-600 dark:text-blue-400">Conversión</span>
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px]">Tasa de conversión y progreso por etapa de campaña</p>
+                    <p className="text-muted-foreground font-medium text-[15px]">Tasa de conversión y progreso por etapa de campaña</p>
                 </div>
             </div>
             <SummaryManager

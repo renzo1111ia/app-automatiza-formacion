@@ -5,7 +5,7 @@ import {
     Activity, Search, RefreshCw, 
     MessageSquare, Phone, Bot, AlertCircle, 
     CheckCircle2, Clock, ChevronRight, Eye,
-    Database, Zap, ArrowRight, Server
+    Database, Zap, ArrowRight, Server, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -76,7 +76,7 @@ export default function LogsPage() {
     });
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white p-8 space-y-8 pb-24">
+        <div className="min-h-screen bg-background text-foreground p-8 space-y-8 pb-24 transition-colors duration-500">
             {/* ── Header ─────────────────────────────────────────────── */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="space-y-2">
@@ -87,7 +87,7 @@ export default function LogsPage() {
                         <span className="text-xs font-black uppercase tracking-[0.2em]">Auditoría de IA</span>
                     </div>
                     <h1 className="text-4xl font-black tracking-tight">Logs de <span className="text-primary">Ejecución</span></h1>
-                    <p className="text-white/40 text-sm font-medium max-w-md">
+                    <p className="text-muted-foreground text-sm font-medium max-w-md">
                         Monitoriza en tiempo real cada mensaje de WhatsApp y llamada generada por el orquestador.
                     </p>
                 </div>
@@ -95,19 +95,19 @@ export default function LogsPage() {
                 <div className="flex items-center gap-3">
                     <button 
                         onClick={fetchLogs}
-                        className="h-12 px-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center gap-2 text-xs font-bold"
+                        className="h-12 px-4 rounded-2xl bg-card/40 border border-border hover:bg-card/60 transition-all flex items-center gap-2 text-xs font-bold text-foreground"
                     >
                         <RefreshCw className={cn("h-4 w-4 text-primary", loading && "animate-spin")} />
                         Actualizar
                     </button>
-                    <div className="h-12 flex bg-white/5 border border-white/10 rounded-2xl p-1">
+                    <div className="h-12 flex bg-card/40 border border-border rounded-2xl p-1">
                         {(["ALL", "SUCCESS", "FAILED"] as const).map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={cn(
                                     "px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                    filter === f ? "bg-primary text-primary-foreground shadow-lg" : "text-white/40 hover:text-white"
+                                    filter === f ? "bg-primary text-primary-foreground shadow-lg" : "text-muted-foreground hover:text-foreground"
                                 )}
                             >
                                 {f === "ALL" ? "Todos" : f === "SUCCESS" ? "Éxito" : "Errores"}
@@ -121,27 +121,27 @@ export default function LogsPage() {
                 {/* ── Main List ────────────────────────────────────────── */}
                 <div className="lg:col-span-7 space-y-4">
                     <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/20 group-focus-within:text-primary transition-colors" />
                         <input 
                             type="text" 
                             placeholder="Buscar por nombre de lead o teléfono..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                            className="w-full h-14 bg-card/40 border border-border rounded-2xl pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-foreground"
                         />
                     </div>
 
                     <div className="space-y-3">
                         {loading && logs.length === 0 ? (
                             Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />
+                                <div key={i} className="h-20 bg-card/40 rounded-2xl animate-pulse border border-border" />
                             ))
                         ) : filteredLogs.length === 0 ? (
-                            <div className="p-20 text-center space-y-4 rounded-3xl border border-dashed border-white/10 bg-white/[0.01]">
-                                <div className="p-4 rounded-full bg-white/5 w-fit mx-auto">
-                                    <Database className="h-8 w-8 text-white/20" />
+                            <div className="p-20 text-center space-y-4 rounded-3xl border border-dashed border-border bg-card/20">
+                                <div className="p-4 rounded-full bg-card/40 w-fit mx-auto">
+                                    <Database className="h-8 w-8 text-muted-foreground/20" />
                                 </div>
-                                <p className="text-white/40 font-bold uppercase tracking-widest text-xs">No hay logs que coincidan</p>
+                                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">No hay logs que coincidan</p>
                             </div>
                         ) : (
                             filteredLogs.map((log) => (
@@ -153,7 +153,7 @@ export default function LogsPage() {
                                         "group relative p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4",
                                         selectedLog?.id === log.id 
                                             ? "bg-primary/10 border-primary/40 shadow-xl shadow-primary/5" 
-                                            : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/[0.07]"
+                                            : "bg-card/40 border-border hover:border-foreground/20 hover:bg-card/60"
                                     )}
                                 >
                                     {/* Action Icon */}
@@ -175,16 +175,16 @@ export default function LogsPage() {
                                                 {log.lead?.nombre || "Lead Desconocido"} {log.lead?.apellido || ""}
                                             </span>
                                             {log.ab_variant && (
-                                                <span className="px-1.5 py-0.5 rounded bg-white/10 text-[8px] font-black text-white/60 uppercase">
+                                                <span className="px-1.5 py-0.5 rounded bg-card/60 text-[8px] font-black text-muted-foreground/60 uppercase border border-border">
                                                     Var {log.ab_variant}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-3 text-[10px] text-white/30 font-bold uppercase tracking-wider">
+                                        <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                                             <span>{log.action_type}</span>
-                                            <span className="h-1 w-1 rounded-full bg-white/20" />
+                                            <span className="h-1 w-1 rounded-full bg-border" />
                                             <span>Paso {log.step_number}</span>
-                                            <span className="h-1 w-1 rounded-full bg-white/20" />
+                                            <span className="h-1 w-1 rounded-full bg-border" />
                                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {new Date(log.created_at).toLocaleTimeString()}</span>
                                         </div>
                                     </div>
@@ -206,7 +206,7 @@ export default function LogsPage() {
                                         </span>
                                     </div>
                                     
-                                    <ChevronRight className="h-4 w-4 text-white/10 group-hover:text-white/40 transition-colors" />
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground/20 group-hover:text-foreground transition-colors" />
                                 </motion.div>
                             ))
                         )}
@@ -221,9 +221,9 @@ export default function LogsPage() {
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl"
+                                className="bg-card border border-border rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl"
                             >
-                                <div className="p-6 border-b border-white/10 bg-white/[0.02]">
+                                <div className="p-6 border-b border-border bg-card/20">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
@@ -231,12 +231,12 @@ export default function LogsPage() {
                                             </div>
                                             <div>
                                                 <h3 className="text-sm font-black uppercase tracking-widest">Inspector de Datos</h3>
-                                                <p className="text-[10px] text-white/30 font-bold">Detalle técnico del envío</p>
+                                                <p className="text-[10px] text-muted-foreground font-bold">Detalle técnico del envío</p>
                                             </div>
                                         </div>
                                         <button 
                                             onClick={() => setSelectedLog(null)}
-                                            className="p-2 rounded-xl hover:bg-white/10 text-white/20 transition-colors"
+                                            className="p-2 rounded-xl hover:bg-card/60 text-muted-foreground transition-colors"
                                             title="Cerrar inspector"
                                             aria-label="Cerrar inspector"
                                         >
@@ -246,13 +246,13 @@ export default function LogsPage() {
 
                                     {/* Quick Stats */}
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 rounded-2xl bg-black/40 border border-white/5">
-                                            <p className="text-[8px] font-black text-white/20 uppercase mb-1">Teléfono Lead</p>
+                                        <div className="p-3 rounded-2xl bg-card/40 border border-border">
+                                            <p className="text-[8px] font-black text-muted-foreground/40 uppercase mb-1">Teléfono Lead</p>
                                             <p className="text-xs font-mono text-primary">{selectedLog.lead?.telefono || 'N/A'}</p>
                                         </div>
-                                        <div className="p-3 rounded-2xl bg-black/40 border border-white/5">
-                                            <p className="text-[8px] font-black text-white/20 uppercase mb-1">ID Único</p>
-                                            <p className="text-[9px] font-mono text-white/40 truncate">{selectedLog.id}</p>
+                                        <div className="p-3 rounded-2xl bg-card/40 border border-border">
+                                            <p className="text-[8px] font-black text-muted-foreground/40 uppercase mb-1">ID Único</p>
+                                            <p className="text-[9px] font-mono text-muted-foreground/60 truncate">{selectedLog.id}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -271,37 +271,37 @@ export default function LogsPage() {
 
                                     {/* Main Payload Explorer */}
                                     <div className="space-y-3">
-                                        <div className="flex items-center gap-2 text-white/40">
+                                        <div className="flex items-center gap-2 text-muted-foreground/40">
                                             <Server className="h-3.5 w-3.5" />
                                             <span className="text-[10px] font-black uppercase tracking-widest">Metadata / Payload</span>
                                         </div>
                                         
-                                        <div className="bg-black/60 rounded-2xl border border-white/10 p-4 font-mono text-[10px] overflow-auto max-h-[400px] custom-scrollbar">
-                                            <pre className="text-blue-300">
+                                        <div className="bg-card/60 rounded-2xl border border-border p-4 font-mono text-[10px] overflow-auto max-h-[400px] custom-scrollbar">
+                                            <pre className="text-blue-400">
                                                 {JSON.stringify(selectedLog.metadata, null, 2)}
                                             </pre>
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                                    <div className="pt-4 border-t border-border flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                            <span className="text-[9px] font-black text-white/20 uppercase">Registro Sincronizado</span>
+                                            <span className="text-[9px] font-black text-muted-foreground/40 uppercase">Registro Sincronizado</span>
                                         </div>
-                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-[10px] font-bold text-white/40 hover:text-white transition-colors">
+                                        <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card/40 text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors border border-border">
                                             Copiar JSON <ArrowRight className="h-3 w-3" />
                                         </button>
                                     </div>
                                 </div>
                             </motion.div>
                         ) : (
-                            <div className="h-[500px] rounded-3xl border border-dashed border-white/10 flex flex-col items-center justify-center p-12 text-center space-y-4">
-                                <div className="h-16 w-16 rounded-3xl bg-white/5 flex items-center justify-center">
-                                    <Database className="h-8 w-8 text-white/10" />
+                            <div className="h-[500px] rounded-3xl border border-dashed border-border flex flex-col items-center justify-center p-12 text-center space-y-4">
+                                <div className="h-16 w-16 rounded-3xl bg-card/40 flex items-center justify-center border border-border">
+                                    <Database className="h-8 w-8 text-muted-foreground/20" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-black uppercase tracking-widest text-white/60">No hay selección</h4>
-                                    <p className="text-xs text-white/20 font-medium">Selecciona un evento de la lista para inspeccionar los datos enviados.</p>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-muted-foreground/60">No hay selección</h4>
+                                    <p className="text-xs text-muted-foreground/40 font-medium">Selecciona un evento de la lista para inspeccionar los datos enviados.</p>
                                 </div>
                             </div>
                         )}
@@ -312,6 +312,6 @@ export default function LogsPage() {
     );
 }
 
-function X({ className }: { className?: string }) {
-    return <AlertCircle className={className} />; // Fallback icon
+ function X({ className }: { className?: string }) {
+    return <AlertCircle className={className} />; // Will use imported X instead
 }

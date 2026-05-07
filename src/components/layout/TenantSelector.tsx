@@ -41,7 +41,7 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
 
     if (collapsed) {
         return (
-            <div className="px-2 py-4 flex justify-center border-b border-sidebar-border dark:border-slate-800">
+            <div className="px-2 py-4 flex justify-center border-b border-border">
                 <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary transition-colors">
                     <Building2 className="h-4 w-4" />
                 </div>
@@ -50,19 +50,19 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
     }
 
     return (
-        <div className="relative px-4 py-4 border-b border-sidebar-border">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/40 mb-2 block">
+        <div className="relative px-4 py-4 border-b border-border">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2 block">
                 Cliente Activo
             </label>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex w-full items-center gap-2 rounded-lg bg-sidebar-accent dark:bg-slate-900/50 border border-sidebar-border dark:border-slate-800 px-3 py-2 text-left text-sm transition hover:bg-sidebar-accent/80 dark:hover:bg-slate-800 hover:border-primary/50"
+                className="flex w-full items-center gap-2 rounded-lg bg-card border border-border px-3 py-2 text-left text-sm transition hover:bg-card/60 hover:border-primary/50"
             >
                 <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="flex-1 truncate text-sidebar-foreground font-semibold">
+                <span className="flex-1 truncate text-foreground font-semibold">
                     {tenantName || (loading ? "Cargando..." : "Seleccionar...")}
                 </span>
-                <ChevronDown className={cn("h-4 w-4 text-sidebar-foreground/40 transition-transform", isOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground/40 transition-transform", isOpen && "rotate-180")} />
             </button>
 
             {isOpen && (

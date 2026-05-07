@@ -38,20 +38,20 @@ export default function OnboardingPage() {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-2rem)] w-full overflow-hidden bg-slate-50 dark:bg-black animate-in fade-in duration-1000">
+        <div className="flex flex-col h-[calc(100vh-2rem)] w-full overflow-hidden bg-background animate-in fade-in duration-1000">
             
             {/* ── Top Bar ─────────────────────────────────────────── */}
-            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/60 backdrop-blur-xl z-[60] shrink-0">
+            <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-card/60 backdrop-blur-xl z-[60] shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/10">
                         <Zap className="h-5 w-5" />
                     </div>
                     <div className="flex flex-col">
-                        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white/90 uppercase leading-none">
+                        <h1 className="text-xl font-black tracking-tight text-foreground uppercase leading-none">
                             Flow Orchestrator
-                            <span className="text-slate-500 dark:text-white/20 text-xs font-normal ml-2">{tenantName.toUpperCase()}</span>
+                            <span className="text-muted-foreground/40 text-xs font-normal ml-2">{tenantName.toUpperCase()}</span>
                         </h1>
-                        <p className="text-[10px] text-slate-500 dark:text-white/30 font-bold tracking-widest uppercase">
+                        <p className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">
                             Unified Node Engine V5.0
                         </p>
                     </div>
@@ -79,7 +79,7 @@ export default function OnboardingPage() {
                     onSelect={setSelectedWorkflowId} 
                 />
                 
-                <div className="flex-1 relative bg-slate-50 dark:bg-[#050505]">
+                <div className="flex-1 relative bg-background/50">
                     {selectedWorkflowId ? (
                         <ReactFlowProvider key={selectedWorkflowId}>
                             <SequenceCanvas 
@@ -100,8 +100,8 @@ export default function OnboardingPage() {
             </div>
 
             {/* ── Status Bar ──────────────────────────────────────── */}
-            <div className="px-6 py-2 border-t border-slate-200 dark:border-white/5 bg-white/60 dark:bg-black/60 flex items-center justify-between z-50 shrink-0">
-                <div className="flex items-center gap-6 text-[10px] font-bold tracking-widest text-slate-500 dark:text-white/20 uppercase">
+            <div className="px-6 py-2 border-t border-border bg-card/60 flex items-center justify-between z-50 shrink-0">
+                <div className="flex items-center gap-6 text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
                     <div className="flex items-center gap-1.5">
                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         Flow Engine: Operational
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
                         Canales: Voice + WhatsApp + Text AI
                     </div>
                 </div>
-                <div className="text-[10px] font-mono text-slate-400 dark:text-white/10 italic">
+                <div className="text-[10px] font-mono text-muted-foreground/20 italic">
                     Unified Orchestrator V5.0.0
                 </div>
             </div>

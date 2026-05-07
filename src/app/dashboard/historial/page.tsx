@@ -30,14 +30,14 @@ export default async function HistorialPage({ searchParams }: { searchParams: Pr
     return (
         <div className="space-y-4">
             <div className="flex items-center gap-4 mb-6">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-[20px]">
+                <div className="bg-blue-500/10 p-3 rounded-[20px] border border-blue-500/20">
                     <ClipboardList className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                    <h1 className="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    <h1 className="text-[32px] font-bold text-foreground tracking-tight leading-tight">
                         Historial de <span className="text-blue-600 dark:text-blue-400">Llamadas</span>
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px]">
+                    <p className="text-muted-foreground font-medium text-[15px]">
                         {initialData.count.toLocaleString()} registros · Paginación servidor
                     </p>
                 </div>
@@ -73,14 +73,14 @@ async function AdminConfigSection() {
     return (
         <div className="space-y-8">
             <div className="flex items-center gap-4">
-                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-[20px]">
+                <div className="bg-amber-500/10 p-3 rounded-[20px] border border-amber-500/20">
                     <Settings className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div>
-                    <h1 className="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+                    <h1 className="text-[32px] font-bold text-foreground tracking-tight leading-tight">
                         Configuración <span className="text-amber-600 dark:text-amber-400">Avanzada</span>
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px]">
+                    <p className="text-muted-foreground font-medium text-[15px]">
                         Ajustes exclusivos para administradores del sistema
                     </p>
                 </div>

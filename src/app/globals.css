@@ -156,6 +156,14 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;             /* Chrome, Safari, Opera */
   }
+
+  .bg-grad-primary {
+    background: var(--grad-primary);
+  }
+
+  .bg-grad-surface {
+    background: var(--grad-surface);
+  }
 }
 
 /* Custom thin scrollbar for desktop */

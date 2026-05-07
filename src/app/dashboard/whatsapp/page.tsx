@@ -76,10 +76,10 @@ async function WhatsappKpis({
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                            <h1 className="text-3xl font-black text-foreground tracking-tight">
                                 WhatsApp <span className="text-green-600">Leads</span>
                             </h1>
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                                 Gestión y conversiones vía WhatsApp
                             </p>
                         </div>
@@ -87,8 +87,8 @@ async function WhatsappKpis({
 
                     {/* Hero metrics */}
                     <div className="mt-6 flex flex-wrap gap-8">
-                        <HeroStat label="Conversaciones" value={kpi.total_conversaciones.toLocaleString("es-ES")} color="text-slate-900 dark:text-white" />
-                        <HeroStat label="Leads únicos" value={kpi.total_leads_unicos.toLocaleString("es-ES")} color="text-slate-700" />
+                        <HeroStat label="Conversaciones" value={kpi.total_conversaciones.toLocaleString("es-ES")} color="text-foreground" />
+                        <HeroStat label="Leads únicos" value={kpi.total_leads_unicos.toLocaleString("es-ES")} color="text-foreground/70" />
                     </div>
                 </div>
             }
@@ -99,7 +99,7 @@ async function WhatsappKpis({
 function HeroStat({ label, value, color }: { label: string; value: string; color: string }) {
     return (
         <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{label}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
             <p className={`text-3xl font-black tracking-tighter leading-none ${color}`}>{value}</p>
         </div>
     );

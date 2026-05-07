@@ -179,12 +179,10 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                 <div className={cn(
                     "flex items-center gap-1 rounded-xl px-1 text-sm font-semibold transition-all duration-200 group",
                     isActive && !hasSubItems
-                        ? "text-primary-foreground shadow-lg shadow-primary/30"
-                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white",
+                        ? "bg-grad-primary text-primary-foreground shadow-lg shadow-primary/30"
+                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
                     depth > 0 && !collapsed && "ml-4"
-                )}
-                style={isActive && !hasSubItems ? { background: 'var(--grad-primary)' } : {}}
-            >
+                )}>
                 {/* Main Link Area (Icon + Label) */}
                     <Link 
                         href={item.href}
@@ -246,16 +244,15 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
             {/* ── DESKTOP Sidebar / MOBILE Drawer ───────────────────────── */}
             <aside
                 className={cn(
-                    "relative hidden md:flex h-screen flex-col border-r border-slate-200 dark:border-white/5 transition-all duration-300",
+                    "relative hidden md:flex h-screen flex-col border-r border-border transition-all duration-300 bg-grad-surface",
                     collapsed ? "w-16" : "w-64",
                     "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:flex max-md:w-72 max-md:shadow-2xl",
                     mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
                     "max-md:transition-transform max-md:duration-300"
                 )}
-                style={{ background: 'var(--grad-surface)' }}
             >
                 {/* Logo */}
-                <div className={cn("flex h-16 md:h-20 items-center justify-between border-b border-sidebar-border transition-all px-4")}>
+                <div className={cn("flex h-16 md:h-20 items-center justify-between border-b border-border transition-all px-4")}>
                     {!collapsed ? (
                         <NextImage src="/logo.png" alt="App Automatiza" width={180} height={36} className="h-9 w-auto object-contain" />
                     ) : (
@@ -268,7 +265,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                     {onMobileClose && (
                         <button 
                             onClick={onMobileClose} 
-                            className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl text-sidebar-foreground/50 hover:bg-sidebar-accent transition-all"
+                            className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl text-muted-foreground/50 hover:bg-card transition-all"
                             title="Cerrar menú"
                             aria-label="Cerrar menú"
                         >
@@ -287,7 +284,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
 
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="hidden md:flex m-3 items-center justify-center rounded-xl py-2.5 text-sidebar-foreground/40 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    className="hidden md:flex m-3 items-center justify-center rounded-xl py-2.5 text-muted-foreground/40 transition hover:bg-card hover:text-foreground"
                     title={collapsed ? "Expandir" : "Colapsar"}
                 >
                     <svg
@@ -300,7 +297,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
             </aside>
 
             {/* ── MOBILE: Bottom Navigation Bar ─────────────────────────── */}
-            <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-sidebar-border dark:border-slate-800 bg-sidebar/95 dark:bg-slate-950/95 backdrop-blur-md px-1 pb-safe">
+            <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md px-1 pb-safe">
                 {[
                     NAV_ITEMS[0], // Informes
                     ...(NAV_ITEMS[0].subItems?.slice(0, 3) || []), // Minutos, WhatsApp, Campañas
@@ -314,7 +311,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                             href={item.href}
                             className={cn(
                                 "flex flex-col items-center gap-0.5 px-2 py-2 min-w-[48px] rounded-xl transition-all",
-                                active ? "text-primary" : "text-sidebar-foreground/40"
+                                active ? "text-primary" : "text-muted-foreground/40"
                             )}
                         >
                             <span className={cn(
