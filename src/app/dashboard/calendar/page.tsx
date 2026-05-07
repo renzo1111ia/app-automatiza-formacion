@@ -108,8 +108,9 @@ export default function CalendarPage() {
     useEffect(() => {
         const loadReminderConfig = async () => {
             const tenant = await getActiveTenantConfig();
-            if (tenant?.config?.scheduling?.reminders) {
-                setReminderConfig(tenant.config.scheduling.reminders as any);
+            const config = (tenant as any)?.config;
+            if (config?.scheduling?.reminders) {
+                setReminderConfig(config.scheduling.reminders);
             }
         };
         void loadReminderConfig();

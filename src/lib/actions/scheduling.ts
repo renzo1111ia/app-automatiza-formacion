@@ -185,8 +185,9 @@ export async function createAppointment(data: {
     // Fetch tenant config for reminders
     let leadTimeMinutes = 60; // Default
     const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
-    if (tenant?.config?.scheduling?.reminders?.enabled) {
-        leadTimeMinutes = tenant.config.scheduling.reminders.lead_time_minutes || 60;
+    const config = (tenant as any)?.config;
+    if (config?.scheduling?.reminders?.enabled) {
+        leadTimeMinutes = config.scheduling.reminders.lead_time_minutes || 60;
     }
 
     // Calculate reminder time
@@ -231,8 +232,9 @@ export async function rescheduleAppointment(appointmentId: string, newDate: stri
     let leadTimeMinutes = 60;
     if (tenantId) {
         const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
-        if (tenant?.config?.scheduling?.reminders?.enabled) {
-            leadTimeMinutes = tenant.config.scheduling.reminders.lead_time_minutes || 60;
+        const config = (tenant as any)?.config;
+        if (config?.scheduling?.reminders?.enabled) {
+            leadTimeMinutes = config.scheduling.reminders.lead_time_minutes || 60;
         }
     }
 
