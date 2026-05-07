@@ -387,6 +387,8 @@ export default function AgentsPage() {
                                                         {isEditing ? (
                                                             <input 
                                                                 autoFocus
+                                                                title="Editar nombre de variable"
+                                                                placeholder="NOMBRE_VARIABLE"
                                                                 value={editingValue}
                                                                 onChange={(e) => setEditingValue(e.target.value.toUpperCase().replace(/\s/g, '_'))}
                                                                 onBlur={() => {
