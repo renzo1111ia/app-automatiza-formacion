@@ -49,9 +49,8 @@ export async function GET() {
 
                 // Skip if reminders are disabled for this tenant
                 if (config && config.enabled === false) {
-                    console.log(`[REMINDER CRON] ⏭️ Reminders disabled for tenant ${apt.tenant_id}. Skipping.`);
                     // Mark as "sent" (skipped) so we don't process it again
-                    await supabase.from("appointments").update({ reminder_sent_at: now } as any).eq("id", apt.id);
+                    await (supabase.from("appointments") as any).update({ reminder_sent_at: now }).eq("id", apt.id);
                     continue;
                 }
 
@@ -112,9 +111,9 @@ export async function GET() {
                 });
 
                 // 4. Mark as sent
-                await supabase
-                    .from("appointments")
-                    .update({ reminder_sent_at: now } as any)
+                await (supabase
+                    .from("appointments") as any)
+                    .update({ reminder_sent_at: now })
                     .eq("id", apt.id);
 
                 results.push({ id: apt.id, status: "SENT", lead: lead.nombre, mode: config?.mode || "manual" });
