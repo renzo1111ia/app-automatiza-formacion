@@ -2,6 +2,42 @@
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
 
+// ─── Interfaces ───────────────────────────────────────────────────
+
+export interface Advisor {
+    id: string;
+    tenant_id: string;
+    name: string;
+    email?: string | null;
+    phone?: string | null;
+    specialty?: string | null;
+    is_active: boolean;
+    created_at: string;
+}
+
+export interface AvailabilitySlot {
+    id: string;
+    advisor_id: string;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+}
+
+export interface Appointment {
+    id: string;
+    tenant_id: string;
+    lead_id: string;
+    advisor_id?: string | null;
+    scheduled_at: string;
+    duration_minutes: number;
+    status: string;
+    notes?: string | null;
+    reminder_scheduled_at?: string | null;
+    reminder_sent_at?: string | null;
+    advisors?: { name: string } | null;
+    lead?: { nombre: string; apellido: string; telefono: string } | null;
+}
+
 interface TenantConfig {
     scheduling?: {
         reminders?: {
@@ -13,6 +49,118 @@ interface TenantConfig {
         }
     }
 }
+
+// ─── Advisors ─────────────────────────────────────────────────────
+
+export async function getAdvisors() {
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return { error: "No hay un cliente seleccionado." };
+
+    const supabase = await getAdminSupabaseClient();
+    const { data, error } = await supabase
+        .from("advisors" as never)
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+    if (error) return { error: error.message };
+    return { success: true, data: data as unknown as Advisor[] };
+}
+
+export async function saveAdvisor(advisor: Partial<Advisor>) {
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return { error: "No hay un cliente seleccionado." };
+
+    const supabase = await getAdminSupabaseClient();
+    const { data, error } = await supabase
+        .from("advisors" as never)
+        .upsert({ ...advisor, tenant_id: tenantId } as never)
+        .select()
+        .single();
+
+    if (error) return { error: error.message };
+    return { success: true, data: data as unknown as Advisor };
+}
+
+export async function deleteAdvisor(id: string) {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await supabase
+        .from("advisors" as never)
+        .delete()
+        .eq("id", id);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+// ─── Availability ─────────────────────────────────────────────────
+
+export async function getAdvisorSlots(advisorId: string) {
+    const supabase = await getAdminSupabaseClient();
+    const { data, error } = await supabase
+        .from("availability_slots" as never)
+        .select("*")
+        .eq("advisor_id", advisorId)
+        .order("day_of_week");
+
+    if (error) return { error: error.message };
+    return { success: true, data: data as unknown as AvailabilitySlot[] };
+}
+
+export async function saveAdvisorSlots(advisorId: string, slots: Partial<AvailabilitySlot>[]) {
+    const supabase = await getAdminSupabaseClient();
+    await supabase.from("availability_slots" as never).delete().eq("advisor_id", advisorId);
+
+    if (slots.length === 0) return { success: true };
+
+    const { error } = await supabase
+        .from("availability_slots" as never)
+        .insert(slots.map(s => ({ ...s, advisor_id: advisorId })) as never);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+// ─── Appointments ─────────────────────────────────────────────────
+
+export async function getAppointments(options?: {
+    from?: string;
+    to?: string;
+    advisorId?: string;
+    status?: string;
+}) {
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return { error: "No hay un cliente seleccionado." };
+
+    const supabase = await getAdminSupabaseClient();
+    let query = supabase
+        .from("appointments" as never)
+        .select("*, advisors(name), lead(nombre, apellido, telefono)")
+        .eq("tenant_id", tenantId)
+        .order("scheduled_at", { ascending: true });
+
+    if (options?.from) query = query.gte("scheduled_at", options.from);
+    if (options?.to) query = query.lte("scheduled_at", options.to);
+    if (options?.advisorId) query = query.eq("advisor_id", options.advisorId);
+    if (options?.status) query = query.eq("status", options.status);
+
+    const { data, error } = await query;
+    if (error) return { error: error.message };
+    return { success: true, data: data as unknown as Appointment[] };
+}
+
+export async function updateAppointmentStatus(appointmentId: string, status: string) {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await supabase
+        .from("appointments" as never)
+        .update({ status, updated_at: new Date().toISOString() } as never)
+        .eq("id", appointmentId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+// ─── Appointment Tools (for AI Agents) ───────────────────────────
 
 export async function createAppointment(data: {
     lead_id: string;
