@@ -51,6 +51,7 @@ export default function AgentsPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState("");
+    const [editingType, setEditingType] = useState("string");
     const [saving, setSaving] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -362,7 +363,17 @@ export default function AgentsPage() {
                                                         if (val) {
                                                             const current = variantA.tracked_variables || [];
                                                             if (!current.includes(val)) {
-                                                                setVariantA(p => ({...p, tracked_variables: [...current, val]}));
+                                                                setVariantA(p => {
+                                                                    const dyn = (p.dynamic_variables && typeof p.dynamic_variables === 'object' && !Array.isArray(p.dynamic_variables)) 
+                                                                        ? { ...p.dynamic_variables as Record<string, string> } 
+                                                                        : {};
+                                                                    dyn[val] = 'string';
+                                                                    return {
+                                                                        ...p, 
+                                                                        tracked_variables: [...current, val],
+                                                                        dynamic_variables: dyn
+                                                                    };
+                                                                });
                                                             }
                                                             input.value = '';
                                                         }
@@ -377,55 +388,101 @@ export default function AgentsPage() {
                                         <div className="flex flex-wrap gap-3 p-8 bg-black/20 border border-white/5 rounded-[32px]">
                                             {(variantA.tracked_variables || ['USER_NAME', 'ID_LEAD', 'USER_COUNTRY', 'USER_PHONE', 'COURSE_NAME', 'QUALIFIED', 'CORRECTO']).map((tag, idx) => {
                                                 const isEditing = editingTag === tag;
+                                                const dynVars = (variantA.dynamic_variables && typeof variantA.dynamic_variables === 'object' && !Array.isArray(variantA.dynamic_variables)) 
+                                                    ? variantA.dynamic_variables as Record<string, string> 
+                                                    : {};
+                                                const currentType = dynVars[tag] || 'string';
+
                                                 return (
                                                     <div key={idx} className={cn(
                                                         "flex items-center gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/20 rounded-xl group hover:border-amber-500/50 transition-all cursor-pointer",
-                                                        isEditing && "ring-2 ring-blue-500/50 border-blue-500/50 bg-blue-500/5"
+                                                        isEditing && "ring-2 ring-blue-500/50 border-blue-500/50 bg-blue-500/5 min-w-[300px]"
                                                     )}>
                                                         <DbIcon className={cn("h-3 w-3", isEditing ? "text-blue-400" : "text-amber-500/40")} />
                                                         
                                                         {isEditing ? (
-                                                            <input 
-                                                                autoFocus
-                                                                title="Editar nombre de variable"
-                                                                placeholder="NOMBRE_VARIABLE"
-                                                                value={editingValue}
-                                                                onChange={(e) => setEditingValue(e.target.value.toUpperCase().replace(/\s/g, '_'))}
-                                                                onBlur={() => {
-                                                                    if (editingValue && editingValue !== tag) {
-                                                                        const newTags = (variantA.tracked_variables || []).map(t => t === tag ? editingValue : t);
-                                                                        setVariantA(p => ({...p, tracked_variables: newTags}));
-                                                                    }
-                                                                    setEditingTag(null);
-                                                                }}
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter') {
-                                                                        if (editingValue && editingValue !== tag) {
-                                                                            const newTags = (variantA.tracked_variables || []).map(t => t === tag ? editingValue : t);
-                                                                            setVariantA(p => ({...p, tracked_variables: newTags}));
-                                                                        }
-                                                                        setEditingTag(null);
-                                                                    }
-                                                                    if (e.key === 'Escape') setEditingTag(null);
-                                                                }}
-                                                                className="bg-transparent border-none outline-none text-xs font-black text-blue-400 tracking-wider w-32"
-                                                            />
+                                                            <div className="flex flex-col gap-2 w-full">
+                                                                <div className="flex items-center gap-2">
+                                                                    <input 
+                                                                        autoFocus
+                                                                        title="Editar nombre de variable"
+                                                                        placeholder="NOMBRE_VARIABLE"
+                                                                        value={editingValue}
+                                                                        onChange={(e) => setEditingValue(e.target.value.toUpperCase().replace(/\s/g, '_'))}
+                                                                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs font-black text-blue-400 tracking-wider flex-1"
+                                                                    />
+                                                                    <select 
+                                                                        title="Tipo de variable"
+                                                                        value={editingType}
+                                                                        onChange={(e) => setEditingType(e.target.value)}
+                                                                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold text-white/60 outline-none"
+                                                                    >
+                                                                        <option value="string">Texto</option>
+                                                                        <option value="number">Número</option>
+                                                                        <option value="boolean">Booleano</option>
+                                                                        <option value="date">Fecha</option>
+                                                                        <option value="email">Email</option>
+                                                                        <option value="phone">Teléfono</option>
+                                                                        <option value="url">URL</option>
+                                                                        <option value="currency">Moneda</option>
+                                                                        <option value="json">JSON</option>
+                                                                        <option value="list">Lista</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <button 
+                                                                        onClick={() => setEditingTag(null)}
+                                                                        className="text-[9px] font-bold text-white/40 hover:text-white"
+                                                                    >
+                                                                        Cancelar
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            if (editingValue) {
+                                                                                const newTags = (variantA.tracked_variables || []).map(t => t === tag ? editingValue : t);
+                                                                                const newDyn = { ...dynVars };
+                                                                                delete newDyn[tag];
+                                                                                newDyn[editingValue] = editingType;
+                                                                                
+                                                                                setVariantA(p => ({
+                                                                                    ...p, 
+                                                                                    tracked_variables: newTags,
+                                                                                    dynamic_variables: newDyn
+                                                                                }));
+                                                                            }
+                                                                            setEditingTag(null);
+                                                                        }}
+                                                                        className="text-[9px] font-bold text-blue-400 hover:text-blue-300 bg-blue-400/10 px-2 py-0.5 rounded"
+                                                                    >
+                                                                        Guardar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         ) : (
                                                             <>
-                                                                <span className="text-xs font-black text-amber-500 tracking-wider">{"{{"}{tag}{"}}"}</span>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-black text-amber-500 tracking-wider">{"{{"}{tag}{"}}"}</span>
+                                                                    <span className="text-[8px] font-bold text-amber-500/40 uppercase tracking-widest">{currentType}</span>
+                                                                </div>
                                                                 <div className="flex items-center gap-1">
                                                                     <button 
                                                                         title={`Editar etiqueta ${tag}`}
                                                                         onClick={() => {
                                                                             setEditingTag(tag);
                                                                             setEditingValue(tag);
+                                                                            setEditingType(currentType);
                                                                         }}
                                                                         className="opacity-0 group-hover:opacity-100 transition-all text-blue-400 hover:text-blue-300 p-1"
                                                                     >
                                                                         <Edit3 className="h-3.5 w-3.5" />
                                                                     </button>
                                                                     <button title={`Eliminar etiqueta ${tag}`}
-                                                                        onClick={() => setVariantA(p => ({...p, tracked_variables: (p.tracked_variables || []).filter(t => t !== tag)}))}
+                                                                        onClick={() => {
+                                                                            const newTags = (variantA.tracked_variables || []).filter(t => t !== tag);
+                                                                            const newDyn = { ...dynVars };
+                                                                            delete newDyn[tag];
+                                                                            setVariantA(p => ({...p, tracked_variables: newTags, dynamic_variables: newDyn}));
+                                                                        }}
                                                                         className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400 p-1"
                                                                     >
                                                                         <X className="h-3.5 w-3.5" />
