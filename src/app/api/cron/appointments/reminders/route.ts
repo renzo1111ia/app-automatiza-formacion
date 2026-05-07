@@ -7,11 +7,26 @@ import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
 
+interface ReminderAppointment {
+    id: string;
+    lead_id: string;
+    advisor_id: string | null;
+    scheduled_at: string;
+    status: string;
+    reminder_scheduled_at: string | null;
+    reminder_sent_at: string | null;
+    tenant_id: string;
+    lead: { id: string; nombre: string | null; apellido: string | null; telefono: string } | null;
+    tenant: { id: string; config: Record<string, any> } | null;
+    advisors: { name: string } | null;
+}
+
 /**
  * APPOINTMENT REMINDER CRON v2
  * Supports custom templates, AI mode, and variables.
  */
 export async function GET() {
+    // We use the service role key to bypass RLS and reach all tenants
     const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!);
     const now = new Date().toISOString();
 
@@ -19,8 +34,9 @@ export async function GET() {
         console.log("[REMINDER CRON] 🕒 Checking for pending reminders...");
 
         // 1. Fetch appointments due for reminder
-        const { data: appts, error: fetchError } = await (supabase
-            .from("appointments") as any)
+        // We cast to unknown first to safely bypass strict DB types if 'appointments' is missing from schema
+        const { data, error: fetchError } = await (supabase
+            .from("appointments" as any)
             .select(`
                 *,
                 lead:leads(id, nombre, apellido, telefono),
@@ -30,27 +46,27 @@ export async function GET() {
             .in("status", ["PENDING", "CONFIRMED"])
             .lte("reminder_scheduled_at", now)
             .is("reminder_sent_at", null)
-            .limit(20);
+            .limit(20) as unknown as { data: ReminderAppointment[] | null; error: any });
 
         if (fetchError) throw fetchError;
         
-        if (!appts || (appts as any[]).length === 0) {
+        if (!data || data.length === 0) {
             return NextResponse.json({ success: true, processed: 0, message: "No reminders due." });
         }
 
         const results = [];
 
-        for (const apt of (appts as any[])) {
+        for (const apt of data) {
             try {
                 const lead = apt.lead;
                 const tenant = apt.tenant;
-                const config = tenant?.config?.scheduling?.reminders;
-                const waConfig = tenant?.config?.whatsapp;
+                const config = (tenant?.config?.scheduling as any)?.reminders;
+                const waConfig = (tenant?.config as any)?.whatsapp;
 
                 // Skip if reminders are disabled for this tenant
                 if (config && config.enabled === false) {
                     // Mark as "sent" (skipped) so we don't process it again
-                    await (supabase.from("appointments") as any).update({ reminder_sent_at: now }).eq("id", apt.id);
+                    await (supabase.from("appointments" as any) as any).update({ reminder_sent_at: now }).eq("id", apt.id);
                     continue;
                 }
 
@@ -72,7 +88,7 @@ export async function GET() {
                     console.log(`[REMINDER CRON] 🤖 Generating AI reminder for ${lead.nombre}`);
                     
                     // We try to find an API key in the tenant config or use env
-                    const apiKey = tenant?.config?.openai?.api_key || process.env.OPENAI_API_KEY;
+                    const apiKey = (tenant?.config as any)?.openai?.api_key || process.env.OPENAI_API_KEY;
                     if (!apiKey) throw new Error("No OpenAI API Key found for AI reminder.");
 
                     const openai = new OpenAI({ apiKey });
@@ -112,7 +128,7 @@ export async function GET() {
 
                 // 4. Mark as sent
                 await (supabase
-                    .from("appointments") as any)
+                    .from("appointments" as any) as any)
                     .update({ reminder_sent_at: now })
                     .eq("id", apt.id);
 
@@ -125,7 +141,7 @@ export async function GET() {
             }
         }
 
-        return NextResponse.json({ success: true, processed: (appts as any[]).length, results });
+        return NextResponse.json({ success: true, processed: data.length, results });
 
     } catch (error) {
         console.error("[REMINDER CRON] 💀 Critical error:", error);
