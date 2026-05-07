@@ -34,6 +34,8 @@ export interface Appointment {
     notes?: string | null;
     reminder_scheduled_at?: string | null;
     reminder_sent_at?: string | null;
+    ab_variant?: string | null;
+    agent_used?: string | null;
     advisors?: { name: string } | null;
     lead?: { nombre: string; apellido: string; telefono: string } | null;
 }
