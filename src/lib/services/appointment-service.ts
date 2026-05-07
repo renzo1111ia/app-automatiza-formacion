@@ -114,7 +114,7 @@ export class AppointmentService {
                 advisor_id: selectedAdvisor?.id || null,
                 scheduled_at: scheduledAt,
                 duration_minutes: 30, // Ensure duration is provided
-                status: "SCHEDULED",
+                status: "PENDING",
                 notes: notes || `Agendado por IA. Programa: ${programName || 'No especificado'}`
             }).select().single();
 
