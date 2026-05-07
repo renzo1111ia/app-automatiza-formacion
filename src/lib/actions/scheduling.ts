@@ -182,9 +182,16 @@ export async function createAppointment(data: {
 
     const supabase = (await getAdminSupabaseClient()) as any;
     
-    // Calculate reminder time (1 hour before by default)
+    // Fetch tenant config for reminders
+    let leadTimeMinutes = 60; // Default
+    const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
+    if (tenant?.config?.scheduling?.reminders?.enabled) {
+        leadTimeMinutes = tenant.config.scheduling.reminders.lead_time_minutes || 60;
+    }
+
+    // Calculate reminder time
     const scheduledDate = new Date(data.scheduled_at);
-    const reminderDate = new Date(scheduledDate.getTime() - 60 * 60000); // 1 hour before
+    const reminderDate = new Date(scheduledDate.getTime() - leadTimeMinutes * 60000);
     
     const { data: res, error } = await supabase
         .from("appointments")
@@ -220,9 +227,18 @@ export async function cancelAppointment(appointmentId: string, reason?: string) 
 export async function rescheduleAppointment(appointmentId: string, newDate: string) {
     const supabase = (await getAdminSupabaseClient()) as any;
     
+    const tenantId = await getActiveTenantId();
+    let leadTimeMinutes = 60;
+    if (tenantId) {
+        const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
+        if (tenant?.config?.scheduling?.reminders?.enabled) {
+            leadTimeMinutes = tenant.config.scheduling.reminders.lead_time_minutes || 60;
+        }
+    }
+
     // Calculate new reminder time
     const scheduledDate = new Date(newDate);
-    const reminderDate = new Date(scheduledDate.getTime() - 60 * 60000);
+    const reminderDate = new Date(scheduledDate.getTime() - leadTimeMinutes * 60000);
 
     const { error } = await supabase
         .from("appointments")

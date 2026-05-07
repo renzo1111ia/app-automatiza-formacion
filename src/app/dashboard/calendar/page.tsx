@@ -16,7 +16,8 @@ import {
     type Advisor, type Appointment
 } from "@/lib/actions/scheduling";
 import { getInboxLeads, type InboxLead } from "@/lib/actions/inbox";
-import { Wrench, Search, CalendarPlus, CalendarX, Terminal, Globe } from "lucide-react";
+import { getActiveTenantConfig, updateTenantConfig } from "@/lib/actions/tenant";
+import { Wrench, Search, CalendarPlus, CalendarX, Terminal, Globe, BellRing, Settings2, Sparkles, MessageSquareQuote } from "lucide-react";
 import { resolveTimezoneFromPhone } from "@/lib/utils/location-client";
 
 const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -31,7 +32,7 @@ const STATUS_CONFIG = {
     NO_SHOW:   { label: "No apareció",color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
 };
 
-type Tab = "agenda" | "advisors" | "slots" | "tools";
+type Tab = "agenda" | "advisors" | "slots" | "tools" | "reminders";
 
 export default function CalendarPage() {
     const [tab, setTab] = useState<Tab>("agenda");
@@ -51,6 +52,13 @@ export default function CalendarPage() {
     const [toolDate, setToolDate] = useState(new Date().toISOString().split('T')[0]);
     const [toolTime, setToolTime] = useState("10:00");
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [reminderConfig, setReminderConfig] = useState({
+        enabled: true,
+        lead_time_minutes: 60,
+        repetitions: 1,
+        mode: "manual" as "manual" | "ai",
+        template: "Hola {nombre}, 👋 te recordamos que tienes una cita programada con un asesor de Esden hoy a las {hora} (hora España). ¡Te esperamos!"
+    });
 
     const loadData = useCallback(async () => {
         const [advisorsRes, aptsRes, leadsRes] = await Promise.all([
@@ -96,6 +104,36 @@ export default function CalendarPage() {
         void init();
         return () => { isMounted = false; };
     }, []);
+
+    useEffect(() => {
+        const loadReminderConfig = async () => {
+            const tenant = await getActiveTenantConfig();
+            if (tenant?.config?.scheduling?.reminders) {
+                setReminderConfig(tenant.config.scheduling.reminders as any);
+            }
+        };
+        void loadReminderConfig();
+    }, []);
+
+    const saveReminderConfig = async () => {
+        const tenant = await getActiveTenantConfig();
+        if (!tenant) return;
+        setSaving(true);
+        try {
+            const res = await updateTenantConfig(tenant.id, {
+                scheduling: {
+                    reminders: reminderConfig
+                }
+            });
+            if (res.success) {
+                alert("Configuración de recordatorios guardada correctamente.");
+            } else {
+                alert("Error al guardar: " + res.error);
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
 
     useEffect(() => {
         if (!selectedAdvisor && advisors.length > 0) {
@@ -221,7 +259,7 @@ export default function CalendarPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {(["agenda", "advisors", "slots", "tools"] as Tab[]).map(t => (
+                    {(["agenda", "advisors", "slots", "reminders", "tools"] as Tab[]).map(t => (
                         <button
                             key={t}
                             onClick={() => setTab(t)}
@@ -231,7 +269,7 @@ export default function CalendarPage() {
                                 tab === t ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "bg-slate-200/50 dark:bg-white/5 text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10"
                             )}
                         >
-                            {t === "agenda" ? "Agenda" : t === "advisors" ? "Asesores" : t === "slots" ? "Horarios" : "Tools"}
+                            {t === "agenda" ? "Agenda" : t === "advisors" ? "Asesores" : t === "slots" ? "Horarios" : t === "reminders" ? "Recordatorios" : "Tools"}
                         </button>
                     ))}
                 </div>
@@ -876,6 +914,164 @@ export default function CalendarPage() {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {/* REMINDERS TAB */}
+                {tab === "reminders" && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                        className="max-w-4xl mx-auto space-y-8 pb-20"
+                    >
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Recordatorios Automáticos</h2>
+                                <p className="text-xs font-bold text-slate-500 dark:text-white/40 uppercase tracking-[0.3em] mt-1">Configuración de avisos vía WhatsApp</p>
+                            </div>
+                            <button 
+                                onClick={saveReminderConfig}
+                                disabled={saving}
+                                className="h-12 px-8 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:scale-[1.02] transition-all flex items-center gap-3 disabled:opacity-50"
+                            >
+                                {saving ? <RotateCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                                Guardar Cambios
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {/* Left Panel: Basic Controls */}
+                            <div className="md:col-span-1 space-y-6">
+                                <div className="p-6 rounded-[32px] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <BellRing className="h-5 w-5 text-primary" />
+                                            <span className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Estado</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => setReminderConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                                            title={reminderConfig.enabled ? "Desactivar recordatorios" : "Activar recordatorios"}
+                                            className={cn(
+                                                "h-8 w-14 rounded-full p-1 transition-all flex items-center",
+                                                reminderConfig.enabled ? "bg-primary" : "bg-slate-200 dark:bg-white/10"
+                                            )}
+                                        >
+                                            <div className={cn("h-6 w-6 rounded-full bg-white shadow-sm transition-all", reminderConfig.enabled ? "translate-x-6" : "translate-x-0")} />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anticipación</label>
+                                            <select 
+                                                value={reminderConfig.lead_time_minutes}
+                                                title="Tiempo de anticipación"
+                                                onChange={(e) => setReminderConfig(prev => ({ ...prev, lead_time_minutes: parseInt(e.target.value) }))}
+                                                className="w-full h-11 px-4 rounded-xl bg-slate-50 dark:bg-black/20 border-none text-xs font-bold focus:ring-2 ring-primary/20"
+                                            >
+                                                <option value={15}>15 minutos antes</option>
+                                                <option value={30}>30 minutos antes</option>
+                                                <option value={60}>1 hora antes</option>
+                                                <option value={120}>2 horas antes</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Repeticiones</label>
+                                            <select 
+                                                value={reminderConfig.repetitions}
+                                                title="Número de repeticiones"
+                                                onChange={(e) => setReminderConfig(prev => ({ ...prev, repetitions: parseInt(e.target.value) }))}
+                                                className="w-full h-11 px-4 rounded-xl bg-slate-50 dark:bg-black/20 border-none text-xs font-bold focus:ring-2 ring-primary/20"
+                                            >
+                                                <option value={1}>1 solo aviso</option>
+                                                <option value={2}>2 avisos</option>
+                                                <option value={3}>3 avisos (Insistente)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Panel: Content Controls */}
+                            <div className="md:col-span-2 space-y-6">
+                                <div className="p-8 rounded-[40px] bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                                            <MessageSquareQuote className="h-5 w-5 text-primary" />
+                                            Contenido del Mensaje
+                                        </h3>
+                                        <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-white/5">
+                                            <button 
+                                                onClick={() => setReminderConfig(prev => ({ ...prev, mode: "manual" }))}
+                                                className={cn("px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", reminderConfig.mode === "manual" ? "bg-white dark:bg-white/10 text-primary shadow-sm" : "text-slate-400")}
+                                            >
+                                                Manual
+                                            </button>
+                                            <button 
+                                                onClick={() => setReminderConfig(prev => ({ ...prev, mode: "ai" }))}
+                                                className={cn("px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", reminderConfig.mode === "ai" ? "bg-white dark:bg-white/10 text-primary shadow-sm" : "text-slate-400")}
+                                            >
+                                                <Sparkles className="h-3 w-3" /> IA Decide
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {reminderConfig.mode === "manual" ? (
+                                        <div className="space-y-4">
+                                            <div className="relative">
+                                                <textarea 
+                                                    value={reminderConfig.template}
+                                                    onChange={(e) => setReminderConfig(prev => ({ ...prev, template: e.target.value }))}
+                                                    className="w-full h-40 p-6 rounded-3xl bg-slate-50 dark:bg-black/20 border-none text-sm font-medium leading-relaxed focus:ring-2 ring-primary/20 custom-scrollbar resize-none"
+                                                    placeholder="Escribe el mensaje aquí..."
+                                                />
+                                                <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                                                    <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">
+                                                        {reminderConfig.template.length} caracteres
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2 self-center">Variables:</span>
+                                                {["{nombre}", "{apellido}", "{hora}", "{asesor}", "{fecha}"].map(v => (
+                                                    <button 
+                                                        key={v}
+                                                        onClick={() => setReminderConfig(prev => ({ ...prev, template: prev.template + " " + v }))}
+                                                        className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold text-slate-600 dark:text-white/40 hover:text-primary transition-all"
+                                                    >
+                                                        {v}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
+                                                <Settings2 className="h-4 w-4 text-amber-500 mt-0.5" />
+                                                <p className="text-[10px] font-bold text-amber-600/80 leading-relaxed uppercase tracking-widest">
+                                                    Nota: El sistema reemplazará automáticamente las variables entre llaves con la información real de la cita.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-12 flex flex-col items-center justify-center text-center space-y-6">
+                                            <div className="h-20 w-20 rounded-[32px] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative">
+                                                <Sparkles className="h-10 w-10 text-primary animate-pulse" />
+                                                <div className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center shadow-lg">
+                                                    <Terminal className="h-3 w-3" />
+                                                </div>
+                                            </div>
+                                            <div className="max-w-sm space-y-2">
+                                                <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Orquestación Inteligente Activa</h4>
+                                                <p className="text-xs font-medium text-slate-500 dark:text-white/40 leading-relaxed">
+                                                    Virginia determinará el mejor mensaje de recordatorio basándose en el historial de chat y el tono de la conversación.
+                                                </p>
+                                            </div>
+                                            <div className="px-6 py-3 rounded-2xl bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-widest border border-primary/10">
+                                                Optimizado para conversión
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                 )}
             </div>
 
