@@ -57,7 +57,7 @@ export default function AgentsPage() {
     
     // Simulator State
     const [simHistory, setSimHistory] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
-    const [simVariables, setSimVariables] = useState<Record<string, any>>({});
+    const [simVariables, setSimVariables] = useState<Record<string, string | number | boolean>>({});
     const [simInput, setSimInput] = useState("");
     const [isSimLoading, setIsSimLoading] = useState(false);
     const [simLogs, setSimLogs] = useState<{status: 'success' | 'pending' | 'error', label: string}[]>([]);
