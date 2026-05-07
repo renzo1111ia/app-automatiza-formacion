@@ -11,6 +11,7 @@ export interface Advisor {
     email?: string | null;
     phone?: string | null;
     specialty?: string | null;
+    countries?: string[] | null;
     is_active: boolean;
     created_at: string;
 }
