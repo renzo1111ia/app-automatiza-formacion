@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Tenant } from "@/types/tenant";
 import { KpiBuilder } from "./KpiBuilder";
 import { IntegrationsManager } from "./IntegrationsManager";
-import { VariableManager } from "./VariableManager";
+import { IntegrationsManager } from "./IntegrationsManager";
 
 export default function SettingsPage() {
     const { setTenant: setActiveTenant } = useTenantStore();
@@ -395,16 +395,6 @@ export default function SettingsPage() {
                                                                     }}
                                                                 />
                                                             </div>
-
-                                                            <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-                                                                <VariableManager 
-                                                                    variables={(editForm.config as Record<string, any>)?.variables || []}
-                                                                    onChange={(variables) => {
-                                                                        const current = (editForm.config as Record<string, any>) || {};
-                                                                        setEditForm({ ...editForm, config: { ...current, variables } });
-                                                                    }}
-                                                                />
-                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -474,16 +464,6 @@ export default function SettingsPage() {
                                                             config={(editForm.config as Record<string, unknown>) || {}}
                                                             onChange={(newConf) => {
                                                                     setEditForm({ ...editForm, config: newConf as any });
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                    <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-inner mt-6">
-                                                        <VariableManager 
-                                                            variables={(editForm.config as Record<string, any>)?.variables || []}
-                                                            onChange={(variables) => {
-                                                                const current = (editForm.config as Record<string, any>) || {};
-                                                                setEditForm({ ...editForm, config: { ...current, variables } });
                                                             }}
                                                         />
                                                     </div>
