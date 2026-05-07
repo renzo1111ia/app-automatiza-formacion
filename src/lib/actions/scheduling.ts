@@ -12,6 +12,11 @@ export interface Advisor {
     phone?: string | null;
     specialty?: string | null;
     countries?: string[] | null;
+    origins?: string[] | null;
+    campaigns?: string[] | null;
+    courses?: string[] | null;
+    handled_lead_types?: string[] | null;
+    specialties?: string[] | null;
     is_active: boolean;
     created_at: string;
 }
