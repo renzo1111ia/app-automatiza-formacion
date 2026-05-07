@@ -257,16 +257,16 @@ export default function AgentsPage() {
                     </div>
                     <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-10 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/5">
                         {agents.map(agent => (
-                            <div key={agent.id} onClick={() => setSelectedAgent(agent)} className={cn("w-full p-5 rounded-[24px] text-left transition-all border group cursor-pointer relative overflow-hidden", selectedAgent?.id === agent.id ? "bg-primary/10 border-primary/20 shadow-xl" : "bg-white dark:bg-white/[0.01] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.03]")}>
+                            <div key={agent.id} onClick={() => setSelectedAgent(agent)} className={cn("w-full p-5 rounded-[24px] text-left transition-all border group cursor-pointer relative overflow-hidden", selectedAgent?.id === agent.id ? "bg-primary/10 border-primary/20 shadow-xl" : "bg-card border-border hover:bg-card/80")}>
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
                                         <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Activo</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Activo</span>
                                     </div>
-                                    <button title="Borrar Agente" onClick={(e) => { e.stopPropagation(); setAgentToDelete(agent); setIsDeleteModalOpen(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"><Trash2 className="h-3.5 w-3.5" /></button>
+                                    <button title="Borrar Agente" onClick={(e) => { e.stopPropagation(); setAgentToDelete(agent); setIsDeleteModalOpen(true); }} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-muted-foreground/20 hover:text-red-500 transition-all"><Trash2 className="h-3.5 w-3.5" /></button>
                                 </div>
-                                <h3 className="font-black text-sm text-white truncate tracking-tight">{agent.name}</h3>
-                                <p className="text-[10px] text-white/20 mt-1 line-clamp-1 font-bold">{agent.description || "Sin descripción"}</p>
+                                <h3 className={cn("font-black text-sm truncate tracking-tight", selectedAgent?.id === agent.id ? "text-primary" : "text-foreground")}>{agent.name}</h3>
+                                <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1 font-bold">{agent.description || "Sin descripción"}</p>
                                 {selectedAgent?.id === agent.id && <motion.div layoutId="activeAgent" className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
                             </div>
                         ))}
@@ -275,7 +275,7 @@ export default function AgentsPage() {
 
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col overflow-hidden bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent">
-                    <div className="flex items-center border-b border-white/5 bg-black/40 px-8 backdrop-blur-md">
+                    <div className="flex items-center border-b border-border bg-card/60 px-8 backdrop-blur-md">
                         <TabButton active={activeTab === 'BRAIN'} onClick={() => setActiveTab('BRAIN')} icon={Brain} label="Cerebro" />
                         <TabButton active={activeTab === 'INACTIVO'} onClick={() => setActiveTab('INACTIVO')} icon={AlarmClock} label="Inactividad" />
                         <TabButton active={activeTab === 'CRM'} onClick={() => setActiveTab('CRM')} icon={DbIcon} label="CRM Sync" />
@@ -296,18 +296,18 @@ export default function AgentsPage() {
                                                 </div>
                                                 <div>
                                                     <h3 className="text-xl font-black uppercase tracking-tight">Cerebro del Agente</h3>
-                                                    <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Selecciona el motor de inteligencia para este maestro</p>
+                                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Selecciona el motor de inteligencia para este maestro</p>
                                                 </div>
                                             </div>
                                             
-                                            <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl">
-                                                <button title="Usar OpenAI como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'OPENAI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'OPENAI' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-white/40 hover:text-white")}>
+                                            <div className="flex p-1 bg-card/40 border border-border rounded-2xl">
+                                                <button title="Usar OpenAI como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'OPENAI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'OPENAI' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-muted-foreground hover:text-foreground")}>
                                                     <Zap className="h-3 w-3" /> OpenAI
                                                 </button>
-                                                <button title="Usar Anthropic como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'ANTHROPIC'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'ANTHROPIC' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-white/40 hover:text-white")}>
+                                                <button title="Usar Anthropic como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'ANTHROPIC'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'ANTHROPIC' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground")}>
                                                     <Brain className="h-3 w-3" /> Claude
                                                 </button>
-                                                <button title="Usar Google Gemini como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'GEMINI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'GEMINI' ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-white/40 hover:text-white")}>
+                                                <button title="Usar Google Gemini como proveedor" onClick={() => setVariantA(p => ({...p, model_provider: 'GEMINI'}))} className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", variantA.model_provider === 'GEMINI' ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-muted-foreground hover:text-foreground")}>
                                                     <Zap className="h-3 w-3" /> Gemini
                                                 </button>
                                             </div>
@@ -342,14 +342,14 @@ export default function AgentsPage() {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 ml-4 flex items-center gap-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-4 flex items-center gap-2">
                                                 <Edit3 className="h-3 w-3" /> O introduce un ID de modelo manual
                                             </label>
                                             <input 
                                                 type="text" 
                                                 value={variantA.model_name || ""} 
                                                 onChange={(e) => setVariantA(p => ({...p, model_name: e.target.value}))}
-                                                className="w-full h-14 bg-black/60 border border-white/10 rounded-2xl px-6 text-sm font-bold text-white/80 focus:border-primary/40 outline-none transition-all"
+                                                className="w-full h-14 bg-card/60 border border-border rounded-2xl px-6 text-sm font-bold text-foreground focus:border-primary/40 outline-none transition-all"
                                                 placeholder="ej: gpt-4.1-mini"
                                             />
                                         </div>
@@ -369,7 +369,7 @@ export default function AgentsPage() {
                                         <textarea 
                                             value={variantA.prompt_text || ""} 
                                             onChange={(e) => setVariantA(p => ({...p, prompt_text: e.target.value}))} 
-                                            className="w-full h-[400px] bg-black/60 border border-white/5 rounded-[40px] p-10 text-base leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-white/80 shadow-2xl backdrop-blur-xl border-t-primary/20" 
+                                            className="w-full h-[400px] bg-card/40 border border-border rounded-[40px] p-10 text-base leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-foreground shadow-2xl backdrop-blur-xl border-t-primary/20" 
                                             placeholder="Eres un agente experto en cualificación de leads..." 
                                         />
                                     </div>
@@ -404,7 +404,7 @@ export default function AgentsPage() {
                                                             }
                                                         }
                                                     }}
-                                                    className="h-11 px-6 bg-white/5 border border-white/10 rounded-xl text-xs font-bold outline-none focus:border-amber-500/40"
+                                                    className="h-11 px-6 bg-card border border-border rounded-xl text-xs font-bold outline-none focus:border-amber-500/40"
                                                 />
                                                 <button title="Añadir nueva etiqueta de memoria"
                                                     onClick={() => {
@@ -435,7 +435,7 @@ export default function AgentsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-wrap gap-3 p-8 bg-black/20 border border-white/5 rounded-[32px]">
+                                        <div className="flex flex-wrap gap-3 p-8 bg-card/20 border border-border rounded-[32px]">
                                             {(variantA.tracked_variables || ['USER_NAME', 'ID_LEAD', 'USER_COUNTRY', 'USER_PHONE', 'COURSE_NAME', 'QUALIFIED', 'CORRECTO']).map((tag, idx) => {
                                                 const isEditing = editingTag === tag;
                                                 const dynVars = (variantA.dynamic_variables && typeof variantA.dynamic_variables === 'object' && !Array.isArray(variantA.dynamic_variables)) 
@@ -465,7 +465,7 @@ export default function AgentsPage() {
                                                                         title="Tipo de variable"
                                                                         value={editingType}
                                                                         onChange={(e) => setEditingType(e.target.value)}
-                                                                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-[10px] font-bold text-white/60 outline-none"
+                                                                        className="bg-card border border-border rounded-lg px-2 py-1 text-[10px] font-bold text-foreground outline-none"
                                                                     >
                                                                         <option value="string">Texto</option>
                                                                         <option value="number">Número</option>
@@ -482,7 +482,7 @@ export default function AgentsPage() {
                                                                 <div className="flex items-center justify-end gap-2">
                                                                     <button 
                                                                         onClick={() => setEditingTag(null)}
-                                                                        className="text-[9px] font-bold text-white/40 hover:text-white"
+                                                                        className="text-[9px] font-bold text-muted-foreground hover:text-foreground"
                                                                     >
                                                                         Cancelar
                                                                     </button>
@@ -544,7 +544,7 @@ export default function AgentsPage() {
                                                 );
                                             })}
                                             {(variantA.tracked_variables || []).length === 0 && (
-                                                <p className="text-[10px] font-black uppercase text-white/10 tracking-[0.3em] py-4">No hay etiquetas de memoria configuradas</p>
+                                                <p className="text-[10px] font-black uppercase text-muted-foreground/20 tracking-[0.3em] py-4">No hay etiquetas de memoria configuradas</p>
                                             )}
                                         </div>
                                     </div>
@@ -570,10 +570,10 @@ export default function AgentsPage() {
                                                 title="API Key del Proveedor"
                                                 value={variantA.api_key || ""} 
                                                 onChange={(e) => setVariantA(p => ({...p, api_key: e.target.value}))}
-                                                className="w-full h-20 bg-black/40 border border-white/10 rounded-[32px] px-10 text-lg tracking-[0.5em] text-primary focus:border-primary/40 outline-none transition-all shadow-2xl"
+                                                className="w-full h-20 bg-card border border-border rounded-[32px] px-10 text-lg tracking-[0.5em] text-primary focus:border-primary/40 outline-none transition-all shadow-2xl"
                                                 placeholder="••••••••••••••••••••••••••••••••••••••••••••••••"
                                             />
-                                            <p className="text-[9px] text-white/20 mt-4 italic ml-4">
+                                            <p className="text-[9px] text-muted-foreground mt-4 italic ml-4">
                                                 * Esta llave se usará exclusivamente para las llamadas procesadas por este agente. Si se deja vacía, se usará la llave global del sistema.
                                             </p>
                                         </div>
@@ -1145,8 +1145,8 @@ export default function AgentsPage() {
 
 function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, onClick: () => void, icon: React.ElementType, label: string }) {
     return (
-        <button title={label} onClick={onClick} className={cn("flex items-center gap-3 px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative group", active ? "text-primary" : "text-white/20 hover:text-white/40")}>
-            <Icon className={cn("h-4 w-4 transition-all", active ? "text-primary scale-110" : "text-white/20")} /> {label}
+        <button title={label} onClick={onClick} className={cn("flex items-center gap-3 px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative group", active ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
+            <Icon className={cn("h-4 w-4 transition-all", active ? "text-primary scale-110" : "text-muted-foreground")} /> {label}
             {active && <motion.div layoutId="tabUnderline" className="absolute bottom-0 left-4 right-4 h-1 bg-primary rounded-t-full shadow-[0_-4px_12px_rgba(var(--primary-rgb),0.5)]" />}
         </button>
     );
