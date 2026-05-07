@@ -210,8 +210,8 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                 </div>
             </div>
 
-            {/* ── SECTION: TELEPHONY ── */}
-            <div className="space-y-6">
+            {/* ── SECTION: TELEPHONY (Hidden for now as per user request) ── */}
+            <div className="space-y-6 hidden">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                     <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center border border-orange-500/20">
