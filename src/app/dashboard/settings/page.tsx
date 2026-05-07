@@ -349,11 +349,8 @@ export default function SettingsPage() {
                                                                             } catch { return ""; } 
                                                                         })()} 
                                                                         onChange={e => { 
-                                                                            try { 
-                                                                                const conf = typeof editForm.config === 'string' ? JSON.parse(editForm.config || '{}') : (editForm.config || {}); 
-                                                                                (conf as Record<string, any>).dashboard_title = e.target.value; 
-                                                                                setEditForm({ ...editForm, config: JSON.stringify(conf, null, 2) as any }); 
-                                                                            } catch { } 
+                                                                            const current = typeof editForm.config === 'string' ? JSON.parse(editForm.config || '{}') : (editForm.config || {});
+                                                                            setEditForm({ ...editForm, config: { ...current, dashboard_title: e.target.value } });
                                                                         }} 
                                                                         className="h-11 bg-white rounded-xl" 
                                                                     />
@@ -368,11 +365,9 @@ export default function SettingsPage() {
                                                                             } catch { return ""; } 
                                                                         })()} 
                                                                         onChange={e => { 
-                                                                            try { 
-                                                                                const conf = typeof editForm.config === 'string' ? JSON.parse(editForm.config || '{}') : (editForm.config || {}); 
-                                                                                (conf as Record<string, any>).headers = e.target.value.split(",").map((s: string) => s.trim()).filter((s: string) => s !== ""); 
-                                                                                setEditForm({ ...editForm, config: JSON.stringify(conf, null, 2) as any }); 
-                                                                            } catch { } 
+                                                                            const current = typeof editForm.config === 'string' ? JSON.parse(editForm.config || '{}') : (editForm.config || {});
+                                                                            const headers = e.target.value.split(",").map((s: string) => s.trim()).filter((s: string) => s !== "");
+                                                                            setEditForm({ ...editForm, config: { ...current, headers } });
                                                                         }} 
                                                                         className="h-11 bg-white rounded-xl" 
                                                                     />
