@@ -214,9 +214,9 @@ export default function AgentsPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white selection:bg-primary/30">
+        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-background text-foreground selection:bg-primary/30 transition-colors duration-500">
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 bg-white/40 dark:bg-white/[0.02] border-b border-slate-200 dark:border-white/5 backdrop-blur-xl relative z-10">
+            <div className="flex items-center justify-between px-8 py-6 bg-card/40 border-b border-border backdrop-blur-xl relative z-10">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
                         <Bot className="h-6 w-6 text-primary" />
@@ -249,7 +249,7 @@ export default function AgentsPage() {
 
             <div className="flex flex-1 overflow-hidden relative">
                 {/* Sidebar */}
-                <div className="w-80 border-r border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-black/40 backdrop-blur-xl flex flex-col">
+                <div className="w-80 border-r border-border bg-card/40 backdrop-blur-xl flex flex-col">
                     <div className="p-6">
                         <button title="Crear nuevo Agente Maestro" onClick={() => setIsCreateModalOpen(true)} className="w-full h-11 border border-dashed border-primary/40 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 transition-all shadow-lg shadow-primary/5">
                             <PlusCircle className="h-4 w-4" /> Nuevo Maestro

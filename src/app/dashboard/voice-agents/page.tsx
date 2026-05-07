@@ -443,16 +443,16 @@ export default function VoiceAgentsPage() {
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-slate-950 text-white selection:bg-purple-500/30">
+        <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-background text-foreground transition-colors duration-500">
             {/* Header Area */}
-            <div className="flex items-center justify-between px-8 py-6 bg-white/[0.02] border-b border-white/5">
+            <div className="flex items-center justify-between px-8 py-6 bg-card/20 border-b border-border">
                 <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
                         <Mic className="h-6 w-6 text-purple-400" />
                     </div>
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight">Gestión de Agentes de Voz</h1>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest leading-none mt-1">Configura Retell AI y Ultravox AI para llamadas inteligentes.</p>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest leading-none mt-1">Configura Retell AI y Ultravox AI para llamadas inteligentes.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export default function VoiceAgentsPage() {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* ── LEFT PANEL: Agents List ── */}
-                <div className="w-80 border-r border-white/5 bg-black/40 flex flex-col">
+                <div className="w-80 border-r border-border bg-card/40 flex flex-col">
                     <div className="p-6 space-y-3">
                         {availableProviders.length === 0 && (
                             <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 mb-4 text-center">
