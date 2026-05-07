@@ -2,70 +2,90 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Key, X, Zap, ShieldCheck, RefreshCw, AlertCircle } from "lucide-react";
+import { X, Zap, ShieldCheck, RefreshCw, Volume2 } from "lucide-react";
 import { syncRetellResources } from "@/lib/actions/retell-sync";
+import { syncUltravoxResources } from "@/lib/actions/ultravox-sync";
 import { updateTenantConfig } from "@/lib/actions/tenant";
 import { cn } from "@/lib/utils";
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
-    currentApiKey: string;
-    tenantId: string;  // passed directly — don't rely on store which may not be initialized
-    onSuccess: (newKey: string) => void;
+    currentRetellKey: string;
+    currentUltravoxKey: string;
+    tenantId: string;
+    onSuccess: (provider: 'retell' | 'ultravox', newKey: string) => void;
 }
 
-export function RetellConfigModal({ isOpen, onClose, currentApiKey, tenantId, onSuccess }: Props) {
-    const [apiKey, setApiKey] = useState(currentApiKey);
+export function VoiceConfigModal({ isOpen, onClose, currentRetellKey, currentUltravoxKey, tenantId, onSuccess }: Props) {
+    const [retellKey, setRetellKey] = useState(currentRetellKey);
+    const [ultravoxKey, setUltravoxKey] = useState(currentUltravoxKey);
     const [isSaving, setIsSaving] = useState(false);
-    const [isTesting, setIsTesting] = useState(false);
-    const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    
+    const [isTestingRetell, setIsTestingRetell] = useState(false);
+    const [retellTestResult, setRetellTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    
+    const [isTestingUltravox, setIsTestingUltravox] = useState(false);
+    const [ultravoxTestResult, setUltravoxTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
-    const handleTestConnection = async () => {
-        if (!apiKey) return;
-        setIsTesting(true);
-        setTestResult(null);
+    const handleTestRetell = async () => {
+        if (!retellKey) return;
+        setIsTestingRetell(true);
+        setRetellTestResult(null);
         try {
-            const res = await syncRetellResources(apiKey);
+            const res = await syncRetellResources(retellKey);
             if (res.success) {
-                setTestResult({ success: true, message: "Conexión exitosa. Se detectaron agentes y números." });
+                setRetellTestResult({ success: true, message: "Conexión con Retell exitosa." });
             } else {
-                setTestResult({ success: false, message: res.error || "Error de autenticación." });
+                setRetellTestResult({ success: false, message: res.error || "Error en Retell." });
             }
         } catch {
-            setTestResult({ success: false, message: "Fallo al conectar con la API de Retell." });
+            setRetellTestResult({ success: false, message: "Fallo al conectar con Retell." });
         } finally {
-            setIsTesting(false);
+            setIsTestingRetell(false);
+        }
+    };
+
+    const handleTestUltravox = async () => {
+        if (!ultravoxKey) return;
+        setIsTestingUltravox(true);
+        setUltravoxTestResult(null);
+        try {
+            const res = await syncUltravoxResources(ultravoxKey);
+            if (res.success) {
+                setUltravoxTestResult({ success: true, message: "Conexión con Ultravox exitosa." });
+            } else {
+                setUltravoxTestResult({ success: false, message: res.error || "Error en Ultravox." });
+            }
+        } catch {
+            setUltravoxTestResult({ success: false, message: "Fallo al conectar con Ultravox." });
+        } finally {
+            setIsTestingUltravox(false);
         }
     };
 
     const handleSave = async () => {
         if (!tenantId) {
-            alert("Error: No se encontró el ID del cliente activo. Asegúrate de haber iniciado sesión y seleccionado un cliente.");
-            console.error("[RetellConfigModal] tenantId is empty — cannot save API key.");
-            return;
-        }
-        if (!apiKey.trim()) {
-            alert("Ingresa un API Key válido antes de guardar.");
+            alert("Error: No se encontró el ID del cliente activo.");
             return;
         }
         setIsSaving(true);
         try {
             const res = await updateTenantConfig(tenantId, {
-                retell: { api_key: apiKey.trim() }
+                retell: { api_key: retellKey.trim() },
+                ultravox: { api_key: ultravoxKey.trim() }
             });
 
             if (res.success) {
-                onSuccess(apiKey.trim());
+                if (retellKey !== currentRetellKey) onSuccess('retell', retellKey.trim());
+                if (ultravoxKey !== currentUltravoxKey) onSuccess('ultravox', ultravoxKey.trim());
                 onClose();
             } else {
                 alert("Error al guardar: " + res.error);
-                console.error("[RetellConfigModal] updateTenantConfig error:", res.error);
             }
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Error desconocido";
-            alert("Error crítico al guardar la configuración: " + message);
-            console.error("[RetellConfigModal] critical error:", err);
+            alert("Error crítico: " + message);
         } finally {
             setIsSaving(false);
         }
@@ -82,86 +102,108 @@ export function RetellConfigModal({ isOpen, onClose, currentApiKey, tenantId, on
                     />
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[32px] p-8 shadow-2xl space-y-6 overflow-hidden"
+                        className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl space-y-8 overflow-hidden"
                     >
-                        {/* Background Ornament */}
                         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                            <Zap className="h-32 w-32 text-purple-500" />
-                        </div>
-
-                        <div className="space-y-2 relative">
-                            <div className="h-12 w-12 bg-purple-500/10 rounded-2xl border border-purple-500/20 flex items-center justify-center mb-4">
-                                <Key className="h-6 w-6 text-purple-400" />
-                            </div>
-                            <h3 className="text-xl font-black uppercase tracking-tight text-white">Configurar Retell AI</h3>
-                            <p className="text-white/40 text-xs font-medium uppercase tracking-widest">Establece tu API Key global para este cliente.</p>
+                            <Volume2 className="h-40 w-40 text-purple-500" />
                         </div>
 
                         <div className="space-y-4 relative">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Retell API Key</label>
-                                {!tenantId && (
-                                    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
-                                        <AlertCircle className="h-3 w-3 flex-shrink-0" />
-                                        <span className="text-[9px] font-bold">No se detectó cliente activo. Selecciona un cliente primero.</span>
-                                    </div>
-                                )}
+                            <div className="h-14 w-14 bg-purple-500/10 rounded-3xl border border-purple-500/20 flex items-center justify-center">
+                                <Zap className="h-8 w-8 text-purple-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black uppercase tracking-tight text-white">Configuración de Voz</h3>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">Conecta tus proveedores de IA para llamadas automáticas.</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8 relative">
+                            {/* Retell Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between px-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Retell AI API Key</label>
+                                    {retellTestResult && (
+                                        <span className={cn("text-[10px] font-bold", retellTestResult.success ? "text-emerald-400" : "text-red-400")}>
+                                            {retellTestResult.success ? "● Online" : "● Error"}
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="relative">
                                     <input 
                                         type="password"
-                                        value={apiKey}
-                                        onChange={(e) => setApiKey(e.target.value)}
+                                        value={retellKey}
+                                        onChange={(e) => setRetellKey(e.target.value)}
                                         className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-mono focus:border-purple-500/40 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all text-white"
                                         placeholder="key_........"
                                     />
-                                    {apiKey && (
+                                    {retellKey && (
                                         <button 
-                                            onClick={handleTestConnection}
-                                            disabled={isTesting}
-                                            className="absolute right-3 top-3 h-8 px-3 rounded-lg bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                                            onClick={handleTestRetell}
+                                            disabled={isTestingRetell}
+                                            className="absolute right-3 top-3 h-8 px-4 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
                                         >
-                                            {isTesting ? <RefreshCw className="h-3 w-3 animate-spin"/> : <ShieldCheck className="h-3 w-3 text-emerald-400" />}
-                                            Probar
+                                            {isTestingRetell ? <RefreshCw className="h-3 w-3 animate-spin"/> : <ShieldCheck className="h-3 w-3 text-emerald-400" />}
+                                            Test
                                         </button>
                                     )}
                                 </div>
                             </div>
 
-                            {testResult && (
-                                <motion.div 
-                                    initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                                    className={cn(
-                                        "p-3 rounded-xl border text-[10px] font-bold flex items-center gap-2",
-                                        testResult.success ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-400"
+                            {/* Ultravox Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between px-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Ultravox API Key</label>
+                                    {ultravoxTestResult && (
+                                        <span className={cn("text-[10px] font-bold", ultravoxTestResult.success ? "text-emerald-400" : "text-red-400")}>
+                                            {ultravoxTestResult.success ? "● Online" : "● Error"}
+                                        </span>
                                     )}
-                                >
-                                    {testResult.message}
-                                </motion.div>
-                            )}
+                                </div>
+                                <div className="relative">
+                                    <input 
+                                        type="password"
+                                        value={ultravoxKey}
+                                        onChange={(e) => setUltravoxKey(e.target.value)}
+                                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-mono focus:border-purple-500/40 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all text-white"
+                                        placeholder="uv_........"
+                                    />
+                                    {ultravoxKey && (
+                                        <button 
+                                            onClick={handleTestUltravox}
+                                            disabled={isTestingUltravox}
+                                            className="absolute right-3 top-3 h-8 px-4 rounded-xl bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                                        >
+                                            {isTestingUltravox ? <RefreshCw className="h-3 w-3 animate-spin"/> : <ShieldCheck className="h-3 w-3 text-emerald-400" />}
+                                            Test
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex gap-3 pt-2 relative">
+                        <div className="flex gap-4 pt-4 relative">
                             <button 
                                 onClick={onClose}
-                                className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white"
+                                className="flex-1 h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 onClick={handleSave}
-                                disabled={isSaving || !apiKey}
-                                className="flex-[2] h-12 rounded-xl bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                                disabled={isSaving}
+                                className="flex-[2] h-14 rounded-2xl bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                             >
-                                {isSaving ? "Guardando..." : "Guardar y Conectar"}
+                                {isSaving ? "Guardando..." : "Guardar Cambios"}
                             </button>
                         </div>
 
                         <button 
                             onClick={onClose}
-                            title="Cerrar modal"
-                            className="absolute top-4 right-4 text-white/20 hover:text-white transition-colors"
+                            title="Cerrar modal de configuración"
+                            className="absolute top-6 right-6 text-white/20 hover:text-white transition-colors"
                         >
-                            <X className="h-5 w-5" />
+                            <X className="h-6 w-6" />
                         </button>
                     </motion.div>
                 </div>
@@ -169,4 +211,6 @@ export function RetellConfigModal({ isOpen, onClose, currentApiKey, tenantId, on
         </AnimatePresence>
     );
 }
+
+
 

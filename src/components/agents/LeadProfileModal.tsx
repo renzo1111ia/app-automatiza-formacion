@@ -87,7 +87,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                         </div>
                         <div>
                             <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Perfil del Lead</h2>
-                            <p className="text-[11px] font-bold text-slate-400 dark:text-white/20 uppercase tracking-[0.3em] mt-1">Gestión y Datos Capturados</p>
+                            <p className="text-[11px] font-bold text-slate-500 dark:text-white/40 uppercase tracking-[0.3em] mt-1">Gestión y Datos Capturados</p>
                         </div>
                     </div>
                     <button 
@@ -180,7 +180,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
 
                             <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-6 space-y-6">
                                 {Object.keys(metadata).length === 0 ? (
-                                    <div className="py-10 text-center space-y-3 opacity-20">
+                                    <div className="py-10 text-center space-y-3 text-slate-400 dark:text-white/20">
                                         <AlertCircle className="h-8 w-8 mx-auto" />
                                         <p className="text-[10px] font-black uppercase tracking-widest">No hay datos adicionales capturados</p>
                                     </div>
@@ -188,7 +188,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                                     Object.entries(metadata).map(([key, value]) => (
                                         <div key={key} className="relative group">
                                             <div className="flex items-center justify-between mb-2 px-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">{key.replace(/_/g, ' ')}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">{key.replace(/_/g, ' ')}</label>
                                                 <button 
                                                     onClick={() => removeMetadataKey(key)}
                                                     title={`Eliminar campo ${key}`}
@@ -226,7 +226,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                 <div className="p-8 md:p-10 border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/40 flex items-center justify-end gap-4">
                     <button 
                         onClick={onClose}
-                        className="h-14 px-8 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
+                        className="h-14 px-8 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
                     >
                         Cancelar
                     </button>
@@ -257,7 +257,7 @@ function SectionHeader({ icon: Icon, title }: { icon: LucideIcon | React.Element
     return (
         <div className="flex items-center gap-3">
             <Icon className="h-4 w-4 text-primary" />
-            <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-white/40">{title}</h3>
+            <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-white/40">{title}</h3>
         </div>
     );
 }
@@ -265,7 +265,7 @@ function SectionHeader({ icon: Icon, title }: { icon: LucideIcon | React.Element
 function InputField({ label, value, onChange, icon: Icon }: { label: string, value: string, onChange: (val: string) => void, icon?: LucideIcon | React.ElementType }) {
     return (
         <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">{label}</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 px-1">{label}</label>
             <div className="relative group">
                 {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 dark:text-white/10 group-focus-within:text-primary transition-colors" />}
                 <input 
@@ -285,7 +285,7 @@ function InputField({ label, value, onChange, icon: Icon }: { label: string, val
 function ReadOnlyField({ label, value, icon: Icon }: { label: string, value: string, icon: LucideIcon | React.ElementType }) {
     return (
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-col gap-1">
-            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20">{label}</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">{label}</span>
             <div className="flex items-center gap-2">
                 <Icon className="h-3 w-3 text-primary/40" />
                 <span className="text-[11px] font-bold text-slate-900 dark:text-white/60 truncate">{value}</span>

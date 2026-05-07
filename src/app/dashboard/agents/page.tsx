@@ -53,6 +53,13 @@ export default function AgentsPage() {
     const [editingValue, setEditingValue] = useState("");
     const [editingType, setEditingType] = useState("string");
     const [saving, setSaving] = useState(false);
+    
+    // Simulator State
+    const [simHistory, setSimHistory] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
+    const [simVariables, setSimVariables] = useState<Record<string, any>>({});
+    const [simInput, setSimInput] = useState("");
+    const [isSimLoading, setIsSimLoading] = useState(false);
+    const [simLogs, setSimLogs] = useState<{status: 'success' | 'pending' | 'error', label: string}[]>([]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -161,6 +168,48 @@ export default function AgentsPage() {
             alert("Error: " + error.message); 
         } 
         finally { setIsSaving(false); }
+    };
+
+    const handleSimSend = async () => {
+        if (!selectedAgent || !simInput.trim() || isSimLoading) return;
+        
+        const userMsg = simInput.trim();
+        setSimInput("");
+        setSimHistory(prev => [...prev, { role: 'user', content: userMsg }]);
+        setIsSimLoading(true);
+        setSimLogs([
+            { status: 'pending', label: 'Procesando mensaje...' },
+            { status: 'success', label: 'ADN del Agente Cargado' }
+        ]);
+
+        try {
+            const res = await testAgentVariables({
+                agentId: selectedAgent.id,
+                message: userMsg,
+                history: simHistory,
+                currentVariables: simVariables
+            });
+
+            if (res.success && res.response) {
+                setSimHistory(prev => [...prev, { role: 'assistant', content: res.response! }]);
+                if (res.extracted && Object.keys(res.extracted).length > 0) {
+                    setSimVariables(prev => ({ ...prev, ...res.extracted }));
+                    setSimLogs(prev => [
+                        ...prev, 
+                        { status: 'success', label: `Datos extraídos: ${Object.keys(res.extracted!).join(', ')}` }
+                    ]);
+                }
+                setSimLogs(prev => prev.map(l => l.label === 'Procesando mensaje...' ? { ...l, status: 'success', label: 'Respuesta generada' } : l));
+            } else {
+                alert("Error en simulador: " + (res.error || "Desconocido"));
+                setSimLogs(prev => prev.map(l => l.label === 'Procesando mensaje...' ? { ...l, status: 'error', label: 'Error en la respuesta' } : l));
+            }
+        } catch (err) {
+            console.error(err);
+            setSimLogs(prev => prev.map(l => l.label === 'Procesando mensaje...' ? { ...l, status: 'error', label: 'Fallo crítico' } : l));
+        } finally {
+            setIsSimLoading(false);
+        }
     };
 
     return (
@@ -947,9 +996,15 @@ export default function AgentsPage() {
                                     <div className="p-6 bg-white/[0.02] border border-white/5 rounded-[24px] space-y-3">
                                         <p className="text-[10px] font-black uppercase text-primary tracking-widest">Orquestación Log:</p>
                                         <div className="space-y-2">
-                                            <LogItem status="success" label="ADN del Agente Cargado" />
-                                            <LogItem status="success" label="Round Robin Activo (2 Asesores)" />
-                                            <LogItem status="pending" label="Esperando Interacción..." />
+                                            {simLogs.length === 0 ? (
+                                                <>
+                                                    <LogItem status="success" label="ADN del Agente Cargado" />
+                                                    <LogItem status="success" label="Round Robin Activo (2 Asesores)" />
+                                                    <LogItem status="pending" label="Esperando Interacción..." />
+                                                </>
+                                            ) : (
+                                                simLogs.map((log, i) => <LogItem key={i} status={log.status} label={log.label} />)
+                                            )}
                                         </div>
                                     </div>
 
@@ -959,13 +1014,70 @@ export default function AgentsPage() {
                                                 ¡Hola! Estoy configurado con tu nuevo ADN. ¿Qué quieres probar primero?
                                             </div>
                                         </div>
+                                        {simHistory.map((msg, i) => (
+                                            <div key={i} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                                                <div className={cn(
+                                                    "max-w-[80%] p-4 rounded-[20px] text-sm shadow-sm",
+                                                    msg.role === 'user' 
+                                                        ? "bg-primary text-primary-foreground rounded-tr-none" 
+                                                        : "bg-white/5 border border-white/10 text-white/80 rounded-tl-none"
+                                                )}>
+                                                    {msg.content}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isSimLoading && (
+                                            <div className="flex justify-start animate-pulse">
+                                                <div className="h-10 w-24 bg-white/5 rounded-[20px] rounded-tl-none border border-white/10 flex items-center justify-center">
+                                                    <div className="flex gap-1">
+                                                        <div className="w-1 h-1 bg-white/40 rounded-full animate-bounce" />
+                                                        <div className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                                                        <div className="w-1 h-1 bg-white/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+                                    
+                                    {Object.keys(simVariables).length > 0 && (
+                                        <div className="mt-8 p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-[24px] space-y-3">
+                                            <p className="text-[9px] font-black uppercase text-emerald-400 tracking-[0.2em]">Memoria Extraída (Facts):</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {Object.entries(simVariables).map(([key, val]) => (
+                                                    <div key={key} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex flex-col">
+                                                        <span className="text-[8px] font-black text-emerald-400/60 uppercase">{key}</span>
+                                                        <span className="text-[10px] font-bold text-emerald-400">{String(val)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="p-8 bg-black/40 border-t border-white/5">
                                     <div className="relative">
-                                        <input title="Mensaje de prueba" type="text" placeholder="Escribe un mensaje de prueba..." className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 pr-16 text-sm outline-none focus:border-primary/40 transition-all" />
-                                        <button title="Enviar mensaje de prueba" className="absolute right-2 top-2 h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20"><Play className="h-4 w-4" /></button>
+                                        <input 
+                                            title="Mensaje de prueba" 
+                                            type="text" 
+                                            placeholder="Escribe un mensaje de prueba..." 
+                                            value={simInput}
+                                            onChange={(e) => setSimInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSimSend()}
+                                            disabled={isSimLoading}
+                                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 pr-16 text-sm outline-none focus:border-primary/40 transition-all disabled:opacity-50" 
+                                        />
+                                        <button 
+                                            title="Enviar mensaje de prueba" 
+                                            onClick={handleSimSend}
+                                            disabled={isSimLoading || !simInput.trim()}
+                                            className="absolute right-2 top-2 h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                                        >
+                                            {isSimLoading ? (
+                                                <RefreshCw className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Play className="h-4 w-4" />
+                                            )}
+                                        </button>
                                     </div>
                                     <p className="text-[9px] text-white/20 mt-4 text-center font-black uppercase tracking-widest">La IA analizará este mensaje usando el ADN actual</p>
                                 </div>

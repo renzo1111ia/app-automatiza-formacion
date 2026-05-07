@@ -19,7 +19,7 @@ import { syncRetellResources, getRetellAgent, updateRetellAgentPrompt, updateRet
 import { syncUltravoxResources, listUltravoxAgents, getUltravoxCallTranscript, createUltravoxAgent, updateUltravoxAgent, listUltravoxCalls } from "@/lib/actions/ultravox-sync";
 import { getActiveTenantConfig } from "@/lib/actions/tenant";
 import { VoiceAgent, VoiceAgentVariant } from "@/types/database";
-import { RetellConfigModal } from "./RetellConfigModal";
+import { VoiceConfigModal } from "./RetellConfigModal";
 
 interface CallLog {
     callId: string;
@@ -239,42 +239,47 @@ export default function VoiceAgentsPage() {
     const [availableProviders, setAvailableProviders] = useState<string[]>([]);
     const [ultravoxApiKey, setUltravoxApiKey] = useState("");
 
+    const refreshConfiguration = async () => {
+        const tenant = await getActiveTenantConfig();
+        if (!tenant) return;
+        
+        setTenantId(tenant.id);
+        const config = (tenant.config as any) || {};
+        
+        const rKey = config.retell?.api_key || "";
+        const uKey = config.ultravox?.api_key || "";
+        
+        const providers: string[] = [];
+        if (rKey) {
+            providers.push("RETELL");
+            setRetellApiKey(rKey);
+            handleSyncRetellResources(rKey);
+        } else {
+            setRetellApiKey("");
+        }
+        
+        if (uKey) {
+            providers.push("ULTRAVOX");
+            setUltravoxApiKey(uKey);
+            handleSyncUltravoxResources(uKey);
+        } else {
+            setUltravoxApiKey("");
+        }
+        
+        setAvailableProviders(providers);
+        
+        if (providers.length === 1) {
+            setEditingAgentData(prev => ({ ...prev, provider: providers[0] as VoiceAgent["provider"] }));
+        }
+
+        if (tenant.id) {
+            loadAgents(tenant.id);
+        }
+    };
+
     // Load Retell/Ultravox API Key and tenant ID on mount — auto-sync if keys exist
     useEffect(() => {
-        async function fetchConfig() {
-            const tenant = await getActiveTenantConfig();
-            if (!tenant) return;
-            
-            setTenantId(tenant.id);
-            const config = (tenant.config as any) || {};
-            
-            const rKey = config.retell?.api_key || "";
-            const uKey = config.ultravox?.api_key || "";
-            
-            const providers: string[] = [];
-            if (rKey) {
-                providers.push("RETELL");
-                setRetellApiKey(rKey);
-                handleSyncRetellResources(rKey);
-            }
-            if (uKey) {
-                providers.push("ULTRAVOX");
-                setUltravoxApiKey(uKey);
-                handleSyncUltravoxResources(uKey);
-            }
-            
-            setAvailableProviders(providers);
-            
-            // Set default provider for new agents if only one is available
-            if (providers.length === 1) {
-                setEditingAgentData(prev => ({ ...prev, provider: providers[0] as VoiceAgent["provider"] }));
-            }
-
-            if (tenant.id) {
-                loadAgents(tenant.id);
-            }
-        }
-        fetchConfig();
+        refreshConfiguration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -456,19 +461,23 @@ export default function VoiceAgentsPage() {
                         onClick={() => setIsConfigModalOpen(true)}
                         className={cn(
                             "flex items-center gap-2 px-3 h-11 rounded-xl border transition-all cursor-pointer group",
-                            retellApiKey 
+                            (retellApiKey || ultravoxApiKey)
                                 ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10" 
                                 : "bg-red-500/5 border-red-500/20 text-red-400 hover:bg-red-500/10"
                         )}
-                        title="Configurar Conexión API"
+                        title="Configurar Conexión API (Retell / Ultravox)"
                     >
-                        <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", retellApiKey ? "bg-emerald-500" : "bg-red-500")} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{retellApiKey ? "Retell Conectado" : "Configurar API"}</span>
+                        <div className={cn("h-1.5 w-1.5 rounded-full animate-pulse", (retellApiKey || ultravoxApiKey) ? "bg-emerald-500" : "bg-red-500")} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            {retellApiKey && ultravoxApiKey ? "Retell & Ultravox OK" : 
+                             retellApiKey ? "Retell Conectado" : 
+                             ultravoxApiKey ? "Ultravox Conectado" : "Configurar API"}
+                        </span>
                         <Settings2 className="h-3 w-3 ml-1 text-white/20 group-hover:text-white transition-colors" />
                     </div>
 
                     <button 
-                        onClick={() => loadAgents()} 
+                        onClick={() => refreshConfiguration()} 
                         title="Recargar agentes"
                         aria-label="Recargar agentes"
                         className="h-11 w-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all font-bold"
@@ -1143,16 +1152,20 @@ export default function VoiceAgentsPage() {
                 )}
             </AnimatePresence>
 
-            <RetellConfigModal 
+            <VoiceConfigModal 
                 isOpen={isConfigModalOpen}
                 onClose={() => setIsConfigModalOpen(false)}
-                currentApiKey={retellApiKey}
+                currentRetellKey={retellApiKey}
+                currentUltravoxKey={ultravoxApiKey}
                 tenantId={tenantId}
-                onSuccess={(newKey) => {
-                    setRetellApiKey(newKey);
-                    // Pass newKey directly — state update is async so retellApiKey
-                    // may still be empty when handleSyncRetellResources runs
-                    handleSyncRetellResources(newKey);
+                onSuccess={(provider, newKey) => {
+                    if (provider === 'retell') {
+                        setRetellApiKey(newKey);
+                        handleSyncRetellResources(newKey);
+                    } else {
+                        setUltravoxApiKey(newKey);
+                        handleSyncUltravoxResources(newKey);
+                    }
                 }}
             />
         </div>
