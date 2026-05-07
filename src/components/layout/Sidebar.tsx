@@ -179,11 +179,13 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
                 <div className={cn(
                     "flex items-center gap-1 rounded-xl px-1 text-sm font-semibold transition-all duration-200 group",
                     isActive && !hasSubItems
-                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        ? "text-primary-foreground shadow-lg shadow-primary/30"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white",
                     depth > 0 && !collapsed && "ml-4"
-                )}>
-                    {/* Main Link Area (Icon + Label) */}
+                )}
+                style={isActive && !hasSubItems ? { background: 'var(--grad-primary)' } : {}}
+            >
+                {/* Main Link Area (Icon + Label) */}
                     <Link 
                         href={item.href}
                         className="flex flex-1 items-center gap-3 px-2 py-2.5 outline-none"
@@ -244,12 +246,13 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
             {/* ── DESKTOP Sidebar / MOBILE Drawer ───────────────────────── */}
             <aside
                 className={cn(
-                    "relative hidden md:flex h-screen flex-col border-r border-sidebar-border dark:border-slate-800 bg-sidebar dark:bg-slate-950 transition-all duration-300",
+                    "relative hidden md:flex h-screen flex-col border-r border-slate-200 dark:border-white/5 transition-all duration-300",
                     collapsed ? "w-16" : "w-64",
                     "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:flex max-md:w-72 max-md:shadow-2xl",
                     mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
                     "max-md:transition-transform max-md:duration-300"
                 )}
+                style={{ background: 'var(--grad-surface)' }}
             >
                 {/* Logo */}
                 <div className={cn("flex h-16 md:h-20 items-center justify-between border-b border-sidebar-border transition-all px-4")}>

@@ -2,7 +2,7 @@
 
 import { useTenantStore } from "@/store/tenant";
 import { logoutAction } from "@/lib/actions/auth";
-import { Menu, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface TopbarProps {
@@ -24,7 +24,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
     }
 
     return (
-        <header className="flex h-14 md:h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 px-4 md:px-6 backdrop-blur-md shrink-0">
+        <header className="flex h-14 md:h-16 items-center justify-between border-b border-border bg-card/80 px-4 md:px-6 backdrop-blur-md shrink-0 transition-all duration-500">
             {/* Left: Hamburger (mobile) + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile menu button */}

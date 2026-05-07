@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "dark" | "light" | "system";
+export type Theme = "dark" | "light" | "system" | "aqua" | "esmeralda" | "space";
 
 interface ThemeProviderProps {
     children: React.ReactNode;
@@ -36,6 +36,7 @@ export function ThemeProvider({
         const root = window.document.documentElement;
 
         root.classList.remove("light", "dark");
+        root.removeAttribute("data-theme");
 
         if (theme === "system") {
             const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
@@ -47,7 +48,14 @@ export function ThemeProvider({
             return;
         }
 
-        root.classList.add(theme);
+        // Apply theme attribute
+        if (["aqua", "esmeralda", "space"].includes(theme)) {
+            root.setAttribute("data-theme", theme);
+            // Treat space as dark mode, others as light for base tailwind utilities
+            root.classList.add(theme === "space" ? "dark" : "light");
+        } else {
+            root.classList.add(theme);
+        }
     }, [theme]);
 
     const value = {

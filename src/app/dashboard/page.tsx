@@ -131,14 +131,14 @@ async function FunnelSection({
     return (
         <div className="mt-8 mb-8">
             <div className="flex items-center gap-4 mb-8">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-[20px]">
-                    <Filter className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <div className="bg-primary/10 p-3 rounded-[20px]">
+                    <Filter className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                    <h2 className="text-[32px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-                        Embudo de{' '}<span className="text-blue-600 dark:text-blue-400">Conversi&#xF3;n</span>
+                    <h2 className="text-[32px] font-bold text-foreground tracking-tight leading-tight">
+                        Embudo de{' '}<span className="text-primary">Conversi&#xF3;n</span>
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-[15px]">Tasa de conversi&#xF3;n y progreso por etapa</p>
+                    <p className="text-muted-foreground font-medium text-[15px]">Tasa de conversi&#xF3;n y progreso por etapa</p>
                 </div>
             </div>
             <SummaryManager
