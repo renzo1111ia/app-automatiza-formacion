@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { Tenant } from "@/types/tenant";
 import { KpiBuilder } from "./KpiBuilder";
 import { IntegrationsManager } from "./IntegrationsManager";
-import { IntegrationsManager } from "./IntegrationsManager";
 
 export default function SettingsPage() {
     const { setTenant: setActiveTenant } = useTenantStore();
