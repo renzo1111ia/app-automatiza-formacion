@@ -24,7 +24,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
     }
 
     return (
-        <header className="flex h-14 md:h-16 items-center justify-between border-b border-border bg-card/80 px-4 md:px-6 backdrop-blur-md shrink-0 transition-all duration-500">
+        <header className="relative z-[50] flex h-14 md:h-16 items-center justify-between border-b border-border bg-card/80 px-4 md:px-6 backdrop-blur-md shrink-0 transition-all duration-500">
             {/* Left: Hamburger (mobile) + Title */}
             <div className="flex items-center gap-3">
                 {/* Mobile menu button */}
