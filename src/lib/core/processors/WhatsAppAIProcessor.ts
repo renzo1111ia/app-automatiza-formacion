@@ -119,6 +119,10 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // Add implicit context about timezones
         const timezoneContext = `
+[FECHA Y HORA ACTUAL]
+Hoy es: ${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+Hora actual en España: ${new Date().toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })}
+
 [CONTEXTO TEMPORAL]
 Zona Horaria del Sistema: ${TZ} (España).
 País del Lead: ${variableMap.pais}.
