@@ -181,13 +181,19 @@ export async function createAppointment(data: {
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
     const supabase = (await getAdminSupabaseClient()) as any;
+    
+    // Calculate reminder time (1 hour before by default)
+    const scheduledDate = new Date(data.scheduled_at);
+    const reminderDate = new Date(scheduledDate.getTime() - 60 * 60000); // 1 hour before
+    
     const { data: res, error } = await supabase
         .from("appointments")
         .insert({
             ...data,
             tenant_id: tenantId,
             duration_minutes: data.duration_minutes || 30,
-            status: data.status || "PENDING"
+            status: data.status || "PENDING",
+            reminder_scheduled_at: reminderDate.toISOString()
         })
         .select()
         .single();
@@ -213,10 +219,16 @@ export async function cancelAppointment(appointmentId: string, reason?: string) 
 
 export async function rescheduleAppointment(appointmentId: string, newDate: string) {
     const supabase = (await getAdminSupabaseClient()) as any;
+    
+    // Calculate new reminder time
+    const scheduledDate = new Date(newDate);
+    const reminderDate = new Date(scheduledDate.getTime() - 60 * 60000);
+
     const { error } = await supabase
         .from("appointments")
         .update({ 
             scheduled_at: newDate,
+            reminder_scheduled_at: reminderDate.toISOString(),
             status: "PENDING", // Back to pending if rescheduled
             updated_at: new Date().toISOString() 
         })
