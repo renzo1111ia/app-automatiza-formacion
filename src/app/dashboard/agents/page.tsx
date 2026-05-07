@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAIAgents, getAgentVariants, saveAgentVariant, saveAIAgent, deleteAIAgent } from "@/lib/actions/agents";
 import { getKnowledgeBase } from "@/lib/actions/knowledge";
+import { testAgentVariables } from "@/lib/actions/simulator";
 import type { AIAgent, AIAgentVariant, KnowledgeItem } from "@/types/database";
 
 interface AIAgentCRMConfig {
