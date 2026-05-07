@@ -15,7 +15,8 @@ import {
     type Advisor, type Appointment
 } from "@/lib/actions/scheduling";
 import { getInboxLeads, type InboxLead } from "@/lib/actions/inbox";
-import { Wrench, Search, CalendarPlus, CalendarRange, CalendarX, Terminal } from "lucide-react";
+import { Wrench, Search, CalendarPlus, CalendarX, Terminal, Globe } from "lucide-react";
+import { resolveTimezoneFromPhone } from "@/lib/utils/location-client";
 
 const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const DAYS_FULL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -241,17 +242,17 @@ export default function CalendarPage() {
                     <div className="space-y-6">
                         {/* Week Navigator */}
                         <div className="flex items-center justify-between">
-                            <button onClick={() => setWeekOffset(w => w - 1)} title="Semana anterior" className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                            <button onClick={() => setWeekOffset(w => w - 1)} title="Semana anterior" className="h-9 w-9 rounded-xl bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/60">
+                            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-white/60">
                                 {weekDays[0].toLocaleDateString("es-ES", { day: "numeric", month: "long" })}
                                 {" — "}
                                 {weekDays[6].toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
                             </h2>
-                        <div className="flex gap-2">
-                                <button onClick={() => setWeekOffset(0)} title="Semana actual" className="h-9 px-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white/40">Hoy</button>
-                                <button onClick={() => setWeekOffset(w => w + 1)} title="Semana siguiente" className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                            <div className="flex gap-2">
+                                <button onClick={() => setWeekOffset(0)} title="Semana actual" className="h-9 px-3 rounded-xl bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40">Hoy</button>
+                                <button onClick={() => setWeekOffset(w => w + 1)} title="Semana siguiente" className="h-9 w-9 rounded-xl bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
                                     <ChevronRight className="h-4 w-4" />
                                 </button>
                             </div>
@@ -263,29 +264,33 @@ export default function CalendarPage() {
                                 const dayApts = getAppointmentsForDay(day);
                                 const isToday = day.toDateString() === new Date().toDateString();
                                 
-                                // Group by time to detect overlaps visually
+                                // Group by time to detect overlaps visually (Using Spain Time as primary)
                                 const timeGroups: Record<string, Appointment[]> = {};
                                 dayApts.forEach(apt => {
-                                    const time = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-                                    if (!timeGroups[time]) timeGroups[time] = [];
-                                    timeGroups[time].push(apt);
+                                    const spainTime = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
+                                        hour: "2-digit", 
+                                        minute: "2-digit", 
+                                        timeZone: "Europe/Madrid" 
+                                    });
+                                    if (!timeGroups[spainTime]) timeGroups[spainTime] = [];
+                                    timeGroups[spainTime].push(apt);
                                 });
 
                                 return (
                                     <div key={i} className={cn(
                                         "rounded-2xl border p-4 space-y-2 min-h-[160px]",
-                                        isToday ? "border-primary/30 bg-primary/5" : "border-white/5 bg-white/[0.02]"
+                                        isToday ? "border-primary/30 bg-primary/5" : "border-slate-200 dark:border-white/5 bg-slate-100/50 dark:bg-white/[0.02]"
                                     )}>
                                         <div className="text-center mb-3">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/30">
                                                 {day.toLocaleDateString("es-ES", { weekday: 'short' })}
                                             </p>
-                                            <p className={cn("text-xl font-black", isToday ? "text-primary" : "text-white/70")}>
+                                            <p className={cn("text-xl font-black", isToday ? "text-primary" : "text-slate-800 dark:text-white/70")}>
                                                 {day.getDate()}
                                             </p>
                                         </div>
                                         {dayApts.length === 0 && (
-                                            <p className="text-[9px] text-white/10 text-center">Sin citas</p>
+                                            <p className="text-[9px] text-slate-300 dark:text-white/10 text-center">Sin citas</p>
                                         )}
                                         {Object.entries(timeGroups).map(([time, apts]) => {
                                             const hasOverlap = apts.length > 1;
@@ -302,8 +307,18 @@ export default function CalendarPage() {
                                                                 ! CONFLICTO
                                                             </div>
                                                         )}
-                                                        <div className="font-black">{time}</div>
-                                                        <div className="truncate opacity-80">{apt.lead?.nombre} {apt.lead?.apellido}</div>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="font-black">{time} <span className="opacity-40 font-bold ml-1 text-[7px]">ES</span></div>
+                                                            <div className="text-[7px] opacity-70 flex items-center gap-0.5">
+                                                                <Globe className="h-2 w-2" />
+                                                                {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
+                                                                    hour: "2-digit", 
+                                                                    minute: "2-digit", 
+                                                                    timeZone: resolveTimezoneFromPhone(apt.lead?.telefono)
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                        <div className="truncate opacity-80 mt-0.5">{apt.lead?.nombre} {apt.lead?.apellido}</div>
                                                         <div className="opacity-60">{apt.advisors?.name || "Sin asignar"}</div>
                                                     </div>
                                                 );
@@ -315,14 +330,14 @@ export default function CalendarPage() {
                         </div>
 
                         {/* Appointment List */}
-                        <div className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
-                            <div className="px-6 py-4 border-b border-white/5 flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-white/30" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Todas las Citas</span>
-                                <span className="ml-auto text-[9px] text-white/20 font-bold">{appointments.length} registros</span>
+                        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-slate-400 dark:text-white/30" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">Todas las Citas</span>
+                                <span className="ml-auto text-[9px] text-slate-300 dark:text-white/20 font-bold">{appointments.length} registros</span>
                             </div>
                             {appointments.length === 0 ? (
-                                <div className="py-16 text-center text-white/20">
+                                <div className="py-16 text-center text-slate-400 dark:text-white/20">
                                     <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
                                     <p className="text-xs font-bold uppercase tracking-widest">Sin citas programadas</p>
                                     <p className="text-[10px] mt-1 opacity-60">Las citas se crean automáticamente cuando el orquestador cualifica un lead.</p>
@@ -332,20 +347,39 @@ export default function CalendarPage() {
                                     {appointments.slice(0, 20).map(apt => {
                                         const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
                                         return (
-                                            <div key={apt.id} className="px-6 py-4 flex items-center gap-6 hover:bg-white/[0.02] transition-all">
-                                                <div className="w-40 flex-shrink-0">
-                                                    <p className="text-xs font-bold">
-                                                        {new Date(apt.scheduled_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                                            <div key={apt.id} className="px-6 py-4 flex items-center gap-6 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+                                                <div className="w-48 flex-shrink-0">
+                                                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                                        {new Date(apt.scheduled_at).toLocaleDateString("es-ES", { 
+                                                            day: "numeric", 
+                                                            month: "short",
+                                                            timeZone: "Europe/Madrid"
+                                                        })}
                                                     </p>
-                                                    <p className="text-[10px] text-white/40">
-                                                        {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <p className="text-[10px] font-black text-primary">
+                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
+                                                                hour: "2-digit", 
+                                                                minute: "2-digit", 
+                                                                timeZone: "Europe/Madrid" 
+                                                            })} ES
+                                                        </p>
+                                                        <div className="h-3 w-[1px] bg-slate-200 dark:bg-white/10" />
+                                                        <p className="text-[10px] text-slate-500 dark:text-white/40 flex items-center gap-1">
+                                                            <Globe className="h-2.5 w-2.5" />
+                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
+                                                                hour: "2-digit", 
+                                                                minute: "2-digit", 
+                                                                timeZone: resolveTimezoneFromPhone(apt.lead?.telefono)
+                                                            })} Local
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-bold">{apt.lead?.nombre} {apt.lead?.apellido}</p>
-                                                    <p className="text-[10px] text-white/40">{apt.lead?.telefono}</p>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{apt.lead?.nombre} {apt.lead?.apellido}</p>
+                                                    <p className="text-[10px] text-slate-500 dark:text-white/40">{apt.lead?.telefono}</p>
                                                 </div>
-                                                <div className="text-xs text-white/60 font-medium w-32">{apt.advisors?.name || "Sin asignar"}</div>
+                                                <div className="text-xs text-slate-600 dark:text-white/60 font-medium w-32">{apt.advisors?.name || "Sin asignar"}</div>
                                                 {apt.ab_variant && (
                                                     <span className="text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-lg font-black">
                                                         {apt.ab_variant === "A" ? "🤖 Agente A" : "🤖 Agente B"}
@@ -379,7 +413,7 @@ export default function CalendarPage() {
                 {tab === "advisors" && (
                     <div className="max-w-3xl mx-auto space-y-6">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/40">Equipo de Asesores</h2>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-white/40">Equipo de Asesores</h2>
                             <button
                                 onClick={() => setEditingAdvisor({ name: "", email: "", phone: "", is_active: true })}
                                 className="flex items-center gap-2 h-9 px-4 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all"
@@ -500,27 +534,27 @@ export default function CalendarPage() {
                         {/* Advisors List */}
                         <div className="space-y-3">
                             {advisors.length === 0 && (
-                                <div className="py-20 text-center text-white/20">
+                                <div className="py-20 text-center text-slate-400 dark:text-white/20">
                                     <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
                                     <p className="text-xs font-bold uppercase tracking-widest">Sin asesores configurados</p>
                                     <p className="text-[10px] mt-1 opacity-60">Añade asesores para que el Round Robin pueda asignarles leads.</p>
                                 </div>
                             )}
                             {advisors.map(advisor => (
-                                <div key={advisor.id} className="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.03] transition-all">
+                                <div key={advisor.id} className="flex items-center gap-4 p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all">
                                     <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm flex-shrink-0">
                                         {advisor.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold">{advisor.name}</p>
-                                            <span className={cn("text-[8px] px-2 py-0.5 rounded-full font-black uppercase", advisor.is_active ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-white/20")}>
+                                            <p className="font-bold text-slate-900 dark:text-white">{advisor.name}</p>
+                                            <span className={cn("text-[8px] px-2 py-0.5 rounded-full font-black uppercase", advisor.is_active ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-200 dark:bg-white/5 text-slate-500 dark:text-white/20")}>
                                                 {advisor.is_active ? "Activo" : "Inactivo"}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-4 mt-0.5">
-                                            {advisor.email && <span className="text-[10px] text-white/30 flex items-center gap-1"><Mail className="h-3 w-3" />{advisor.email}</span>}
-                                            {advisor.phone && <span className="text-[10px] text-white/30 flex items-center gap-1"><Phone className="h-3 w-3" />{advisor.phone}</span>}
+                                            {advisor.email && <span className="text-[10px] text-slate-500 dark:text-white/30 flex items-center gap-1"><Mail className="h-3 w-3" />{advisor.email}</span>}
+                                            {advisor.phone && <span className="text-[10px] text-slate-500 dark:text-white/30 flex items-center gap-1"><Phone className="h-3 w-3" />{advisor.phone}</span>}
                                         </div>
                                         {(advisor.countries?.length || 0) + (advisor.origins?.length || 0) + (advisor.campaigns?.length || 0) + (advisor.courses?.length || 0) > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
@@ -532,11 +566,11 @@ export default function CalendarPage() {
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <button onClick={() => { setSelectedAdvisor(advisor); setTab("slots"); }} title="Editar horarios" className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
-                                            <Clock className="h-3.5 w-3.5 text-white/40" />
+                                        <button onClick={() => { setSelectedAdvisor(advisor); setTab("slots"); }} title="Editar horarios" className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                            <Clock className="h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
                                         </button>
-                                        <button onClick={() => setEditingAdvisor(advisor)} title="Editar asesor" className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
-                                            <Pencil className="h-3.5 w-3.5 text-white/40" />
+                                        <button onClick={() => setEditingAdvisor(advisor)} title="Editar asesor" className="h-8 w-8 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-white/10 transition-all">
+                                            <Pencil className="h-3.5 w-3.5 text-slate-400 dark:text-white/40" />
                                         </button>
                                         <button onClick={() => { deleteAdvisor(advisor.id); loadData(); }} title="Eliminar asesor" className="h-8 w-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center hover:bg-red-500/20 transition-all">
                                             <Trash2 className="h-3.5 w-3.5 text-red-400" />
@@ -552,8 +586,8 @@ export default function CalendarPage() {
                 {tab === "slots" && (
                     <div className="max-w-2xl mx-auto space-y-6">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-sm font-black uppercase tracking-widest text-white/40">Disponibilidad Semanal</h2>
-                            <button onClick={() => setTab("advisors")} title="Volver" className="flex items-center gap-2 h-9 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white/40">
+                            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-white/40">Disponibilidad Semanal</h2>
+                            <button onClick={() => setTab("advisors")} title="Volver" className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40">
                                 <ChevronLeft className="h-3.5 w-3.5" /> Asesores
                             </button>
                         </div>
@@ -567,7 +601,7 @@ export default function CalendarPage() {
                                     title={a.name}
                                     className={cn(
                                         "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                                        selectedAdvisor?.id === a.id ? "bg-primary text-primary-foreground border-primary" : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
+                                        selectedAdvisor?.id === a.id ? "bg-primary text-primary-foreground border-primary" : "bg-slate-200/50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10"
                                     )}
                                 >
                                     {a.name}
@@ -576,7 +610,7 @@ export default function CalendarPage() {
                         </div>
 
                         {selectedAdvisor && (
-                            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-6">
+                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-8 space-y-6">
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-7 gap-3">
                                         {DAYS_FULL.map((dayLabel, i) => {
@@ -596,11 +630,11 @@ export default function CalendarPage() {
                                                     title={`Toggle ${dayLabel}`}
                                                     className={cn(
                                                         "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
-                                                        isActive ? "bg-primary/10 border-primary/30 text-primary" : "bg-white/[0.02] border-white/5 text-white/20 hover:text-white/40"
+                                                        isActive ? "bg-primary/10 border-primary/30 text-primary" : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 text-slate-400 dark:text-white/20 hover:text-slate-500 dark:hover:text-white/40"
                                                     )}
                                                 >
                                                     <span className="text-[9px] font-black uppercase tracking-widest">{DAYS[i]}</span>
-                                                    <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", isActive ? "bg-primary border-primary" : "border-white/10")}>
+                                                    <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", isActive ? "bg-primary border-primary" : "border-slate-200 dark:border-white/10")}>
                                                         {isActive && <Check className="h-3 w-3 text-primary-foreground" />}
                                                     </div>
                                                 </button>
@@ -610,7 +644,7 @@ export default function CalendarPage() {
 
                                     {/* Time configuration for active days */}
                                     <div className="space-y-3">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-1">Horarios por Día</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">Horarios por Día</p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {DAYS_FULL.map((dayLabel, i) => {
                                                 const dbDay = DAYS_DB_MAP[i];
@@ -618,22 +652,22 @@ export default function CalendarPage() {
                                                 if (!slotConfig?.active) return null;
 
                                                 return (
-                                                    <div key={dbDay} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-left duration-300">
+                                                    <div key={dbDay} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-left duration-300">
                                                         <span className="text-[10px] font-black uppercase tracking-widest text-primary w-12">{DAYS[i]}</span>
                                                         <div className="flex items-center gap-2 flex-1">
                                                             <input 
                                                                 type="time" 
                                                                 value={slotConfig.start} 
                                                                 onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, start: e.target.value } }))}
-                                                                className="flex-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none"
+                                                                className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                                                 title="Hora de inicio"
                                                             />
-                                                            <span className="text-white/20 text-[10px] font-bold">A</span>
+                                                            <span className="text-slate-400 dark:text-white/20 text-[10px] font-bold">A</span>
                                                             <input 
                                                                 type="time" 
                                                                 value={slotConfig.end} 
                                                                 onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, end: e.target.value } }))}
-                                                                className="flex-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:ring-1 focus:ring-primary outline-none"
+                                                                className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                                                 title="Hora de fin"
                                                             />
                                                         </div>
@@ -645,7 +679,7 @@ export default function CalendarPage() {
                                 </div>
 
                                 <div className="flex items-center justify-between pt-2">
-                                    <button onClick={() => loadSlots(selectedAdvisor.id)} title="Deshacer cambios" className="flex items-center gap-2 h-9 px-4 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all text-white/40">
+                                    <button onClick={() => loadSlots(selectedAdvisor.id)} title="Deshacer cambios" className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40">
                                         <RotateCcw className="h-3.5 w-3.5" /> Deshacer
                                     </button>
                                     <button onClick={handleSaveSlots} disabled={saving} title="Guardar horarios"
@@ -672,12 +706,12 @@ export default function CalendarPage() {
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">1. Seleccionar Lead</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">1. Seleccionar Lead</label>
                                         <select 
                                             value={toolLeadId}
                                             onChange={e => setToolLeadId(e.target.value)}
                                             title="Seleccionar Lead para la herramienta"
-                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full h-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                         >
                                             <option value="">Seleccionar Lead...</option>
                                             {leads.map(l => (
@@ -687,12 +721,12 @@ export default function CalendarPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">2. Seleccionar Asesor</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">2. Seleccionar Asesor</label>
                                         <select 
                                             value={toolAdvisorId}
                                             onChange={e => setToolAdvisorId(e.target.value)}
                                             title="Seleccionar Asesor para la herramienta"
-                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full h-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                         >
                                             <option value="">Sin Asesor (Pendiente)</option>
                                             {advisors.map(a => (
@@ -702,24 +736,24 @@ export default function CalendarPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">3. Fecha</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">3. Fecha</label>
                                         <input 
                                             type="date"
                                             value={toolDate}
                                             onChange={e => setToolDate(e.target.value)}
                                             title="Seleccionar Fecha"
-                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full h-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/40">4. Hora</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">4. Hora</label>
                                         <input 
                                             type="time"
                                             value={toolTime}
                                             onChange={e => setToolTime(e.target.value)}
                                             title="Seleccionar Hora"
-                                            className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:ring-1 focus:ring-primary outline-none"
+                                            className="w-full h-10 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
                                         />
                                     </div>
                                 </div>
@@ -727,9 +761,9 @@ export default function CalendarPage() {
                                 <div className="grid grid-cols-2 gap-4 pt-4">
                                     <button 
                                         onClick={testCheckAvailability}
-                                        className="flex items-center justify-center gap-3 h-12 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all group"
+                                        className="flex items-center justify-center gap-3 h-12 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all group"
                                     >
-                                        <Search className="h-4 w-4 text-white/40 group-hover:text-primary transition-colors" />
+                                        <Search className="h-4 w-4 text-slate-400 dark:text-white/40 group-hover:text-primary transition-colors" />
                                         Disponibilidad
                                     </button>
                                     <button 
@@ -742,53 +776,50 @@ export default function CalendarPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <CalendarRange className="h-5 w-5 text-amber-500" />
-                                    <h2 className="text-sm font-black uppercase tracking-widest">Citas Activas de este Lead</h2>
+                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-8 space-y-6">
+                                <div className="space-y-4">
+                                    {toolLeadId ? (
+                                        <div className="space-y-3">
+                                            {appointments.filter(a => a.lead_id === toolLeadId && a.status !== "CANCELLED").length === 0 ? (
+                                                <p className="text-[10px] text-slate-400 dark:text-white/20 italic">No hay citas activas para este lead.</p>
+                                            ) : (
+                                                appointments.filter(a => a.lead_id === toolLeadId && a.status !== "CANCELLED").map(apt => (
+                                                    <div key={apt.id} className="p-4 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-xs font-bold text-slate-900 dark:text-white">{new Date(apt.scheduled_at).toLocaleString("es-ES", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                                                            <p className="text-[9px] text-slate-500 dark:text-white/40 font-black uppercase tracking-widest mt-0.5">{apt.advisors?.name}</p>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button 
+                                                                onClick={async () => {
+                                                                    const res = await rescheduleAppointment(apt.id, new Date(`${toolDate}T${toolTime}`).toISOString());
+                                                                    addLog("rescheduleAppointment", res);
+                                                                    await loadData();
+                                                                }}
+                                                                className="h-8 px-3 bg-slate-200 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 dark:hover:bg-white/10"
+                                                            >
+                                                                Reagendar
+                                                            </button>
+                                                            <button 
+                                                                title="Cancelar Cita"
+                                                                onClick={async () => {
+                                                                    const res = await cancelAppointment(apt.id);
+                                                                    addLog("cancelAppointment", res);
+                                                                    await loadData();
+                                                                }}
+                                                                className="h-8 w-8 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center hover:bg-red-500/20"
+                                                            >
+                                                                <CalendarX className="h-3.5 w-3.5 text-red-400" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-[10px] text-slate-400 dark:text-white/20">Selecciona un lead para gestionar sus citas.</p>
+                                    )}
                                 </div>
-
-                                {toolLeadId ? (
-                                    <div className="space-y-3">
-                                        {appointments.filter(a => a.lead_id === toolLeadId && a.status !== "CANCELLED").length === 0 ? (
-                                            <p className="text-[10px] text-white/20 italic">No hay citas activas para este lead.</p>
-                                        ) : (
-                                            appointments.filter(a => a.lead_id === toolLeadId && a.status !== "CANCELLED").map(apt => (
-                                                <div key={apt.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-xs font-bold">{new Date(apt.scheduled_at).toLocaleString("es-ES", { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
-                                                        <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{apt.advisors?.name}</p>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button 
-                                                            onClick={async () => {
-                                                                const res = await rescheduleAppointment(apt.id, new Date(`${toolDate}T${toolTime}`).toISOString());
-                                                                addLog("rescheduleAppointment", res);
-                                                                await loadData();
-                                                            }}
-                                                            className="h-8 px-3 bg-white/5 border border-white/10 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-white/10"
-                                                        >
-                                                            Reagendar
-                                                        </button>
-                                                        <button 
-                                                            title="Cancelar Cita"
-                                                            onClick={async () => {
-                                                                const res = await cancelAppointment(apt.id);
-                                                                addLog("cancelAppointment", res);
-                                                                await loadData();
-                                                            }}
-                                                            className="h-8 w-8 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center hover:bg-red-500/20"
-                                                        >
-                                                            <CalendarX className="h-3.5 w-3.5 text-red-400" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-[10px] text-white/20">Selecciona un lead para gestionar sus citas.</p>
-                                )}
                             </div>
                         </div>
 
@@ -797,14 +828,14 @@ export default function CalendarPage() {
                             <div className="bg-slate-900 border border-white/5 rounded-3xl overflow-hidden flex flex-col h-[500px]">
                                 <div className="px-6 py-4 border-b border-white/5 flex items-center gap-2 bg-slate-900/50">
                                     <Terminal className="h-4 w-4 text-emerald-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Logs de Ejecución</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-white">Logs de Ejecución</span>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] space-y-4">
                                     {toolLog.length === 0 && <p className="text-white/10 italic">Esperando acciones...</p>}
                                     {toolLog.map((log, i) => (
                                         <div key={i} className="space-y-1 animate-in fade-in duration-300">
                                             <div className="flex items-center justify-between opacity-40">
-                                                <span>{log.time}</span>
+                                                <span className="text-white">{log.time}</span>
                                                 <span className="text-primary">{log.action}()</span>
                                             </div>
                                             <div className="bg-black/40 p-2 rounded-lg border border-white/5 text-emerald-400 overflow-x-auto">
@@ -815,8 +846,8 @@ export default function CalendarPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-4">Herramientas para el Agente</h3>
+                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-6">
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 mb-4">Herramientas para el Agente</h3>
                                 <div className="space-y-3">
                                     {[
                                         { name: "book_appointment", desc: "Agendar nueva cita" },
@@ -824,11 +855,11 @@ export default function CalendarPage() {
                                         { name: "reschedule_appointment", desc: "Cambiar fecha de cita" },
                                         { name: "check_availability", desc: "Consultar huecos libres" }
                                     ].map(tool => (
-                                        <div key={tool.name} className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+                                        <div key={tool.name} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl">
                                             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                             <div>
-                                                <p className="text-[10px] font-black text-white/80">{tool.name}</p>
-                                                <p className="text-[9px] text-white/40">{tool.desc}</p>
+                                                <p className="text-[10px] font-black text-slate-700 dark:text-white/80">{tool.name}</p>
+                                                <p className="text-[9px] text-slate-500 dark:text-white/40">{tool.desc}</p>
                                             </div>
                                         </div>
                                     ))}
