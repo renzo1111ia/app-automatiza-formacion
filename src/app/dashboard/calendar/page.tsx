@@ -7,6 +7,7 @@ import {
     Pencil, Trash2, Phone, Mail, RotateCcw, Save
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     getAdvisors, saveAdvisor, deleteAdvisor,
     getAdvisorSlots, saveAdvisorSlots,
@@ -49,6 +50,7 @@ export default function CalendarPage() {
     const [toolAdvisorId, setToolAdvisorId] = useState("");
     const [toolDate, setToolDate] = useState(new Date().toISOString().split('T')[0]);
     const [toolTime, setToolTime] = useState("10:00");
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
     const loadData = useCallback(async () => {
         const [advisorsRes, aptsRes, leadsRes] = await Promise.all([
@@ -297,11 +299,14 @@ export default function CalendarPage() {
                                             return apts.map((apt, idx) => {
                                                 const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
                                                 return (
-                                                    <div key={apt.id} className={cn(
-                                                        "p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all relative", 
-                                                        sc.color,
-                                                        hasOverlap && "border-red-500/50 shadow-[0_0_5px_rgba(239,68,68,0.3)]"
-                                                    )}>
+                                                    <div 
+                                                        key={apt.id} 
+                                                        onClick={() => setSelectedAppointment(apt)}
+                                                        className={cn(
+                                                            "p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all relative", 
+                                                            sc.color,
+                                                            hasOverlap && "border-red-500/50 shadow-[0_0_5px_rgba(239,68,68,0.3)]"
+                                                        )}>
                                                         {hasOverlap && idx === 0 && (
                                                             <div className="absolute -top-1.5 -right-1.5 h-4 px-1 rounded-full bg-red-500 text-[8px] text-white flex items-center justify-center font-black animate-pulse z-10">
                                                                 ! CONFLICTO
@@ -347,7 +352,11 @@ export default function CalendarPage() {
                                     {appointments.slice(0, 20).map(apt => {
                                         const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
                                         return (
-                                            <div key={apt.id} className="px-6 py-4 flex items-center gap-6 hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all">
+                                            <div 
+                                                key={apt.id} 
+                                                onClick={() => setSelectedAppointment(apt)}
+                                                className="px-6 py-4 flex items-center gap-6 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-all"
+                                            >
                                                 <div className="w-48 flex-shrink-0">
                                                     <p className="text-xs font-bold text-slate-900 dark:text-white">
                                                         {new Date(apt.scheduled_at).toLocaleDateString("es-ES", { 
@@ -869,6 +878,164 @@ export default function CalendarPage() {
                     </div>
                 )}
             </div>
+
+            {/* APPOINTMENT DETAIL MODAL */}
+            <AnimatePresence>
+                {selectedAppointment && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-6">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+                            onClick={() => setSelectedAppointment(null)}
+                        />
+                        
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-2xl bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col"
+                        >
+                            {/* Header */}
+                            <div className="p-8 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-slate-50 dark:bg-black/20">
+                                <div className="flex items-center gap-4">
+                                    <div className={cn(
+                                        "h-14 w-14 rounded-2xl border flex items-center justify-center",
+                                        (STATUS_CONFIG[selectedAppointment.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING).color
+                                    )}>
+                                        <CalendarPlus className="h-7 w-7" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Detalle de la Cita</h2>
+                                        <p className="text-[10px] font-bold text-slate-500 dark:text-white/40 uppercase tracking-widest mt-1">ID: {selectedAppointment.id.split('-')[0]}</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedAppointment(null)} 
+                                    title="Cerrar detalle"
+                                    className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
+                                >
+                                    <X className="h-5 w-5 text-slate-400 dark:text-white/40" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-8 space-y-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                                {/* Lead Info Section */}
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                        <Users className="h-3 w-3" /> Información del Prospecto
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Nombre Completo</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedAppointment.lead?.nombre} {selectedAppointment.lead?.apellido}</p>
+                                        </div>
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Teléfono</p>
+                                            <div className="flex items-center gap-2">
+                                                <Phone className="h-3 w-3 text-primary" />
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedAppointment.lead?.telefono}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Appointment Schedule Section */}
+                                <div className="space-y-4">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                        <Clock className="h-3 w-3" /> Horarios de la Cita
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Hora España (ES)</p>
+                                            <p className="text-lg font-black text-primary">
+                                                {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", { 
+                                                    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" 
+                                                })}
+                                            </p>
+                                            <p className="text-[10px] font-medium text-slate-400 mt-1">
+                                                {new Date(selectedAppointment.scheduled_at).toLocaleDateString("es-ES", { 
+                                                    weekday: 'long', day: 'numeric', month: 'long' 
+                                                })}
+                                            </p>
+                                        </div>
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Hora Local del Lead</p>
+                                            <div className="flex items-center gap-2">
+                                                <Globe className="h-4 w-4 text-emerald-500" />
+                                                <p className="text-lg font-black text-slate-900 dark:text-white">
+                                                    {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", { 
+                                                        hour: "2-digit", minute: "2-digit", 
+                                                        timeZone: resolveTimezoneFromPhone(selectedAppointment.lead?.telefono)
+                                                    })}
+                                                </p>
+                                            </div>
+                                            <p className="text-[9px] font-bold text-slate-500 dark:text-white/40 mt-1 uppercase tracking-tighter">
+                                                Zona: {resolveTimezoneFromPhone(selectedAppointment.lead?.telefono)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Status & Advisor Section */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                            <Check className="h-3 w-3" /> Estado y Asesor
+                                        </h3>
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+                                            <div className={cn(
+                                                "inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border mb-3",
+                                                (STATUS_CONFIG[selectedAppointment.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING).color
+                                            )}>
+                                                {(STATUS_CONFIG[selectedAppointment.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING).label}
+                                            </div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Asesor Asignado</p>
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                    <Users className="h-3 w-3 text-primary" />
+                                                </div>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white">{selectedAppointment.advisors?.name || "Sin asignar"}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                            <Terminal className="h-3 w-3" /> Notas del Agente
+                                        </h3>
+                                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 min-h-[100px]">
+                                            <p className="text-xs font-medium text-slate-600 dark:text-white/60 italic leading-relaxed">
+                                                {selectedAppointment.notes || "No hay notas adicionales para esta cita."}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="p-8 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-end gap-3">
+                                <button 
+                                    onClick={() => setSelectedAppointment(null)}
+                                    className="h-11 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
+                                >
+                                    Cerrar Detalle
+                                </button>
+                                {selectedAppointment.status === "PENDING" && (
+                                    <button 
+                                        onClick={() => {
+                                            handleStatusChange(selectedAppointment.id, "CONFIRMED");
+                                            setSelectedAppointment(null);
+                                        }}
+                                        className="h-11 px-6 rounded-2xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/20"
+                                    >
+                                        Confirmar Cita
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
