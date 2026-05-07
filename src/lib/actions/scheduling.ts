@@ -1,3 +1,7 @@
+"use server";
+
+import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
+
 interface TenantConfig {
     scheduling?: {
         reminders?: {
@@ -37,30 +41,30 @@ export async function createAppointment(data: {
     const reminderDate = new Date(scheduledDate.getTime() - leadTimeMinutes * 60000);
     
     const { data: res, error } = await supabase
-        .from("appointments")
+        .from("appointments" as never)
         .insert({
             ...data,
             tenant_id: tenantId,
             duration_minutes: data.duration_minutes || 30,
             status: data.status || "PENDING",
             reminder_scheduled_at: reminderDate.toISOString()
-        })
+        } as never)
         .select()
         .single();
 
     if (error) return { error: error.message };
-    return { success: true, data: res };
+    return { success: true, data: res as unknown };
 }
 
 export async function cancelAppointment(appointmentId: string, reason?: string) {
     const supabase = await getAdminSupabaseClient();
     const { error } = await supabase
-        .from("appointments")
+        .from("appointments" as never)
         .update({ 
             status: "CANCELLED", 
             notes: reason ? `Cancelado por IA: ${reason}` : "Cancelado por IA",
             updated_at: new Date().toISOString() 
-        })
+        } as never)
         .eq("id", appointmentId);
 
     if (error) return { error: error.message };
@@ -85,13 +89,13 @@ export async function rescheduleAppointment(appointmentId: string, newDate: stri
     const reminderDate = new Date(scheduledDate.getTime() - leadTimeMinutes * 60000);
 
     const { error } = await supabase
-        .from("appointments")
+        .from("appointments" as never)
         .update({ 
             scheduled_at: newDate,
             reminder_scheduled_at: reminderDate.toISOString(),
             status: "PENDING", // Back to pending if rescheduled
             updated_at: new Date().toISOString() 
-        })
+        } as never)
         .eq("id", appointmentId);
 
     if (error) return { error: error.message };
@@ -106,14 +110,14 @@ export async function checkAvailability(advisorId: string, date: string) {
     const dayOfWeek = d.getDay(); // 0=Sunday, 1=Monday...
     
     const { data: slots, error: slotErr } = await supabase
-        .from("availability_slots")
+        .from("availability_slots" as never)
         .select("*")
         .eq("advisor_id", advisorId)
         .eq("day_of_week", dayOfWeek);
 
     if (slotErr) return { error: slotErr.message };
     
-    if (!slots || slots.length === 0) {
+    if (!slots || (slots as unknown[]).length === 0) {
         return { success: true, available: false, message: "Asesor no disponible este día de la semana." };
     }
 
@@ -124,7 +128,7 @@ export async function checkAvailability(advisorId: string, date: string) {
     dayEnd.setHours(23,59,59,999);
 
     const { data: existing, error: aptErr } = await supabase
-        .from("appointments")
+        .from("appointments" as never)
         .select("scheduled_at, duration_minutes")
         .eq("advisor_id", advisorId)
         .neq("status", "CANCELLED")
@@ -135,8 +139,8 @@ export async function checkAvailability(advisorId: string, date: string) {
 
     return { 
         success: true, 
-        config: slots[0], 
-        busy_slots: (existing || []).map((e: { scheduled_at: string; duration_minutes: number | null }) => ({
+        config: (slots as unknown[])[0], 
+        busy_slots: ((existing as unknown) as { scheduled_at: string; duration_minutes: number | null }[] || []).map((e) => ({
             start: e.scheduled_at,
             end: new Date(new Date(e.scheduled_at).getTime() + (e.duration_minutes || 30) * 60000).toISOString()
         }))

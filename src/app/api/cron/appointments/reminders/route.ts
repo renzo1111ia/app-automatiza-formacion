@@ -7,6 +7,25 @@ import OpenAI from "openai";
 
 export const dynamic = "force-dynamic";
 
+interface TenantConfig {
+    scheduling?: {
+        reminders?: {
+            enabled: boolean;
+            lead_time_minutes: number;
+            repetitions: number;
+            mode: 'manual' | 'ai';
+            template: string;
+        }
+    }
+    whatsapp?: {
+        accessToken: string;
+        phoneNumberId: string;
+    }
+    openai?: {
+        api_key: string;
+    }
+}
+
 interface ReminderAppointment {
     id: string;
     lead_id: string | null;
@@ -17,7 +36,7 @@ interface ReminderAppointment {
     reminder_sent_at: string | null;
     tenant_id: string;
     lead: { id: string; nombre: string | null; apellido: string | null; telefono: string | null } | null;
-    tenant: { id: string; config: Record<string, any> } | null;
+    tenant: { id: string; config: TenantConfig | Record<string, unknown> } | null;
     advisors: { name: string } | null;
 }
 
@@ -60,13 +79,13 @@ export async function GET() {
             try {
                 const lead = apt.lead;
                 const tenant = apt.tenant;
-                const config = (tenant?.config?.scheduling as any)?.reminders;
-                const waConfig = (tenant?.config as any)?.whatsapp;
+                const config = (tenant?.config as TenantConfig | undefined)?.scheduling?.reminders;
+                const waConfig = (tenant?.config as TenantConfig | undefined)?.whatsapp;
 
                 // Skip if reminders are disabled for this tenant
                 if (config && config.enabled === false) {
                     // Mark as "sent" (skipped) so we don't process it again
-                    await supabase.from("appointments").update({ reminder_sent_at: now }).eq("id", apt.id);
+                    await supabase.from("appointments" as never).update({ reminder_sent_at: now } as never).eq("id", apt.id);
                     continue;
                 }
 
@@ -88,7 +107,7 @@ export async function GET() {
                     console.log(`[REMINDER CRON] 🤖 Generating AI reminder for ${lead.nombre}`);
                     
                     // We try to find an API key in the tenant config or use env
-                    const apiKey = (tenant?.config as any)?.openai?.api_key || process.env.OPENAI_API_KEY;
+                    const apiKey = (tenant?.config as TenantConfig | undefined)?.openai?.api_key || process.env.OPENAI_API_KEY;
                     if (!apiKey) throw new Error("No OpenAI API Key found for AI reminder.");
 
                     const openai = new OpenAI({ apiKey });
@@ -128,8 +147,8 @@ export async function GET() {
 
                 // 4. Mark as sent
                 await supabase
-                    .from("appointments")
-                    .update({ reminder_sent_at: now })
+                    .from("appointments" as never)
+                    .update({ reminder_sent_at: now } as never)
                     .eq("id", apt.id);
 
                 results.push({ id: apt.id, status: "SENT", lead: lead.nombre, mode: config?.mode || "manual" });
