@@ -49,6 +49,8 @@ export default function AgentsPage() {
     const [activeTab, setActiveTab] = useState<'BRAIN' | 'INACTIVO' | 'CRM' | 'METRICS'>('BRAIN');
 
     const [isSaving, setIsSaving] = useState(false);
+    const [editingTag, setEditingTag] = useState<string | null>(null);
+    const [editingValue, setEditingValue] = useState("");
     const [saving, setSaving] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -373,18 +375,65 @@ export default function AgentsPage() {
                                         </div>
 
                                         <div className="flex flex-wrap gap-3 p-8 bg-black/20 border border-white/5 rounded-[32px]">
-                                            {(variantA.tracked_variables || ['USER_NAME', 'ID_LEAD', 'USER_COUNTRY', 'USER_PHONE', 'COURSE_NAME', 'QUALIFIED', 'CORRECTO']).map(tag => (
-                                                <div key={tag} className="flex items-center gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/20 rounded-xl group hover:border-amber-500/50 transition-all cursor-pointer">
-                                                    <DbIcon className="h-3 w-3 text-amber-500/40" />
-                                                    <span className="text-xs font-black text-amber-500 tracking-wider">{"{{"}{tag}{"}}"}</span>
-                                                    <button title={`Eliminar etiqueta ${tag}`}
-                                                        onClick={() => setVariantA(p => ({...p, tracked_variables: (p.tracked_variables || []).filter(t => t !== tag)}))}
-                                                        className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400"
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                            {(variantA.tracked_variables || ['USER_NAME', 'ID_LEAD', 'USER_COUNTRY', 'USER_PHONE', 'COURSE_NAME', 'QUALIFIED', 'CORRECTO']).map((tag, idx) => {
+                                                const isEditing = editingTag === tag;
+                                                return (
+                                                    <div key={idx} className={cn(
+                                                        "flex items-center gap-3 px-4 py-3 bg-amber-500/5 border border-amber-500/20 rounded-xl group hover:border-amber-500/50 transition-all cursor-pointer",
+                                                        isEditing && "ring-2 ring-blue-500/50 border-blue-500/50 bg-blue-500/5"
+                                                    )}>
+                                                        <DbIcon className={cn("h-3 w-3", isEditing ? "text-blue-400" : "text-amber-500/40")} />
+                                                        
+                                                        {isEditing ? (
+                                                            <input 
+                                                                autoFocus
+                                                                value={editingValue}
+                                                                onChange={(e) => setEditingValue(e.target.value.toUpperCase().replace(/\s/g, '_'))}
+                                                                onBlur={() => {
+                                                                    if (editingValue && editingValue !== tag) {
+                                                                        const newTags = (variantA.tracked_variables || []).map(t => t === tag ? editingValue : t);
+                                                                        setVariantA(p => ({...p, tracked_variables: newTags}));
+                                                                    }
+                                                                    setEditingTag(null);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') {
+                                                                        if (editingValue && editingValue !== tag) {
+                                                                            const newTags = (variantA.tracked_variables || []).map(t => t === tag ? editingValue : t);
+                                                                            setVariantA(p => ({...p, tracked_variables: newTags}));
+                                                                        }
+                                                                        setEditingTag(null);
+                                                                    }
+                                                                    if (e.key === 'Escape') setEditingTag(null);
+                                                                }}
+                                                                className="bg-transparent border-none outline-none text-xs font-black text-blue-400 tracking-wider w-32"
+                                                            />
+                                                        ) : (
+                                                            <>
+                                                                <span className="text-xs font-black text-amber-500 tracking-wider">{"{{"}{tag}{"}}"}</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <button 
+                                                                        title={`Editar etiqueta ${tag}`}
+                                                                        onClick={() => {
+                                                                            setEditingTag(tag);
+                                                                            setEditingValue(tag);
+                                                                        }}
+                                                                        className="opacity-0 group-hover:opacity-100 transition-all text-blue-400 hover:text-blue-300 p-1"
+                                                                    >
+                                                                        <Edit3 className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button title={`Eliminar etiqueta ${tag}`}
+                                                                        onClick={() => setVariantA(p => ({...p, tracked_variables: (p.tracked_variables || []).filter(t => t !== tag)}))}
+                                                                        className="opacity-0 group-hover:opacity-100 transition-all text-white/20 hover:text-red-400 p-1"
+                                                                    >
+                                                                        <X className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                             {(variantA.tracked_variables || []).length === 0 && (
                                                 <p className="text-[10px] font-black uppercase text-white/10 tracking-[0.3em] py-4">No hay etiquetas de memoria configuradas</p>
                                             )}
