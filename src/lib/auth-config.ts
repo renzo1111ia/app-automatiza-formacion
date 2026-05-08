@@ -3,9 +3,11 @@
  * Esta instancia maneja el login de los usuarios del dashboard.
  * Las credenciales del Supabase de DATOS del cliente se guardan en Settings.
  */
-export const AUTH_SUPABASE_URL =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "https://api-db.automatizaformacion.com";
+const isServer = typeof window === "undefined";
+
+export const AUTH_SUPABASE_URL = isServer
+    ? (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://api-db.automatizaformacion.com")
+    : (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://api-db.automatizaformacion.com");
 
 export const AUTH_SUPABASE_ANON_KEY =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||

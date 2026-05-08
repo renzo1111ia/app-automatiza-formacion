@@ -25,7 +25,7 @@ export async function loginAction(email: string, password: string) {
 
     if (error) {
         console.error("LOGIN ERROR:", error.message);
-        return { error: "Credenciales incorrectas. Verificá tu email y contraseña." };
+        return { error: `Error de Supabase: ${error.message}` };
     }
 
     // Check both 'admin' (set by our createTenant) and 'is_admin' for backward compatibility
