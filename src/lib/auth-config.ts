@@ -5,7 +5,7 @@
  */
 export const AUTH_SUPABASE_URL =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    "http://interno-supabase-a201be-46-62-193-169.traefik.me";
+    "https://api-db.automatizaformacion.com";
 
 export const AUTH_SUPABASE_ANON_KEY =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||

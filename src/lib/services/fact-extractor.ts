@@ -195,7 +195,18 @@ EJEMPLO:
                     }
                 } else {
                     console.log(`[FACT EXTRACTOR] ℹ️ Lead ${leadId} evaluated but NOT qualified yet: ${result.reason}`);
+                    
+                    // 🟢 DYNAMIC RESUME: If we captured new data but not qualified, 
+                    // ask orchestrator to check if we can skip the wait
+                    const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
+                    if (lead) {
+                        await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
+                    }
                 }
+            } else if (Object.keys(newData).length > 0) {
+                // Even if not enough for auto-qual, trigger resume to see if we skip wait
+                const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
+                if (lead) await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
             }
         }
     }

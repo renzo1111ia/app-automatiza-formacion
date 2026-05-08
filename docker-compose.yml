@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SUPABASE_URL=http://interno-supabase-a201be-46-62-193-169.traefik.me
+        - NEXT_PUBLIC_SUPABASE_URL=https://api-db.automatizaformacion.com
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.v5lTSxmgC2pHuB19YxNQUgq4A-tAya678gI53V7DBkk
     container_name: esden-dashboard
     restart: always
@@ -15,7 +15,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - NEXT_PUBLIC_SUPABASE_URL=http://interno-supabase-a201be-46-62-193-169.traefik.me
+      - NEXT_PUBLIC_SUPABASE_URL=https://api-db.automatizaformacion.com
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.v5lTSxmgC2pHuB19YxNQUgq4A-tAya678gI53V7DBkk
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
@@ -34,7 +34,7 @@ services:
     command: node worker.js
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_SUPABASE_URL=http://interno-supabase-a201be-46-62-193-169.traefik.me
+      - NEXT_PUBLIC_SUPABASE_URL=https://api-db.automatizaformacion.com
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - REDIS_URL=redis://redis:6379
     depends_on:

@@ -180,15 +180,28 @@ export class Orchestrator {
 
         const activeLead = (freshLead as Lead) || lead;
 
-        // ── STOP CONDITION: Lead responded ────────────────────────
-        const { count: msgCount } = await (supabase.from("chat_messages") as any)
-            .select("*", { count: 'exact', head: true })
+        // ── STOP CONDITION: Lead responded & is active ────────────
+        // Check for LAST inbound message time. 
+        // If they responded more than 20 minutes ago, we RESUME.
+        const { data: lastMsg } = await (supabase.from("chat_messages") as any)
+            .select("created_at")
             .eq("lead_id", activeLead.id)
-            .eq("direction", "inbound");
+            .eq("direction", "inbound")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
 
-        if (msgCount && msgCount > 0) {
-            console.log(`[ORCHESTRATOR] Lead ${activeLead.id} already responded. Stopping outbound sequence.`);
-            return;
+        if (lastMsg) {
+            const lastMsgTime = new Date(lastMsg.created_at).getTime();
+            const now = Date.now();
+            const minutesSinceLastMsg = (now - lastMsgTime) / 1000 / 60;
+
+            if (minutesSinceLastMsg < 20) {
+                console.log(`[ORCHESTRATOR] Lead ${activeLead.id} is active (responded ${Math.round(minutesSinceLastMsg)}m ago). Pausing sequence.`);
+                return;
+            } else {
+                console.log(`[ORCHESTRATOR] Lead ${activeLead.id} is silent (${Math.round(minutesSinceLastMsg)}m since last response). Resuming sequence.`);
+            }
         }
 
         // ── COMPLIANCE GUARD ──────────────────────────────────────
@@ -297,6 +310,40 @@ export class Orchestrator {
                 actionType: step.action.toUpperCase(), result: "FAILED", errorMessage: errMsg
             });
         }
+    }
+
+    /**
+     * DYNAMIC RESUME: Skips wait if lead is silent or data is captured.
+     */
+    public async triggerDynamicResume(leadId: string, tenantId: string) {
+        console.log(`[ORCHESTRATOR] ⚡ Dynamic Resume triggered for lead ${leadId}`);
+        
+        const supabase = await getSupabaseServerClient();
+        const { data: lead } = await (supabase.from("lead" as any) as any).select("*").eq("id", leadId).single();
+        if (!lead) return;
+
+        // Find the last successful step to know where we are
+        const { data: lastLogs } = await (supabase.from("orchestration_logs" as any) as any)
+            .select("step_number")
+            .eq("lead_id", leadId)
+            .eq("result", "SUCCESS")
+            .order("created_at", { ascending: false })
+            .limit(1);
+        
+        const lastStep = lastLogs && lastLogs.length > 0 ? lastLogs[0].step_number : -1;
+        const nextIndex = lastStep + 1;
+
+        const config = await getOrchestratorConfigForTenant(tenantId);
+        const sequence = config.sequence;
+
+        if (!sequence || nextIndex >= sequence.length) return;
+
+        const nextStep = sequence[nextIndex];
+
+        // If next step is "wait", we might want to skip it if lead was silent
+        // But for now, we just execute the next REAL action immediately
+        console.log(`[ORCHESTRATOR] 🚀 Jumping to step ${nextStep.step} for lead ${leadId} due to data capture.`);
+        await this.executeSequenceStep(lead as Lead, tenantId, sequence, nextIndex, config);
     }
 
     /**
@@ -844,17 +891,79 @@ export class Orchestrator {
                 
                 break;
             }
+            case "TRIGGER_LINK":
+                console.log(`[ORCHESTRATOR] ⚡ Trigger Link Hit. Moving to next step.`);
+                break;
+            case "CONDITION":
+                // Logic handled after switch for branching
+                break;
+            case "WAIT":
+                console.log(`[ORCHESTRATOR] ⏳ Wait rule hit. Metadata logic will handle pauses.`);
+                break;
             default:
                 console.warn(`[ORCHESTRATOR] Unknown rule action: ${action_type}`);
         }
 
-        // Continue chain
+        // --- BRANCHING LOGIC (v5.0) ---
+        let nextOrder: number | null = (rule.sequence_order || 0) + 1;
+
+        if (action_type === "CONDITION") {
+            const { condition_variable, condition_operator, condition_value, branches } = conf || {};
+            const leadValue = (lead as any)[condition_variable] || (lead.metadata as any)?.[condition_variable];
+            
+            const isMet = this.evaluateCondition(leadValue, condition_operator, condition_value);
+            console.log(`[ORCHESTRATOR] Condition Evaluation: ${condition_variable} (${leadValue}) ${condition_operator} ${condition_value} => ${isMet}`);
+            
+            // Map result to handles: "if" (true) or "else" (false)
+            const handle = isMet ? "if" : "else";
+            nextOrder = branches?.[handle] ?? null; 
+        } else {
+            // Non-conditional nodes use "default" branch or sequential increment
+            const branches = conf?.branches || {};
+            nextOrder = branches["default"] ?? (conf?.next_step_order ?? ((rule.sequence_order || 0) + 1));
+        }
+
+        if (nextOrder === null) {
+            console.log(`[ORCHESTRATOR] Flow reached end or filter (No next step for order ${rule.sequence_order})`);
+            return;
+        }
+
+        // Continue chain with specific next order
         const { data: nextRule } = await (supabase
             .from("orchestration_rules" as any) as any).select("*")
             .eq("workflow_id", workflow_id).eq("is_active", true)
-            .eq("sequence_order", (rule.sequence_order || 1) + 1).single();
+            .eq("sequence_order", nextOrder).single();
 
-        if (nextRule) await this.executeRule(nextRule, lead, tenantId, context);
+        if (nextRule) {
+            await this.executeRule(nextRule, lead, tenantId, context);
+        } else {
+            console.log(`[ORCHESTRATOR] No rule found with sequence_order ${nextOrder}. Flow stopped.`);
+        }
+    }
+
+    /**
+     * Helper: Evaluate conditions for Filter/Condition nodes
+     */
+    private evaluateCondition(leadValue: any, operator: string, targetValue: any): boolean {
+        const val = String(leadValue ?? "").toLowerCase().trim();
+        const target = String(targetValue ?? "").toLowerCase().trim();
+
+        switch (operator) {
+            case "equals":
+                return val === target;
+            case "not_equals":
+                return val !== target;
+            case "contains":
+                return val.includes(target);
+            case "is_true":
+                return val === "true" || leadValue === true;
+            case "is_false":
+                return val === "false" || leadValue === false;
+            case "exists":
+                return !!leadValue && leadValue !== "null" && leadValue !== "undefined";
+            default:
+                return val === target;
+        }
     }
 
     // Kept for backward compat with sweep API

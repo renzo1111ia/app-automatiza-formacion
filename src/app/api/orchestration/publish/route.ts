@@ -94,56 +94,81 @@ export async function POST(req: Request) {
 }
 
 /**
- * HELPER: FLATTEN GRAPH (v4.0 - Branching & Specialized Nodes)
+ * HELPER: FLATTEN GRAPH (v5.0 - True Branching & Pointer-based Execution)
  */
 function flattenGraph(nodes: Node[], edges: Edge[]) {
     const triggerNodes = nodes.filter(n => ['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(n.type || ''));
     if (triggerNodes.length === 0) return [];
 
     const allSteps: any[] = [];
+    const nodeIdToOrder = new Map<string, number>();
+    
+    // First pass: Assign unique sequence_order to each non-trigger node
+    let currentOrder = 1;
+    nodes.forEach(node => {
+        if (!['leadTrigger', 'webhookTrigger', 'flow_trigger', 'end'].includes(node.type || '')) {
+            nodeIdToOrder.set(node.id, currentOrder++);
+        }
+    });
 
-    function traverse(currentNodeId: string, triggerNodeId: string, order: number, visitedPath: Set<string>) {
-        if (visitedPath.has(currentNodeId) || order > 50) return;
-        visitedPath.add(currentNodeId);
-  
-        const currentNode = nodes.find(n => n.id === currentNodeId);
-        if (!currentNode) return;
-  
-        // Map visual node to execution action
+    // Second pass: Map each node to an execution rule
+    nodes.forEach(node => {
+        const type = node.type || 'unknown';
+        if (['leadTrigger', 'webhookTrigger', 'flow_trigger', 'end'].includes(type)) return;
+
+        const data = (node.data || {}) as VisualNodeData;
         let actionType = 'UNKNOWN';
-        const type = currentNode.type || 'unknown';
-        const data = (currentNode.data || {}) as VisualNodeData;
-  
+
         if (['voiceCall', 'flow_call'].includes(type)) actionType = 'VOICE_CALL';
         else if (['whatsapp', 'flow_meta_template'].includes(type)) actionType = 'WHATSAPP_TEMPLATE';
-        else if (['textAgent', 'flow_ai_agent'].includes(type)) actionType = 'TEXT_AGENT';
+        else if (['textAgent', 'flow_ai_agent'].includes(type)) actionType = 'AI_AGENT';
         else if (['timeCondition', 'flow_condition'].includes(type)) actionType = 'CONDITION';
         else if (['delay', 'flow_wait'].includes(type)) actionType = 'WAIT';
         else if (['api', 'flow_http'].includes(type)) actionType = 'HTTP';
         else if (['llm', 'flow_ai'].includes(type)) actionType = 'LLM';
-        else if (type === 'end') return; // Stop traversal
-  
-        // If it's a step (not the trigger itself), add it
-        if (!['leadTrigger', 'webhookTrigger', 'flow_trigger'].includes(type)) {
+        else if (['crm', 'flow_crm'].includes(type)) actionType = 'CRM';
+
+        // Find outgoing edges and map to handles
+        const outgoing = edges.filter(e => e.source === node.id);
+        const branches: Record<string, number | null> = {};
+
+        outgoing.forEach(edge => {
+            const targetOrder = nodeIdToOrder.get(edge.target);
+            if (targetOrder) {
+                const handle = edge.sourceHandle || 'default';
+                branches[handle] = targetOrder;
+            }
+        });
+
+        allSteps.push({
+            label: data.label || type,
+            type: actionType,
+            sequence_order: nodeIdToOrder.get(node.id),
+            config: { 
+                ...(data.config || {}), 
+                ...data, 
+                branches,
+                // Default next if no branches defined (backward compat)
+                next_step_order: outgoing.length === 1 ? nodeIdToOrder.get(outgoing[0].target) : null
+            }
+        });
+    });
+
+    // For triggers, we need to know where they start
+    triggerNodes.forEach(trigger => {
+        const outgoing = edges.filter(e => e.source === trigger.id);
+        if (outgoing.length > 0) {
+            const firstStepOrder = nodeIdToOrder.get(outgoing[0].target);
             allSteps.push({
-                label: data.label || type,
-                type: actionType,
-                config: { ...(data.config || {}), ...data, trigger_node_id: triggerNodeId },
-                sequence_order: order
+                label: `Trigger: ${trigger.id}`,
+                type: 'TRIGGER_LINK',
+                sequence_order: 0, // Triggers always at 0
+                config: { 
+                    trigger_node_id: trigger.id,
+                    next_step_order: firstStepOrder 
+                }
             });
         }
-
-        // Find outgoing edges
-        const outgoing = edges.filter(e => e.source === currentNodeId);
-        outgoing.forEach((edge, idx) => {
-            // If it's a condition, we might want to attach the handle info to the config of the NEXT step or current?
-            // For now, let's just follow all branches
-            traverse(edge.target, triggerNodeId, order + 1 + idx, new Set(visitedPath));
-        });
-    }
-
-    triggerNodes.forEach(trigger => {
-        traverse(trigger.id, trigger.id, 0, new Set());
     });
 
     return allSteps;
