@@ -49,7 +49,7 @@ async function getServiceSupabase() {
 
     // 2. Si no existe (problema de Hetzner/Dokploy), usamos la llave directa como respaldo
     if (!serviceKey) {
-        serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.5VpQVwUhqDkHgplZiPE4iGjduuB2NfGNq-5vsASGAbI";
+        serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NzgzNzEyNTMsImV4cCI6MjA5MzczMTI1M30.BCYYkH692WCDc6xqhowvSn_y6IunHA9Qm4he-aikob8";
     }
 
     if (!url || !serviceKey) {
@@ -73,7 +73,7 @@ export async function getTenants(): Promise<Tenant[]> {
 
         // 2. Fallback de emergencia (mismo que en createTenant)
         if (!serviceKey) {
-            serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.5VpQVwUhqDkHgplZiPE4iGjduuB2NfGNq-5vsASGAbI";
+            serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NzgzNzEyNTMsImV4cCI6MjA5MzczMTI1M30.BCYYkH692WCDc6xqhowvSn_y6IunHA9Qm4he-aikob8";
         }
 
         const cookieStore = await cookies();
