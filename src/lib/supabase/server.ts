@@ -2,8 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
 
-const PLACEHOLDER_URL = "https://placeholder.supabase.co";
-const PLACEHOLDER_KEY = "placeholder";
+const PLACEHOLDER_URL = "https://api-db.automatizaformacion.com";
+const PLACEHOLDER_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.ZzJZGBn42ZpSlp3q42X4O48wWjciQQts4ftXVch4od8";
+const REAL_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.dc0tXGNDPsriOwj6qR9dbJm-GffhvoNTBhl88YEB_hg";
 
 /**
  * Returns the currently active tenant_id from the cookie.
@@ -30,8 +31,8 @@ export async function getSupabaseServerClient() {
         console.log(`[SUPABASE_DIAGNOSTIC] Available Env Vars: ${allKeys.join(", ")}`);
         console.log(`[SUPABASE_INFO] URL: ${url ? 'FOUND' : 'MISSING'}`);
 
-        if (!url || !key) {
-            console.error("[SUPABASE_CLIENT] ERROR: Missing credentials.");
+        if (!url || !key || url.includes("placeholder")) {
+            console.error("[SUPABASE_CLIENT] ERROR: Missing credentials. Using Hardcoded Fallback.");
             return createClient<Database>(PLACEHOLDER_URL, PLACEHOLDER_KEY);
         }
 
@@ -54,8 +55,9 @@ export async function getAdminSupabaseClient() {
     if (!url) console.error("[ADMIN_CLIENT] ERROR: Missing URL (Checked SUPABASE_URL and NEXT_PUBLIC_SUPABASE_URL)");
     if (!key) console.error("[ADMIN_CLIENT] ERROR: Missing SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!url || !key) {
-        return createClient<Database>(PLACEHOLDER_URL, PLACEHOLDER_KEY);
+    if (!url || !key || url.includes("placeholder")) {
+        console.error("[ADMIN_CLIENT] ERROR: Missing URL or KEY. Using Hardcoded Fallback.");
+        return createClient<Database>(PLACEHOLDER_URL, REAL_SERVICE_KEY);
     }
 
     return createClient<Database>(url, key, {
