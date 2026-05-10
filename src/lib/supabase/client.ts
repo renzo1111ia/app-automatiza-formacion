@@ -12,13 +12,12 @@ import type { Database } from "@/types/database";
  * Tenant isolation is handled server-side via RLS — NOT via separate DB credentials.
  */
 export function getSupabaseClient() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://api-db.automatizaformacion.com";
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.ZzJZGBn42ZpSlp3q42X4O48wWjciQQts4ftXVch4od8";
 
-    if (!url || !key) {
+    if (!url || !key || url.includes("placeholder")) {
         console.error("SUPABASE CLIENT ERROR: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env vars.");
-        // Return a placeholder during SSR/initial boot to avoid crashing
-        return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+        return createClient<Database>("https://api-db.automatizaformacion.com", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6ImFub24iLCJpc3MiOiJzdXBhYmFzZSJ9.ZzJZGBn42ZpSlp3q42X4O48wWjciQQts4ftXVch4od8");
     }
 
     return createClient<Database>(url, key);
