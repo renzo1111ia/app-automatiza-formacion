@@ -50,6 +50,7 @@ export default function AgentsPage() {
     const [activeTab, setActiveTab] = useState<'BRAIN' | 'INACTIVO' | 'CRM' | 'METRICS'>('BRAIN');
 
     const [isSaving, setIsSaving] = useState(false);
+    const [showApiKey, setShowApiKey] = useState(false);
     const [editingTag, setEditingTag] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState("");
     const [editingType, setEditingType] = useState("string");
@@ -561,12 +562,18 @@ export default function AgentsPage() {
                                                     <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Llave API exclusiva para este agente maestro</p>
                                                 </div>
                                             </div>
-                                            <button title="Mostrar/Ocultar credenciales" className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Mostrar</button>
+                                            <button 
+                                                title="Mostrar/Ocultar credenciales" 
+                                                onClick={() => setShowApiKey(!showApiKey)}
+                                                className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                                            >
+                                                {showApiKey ? "Ocultar" : "Mostrar"}
+                                            </button>
                                         </div>
                                         
                                         <div className="relative group">
                                             <input 
-                                                type="password" 
+                                                type={showApiKey ? "text" : "password"} 
                                                 title="API Key del Proveedor"
                                                 value={variantA.api_key || ""} 
                                                 onChange={(e) => setVariantA(p => ({...p, api_key: e.target.value}))}
