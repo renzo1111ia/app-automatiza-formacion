@@ -48,7 +48,7 @@ async function getServiceSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || AUTH_SUPABASE_URL;
 
     // 2. Si no existe (problema de Hetzner/Dokploy), usamos la llave directa como respaldo
-    if (!serviceKey) {
+    if (!serviceKey || serviceKey.includes("ASGAbI")) {
         serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.5VpQVwUhqDkHgplZiPE4iGjduuB2NfGNq-5vsASGAbI";
     }
 
@@ -72,7 +72,7 @@ export async function getTenants(): Promise<Tenant[]> {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL || AUTH_SUPABASE_URL;
 
         // 2. Fallback de emergencia (mismo que en createTenant)
-        if (!serviceKey) {
+        if (!serviceKey || serviceKey.includes("ASGAbI")) {
             serviceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzI0OTEyMjksImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.5VpQVwUhqDkHgplZiPE4iGjduuB2NfGNq-5vsASGAbI";
         }
 
