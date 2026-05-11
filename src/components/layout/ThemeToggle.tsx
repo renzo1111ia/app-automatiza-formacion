@@ -19,7 +19,10 @@ export function ThemeToggle() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
@@ -30,6 +33,19 @@ export function ThemeToggle() {
     }, []);
 
     const activeTheme = THEMES.find(t => t.id === theme) || THEMES[0];
+
+    if (!mounted) {
+        return (
+            <div className="relative">
+                <button className="group relative flex items-center gap-2 px-3 h-10 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 transition-all shadow-sm opacity-50">
+                    <div className="h-4 w-4 rounded-full bg-slate-200 dark:bg-slate-700" />
+                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                        Cargando...
+                    </span>
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="relative" ref={dropdownRef}>

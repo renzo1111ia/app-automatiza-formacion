@@ -77,9 +77,6 @@ export async function fetchCalls({
             .from("lead")
             .select(`
                 *,
-                last_program:lead_programas (
-                    programa:programas ( nombre )
-                ),
                 llamadas:llamadas (
                     id,
                     estado_llamada,
@@ -242,9 +239,6 @@ export async function getCallsByPhone(phone: string): Promise<HistorialRow[]> {
             .from("lead")
             .select(`
                 id, nombre, apellido, telefono, email, pais, tipo_lead, origen, campana, fecha_ingreso_crm,
-                last_program:lead_programas (
-                    programa:programas ( nombre )
-                ),
                 llamadas:llamadas (
                     id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, url_grabacion, resumen, tipo_agente
                 ),
