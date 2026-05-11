@@ -12,7 +12,7 @@ import {
     Terminal,
     Play,
     Cpu, Brain, Database as DbIcon,
-    X, Sparkles, Calendar, RefreshCw, Info
+    X, Sparkles, Calendar, RefreshCw, Info, Search
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -40,6 +40,7 @@ interface AIAgentAutomationRules {
     contact_policy?: string;
     working_hours?: { start: string; end: string; days: number[] };
     retry_delay?: number;
+    tools?: Record<string, boolean>;
 }
 
 
@@ -550,7 +551,85 @@ export default function AgentsPage() {
                                         </div>
                                     </div>
 
-                                    {/* SECCIÓN 4: CREDENCIALES */}
+                                    {/* SECCIÓN 4: CAPACIDADES Y HERRAMIENTAS */}
+                                    <div className="space-y-8">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
+                                                <Zap className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black uppercase tracking-tight">Capacidades y Herramientas</h3>
+                                                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Habilita funciones avanzadas de orquestación</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Calendario / Bookings */}
+                                            <div className="p-8 bg-card border border-border rounded-[40px] space-y-8 relative overflow-hidden group">
+                                                <div className="flex items-center justify-between relative z-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-xl shadow-primary/5">
+                                                            <Calendar className="h-7 w-7 text-primary" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-lg font-black uppercase tracking-tight text-foreground">Orquestador de Citas</h4>
+                                                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Conexión con Calendario</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4 relative z-10">
+                                                    {[
+                                                        { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres' },
+                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita la reserva directa en el calendario' }
+                                                    ].map((tool) => {
+                                                        const isEnabled = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools?.[tool.id] === true;
+                                                        return (
+                                                            <button 
+                                                                key={tool.id}
+                                                                onClick={() => {
+                                                                    const currentTools = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools || {};
+                                                                    const newTools = { ...currentTools, [tool.id]: !isEnabled };
+                                                                    setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), tools: newTools}}));
+                                                                }}
+                                                                className={cn(
+                                                                    "w-full p-6 rounded-3xl border transition-all flex items-center justify-between group/btn",
+                                                                    isEnabled ? "bg-primary/10 border-primary/30" : "bg-card/40 border-border hover:bg-card/60"
+                                                                )}
+                                                            >
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className={cn(
+                                                                        "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
+                                                                        isEnabled ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                                                                    )}>
+                                                                        <Search className="h-5 w-5" />
+                                                                    </div>
+                                                                    <div className="text-left">
+                                                                        <span className={cn("text-xs font-black uppercase tracking-tight block", isEnabled ? "text-primary" : "text-foreground/60")}>{tool.label}</span>
+                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{tool.desc}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={cn(
+                                                                    "h-6 w-11 rounded-full relative transition-all duration-300",
+                                                                    isEnabled ? "bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]" : "bg-muted"
+                                                                )}>
+                                                                    <div className={cn(
+                                                                        "h-4 w-4 rounded-full bg-white absolute top-1 transition-all duration-300 shadow-sm",
+                                                                        isEnabled ? "right-1" : "left-1"
+                                                                    )} />
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                                    <Calendar className="h-32 w-32 -rotate-12" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* SECCIÓN 5: CREDENCIALES */}
                                     <div className="space-y-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
@@ -1165,19 +1244,28 @@ function ModelCard({ active, onClick, label, desc }: { active: boolean, onClick:
             <button title={`Seleccionar modelo ${label}`}
                 onClick={onClick}
                 className={cn(
-                    "w-full px-5 h-14 rounded-[18px] border text-left transition-all relative overflow-hidden flex items-center justify-between shadow-sm",
-                    active ? "bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                    "w-full h-14 rounded-2xl border text-left transition-all relative overflow-hidden flex items-center px-6 shadow-sm",
+                    active 
+                        ? "bg-primary/10 border-primary shadow-lg shadow-primary/10" 
+                        : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                 )}
             >
-                <h4 className={cn("text-[10px] font-black uppercase tracking-wider", active ? "text-emerald-500 dark:text-emerald-400" : "text-slate-400 dark:text-white/40 group-hover:text-slate-900 dark:group-hover:text-white")}>{label}</h4>
-                {active && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
-                {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />}
+                <div className="flex items-center gap-3 w-full">
+                    <div className={cn(
+                        "h-2 w-2 rounded-full transition-all shrink-0",
+                        active ? "bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]" : "bg-slate-300 dark:bg-white/10"
+                    )} />
+                    <span className={cn(
+                        "text-[10px] font-black uppercase tracking-tight truncate",
+                        active ? "text-primary" : "text-slate-500 dark:text-white/40 group-hover:text-slate-900 dark:group-hover:text-white"
+                    )}>{label}</span>
+                </div>
+                {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
             </button>
-
-            {/* Floating Tooltip/Menu */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-slate-900 border border-white/10 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all transform scale-90 translate-y-2 group-hover:scale-100 group-hover:translate-y-0 z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <p className="text-[9px] font-black text-white/80 uppercase tracking-widest leading-relaxed">{desc}</p>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
+            {/* Floating Tooltip */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-slate-900/95 backdrop-blur-md border border-white/10 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 shadow-2xl">
+                <p className="text-[10px] font-bold text-white/90 leading-relaxed text-center uppercase tracking-wider">{desc}</p>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900/95 border-b border-r border-white/10 rotate-45 -translate-y-1" />
             </div>
         </div>
     );

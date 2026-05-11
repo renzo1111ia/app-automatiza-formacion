@@ -75,11 +75,11 @@ export async function POST(req: Request) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        console.error("❌ [WHATSAPP WEBHOOK] Error crítico:", error);
+    } catch (error: unknown) {
+        console.error("❌ [WHATSAPP WEBHOOK] Error crítico:", (error as Error).message);
         return NextResponse.json({ 
             success: false, 
-            error: error.message 
+            error: (error as Error).message 
         }, { status: 500 });
     }
 }

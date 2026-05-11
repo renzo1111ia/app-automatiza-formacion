@@ -48,18 +48,20 @@ export class FactExtractionService {
             const openai = new OpenAI({ apiKey });
             
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
-Analiza el diálogo y extrae la información para estas claves: ${normalizedKeys.join(', ')}.
+Analiza el diálogo y extrae la información ÚNICAMENTE si ha sido mencionada explícitamente por el usuario.
 
-REGLAS DE ORO:
-1. Devuelve ÚNICAMENTE un JSON plano con las claves solicitadas.
-2. Sé inteligente: si el usuario describe su trabajo, extráelo para "profesion". Si explica por qué quiere estudiar, extráelo para "motivations".
-3. NO inventes datos. Si una información no está en el diálogo, NO incluyas esa clave en el JSON.
-4. Si ves patrones como {clave}=valor, tienen prioridad máxima.
-5. Normaliza textos cortos (ej: nombres propios con mayúsculas, países correctos).
-6. Para la clave "qualified": usa "SI" si el lead es apto e interesado, "NO" si rechaza explícitamente.
+CLAVES SOLICITADAS: ${normalizedKeys.join(', ')}.
 
-EJEMPLO:
-{"USER_NAME": "Lucía Pérez", "USER_PROFESION": "Ingeniera de Software", "USER_MOTIVATIONS": "Ascenso laboral", "USER_STUDIES": "Grado en Informática"}`;
+REGLAS CRÍTICAS:
+1. Devuelve ÚNICAMENTE un JSON plano.
+2. NO INVENTES: Si el usuario no ha mencionado su motivación, NO rellenes la clave "motivations" con frases genéricas como "cumple requisitos" o "interesado". Si no existe la información, omite la clave del JSON.
+3. PRECISIÓN: Extrae valores específicos. Ejemplo: "Aprender marketing digital" en lugar de "Estudios".
+4. FUENTES DE DATOS: Si ves que el usuario menciona su nombre o profesión, extráelos.
+5. NO REDUNDANCIA: No sugieras al asistente pedir el nombre o teléfono si ya están presentes en la conversación o en los metadatos.
+6. "qualified": Usa "SI" solo si el lead cumple con los requisitos mínimos de perfil y muestra interés real. "NO" si no es apto. "PENDIENTE" si falta información crítica.
+
+EJEMPLO DE SALIDA LIMPIA:
+{"user_name": "Carlos Ruiz", "user_profesion": "Arquitecto", "user_motivation": "Especialización en BIM"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -198,15 +200,19 @@ EJEMPLO:
                     
                     // 🟢 DYNAMIC RESUME: If we captured new data but not qualified, 
                     // ask orchestrator to check if we can skip the wait
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
                     if (lead) {
-                        await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        await orchestrator.triggerDynamicResume(leadId, (lead as any).tenant_id);
                     }
                 }
             } else if (Object.keys(newData).length > 0) {
                 // Even if not enough for auto-qual, trigger resume to see if we skip wait
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
-                if (lead) await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (lead) await orchestrator.triggerDynamicResume(leadId, (lead as any).tenant_id);
             }
         }
     }

@@ -81,6 +81,7 @@ export class AppointmentService {
             const programName = lead?.lead_programas?.[0]?.programas?.nombre;
 
             console.log(`[BOOK APPOINTMENT] 🔍 Searching advisors for tenant ${tenantId}...`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: advisors, error: advError } = await (supabase.from("advisors") as any)
                 .select("*")
                 .eq("tenant_id", tenantId)
@@ -159,24 +160,32 @@ export class AppointmentService {
 
     static async checkAvailability(tenantId: string, date: string) {
         const cleanDate = this.normalizeDate(date);
-        console.log(`[CHECK AVAILABILITY] Checking for ${cleanDate} (original: ${date})`);
+        console.log(`[CHECK AVAILABILITY] 🔍 Checking for ${cleanDate} in ${this.DEFAULT_TIMEZONE}`);
         const supabase = this.getSupabase();
-        const dayOfWeek = new Date(cleanDate).getUTCDay(); // 0-6 (Sun-Sat)
         
-        // Get slots for that day
+        // 1. Determine day of week in Madrid
+        // Using a fixed time (midday) to ensure we get the correct day of week in that timezone
+        const referenceDate = fromZonedTime(`${cleanDate} 12:00:00`, this.DEFAULT_TIMEZONE);
+        const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
+        
+        // 2. Get advisor availability slots for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: ranges } = await (supabase.from("availability_slots") as any)
             .select("*, advisors!inner(tenant_id)")
             .eq("day_of_week", dayOfWeek)
             .eq("advisors.tenant_id", tenantId);
 
-        // Get existing appointments for that day
+        // 3. Define the time range for the whole day in UTC to fetch appointments
+        const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();
+        const endOfDayUTC = fromZonedTime(`${cleanDate} 23:59:59`, this.DEFAULT_TIMEZONE).toISOString();
+
+        // 4. Get existing appointments for that day (using Madrid day boundaries in UTC)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing } = await (supabase.from("appointments") as any)
             .select("scheduled_at, advisor_id")
             .eq("tenant_id", tenantId)
-            .gte("scheduled_at", `${date}T00:00:00Z`)
-            .lte("scheduled_at", `${date}T23:59:59Z`)
+            .gte("scheduled_at", startOfDayUTC)
+            .lte("scheduled_at", endOfDayUTC)
             .neq("status", "CANCELLED");
 
         const availableSlots: { time: string, advisor_id: string }[] = [];
@@ -186,30 +195,39 @@ export class AppointmentService {
                 const startTime = range.start_time;
                 const endTime = range.end_time;
                 const duration = range.slot_duration_minutes || 30;
+                const advisorId = range.advisor_id;
 
-                let current = this.parseTimeToMinutes(startTime);
-                const end = this.parseTimeToMinutes(endTime);
+                let currentMin = this.parseTimeToMinutes(startTime);
+                const endMin = this.parseTimeToMinutes(endTime);
 
-                while (current < end) {
-                    const timeString = this.minutesToTimeString(current);
+                while (currentMin < endMin) {
+                    const timeStr = this.minutesToTimeString(currentMin); // "HH:MM:00"
+                    
+                    // Convert this specific slot to UTC ISO for comparison
+                    const slotFullString = `${cleanDate} ${timeStr}`;
+                    const slotUTC = fromZonedTime(slotFullString, this.DEFAULT_TIMEZONE).toISOString();
                     
                     // Check if already booked
-                    const isBooked = (existing as { scheduled_at: string; advisor_id: string }[])?.some((e) => 
-                        e.scheduled_at.includes(timeString) && e.advisor_id === range.advisor_id
-                    );
+                    // We compare the ISO strings exactly
+                    const isBooked = (existing as { scheduled_at: string; advisor_id: string }[])?.some((e) => {
+                        const existingISO = new Date(e.scheduled_at).toISOString();
+                        return existingISO === slotUTC && e.advisor_id === advisorId;
+                    });
 
                     if (!isBooked) {
                         availableSlots.push({
-                            time: timeString,
-                            advisor_id: range.advisor_id
+                            time: timeStr.substring(0, 5), // Return "HH:MM" for AI friendliness
+                            advisor_id: advisorId
                         });
                     }
-                    current += duration;
+                    currentMin += duration;
                 }
             }
         }
 
+        console.log(`[CHECK AVAILABILITY] ✅ Found ${availableSlots.length} available slots.`);
         return {
+            date: cleanDate,
             available_slots: availableSlots
         };
     }
