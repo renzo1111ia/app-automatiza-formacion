@@ -314,14 +314,14 @@ export default function AgentsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                                             {variantA.model_provider === 'OPENAI' && (
                                                 <>
-                                                    <ModelCard active={variantA.model_name === 'gpt-4.1'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1'}))} label="GPT-4.1 (Omni Series)" desc="Última versión optimizada con razonamiento 4.1" />
+                                                    <ModelCard active={variantA.model_name === 'gpt-4.1'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1'}))} label="GPT-4.1 (Omni)" desc="Última versión optimizada con razonamiento 4.1" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4.1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4.1-mini'}))} label="GPT-4.1 Mini" desc="Máxima velocidad con inteligencia 4.1" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4o'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o'}))} label="GPT-4o (Standard)" desc="El modelo insignia versátil y rápido" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4o-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4o-mini'}))} label="GPT-4o MINI" desc="Económico y ultra-rápido" />
-                                                    <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="o3-mini (Reasoning)" desc="Razonamiento ultra-rápido para lógica compleja" />
+                                                    <ModelCard active={variantA.model_name === 'o3-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o3-mini'}))} label="o3-mini (Logic)" desc="Razonamiento ultra-rápido para lógica compleja" />
                                                     <ModelCard active={variantA.model_name === 'o1'} onClick={() => setVariantA(p => ({...p, model_name: 'o1'}))} label="o1 (Preview)" desc="Razonamiento profundo avanzado" />
                                                     <ModelCard active={variantA.model_name === 'o1-mini'} onClick={() => setVariantA(p => ({...p, model_name: 'o1-mini'}))} label="o1-mini" desc="Razonamiento rápido y eficaz" />
                                                     <ModelCard active={variantA.model_name === 'gpt-4-turbo'} onClick={() => setVariantA(p => ({...p, model_name: 'gpt-4-turbo'}))} label="GPT-4 Turbo" desc="Precisión legacy demostrada" />
@@ -1161,20 +1161,25 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, on
 
 function ModelCard({ active, onClick, label, desc }: { active: boolean, onClick: () => void, label: string, desc: string }) {
     return (
-        <button title={`Seleccionar modelo ${label}`}
-            onClick={onClick}
-            className={cn(
-                "p-6 rounded-[32px] border text-left transition-all relative group overflow-hidden h-32 flex flex-col justify-between shadow-sm",
-                active ? "bg-emerald-500/10 border-emerald-500/40 shadow-2xl shadow-emerald-500/10" : "bg-white dark:bg-white/[0.01] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.03]"
-            )}
-        >
-            <div className="flex items-center justify-between">
-                <h4 className={cn("text-sm font-black uppercase tracking-tight", active ? "text-emerald-500 dark:text-emerald-400" : "text-slate-400 dark:text-white/40 group-hover:text-slate-900 dark:group-hover:text-white")}>{label}</h4>
+        <div className="relative group">
+            <button title={`Seleccionar modelo ${label}`}
+                onClick={onClick}
+                className={cn(
+                    "w-full px-5 h-14 rounded-[18px] border text-left transition-all relative overflow-hidden flex items-center justify-between shadow-sm",
+                    active ? "bg-emerald-500/10 border-emerald-500/40 shadow-lg shadow-emerald-500/5" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                )}
+            >
+                <h4 className={cn("text-[10px] font-black uppercase tracking-wider", active ? "text-emerald-500 dark:text-emerald-400" : "text-slate-400 dark:text-white/40 group-hover:text-slate-900 dark:group-hover:text-white")}>{label}</h4>
                 {active && <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
+                {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />}
+            </button>
+
+            {/* Floating Tooltip/Menu */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-slate-900 border border-white/10 rounded-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all transform scale-90 translate-y-2 group-hover:scale-100 group-hover:translate-y-0 z-50 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <p className="text-[9px] font-black text-white/80 uppercase tracking-widest leading-relaxed">{desc}</p>
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-slate-900" />
             </div>
-            <p className={cn("text-[10px] font-bold uppercase tracking-tight leading-tight line-clamp-2", active ? "text-emerald-600/60 dark:text-emerald-400/40" : "text-slate-400 dark:text-white/20")}>{desc}</p>
-            {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />}
-        </button>
+        </div>
     );
 }
 
