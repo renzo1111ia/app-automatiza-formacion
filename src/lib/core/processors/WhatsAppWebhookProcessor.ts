@@ -197,13 +197,12 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                 console.log(`[WHATSAPP PROCESSOR] Message logged successfully for lead ${lead.id}`);
             }
 
-            // Log activity for debugging
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from("system_logs") as any).insert({
-                tenant_id: tenantId,
-                level: "INFO",
-                message: `WhatsApp Inbound: ${fromNumber}`,
-                metadata: { lead_id: lead.id, content: content.substring(0, 100) }
+            // activity log for debugging
+            const { GlobalLogger } = await import("../logger");
+            await GlobalLogger.info(tenantId, "WHATSAPP", `WhatsApp Inbound: ${fromNumber}`, { 
+                lead_id: lead.id, 
+                content: content.substring(0, 100),
+                is_ai_enabled: (lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled
             });
         } catch (logEx) {
             console.error("[WHATSAPP PROCESSOR] Exception logging message:", logEx);
@@ -211,8 +210,13 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         // 6. Trigger AI Response
         if ((lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled) {
+            const { GlobalLogger } = await import("../logger");
+            await GlobalLogger.info(tenantId, "WHATSAPP", `🤖 Calling AI Processor for lead ${lead.id}`);
             const { generateAIWhatsAppResponse } = await import("./WhatsAppAIProcessor");
             await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content, message.id);
+        } else {
+            const { GlobalLogger } = await import("../logger");
+            await GlobalLogger.warn(tenantId, "WHATSAPP", `AI is DISABLED for lead ${lead.id}. Skipping.`);
         }
 
     } catch (err: unknown) {
