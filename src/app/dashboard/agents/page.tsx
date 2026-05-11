@@ -576,15 +576,14 @@ export default function AgentsPage() {
                                                             <h4 className="text-lg font-black uppercase tracking-tight text-foreground">Orquestador de Citas</h4>
                                                             <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Conexión con Calendario</p>
                                                         </div>
-                                                    </div>
                                                 </div>
 
-                                                <div className="space-y-4 relative z-10">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
                                                     {[
                                                         { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres' },
-                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita la reserva directa en el calendario' },
+                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita reserva directa en el calendario' },
                                                         { id: 'cancel_appointment', label: 'Cancelar Cita', desc: 'Permite a la IA anular citas existentes' },
-                                                        { id: 'reschedule_appointment', label: 'Reprogramar Cita', desc: 'Permite a la IA cambiar la hora de una cita' }
+                                                        { id: 'reschedule_appointment', label: 'Reprogramar Cita', desc: 'Permite a la IA cambiar hora de cita' }
                                                     ].map((tool) => {
                                                         const isEnabled = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools?.[tool.id] === true;
                                                         return (
@@ -596,35 +595,35 @@ export default function AgentsPage() {
                                                                     setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), tools: newTools}}));
                                                                 }}
                                                                 className={cn(
-                                                                    "w-full p-6 rounded-3xl border transition-all flex items-center justify-between group/btn",
-                                                                    isEnabled ? "bg-primary/10 border-primary/30" : "bg-card/40 border-border hover:bg-card/60"
+                                                                    "w-full p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 group/btn text-left",
+                                                                    isEnabled ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card/40 border-border hover:bg-card/80"
                                                                 )}
                                                             >
-                                                                <div className="flex items-center gap-4">
+                                                                <div className="flex items-center justify-between w-full">
                                                                     <div className={cn(
-                                                                        "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-                                                                        isEnabled ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                                                                        "h-8 w-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0",
+                                                                        isEnabled ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-muted text-muted-foreground"
                                                                     )}>
-                                                                        <Search className="h-5 w-5" />
+                                                                        <Search className="h-4 w-4" />
                                                                     </div>
-                                                                    <div className="text-left">
-                                                                        <span className={cn("text-xs font-black uppercase tracking-tight block", isEnabled ? "text-primary" : "text-foreground/60")}>{tool.label}</span>
-                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">{tool.desc}</span>
+                                                                    <div className={cn(
+                                                                        "h-5 w-9 rounded-full relative transition-all duration-300 border flex-shrink-0",
+                                                                        isEnabled ? "bg-primary border-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" : "bg-muted border-border"
+                                                                    )}>
+                                                                        <div className={cn(
+                                                                            "h-3.5 w-3.5 rounded-full bg-white absolute top-0.5 transition-all duration-300 shadow-sm",
+                                                                            isEnabled ? "left-4.5" : "left-0.5"
+                                                                        )} style={{ left: isEnabled ? 'calc(100% - 16px)' : '2px' }} />
                                                                     </div>
                                                                 </div>
-                                                                <div className={cn(
-                                                                    "h-6 w-11 rounded-full relative transition-all duration-300",
-                                                                    isEnabled ? "bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]" : "bg-muted"
-                                                                )}>
-                                                                    <div className={cn(
-                                                                        "h-4 w-4 rounded-full bg-white absolute top-1 transition-all duration-300 shadow-sm",
-                                                                        isEnabled ? "right-1" : "left-1"
-                                                                    )} />
+                                                                <div>
+                                                                    <span className={cn("text-[11px] font-black uppercase tracking-tight block", isEnabled ? "text-primary" : "text-foreground/80")}>{tool.label}</span>
+                                                                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1 block line-clamp-2">{tool.desc}</span>
                                                                 </div>
                                                             </button>
                                                         );
                                                     })}
-                                                </div>
+                                                </div>                           </div>
                                                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                                                     <Calendar className="h-32 w-32 -rotate-12" />
                                                 </div>
