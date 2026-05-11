@@ -28,8 +28,7 @@ export async function runRescueCheck() {
     // 1. Fetch leads that are: 
     // - Assigned to an AI text agent
     // - Not paused
-    const { data: leadsRaw, error } = await supabase
-        .from("lead" as never)
+    const { data: leadsRaw, error } = await (supabase.from("lead" as any) as any)
         .select("*, ai_agents(*)")
         .not("ai_agent_id", "is", null)
         .eq("is_ai_paused", false);
@@ -159,9 +158,8 @@ export async function runRescueCheck() {
                 }
             };
 
-            await supabase
-                .from("lead" as never)
-                .update(updateData)
+            await (supabase.from("lead" as any) as any)
+                .update(updateData as any)
                 .eq("id", lead.id);
 
             await GlobalLogger.info(lead.tenant_id, 'RESCUE', `Inactivity rescue sent (${isAIEnabled ? 'AI' : 'Static'})`, { leadId: lead.id, agentId: agent.id });
