@@ -580,6 +580,7 @@ export default function AgentsPage() {
                                                 </div>
 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                                                    {[
                                                         { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres en tiempo real.', icon: Search },
                                                         { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita la capacidad de crear nuevas reservas.', icon: CalendarPlus },
                                                         { id: 'cancel_appointment', label: 'Cancelar Cita', desc: 'Permite a la IA anular citas si el usuario lo solicita.', icon: CalendarX },
