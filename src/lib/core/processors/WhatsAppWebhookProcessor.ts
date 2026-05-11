@@ -32,7 +32,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const supabase = getAdminSupabase();
 
         // 1. Identify Tenant by WABA ID (phone_number_id)
-        const { data: tenants, error: tenantError } = await supabase.from("tenants")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: tenants, error: tenantError } = await (supabase.from("tenants") as any)
             .select("id")
             .filter("config->whatsapp->>phoneNumberId", "eq", wabaId);
 
@@ -48,7 +49,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         if (searchPhone.startsWith("+")) searchPhone = searchPhone.slice(1);
 
         // 3. Find or Create Lead
-        const { data: leadFound, error: leadError } = await supabase.from("lead")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: leadFound, error: leadError } = await (supabase.from("lead") as any)
             .select("*")
             .eq("tenant_id", tenantId)
             .ilike("telefono", `%${searchPhone}%`)
@@ -69,7 +71,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             const location = getLeadLocationData(fromNumber);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: newLead, error: createError } = await supabase.from("lead")
+            const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
                     tenant_id: tenantId,
                     telefono: fromNumber,
@@ -88,7 +90,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             // Update country for existing lead if missing
             const location = getLeadLocationData(fromNumber);
             if (location.countryName) {
-                await supabase.from("lead")
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (supabase.from("lead") as any)
                     .update({ pais: location.countryName })
                     .eq("id", lead.id);
                 lead.pais = location.countryName;
@@ -114,7 +117,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             
             if (mediaId) {
                 try {
-                    const { data: tenantData } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const { data: tenantData } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const config = (tenantData as any)?.config;
                     const token = config?.whatsapp?.accessToken;
@@ -173,7 +177,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             }
 
             // Log activity for debugging
-            await supabase.from("system_logs").insert({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from("system_logs") as any).insert({
                 tenant_id: tenantId,
                 level: "INFO",
                 message: `WhatsApp Inbound: ${fromNumber}`,
