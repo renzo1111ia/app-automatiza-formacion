@@ -29,7 +29,7 @@ export async function runRescueCheck() {
     // - Assigned to an AI text agent
     // - Not paused
     const { data: leadsRaw, error } = await supabase
-        .from("lead")
+        .from("lead" as never)
         .select("*, ai_agents(*)")
         .not("ai_agent_id", "is", null)
         .eq("is_ai_paused", false);
@@ -47,7 +47,7 @@ export async function runRescueCheck() {
 
             // 2. Fetch the active variant for this agent to get the latest rules
             const { data: variantRaw } = await supabase
-                .from("ai_agent_variants")
+                .from("ai_agent_variants" as never)
                 .select("*")
                 .eq("agent_id", agent.id)
                 .eq("is_active", true)
@@ -88,7 +88,7 @@ export async function runRescueCheck() {
 
             // 6. Fetch Tenant Credentials for WhatsApp
             const { data: tenantRaw } = await supabase
-                .from("tenants")
+                .from("tenants" as never)
                 .select("config")
                 .eq("id", lead.tenant_id)
                 .single();
@@ -160,7 +160,7 @@ export async function runRescueCheck() {
             };
 
             await supabase
-                .from("lead")
+                .from("lead" as never)
                 .update(updateData)
                 .eq("id", lead.id);
 
