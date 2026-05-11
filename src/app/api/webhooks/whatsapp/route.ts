@@ -66,15 +66,15 @@ export async function POST(req: Request) {
 
         // --- DEBUG LOG: Capturar cuerpo completo ---
         try {
-            const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const supabaseUrl = "https://api-db.automatizaformacion.com";
+            const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.dc0tXGNDPsriOwj6qR9dbJm-GffhvoNTBhl88YEB_hg";
             
             if (supabaseUrl && supabaseKey) {
                 const supabase = createClient(supabaseUrl, supabaseKey);
                 await supabase.from("system_logs").insert({
-                    tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70", // Usamos el ID del tenant principal para debug
+                    tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70", 
                     level: "INFO",
-                    message: "WHATSAPP_WEBHOOK_RAW: Cuerpo recibido de Meta",
+                    message: "WHATSAPP_WEBHOOK_RAW: Entrada detectada (Hardcoded Keys)",
                     metadata: body
                 });
             }
