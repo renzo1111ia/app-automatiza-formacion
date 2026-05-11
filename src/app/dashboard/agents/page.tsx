@@ -576,6 +576,7 @@ export default function AgentsPage() {
                                                             <h4 className="text-lg font-black uppercase tracking-tight text-foreground">Orquestador de Citas</h4>
                                                             <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Conexión con Calendario</p>
                                                         </div>
+                                                    </div>
                                                 </div>
 
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
