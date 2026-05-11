@@ -328,8 +328,7 @@ ${conversationContext}
                 // 12. Log Outbound Message (Consolidated)
                 await ChatSummaryService.appendMessage(tenantId, leadId, "Asistente", aiResponse);
 
-                /*
-                // LEGACY: Individual message logging
+                // 12. Individual message logging (REQUIRED FOR DASHBOARD INBOX)
                 await (supabase.from("chat_messages" as unknown as string) as any).insert({
                     tenant_id: tenantId,
                     lead_id: leadId,
@@ -344,7 +343,6 @@ ${conversationContext}
                         token_usage: completion.usage
                     }
                 });
-                */
 
                 // 12. Autonomous Learning (Fact Extraction)
                 const trackedVars = (activeVariant.tracked_variables as string[]) || [];

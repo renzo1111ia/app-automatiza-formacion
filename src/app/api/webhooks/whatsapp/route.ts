@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { WhatsAppWebhookProcessor } from "@/lib/core/processors/WhatsAppWebhookProcessor";
+import { processIncomingWhatsApp } from "@/lib/core/processors/WhatsAppWebhookProcessor";
 import crypto from "crypto";
 
 /**
@@ -53,9 +53,28 @@ export async function POST(req: Request) {
         }
 
         // 3. Procesar mensajes a través del procesador central
-        const result = await WhatsAppWebhookProcessor.processIncomingWhatsApp(body);
+        // Nota: Meta envía una estructura compleja, processIncomingWhatsApp maneja la extracción interna.
+        const entries = body.entry || [];
+        for (const entry of entries) {
+            const changes = entry.changes || [];
+            for (const change of changes) {
+                const value = change.value;
+                if (!value || !value.messages) continue;
 
-        return NextResponse.json({ success: result });
+                for (const message of value.messages) {
+                    const from = message.from;
+                    const wabaId = value.metadata?.phone_number_id;
+                    const contactName = value.contacts?.[0]?.profile?.name || null;
+
+                    // Procesamiento asíncrono para no bloquear a Meta
+                    processIncomingWhatsApp(from, message, wabaId, contactName).catch(err => {
+                        console.error("[WHATSAPP WEBHOOK] Error en procesamiento:", err);
+                    });
+                }
+            }
+        }
+
+        return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("❌ [WHATSAPP WEBHOOK] Error crítico:", error);
         return NextResponse.json({ 
