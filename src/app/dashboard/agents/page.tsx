@@ -49,7 +49,7 @@ interface AIAgentAutomationRules {
 export default function AgentsPage() {
     const [agents, setAgents] = useState<AIAgent[]>([]);
     const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
-    const [activeTab, setActiveTab] = useState<'BRAIN' | 'INACTIVO' | 'CRM' | 'METRICS'>('BRAIN');
+    const [activeTab, setActiveTab] = useState<'BRAIN' | 'INACTIVO' | 'CRM'>('BRAIN');
 
     const [isSaving, setIsSaving] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
@@ -282,7 +282,6 @@ export default function AgentsPage() {
                         <TabButton active={activeTab === 'BRAIN'} onClick={() => setActiveTab('BRAIN')} icon={Brain} label="Cerebro" />
                         <TabButton active={activeTab === 'INACTIVO'} onClick={() => setActiveTab('INACTIVO')} icon={AlarmClock} label="Inactividad" />
                         <TabButton active={activeTab === 'CRM'} onClick={() => setActiveTab('CRM')} icon={DbIcon} label="CRM Sync" />
-                        <TabButton active={activeTab === 'METRICS'} onClick={() => setActiveTab('METRICS')} icon={BarChart3} label="Métricas" />
                     </div>
 
                     <div className="flex-1 p-10 overflow-y-auto no-scrollbar">
@@ -1104,77 +1103,7 @@ export default function AgentsPage() {
                                 </motion.div>
                             )}
 
-                            {activeTab === 'METRICS' && (
-                                <motion.div key="METRICS" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-10 pb-20">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
-                                            <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-xl shadow-emerald-500/5">
-                                                <TrendingUp className="h-7 w-7 text-emerald-400" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Conversión Global</h4>
-                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">94.2%</p>
-                                            </div>
-                                        </div>
-                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
-                                            <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-xl shadow-blue-500/5">
-                                                <Zap className="h-7 w-7 text-blue-400" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Leads Procesados</h4>
-                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">1,284</p>
-                                            </div>
-                                        </div>
-                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
-                                            <div className="h-14 w-14 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-xl shadow-purple-500/5">
-                                                <Clock className="h-7 w-7 text-purple-400" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Respuesta Media</h4>
-                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">1.2m</p>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="p-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[56px] shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 p-12 opacity-5">
-                                            <BarChart3 className="h-48 w-48 text-primary" />
-                                        </div>
-                                        <div className="relative z-10 space-y-10">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
-                                                    <BarChart3 className="h-6 w-6 text-primary" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-xl font-black uppercase tracking-tight">Análisis de Rendimiento A/B</h3>
-                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Comparativa de efectividad entre variantes</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Variante A (Actual)</span>
-                                                        <span className="text-[11px] font-black text-emerald-500 uppercase tracking-widest">Líder en Conversión</span>
-                                                    </div>
-                                                    <div className="h-4 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                                        <motion.div initial={{ width: 0 }} animate={{ width: "94%" }} className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-6">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Variante B (Control)</span>
-                                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">88% Efectividad</span>
-                                                    </div>
-                                                    <div className="h-4 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-                                                        <motion.div initial={{ width: 0 }} animate={{ width: "88%" }} className="h-full bg-slate-400" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
                         </AnimatePresence>
                     </div>
                 </div>
