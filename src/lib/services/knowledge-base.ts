@@ -103,16 +103,29 @@ export class ChatSummaryService {
         const newMessage = `[${timestamp}] ${role}: ${content}\n`;
         const updatedSummary = currentSummary + newMessage;
 
-        const { error } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { upsert: (d: unknown, options: unknown) => Promise<{ error: unknown }> })
-            .upsert({
-                tenant_id: tenantId,
-                lead_id: leadId,
-                summary: updatedSummary,
-                last_interaction_at: new Date().toISOString()
-            }, { onConflict: 'lead_id' });
+        // Manual upsert logic to avoid ON CONFLICT constraint missing in DB
+        const { data: existing } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { select: (s: string) => { eq: (f: string, v: string) => { maybeSingle: () => Promise<{ data: unknown, error: unknown }> } } })
+            .select('id')
+            .eq('lead_id', leadId)
+            .maybeSingle();
 
-        if (error) {
-            console.error('❌ [CHAT_SUMMARY_APPEND] Error:', (error as unknown as { message: string }).message);
+        if (existing) {
+            const { error } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { update: (d: unknown) => { eq: (f: string, v: string) => Promise<{ error: unknown }> } })
+                .update({
+                    summary: updatedSummary,
+                    last_interaction_at: new Date().toISOString()
+                })
+                .eq('lead_id', leadId);
+            if (error) console.error('❌ [CHAT_SUMMARY_UPDATE] Error:', (error as unknown as { message: string }).message);
+        } else {
+            const { error } = await (supabase.from('chat_summaries' as unknown as string) as unknown as { insert: (d: unknown) => Promise<{ error: unknown }> })
+                .insert({
+                    tenant_id: tenantId,
+                    lead_id: leadId,
+                    summary: updatedSummary,
+                    last_interaction_at: new Date().toISOString()
+                });
+            if (error) console.error('❌ [CHAT_SUMMARY_INSERT] Error:', (error as unknown as { message: string }).message);
         }
     }
 }

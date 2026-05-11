@@ -26,19 +26,33 @@ export class GlobalLogger {
 
             // Persist to DB
             // Using a typed cast to avoid 'any' since system_logs might not be in the generated types
-            const { error } = await (supabase.from("system_logs" as never) as unknown as { 
-                insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }> 
-            }).insert({
+            const payload: Record<string, unknown> = {
                 tenant_id: tenantId,
                 level,
                 source,
                 message,
                 metadata: metadata as Record<string, unknown>,
                 error_code: errorCode
-            });
+            };
+
+            const { error } = await (supabase.from("system_logs" as never) as unknown as { 
+                insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }> 
+            }).insert(payload);
 
             if (error) {
-                console.error("[LOGGER FATAL] Failed to persist log to DB:", error.message);
+                // If the error is about the source column missing in schema cache, retry without it
+                if (error.message.includes("column") && error.message.includes("source")) {
+                    const { source: _unused, ...payloadWithoutSource } = payload;
+                    const { error: retryError } = await (supabase.from("system_logs" as never) as unknown as { 
+                        insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }> 
+                    }).insert(payloadWithoutSource);
+                    
+                    if (retryError) {
+                        console.error("[LOGGER FATAL] Failed to persist log even without source:", retryError.message);
+                    }
+                } else {
+                    console.error("[LOGGER FATAL] Failed to persist log to DB:", error.message);
+                }
             }
         } catch (e) {
             console.error("[LOGGER FATAL] Critical failure in logging system:", e);
