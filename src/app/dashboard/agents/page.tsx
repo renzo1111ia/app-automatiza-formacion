@@ -32,6 +32,7 @@ interface AIAgentCRMConfig {
 }
 
 interface AIAgentAutomationRules {
+    inactivity_enabled?: boolean;
     inactivity_timeout?: number;
     max_retries?: number;
     inactivity_action?: 'MESSAGE' | 'NOTIFY';
