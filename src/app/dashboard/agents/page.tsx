@@ -571,6 +571,25 @@ export default function AgentsPage() {
                                                         <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-xl shadow-primary/5">
                                                             <Calendar className="h-7 w-7 text-primary" />
                                                         </div>
+                                                        <div>
+                                                            <h4 className="text-lg font-black uppercase tracking-tight text-foreground">Orquestador de Citas</h4>
+                                                            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">Conexión con Calendario</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4 relative z-10">
+                                                    {[
+                                                        { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres' },
+                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita la reserva directa en el calendario' },
+                                                        { id: 'cancel_appointment', label: 'Cancelar Cita', desc: 'Permite a la IA anular citas existentes' },
+                                                        { id: 'reschedule_appointment', label: 'Reprogramar Cita', desc: 'Permite a la IA cambiar la hora de una cita' }
+                                                    ].map((tool) => {
+                                                        const isEnabled = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools?.[tool.id] === true;
+                                                        return (
+                                                            <button 
+                                                                key={tool.id}
+                                                                onClick={() => {
                                                                     const currentTools = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools || {};
                                                                     const newTools = { ...currentTools, [tool.id]: !isEnabled };
                                                                     setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), tools: newTools}}));
