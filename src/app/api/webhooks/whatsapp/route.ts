@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { WhatsAppWebhookProcessor } from "@/lib/core/processors/WhatsAppWebhookProcessor";
+import crypto from "crypto";
 
 /**
  * WHATSAPP WEBHOOK (META CLOUD API)
@@ -27,106 +28,39 @@ export async function GET(req: Request) {
 
 // Message Receiver (POST)
 export async function POST(req: Request) {
-    console.log("🚀 [WHATSAPP WEBHOOK] Solicitud recibida...");
     try {
         const rawBody = await req.text();
-        console.log("📦 [WHATSAPP WEBHOOK] Body:", JSON.stringify(JSON.parse(rawBody), null, 2));
+        const body = JSON.parse(rawBody);
         const signature = req.headers.get("x-hub-signature-256");
         const appSecret = process.env.WHATSAPP_APP_SECRET;
 
         // 1. Validar firma si existe el App Secret
         if (appSecret && signature) {
-            const crypto = await import("crypto");
             const hash = "sha256=" + crypto
                 .createHmac("sha256", appSecret)
                 .update(rawBody)
                 .digest("hex");
 
             if (hash !== signature) {
-                console.warn("[WHATSAPP WEBHOOK] ❌ Invalid signature.");
-                
-                // Log to DB for debugging
-                const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-                const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-                if (supabaseUrl && supabaseKey) {
-                    const supabase = createClient(supabaseUrl, supabaseKey);
-                    await supabase.from("system_logs").insert({
-                        tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70",
-                        level: "WARNING",
-                        message: "WHATSAPP_WEBHOOK: Invalid Signature. Check WHATSAPP_APP_SECRET.",
-                        metadata: { receivedHash: signature, computedHash: hash }
-                    });
-                }
-
+                console.warn("[WHATSAPP WEBHOOK] ❌ Invalid signature mismatch.");
                 return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
             }
         }
 
-        const body = JSON.parse(rawBody);
-
-        // --- DEBUG LOG: Capturar cuerpo completo ---
-        try {
-            const supabaseUrl = "https://api-db.automatizaformacion.com";
-            const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NzgzOTI5MzQsImV4cCI6MTg5MzQ1NjAwMCwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlzcyI6InN1cGFiYXNlIn0.dc0tXGNDPsriOwj6qR9dbJm-GffhvoNTBhl88YEB_hg";
-            
-            if (supabaseUrl && supabaseKey) {
-                const supabase = createClient(supabaseUrl, supabaseKey);
-                await supabase.from("system_logs").insert({
-                    tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70", 
-                    level: "INFO",
-                    message: "WHATSAPP_WEBHOOK_RAW: Entrada detectada (Hardcoded Keys)",
-                    metadata: body
-                });
-            }
-        } catch (e) {
-            console.error("Error logging raw webhook:", e);
-        }
-
-        // 1. Basic Structure check
+        // 2. Estructura básica de WhatsApp
         if (body.object !== "whatsapp_business_account") {
             return NextResponse.json({ error: "Invalid object type" }, { status: 400 });
         }
 
-        const entries = body.entry || [];
-        for (const entry of entries) {
-            const changes = entry.changes || [];
-            for (const change of changes) {
-                const value = change.value;
-                if (!value) continue;
+        // 3. Procesar mensajes a través del procesador central
+        const result = await WhatsAppWebhookProcessor.processIncomingWhatsApp(body);
 
-                // ── A. Handle Status Updates (Sent, Delivered, Read) ──
-                if (value.statuses) {
-                    for (const status of value.statuses) {
-                        console.log(`[WHATSAPP WEBHOOK] Status Update: ${status.status} for message ${status.id}`);
-                        // Logic to update `chat_messages` status can be added here
-                    }
-                }
-
-                // ── B. Handle Incoming Messages ──
-                if (value.messages) {
-                    // Extract contact name if available
-                    const contactName = value.contacts?.[0]?.profile?.name || null;
-
-                    for (const message of value.messages) {
-                        const from = message.from; // Phone number (sender)
-                        const wabaId = value.metadata?.phone_number_id;
-
-                        // Delegate processing to a core processor (Non-blocking to avoid Meta timeout)
-                        const { processIncomingWhatsApp } = await import("@/lib/core/processors/WhatsAppWebhookProcessor");
-                        
-                        processIncomingWhatsApp(from, message, wabaId, contactName).catch(err => {
-                            console.error("[WHATSAPP WEBHOOK] Background processing error:", err);
-                        });
-                    }
-                }
-            }
-        }
-
-        return NextResponse.json({ success: true });
-
-    } catch (error: unknown) {
-        const err = error as Error;
-        console.error("[WHATSAPP WEBHOOK POST] Error:", err.message);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ success: result });
+    } catch (error: any) {
+        console.error("❌ [WHATSAPP WEBHOOK] Error crítico:", error);
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message 
+        }, { status: 500 });
     }
 }
