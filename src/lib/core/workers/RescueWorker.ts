@@ -28,6 +28,7 @@ export async function runRescueCheck() {
     // 1. Fetch leads that are: 
     // - Assigned to an AI text agent
     // - Not paused
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: leadsRaw, error } = await (supabase.from("lead" as any) as any)
         .select("*, ai_agents(*)")
         .not("ai_agent_id", "is", null)
@@ -128,6 +129,7 @@ export async function runRescueCheck() {
                 const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
                 await ChatSummaryService.appendMessage(lead.tenant_id, lead.id, "Asistente", finalMessage);
                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await (supabase.from("chat_messages") as any).insert({
                     tenant_id: lead.tenant_id,
                     lead_id: lead.id,
@@ -158,7 +160,9 @@ export async function runRescueCheck() {
                 }
             };
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await (supabase.from("lead" as any) as any)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .update(updateData as any)
                 .eq("id", lead.id);
 
