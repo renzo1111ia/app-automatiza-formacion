@@ -70,7 +70,7 @@ export class AppointmentService {
 
             // 1. Get Lead context (Simple fetch first to avoid relationship errors)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: lead, error: leadError } = await (supabase.from("lead") as any)
+            const { error: leadError } = await (supabase.from("lead") as any)
                 .select("*")
                 .eq("id", leadId)
                 .single();
@@ -90,6 +90,7 @@ export class AppointmentService {
                     .limit(1)
                     .maybeSingle();
                 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 programName = (lp as any)?.programas?.nombre;
             } catch (e) {
                 console.warn("[BOOK APPOINTMENT] Could not fetch program name, skipping...", e);
@@ -100,6 +101,7 @@ export class AppointmentService {
             console.log(`[BOOK APPOINTMENT] ✅ Proceeding without advisor assignment (will be assigned later).`);
 
             // 3. Persist to DB with Retry Logic for Schema Cache issues
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const appointmentData: any = {
                 tenant_id: tenantId,
                 lead_id: leadId,
@@ -115,6 +117,7 @@ export class AppointmentService {
 
             console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
             
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let { data: appointment, error: insertError } = await (supabase.from("appointments") as any)
                 .insert(appointmentData)
                 .select()
@@ -123,7 +126,9 @@ export class AppointmentService {
             // Retry without 'notes' if column is missing in schema cache
             if (insertError?.message?.includes("column") && insertError?.message?.includes("notes")) {
                 console.warn("[BOOK APPOINTMENT] 'notes' column not found in cache, retrying without it...");
-                const { notes: _, ...safeData } = appointmentData;
+                const safeData = { ...appointmentData };
+                delete safeData.notes;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const retry = await (supabase.from("appointments") as any)
                     .insert(safeData)
                     .select()
