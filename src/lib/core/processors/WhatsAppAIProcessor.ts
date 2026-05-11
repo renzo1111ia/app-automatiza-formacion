@@ -6,6 +6,7 @@ import OpenAI from "openai";
 import { ChatMemoryService } from "@/lib/services/chat-memory";
 import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowledge-base";
 import { FactExtractionService } from "@/lib/services/fact-extractor";
+import { GlobalLogger } from "../logger";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
@@ -16,10 +17,9 @@ import { FactExtractionService } from "@/lib/services/fact-extractor";
 export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, metaId?: string) {
     if (!incomingMessage) return;
     
-    console.log(`[AI PROCESSOR] 🤖 Thinking for lead ${leadId} (tenant: ${tenantId}, metaId: ${metaId})`);
-
     try {
         const supabase = getAdminSupabase();
+        await GlobalLogger.info(tenantId, "AI_PROCESSOR", `Thinking started for lead ${leadId}`, { message: incomingMessage });
 
         // 0. Deduplication check (Skip if we already processed this Meta ID)
         if (metaId) {
@@ -86,9 +86,12 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             : process.env.OPENAI_API_KEY;
         
         if (!apiKey || apiKey === "your_api_key_here") {
+            await GlobalLogger.error(tenantId, "AI_PROCESSOR", `Missing OpenAI API Key for lead ${leadId}`);
             console.error(`[AI PROCESSOR] ❌ OpenAI API Key missing both in Variant and System Env for lead ${leadId}`);
             return;
         }
+
+        await GlobalLogger.info(tenantId, "AI_PROCESSOR", `API Key verified, using variant ${activeVariant.id}`);
 
         // 3-5. Fetch all context data in parallel to reduce latency
         console.log(`[AI PROCESSOR] ⚡ Fetching context data and credentials in parallel...`);
@@ -264,6 +267,8 @@ ${conversationContext}
             { role: "user", content: incomingMessage }
         ];
 
+        await GlobalLogger.info(tenantId, "AI_PROCESSOR", `Calling OpenAI model ${modelName}`, { promptLength: systemPrompt.length });
+
         const completion = await openai.chat.completions.create({
             model: modelName,
             messages,
@@ -330,6 +335,7 @@ ${conversationContext}
         }
 
         const aiResponse = aiMessage?.content || "";
+        await GlobalLogger.info(tenantId, "AI_PROCESSOR", `AI Response generated`, { response: aiResponse.substring(0, 100) });
 
         if (aiResponse) {
             // 11. Update Redis Memory (Short-term)
@@ -385,6 +391,7 @@ ${conversationContext}
 
     } catch (err: unknown) {
         const error = err as Error;
+        await GlobalLogger.error(tenantId, "AI_PROCESSOR", `Critical Error in generateAIWhatsAppResponse: ${error.message}`, { stack: error.stack });
         console.error("[AI PROCESSOR] ❌ Critical Error:", error.message);
     }
 }
