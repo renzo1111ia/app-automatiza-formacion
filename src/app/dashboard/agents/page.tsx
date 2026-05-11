@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { 
     Bot, Zap,
     Save, 
-    BarChart3,
+    BarChart3, TrendingUp, Clock,
     PlusCircle,
     AlarmClock, MessageSquare as MessageSquareIcon,
     Trash2, Edit3,
@@ -12,7 +12,7 @@ import {
     Terminal,
     Play,
     Cpu, Brain, Database as DbIcon,
-    X, Sparkles, Calendar, RefreshCw, Info, Search
+    X, Sparkles, Calendar, RefreshCw, Search
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -707,188 +707,204 @@ export default function AgentsPage() {
                                                         {isSelected && <div className="h-3 w-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]" />}
                                                     </button>
                                                 );
-                                            })}
+                                                                                        })}
                                         </div>
                                     </div>
-
                                 </motion.div>
                             )}
 
                             {activeTab === 'INACTIVO' && (
-                                <motion.div key="INACTIVO" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="max-w-6xl mx-auto space-y-12 pb-20">
-                                    <div className="p-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[56px] space-y-12 shadow-sm">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-16 w-16 rounded-[24px] bg-red-500/10 flex items-center justify-center border border-red-500/20 shadow-2xl shadow-red-500/5">
-                                                    <AlarmClock className="h-8 w-8 text-red-500" />
+                                <motion.div key="INACTIVO" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="max-w-6xl mx-auto space-y-8 pb-20">
+                                    
+                                    {/* HEADER & MASTER TOGGLE */}
+                                    <div className="relative group overflow-hidden bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] p-10 shadow-sm transition-all hover:border-primary/20">
+                                        <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                                            <AlarmClock className="h-32 w-32 text-primary" />
+                                        </div>
+
+                                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                                            <div className="flex items-center gap-6">
+                                                <div className={cn(
+                                                    "h-20 w-20 rounded-[28px] flex items-center justify-center border transition-all duration-700",
+                                                    (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled 
+                                                        ? "bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.15)]" 
+                                                        : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10"
+                                                )}>
+                                                    <Zap className={cn("h-10 w-10 transition-all duration-700", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled ? "text-emerald-400 scale-110" : "text-slate-300 dark:text-white/20")} />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Gestión de Inactividad</h3>
-                                                    <p className="text-[11px] text-slate-500 dark:text-white/40 font-black uppercase tracking-widest mt-1">Reglas automáticas para leads que dejan de responder</p>
+                                                    <h2 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white leading-none">Rescate Inteligente</h2>
+                                                    <p className="text-[11px] text-slate-500 dark:text-white/40 font-black uppercase tracking-widest mt-2">Recuperación autónoma de prospectos inactivos</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn("h-3 w-3 rounded-full animate-pulse", variantA.automation_rules?.inactivity_enabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-white/10")} />
-                                                <button 
-                                                    title={variantA.automation_rules?.inactivity_enabled ? "Desactivar sistema de inactividad" : "Activar sistema de inactividad"}
-                                                    onClick={() => setVariantA(p => ({...p, automation_rules: {...p.automation_rules, inactivity_enabled: !p.automation_rules?.inactivity_enabled}}))}
-                                                    className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", variantA.automation_rules?.inactivity_enabled ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/40 border border-slate-200 dark:border-white/10")}
-                                                >
-                                                    {variantA.automation_rules?.inactivity_enabled ? "Sistema Activado" : "Sistema Desactivado"}
-                                                </button>
+
+                                            <button 
+                                                onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_enabled: !(p.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled}}))}
+                                                className={cn(
+                                                    "h-16 px-10 rounded-[24px] flex items-center gap-4 font-black uppercase text-[11px] tracking-[0.2em] transition-all active:scale-95 group/btn",
+                                                    (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled 
+                                                        ? "bg-emerald-500 text-white shadow-xl shadow-emerald-500/30" 
+                                                        : "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-white/20 border border-slate-200 dark:border-white/10"
+                                                )}
+                                            >
+                                                <div className={cn("h-2 w-2 rounded-full", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled ? "bg-white animate-ping" : "bg-slate-400")} />
+                                                {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled ? "Sistema en Guardia" : "Sistema Pausado"}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className={cn(
+                                        "grid grid-cols-1 lg:grid-cols-12 gap-8 transition-all duration-700",
+                                        !(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_enabled && "opacity-30 grayscale blur-[2px] pointer-events-none scale-[0.99]"
+                                    )}>
+                                        
+                                        {/* CONFIG PANEL */}
+                                        <div className="lg:col-span-4 space-y-8">
+                                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] p-8 space-y-8 shadow-sm">
+                                                <div className="flex items-center gap-3">
+                                                    <Terminal className="h-4 w-4 text-primary" />
+                                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Parámetros de Ejecución</h3>
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <div className="space-y-3">
+                                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 ml-2">Tiempo de Espera</label>
+                                                        <select 
+                                                            title="Tiempo de espera"
+                                                            value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_timeout || 30}
+                                                            onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_timeout: parseInt(e.target.value)}}))}
+                                                            className="w-full h-14 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-2xl px-5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/20 transition-all appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="10">10 minutos (Agresivo)</option>
+                                                            <option value="30">30 minutos (Estándar)</option>
+                                                            <option value="60">1 hora (Amable)</option>
+                                                            <option value="120">2 horas (Conservador)</option>
+                                                            <option value="1440">24 horas (Recordatorio)</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 ml-2">Máximo de Reintentos</label>
+                                                        <div className="grid grid-cols-3 gap-2">
+                                                            {[1, 2, 3].map(n => (
+                                                                <button
+                                                                    key={n}
+                                                                    onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), max_retries: n}}))}
+                                                                    className={cn(
+                                                                        "h-12 rounded-xl text-[10px] font-black transition-all border",
+                                                                        (variantA.automation_rules as unknown as AIAgentAutomationRules)?.max_retries === n 
+                                                                            ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
+                                                                            : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400"
+                                                                    )}
+                                                                >
+                                                                    {n} {n === 1 ? 'VEZ' : 'VECES'}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-8 border-t border-slate-200 dark:border-white/5">
+                                                    <div className="flex items-center gap-2 text-primary">
+                                                        <Sparkles className="h-4 w-4" />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest">IA Engine v3.0 Active</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                                            {/* Left Column: Settings */}
-                                            <div className="lg:col-span-5 space-y-10">
-                                                <div className="space-y-8">
-                                                    <div className="space-y-4">
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 ml-4 flex items-center gap-2">
-                                                            <Calendar className="h-3 w-3" /> Tiempo de Espera
-                                                        </label>
-                                                        <div className="flex items-center gap-4">
-                                                            <input 
-                                                                type="number" 
-                                                                title="Tiempo de espera en minutos"
-                                                                placeholder="30"
-                                                                value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_timeout || 30} 
-                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_timeout: parseInt(e.target.value)}}))}
-                                                                className="flex-1 h-14 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/40 shadow-inner" 
-                                                            />
-                                                            <div className="h-14 px-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center text-[9px] font-black uppercase text-slate-500 dark:text-white/40 tracking-widest">
-                                                                MINUTOS
-                                                            </div>
-                                                        </div>
+                                        {/* MESSAGE PANEL */}
+                                        <div className="lg:col-span-8 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] p-10 space-y-10 shadow-sm overflow-hidden relative">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                                        <MessageSquareIcon className="h-5 w-5 text-primary" />
                                                     </div>
-
-                                                    <div className="space-y-4">
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 ml-4 flex items-center gap-2">
-                                                            <RefreshCw className="h-3 w-3" /> Máximo de Reintentos
-                                                        </label>
-                                                        <div className="flex items-center gap-4">
-                                                            <input 
-                                                                type="number" 
-                                                                title="Máximo de reintentos"
-                                                                placeholder="1"
-                                                                value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.max_retries || 1} 
-                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), max_retries: parseInt(e.target.value)}}))}
-                                                                className="flex-1 h-14 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-primary/40 shadow-inner" 
-                                                            />
-                                                            <div className="h-14 px-6 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center text-[9px] font-black uppercase text-slate-500 dark:text-white/40 tracking-widest">
-                                                                REINTENTOS
-                                                            </div>
-                                                        </div>
+                                                    <div>
+                                                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Lógica de Comunicación</h3>
+                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Define el tono del mensaje de rescate</p>
                                                     </div>
                                                 </div>
 
-                                                <div className="p-6 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[32px]">
-                                                    <p className="text-[10px] text-slate-400 dark:text-white/30 italic text-center leading-relaxed font-medium">
-                                                        El agente intentará el rescate automáticamente tras cada periodo de inactividad detectado, hasta agotar el límite de reintentos configurado.
-                                                    </p>
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40 ml-4 flex items-center gap-2">
-                                                        <Zap className="h-3 w-3" /> Acción Automática
-                                                    </label>
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        <button title="Seleccionar acción: Enviar mensaje" onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_action: 'MESSAGE'}}))} className={cn("p-6 rounded-[28px] border text-left transition-all flex items-center justify-between shadow-sm", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_action === 'MESSAGE' ? "bg-primary/10 border-primary/20" : "bg-white dark:bg-white/[0.01] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.03]")}>
-                                                            <div className="flex items-center gap-4">
-                                                                <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_action === 'MESSAGE' ? "bg-primary/20 text-primary" : "bg-slate-100 dark:bg-white/5 text-slate-400")}>
-                                                                    <MessageSquareIcon className="h-5 w-5" />
-                                                                </div>
-                                                                <span className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Enviar Seguimiento</span>
-                                                            </div>
-                                                            {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_action === 'MESSAGE' && <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />}
-                                                        </button>
-                                                        <button title="Seleccionar acción: Notificar asesor" onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_action: 'NOTIFY'}}))} className={cn("p-6 rounded-[28px] border text-left transition-all flex items-center justify-between shadow-sm", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_action === 'NOTIFY' ? "bg-primary/10 border-primary/20" : "bg-white dark:bg-white/[0.01] border-slate-200 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.03]")}>
-                                                            <div className="flex items-center gap-4">
-                                                                <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", variantA.automation_rules?.inactivity_action === 'NOTIFY' ? "bg-primary/20 text-primary" : "bg-slate-100 dark:bg-white/5 text-slate-400")}>
-                                                                    <UserCheck className="h-5 w-5" />
-                                                                </div>
-                                                                <span className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white">Notificar Asesor</span>
-                                                            </div>
-                                                            {variantA.automation_rules?.inactivity_action === 'NOTIFY' && <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]" />}
-                                                        </button>
-                                                    </div>
+                                                <div className="flex p-1.5 bg-slate-100 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/10 w-fit">
+                                                    <button 
+                                                        onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_ai_enabled: false}}))}
+                                                        className={cn(
+                                                            "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                            !(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled 
+                                                                ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-xl" 
+                                                                : "text-slate-400 dark:text-white/20 hover:text-slate-600 dark:hover:text-white/40"
+                                                        )}
+                                                    >
+                                                        Manual
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_ai_enabled: true}}))}
+                                                        className={cn(
+                                                            "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                                                            (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled 
+                                                                ? "bg-white dark:bg-white/10 text-primary shadow-xl" 
+                                                                : "text-slate-400 dark:text-white/20 hover:text-slate-600 dark:hover:text-white/40"
+                                                        )}
+                                                    >
+                                                        <Sparkles className="h-3.5 w-3.5" /> IA Decide
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            {/* Right Column: Message Content */}
-                                            <div className="lg:col-span-7 space-y-6">
-                                                <div className="flex items-center justify-between ml-4">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">
-                                                        {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled ? "Instrucción Estratégica (IA)" : "Mensaje de Rescate Estático"}
-                                                    </label>
-                                                    <button 
-                                                        title={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled ? "Usar mensaje estático" : "Usar Inteligencia Artificial para personalizar"}
-                                                        onClick={() => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_ai_enabled: !(p.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled}}))}
-                                                        className={cn(
-                                                            "flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm",
-                                                            (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled 
-                                                                ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
-                                                                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 dark:text-white/40 hover:text-white"
-                                                        )}
-                                                    >
-                                                        <Sparkles className={cn("h-3 w-3", (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled && "animate-pulse")} />
-                                                        {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled ? "IA Personalizada" : "Mejorar con IA"}
-                                                    </button>
-                                                </div>
-                                                
-                                                <div className="relative h-[480px] group">
-                                                    <textarea 
-                                                        value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_message || ""} 
-                                                        onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_message: e.target.value}}))}
-                                                        className={cn(
-                                                            "w-full h-full border rounded-[48px] p-10 text-base leading-relaxed font-medium focus:ring-8 transition-all resize-none outline-none shadow-2xl backdrop-blur-sm",
-                                                            (variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled
-                                                                ? "bg-primary/5 border-primary/30 text-white focus:ring-primary/5 border-t-primary/40"
-                                                                : "bg-white dark:bg-black/60 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/90 focus:ring-primary/5"
-                                                        )}
-                                                        placeholder={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled 
-                                                            ? "Ej: Detecta que el usuario no responde y envíale un mensaje empático preguntando si necesita más detalles sobre el programa, manteniendo un tono profesional..." 
-                                                            : "Hola, sigues ahí? Quería ver si habías podido revisar la información que te envié..."} 
-                                                    />
-                                                    {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled && (
-                                                        <div className="absolute top-8 right-8 flex items-center gap-2">
-                                                            <span className="text-[8px] font-black uppercase tracking-widest text-primary animate-pulse">Procesamiento IA</span>
-                                                            <div className="h-2 w-2 rounded-full bg-primary animate-ping" />
-                                                        </div>
-                                                    )}
-                                                </div>
-
+                                            <div className="relative min-h-[350px] bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-[40px] p-8 shadow-inner overflow-hidden">
+                                                <AnimatePresence mode="wait">
                                                     {(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_ai_enabled ? (
-                                                    <div className="flex items-start gap-4 p-6 bg-primary/10 border border-primary/20 rounded-[32px] shadow-lg shadow-primary/5">
-                                                        <div className="h-10 w-10 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0">
-                                                            <Sparkles className="h-5 w-5 text-primary" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Modo Cognitivo Activo</h4>
-                                                            <p className="text-[11px] text-primary/80 leading-relaxed font-medium">
-                                                                La IA analizará el flujo de la conversación y tus objetivos para generar un mensaje de rescate hiper-personalizado.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex items-start gap-4 p-6 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[32px]">
-                                                        <div className="h-10 w-10 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
-                                                            <Info className="h-5 w-5 text-slate-400" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Mensaje Estático</h4>
-                                                            <p className="text-[11px] text-slate-500 dark:text-white/30 leading-relaxed font-medium">
-                                                                Se enviará exactamente este texto cuando se detecte inactividad. Sin variaciones.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
+                                                        <motion.div 
+                                                            key="ai-view"
+                                                            initial={{ opacity: 0, y: 10 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            exit={{ opacity: 0, y: -10 }}
+                                                            className="flex flex-col items-center justify-center h-full text-center space-y-8 py-10"
+                                                        >
+                                                            <div className="relative">
+                                                                <div className="absolute inset-0 bg-primary/20 blur-[60px] rounded-full animate-pulse" />
+                                                                <div className="h-28 w-28 rounded-[40px] bg-primary/10 border border-primary/30 flex items-center justify-center relative z-10 shadow-2xl">
+                                                                    <Sparkles className="h-12 w-12 text-primary animate-pulse" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="space-y-3">
+                                                                <h4 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Orquestación Predictiva Activa</h4>
+                                                                <p className="text-[11px] text-slate-500 dark:text-white/40 max-w-sm mx-auto font-bold leading-relaxed uppercase tracking-widest">
+                                                                    Virginia analizará el historial y generará un mensaje hiper-personalizado para cada prospecto.
+                                                                </p>
+                                                            </div>
+                                                            <div className="px-8 py-3 bg-primary/10 border border-primary/20 rounded-full">
+                                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tono: Persuasivo & Natural</span>
+                                                            </div>
+                                                        </motion.div>
+                                                    ) : (
+                                                        <motion.div 
+                                                            key="manual-view"
+                                                            initial={{ opacity: 0 }}
+                                                            animate={{ opacity: 1 }}
+                                                            exit={{ opacity: 0 }}
+                                                            className="h-full"
+                                                        >
+                                                            <textarea 
+                                                                value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.inactivity_message || ""} 
+                                                                onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), inactivity_message: e.target.value}}))}
+                                                                className="w-full h-[300px] bg-transparent text-sm font-medium leading-relaxed outline-none transition-all resize-none placeholder:text-slate-300 dark:placeholder:text-white/10"
+                                                                placeholder="Ej: Hola {{nombre}}, ¿sigues interesado en el Máster? He visto que te habías quedado con alguna duda..."
+                                                            />
+                                                            <div className="mt-4 flex items-center gap-3">
+                                                                <div className="px-3 py-1 bg-white dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                                                    Usa {"{{nombre}}"} para personalizar
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </div>
                                         </div>
                                     </div>
                                 </motion.div>
                             )}
-
 
                             {activeTab === 'CRM' && (
                                 <motion.div key="CRM" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-10 pb-20">
@@ -1058,6 +1074,78 @@ export default function AgentsPage() {
                                     </div>
                                 </motion.div>
                             )}
+
+                            {activeTab === 'METRICS' && (
+                                <motion.div key="METRICS" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-6xl mx-auto space-y-10 pb-20">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
+                                            <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-xl shadow-emerald-500/5">
+                                                <TrendingUp className="h-7 w-7 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Conversión Global</h4>
+                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">94.2%</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
+                                            <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-xl shadow-blue-500/5">
+                                                <Zap className="h-7 w-7 text-blue-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Leads Procesados</h4>
+                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">1,284</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-10 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[48px] space-y-4 shadow-sm">
+                                            <div className="h-14 w-14 rounded-2xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-xl shadow-purple-500/5">
+                                                <Clock className="h-7 w-7 text-purple-400" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/40">Respuesta Media</h4>
+                                                <p className="text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mt-1">1.2m</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[56px] shadow-sm relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-12 opacity-5">
+                                            <BarChart3 className="h-48 w-48 text-primary" />
+                                        </div>
+                                        <div className="relative z-10 space-y-10">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                                                    <BarChart3 className="h-6 w-6 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-black uppercase tracking-tight">Análisis de Rendimiento A/B</h3>
+                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Comparativa de efectividad entre variantes</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Variante A (Actual)</span>
+                                                        <span className="text-[11px] font-black text-emerald-500 uppercase tracking-widest">Líder en Conversión</span>
+                                                    </div>
+                                                    <div className="h-4 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div initial={{ width: 0 }} animate={{ width: "94%" }} className="h-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-6">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[11px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Variante B (Control)</span>
+                                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">88% Efectividad</span>
+                                                    </div>
+                                                    <div className="h-4 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                                                        <motion.div initial={{ width: 0 }} animate={{ width: "88%" }} className="h-full bg-slate-400" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
                         </AnimatePresence>
                     </div>
                 </div>
@@ -1173,6 +1261,7 @@ export default function AgentsPage() {
                     )}
                 </AnimatePresence>
             </div>
+
 
             {/* Modals */}
             <AnimatePresence>

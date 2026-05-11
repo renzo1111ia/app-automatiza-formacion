@@ -103,29 +103,55 @@ export async function deleteAdvisor(id: string) {
 
 // ─── Availability ─────────────────────────────────────────────────
 
-export async function getAdvisorSlots(advisorId: string) {
+export async function getAdvisorSlots(advisorId: string | null) {
+    const tenantId = await getActiveTenantId();
     const supabase = await getAdminSupabaseClient();
-    const { data, error } = await supabase
-        .from("availability_slots" as never)
-        .select("*")
-        .eq("advisor_id", advisorId)
-        .order("day_of_week");
+    
+    let query = supabase.from("availability_slots" as never).select("*");
+    
+    if (advisorId) {
+        query = query.eq("advisor_id", advisorId);
+    } else {
+        // General slots for the tenant
+        if (!tenantId) return { error: "No hay un cliente seleccionado para ver horario general." };
+        query = query.eq("tenant_id", tenantId).is("advisor_id", null);
+    }
+
+    const { data, error } = await query.order("day_of_week");
 
     if (error) return { error: error.message };
     return { success: true, data: data as unknown as AvailabilitySlot[] };
 }
 
-export async function saveAdvisorSlots(advisorId: string, slots: Partial<AvailabilitySlot>[]) {
+export async function saveAdvisorSlots(advisorId: string | null, slots: Partial<AvailabilitySlot>[]) {
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return { error: "No hay un cliente seleccionado." };
+    
     const supabase = await getAdminSupabaseClient();
-    await supabase.from("availability_slots" as never).delete().eq("advisor_id", advisorId);
+    
+    // 1. Delete existing
+    if (advisorId) {
+        await supabase.from("availability_slots" as never).delete().eq("advisor_id", advisorId);
+    } else {
+        await supabase.from("availability_slots" as never).delete().eq("tenant_id", tenantId).is("advisor_id", null);
+    }
 
     if (slots.length === 0) return { success: true };
 
+    // 2. Insert new
     const { error } = await supabase
         .from("availability_slots" as never)
-        .insert(slots.map(s => ({ ...s, advisor_id: advisorId })) as never);
+        .insert(slots.map(s => ({ 
+            ...s, 
+            advisor_id: advisorId || null,
+            tenant_id: tenantId 
+        })) as never);
 
-    if (error) return { error: error.message };
+    if (error) {
+        console.error("❌ Error saving slots:", error);
+        return { error: error.message };
+    }
+    
     return { success: true };
 }
 
@@ -258,23 +284,30 @@ export async function rescheduleAppointment(appointmentId: string, newDate: stri
     return { success: true };
 }
 
-export async function checkAvailability(advisorId: string, date: string) {
+export async function checkAvailability(tenantId: string, date: string, advisorId?: string | null) {
     const supabase = await getAdminSupabaseClient();
     
-    // 1. Get advisor's configured day availability
+    // 1. Get configured day availability
     const d = new Date(date);
     const dayOfWeek = d.getDay(); // 0=Sunday, 1=Monday...
     
-    const { data: slots, error: slotErr } = await supabase
+    let query = supabase
         .from("availability_slots" as never)
         .select("*")
-        .eq("advisor_id", advisorId)
         .eq("day_of_week", dayOfWeek);
+
+    if (advisorId) {
+        query = query.eq("advisor_id", advisorId);
+    } else {
+        query = query.eq("tenant_id", tenantId).is("advisor_id", null);
+    }
+
+    const { data: slots, error: slotErr } = await query;
 
     if (slotErr) return { error: slotErr.message };
     
     if (!slots || (slots as unknown[]).length === 0) {
-        return { success: true, available: false, message: "Asesor no disponible este día de la semana." };
+        return { success: true, available: false, message: "No hay disponibilidad configurada para este día." };
     }
 
     // 2. Get existing appointments for that day
@@ -283,13 +316,20 @@ export async function checkAvailability(advisorId: string, date: string) {
     const dayEnd = new Date(date);
     dayEnd.setHours(23,59,59,999);
 
-    const { data: existing, error: aptErr } = await supabase
+    let aptQuery = supabase
         .from("appointments" as never)
         .select("scheduled_at, duration_minutes")
-        .eq("advisor_id", advisorId)
         .neq("status", "CANCELLED")
         .gte("scheduled_at", dayStart.toISOString())
         .lte("scheduled_at", dayEnd.toISOString());
+
+    if (advisorId) {
+        aptQuery = aptQuery.eq("advisor_id", advisorId);
+    } else {
+        aptQuery = aptQuery.eq("tenant_id", tenantId).is("advisor_id", null);
+    }
+
+    const { data: existing, error: aptErr } = await aptQuery;
 
     if (aptErr) return { error: aptErr.message };
 

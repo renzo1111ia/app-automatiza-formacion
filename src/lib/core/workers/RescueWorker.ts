@@ -59,6 +59,7 @@ export async function runRescueCheck() {
 
             // 3. Extract rules from variant's automation_rules
             const rules = (variant.automation_rules as unknown as InactivityRules);
+            
             if (!rules || !rules.inactivity_enabled) continue;
 
             const timeoutMins = rules.inactivity_timeout || 30;
@@ -72,8 +73,17 @@ export async function runRescueCheck() {
 
             if (diffMins < timeoutMins) continue;
 
-            // 5. Frequency check
+            // 5. Frequency & Safety check
             const sentCount = lead.inactivity_sent_count || 0;
+            const metadata = (lead.metadata as Record<string, unknown> || {});
+            const lastRescueAt = metadata.last_rescue_at ? new Date(metadata.last_rescue_at as string) : null;
+            
+            // Safety window: Never send two rescue messages within 5 minutes of each other
+            if (lastRescueAt && (now.getTime() - lastRescueAt.getTime()) < (5 * 60 * 1000)) {
+                console.log(`[RESCUE] ⏳ Safety window active for ${lead.telefono}. Skipping.`);
+                continue;
+            }
+
             if (sentCount >= maxRetries) continue;
 
             // 6. Fetch Tenant Credentials for WhatsApp
@@ -114,6 +124,24 @@ export async function runRescueCheck() {
                         phoneNumberId: waConfig.phoneNumberId
                     }
                 );
+
+                // LOG THE RESCUE MESSAGE (So AI knows it was sent)
+                const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
+                await ChatSummaryService.appendMessage(lead.tenant_id, lead.id, "Asistente", finalMessage);
+                
+                await (supabase.from("chat_messages") as any).insert({
+                    tenant_id: lead.tenant_id,
+                    lead_id: lead.id,
+                    direction: "OUTBOUND",
+                    message_type: "TEXT",
+                    content: finalMessage,
+                    sent_by: "SYSTEM_RESCUE",
+                    status: "SENT",
+                    metadata: { 
+                        type: 'inactivity_rescue',
+                        agent_id: agent.id
+                    }
+                });
             } else if (action === "NOTIFY") {
                 // Future: Add notification logic here
                 console.log(`[RESCUE] Notify action for lead ${lead.id} - Not implemented yet`);
@@ -131,8 +159,8 @@ export async function runRescueCheck() {
                 }
             };
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from("lead") as any)
+            await supabase
+                .from("lead")
                 .update(updateData)
                 .eq("id", lead.id);
 

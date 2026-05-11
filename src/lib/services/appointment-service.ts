@@ -77,34 +77,11 @@ export class AppointmentService {
                 throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
             }
 
-            const programId = lead?.lead_programas?.[0]?.id_programa;
             const programName = lead?.lead_programas?.[0]?.programas?.nombre;
 
-            console.log(`[BOOK APPOINTMENT] 🔍 Searching advisors for tenant ${tenantId}...`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: advisors, error: advError } = await (supabase.from("advisors") as any)
-                .select("*")
-                .eq("tenant_id", tenantId)
-                .eq("is_active", true);
-
-            if (advError) {
-                console.error(`[BOOK APPOINTMENT] ❌ Advisor fetch error:`, advError);
-                throw new Error(`Error al obtener asesores: ${advError.message}`);
-            }
-
-            console.log(`[BOOK APPOINTMENT] 📊 Found ${advisors?.length || 0} active advisors.`);
-
-            // 2. Advisor Assignment
-            const selectedAdvisor = advisors?.find((a: any) => 
-                (a.specialties && (a.specialties.includes(programId) || a.specialties.includes(programName))) ||
-                (a.courses && a.courses.includes(programName))
-            ) || advisors?.[0];
-
-            if (!selectedAdvisor) {
-                console.warn(`[BOOK APPOINTMENT] ⚠️ No advisor found for tenant ${tenantId}. Proceeding with null advisor as requested.`);
-            } else {
-                console.log(`[BOOK APPOINTMENT] ✅ Selected Advisor: ${selectedAdvisor.name} (${selectedAdvisor.id})`);
-            }
+            // 2. Advisor Assignment (Skipped during booking as requested)
+            const selectedAdvisorId = null; 
+            console.log(`[BOOK APPOINTMENT] ✅ Proceeding without advisor assignment (will be assigned later).`);
 
             // 3. Insert
             console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
@@ -112,7 +89,7 @@ export class AppointmentService {
             const { data, error: insertError } = await (supabase.from("appointments") as any).insert({
                 tenant_id: tenantId,
                 lead_id: leadId,
-                advisor_id: selectedAdvisor?.id || null,
+                advisor_id: selectedAdvisorId,
                 scheduled_at: scheduledAt,
                 duration_minutes: 30, // Ensure duration is provided
                 status: "PENDING",
@@ -168,12 +145,12 @@ export class AppointmentService {
         const referenceDate = fromZonedTime(`${cleanDate} 12:00:00`, this.DEFAULT_TIMEZONE);
         const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
         
-        // 2. Get advisor availability slots for that day
+        // 2. Get availability slots for that day (either for an advisor or general tenant slots)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: ranges } = await (supabase.from("availability_slots") as any)
-            .select("*, advisors!inner(tenant_id)")
+            .select("*")
             .eq("day_of_week", dayOfWeek)
-            .eq("advisors.tenant_id", tenantId);
+            .eq("tenant_id", tenantId);
 
         // 3. Define the time range for the whole day in UTC to fetch appointments
         const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();

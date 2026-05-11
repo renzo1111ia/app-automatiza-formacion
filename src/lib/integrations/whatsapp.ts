@@ -77,8 +77,24 @@ export class WhatsAppBridge {
      */
     public async sendTextMessage(to: string, body: string, config: WhatsAppConfig) {
         try {
+            // Safety check: Prevent sending if the lead is paused in DB
+            try {
+                const { createClient } = await import("@supabase/supabase-js");
+                const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+                const { data: lead } = await supabase.from('lead').select('is_ai_paused').eq('telefono', to).maybeSingle();
+                if (lead?.is_ai_paused) {
+                    console.log(`[WHATSAPP BRIDGE] 🚫 BLOCKING outbound to ${to} because AI is PAUSED.`);
+                    return { success: false, error: 'AI_PAUSED' };
+                }
+            } catch (e) {
+                console.warn("[WHATSAPP BRIDGE] Failed to check pause status:", e);
+            }
+
             const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
+            
+            console.log(`[WHATSAPP BRIDGE] 📤 Sending text to ${to}: "${body.substring(0, 50)}..."`);
+            
             const response = await axios.post(
                 url,
                 {
@@ -95,7 +111,7 @@ export class WhatsAppBridge {
                 }
             );
 
-            console.log(`[WHATSAPP BRIDGE] Text message sent to ${to}.`);
+            console.log(`[WHATSAPP BRIDGE] ✅ Text message sent to ${to}.`);
             return response.data;
         } catch (error: unknown) {
             const err = error as { response?: { data?: unknown }; message?: string };

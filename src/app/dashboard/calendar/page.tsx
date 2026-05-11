@@ -73,10 +73,13 @@ export default function CalendarPage() {
         if (leadsRes.success && leadsRes.data) setLeads(leadsRes.data);
     }, []);
 
-    const loadSlots = useCallback(async (advisorId: string) => {
+    const loadSlots = useCallback(async (advisorId: string | null) => {
         const res = await getAdvisorSlots(advisorId);
         if (res.success && res.data) {
             const map: Record<number, { active: boolean, start: string, end: string }> = {};
+            // Initialize with default empty state to ensure we don't keep old data
+            [0, 1, 2, 3, 4, 5, 6].forEach(d => map[d] = { active: false, start: "09:00", end: "20:00" });
+            
             res.data.forEach(s => { 
                 map[s.day_of_week] = { 
                     active: true, 
@@ -84,6 +87,11 @@ export default function CalendarPage() {
                     end: s.end_time || "20:00" 
                 }; 
             });
+            setSlots(map);
+        } else {
+            // Reset if no data or error
+            const map: Record<number, { active: boolean, start: string, end: string }> = {};
+            [0, 1, 2, 3, 4, 5, 6].forEach(d => map[d] = { active: false, start: "09:00", end: "20:00" });
             setSlots(map);
         }
     }, []);
@@ -149,22 +157,25 @@ interface TenantConfig {
     };
 
     useEffect(() => {
-        if (!selectedAdvisor && advisors.length > 0) {
+        if (!selectedAdvisor && advisors.length > 0 && tab !== "slots") {
             const first = advisors[0];
             const timer = setTimeout(() => {
                 setSelectedAdvisor(first);
             }, 0);
             return () => clearTimeout(timer);
         }
-    }, [advisors, selectedAdvisor]);
+    }, [advisors, selectedAdvisor, tab]);
 
     useEffect(() => { 
         let isMounted = true;
-        if (selectedAdvisor) {
-            getAdvisorSlots(selectedAdvisor.id).then(res => {
+        // In slots tab, we might have selectedAdvisor = null for "General"
+        if (tab === "slots") {
+            getAdvisorSlots(selectedAdvisor?.id || null).then(res => {
                 if (!isMounted) return;
+                const map: Record<number, { active: boolean, start: string, end: string }> = {};
+                [0, 1, 2, 3, 4, 5, 6].forEach(d => map[d] = { active: false, start: "09:00", end: "20:00" });
+                
                 if (res.success && res.data) {
-                    const map: Record<number, { active: boolean, start: string, end: string }> = {};
                     res.data.forEach(s => { 
                         map[s.day_of_week] = { 
                             active: true, 
@@ -172,12 +183,12 @@ interface TenantConfig {
                             end: s.end_time || "20:00" 
                         }; 
                     });
-                    setSlots(map);
                 }
+                setSlots(map);
             });
         }
         return () => { isMounted = false; };
-    }, [selectedAdvisor]);
+    }, [selectedAdvisor, tab]);
 
     // Build week display
     const now = new Date();
@@ -212,8 +223,8 @@ interface TenantConfig {
     }
 
     async function handleSaveSlots() {
-        if (!selectedAdvisor) return;
         setSaving(true);
+        const advisorId = selectedAdvisor?.id || null;
         const slotsToSave = Object.entries(slots)
             .filter(([, config]) => config.active)
             .map(([day, config]) => ({
@@ -222,7 +233,14 @@ interface TenantConfig {
                 end_time: config.end,
                 slot_duration_minutes: 30,
             }));
-        await saveAdvisorSlots(selectedAdvisor.id, slotsToSave);
+        
+        const res = await saveAdvisorSlots(advisorId, slotsToSave);
+        if (res.success) {
+            alert("✅ Horarios guardados correctamente.");
+            await loadSlots(advisorId); // Reload to confirm
+        } else {
+            alert("❌ Error al guardar horarios: " + res.error);
+        }
         setSaving(false);
     }
 
@@ -648,29 +666,56 @@ interface TenantConfig {
                         <div className="flex items-center justify-between">
                             <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 dark:text-white/40">Disponibilidad Semanal</h2>
                             <button onClick={() => setTab("advisors")} title="Volver" className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40">
-                                <ChevronLeft className="h-3.5 w-3.5" /> Asesores
+                                <ChevronLeft className="h-3.5 w-3.5" /> Volver
                             </button>
                         </div>
 
-                        {/* Advisor Selector */}
-                        <div className="flex gap-2 flex-wrap">
-                            {advisors.map(a => (
-                                <button
-                                    key={a.id}
-                                    onClick={() => setSelectedAdvisor(a)}
-                                    title={a.name}
-                                    className={cn(
-                                        "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                                        selectedAdvisor?.id === a.id ? "bg-primary text-primary-foreground border-primary" : "bg-slate-200/50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/10"
-                                    )}
-                                >
-                                    {a.name}
-                                </button>
-                            ))}
+                        {/* Simplified Mode Selector */}
+                        <div className="flex gap-4 p-2 bg-slate-200/50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+                            <button
+                                onClick={() => setSelectedAdvisor(null)}
+                                className={cn(
+                                    "flex-1 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    !selectedAdvisor ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5"
+                                )}
+                            >
+                                Sin Asesores (General)
+                            </button>
+                            <button
+                                onClick={() => advisors.length > 0 && setSelectedAdvisor(advisors[0])}
+                                className={cn(
+                                    "flex-1 h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                    selectedAdvisor ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5"
+                                )}
+                            >
+                                Con Asesores
+                            </button>
                         </div>
 
                         {selectedAdvisor && (
-                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-8 space-y-6">
+                            <div className="flex gap-2 flex-wrap animate-in fade-in slide-in-from-top duration-300">
+                                {advisors.map(a => (
+                                    <button
+                                        key={a.id}
+                                        onClick={() => setSelectedAdvisor(a)}
+                                        className={cn(
+                                            "h-9 px-4 rounded-xl text-[10px] font-bold transition-all border",
+                                            selectedAdvisor.id === a.id ? "bg-primary/10 border-primary/30 text-primary" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-white/40"
+                                        )}
+                                    >
+                                        {a.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-8 space-y-6">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                    Editando: {selectedAdvisor ? `Asesor ${selectedAdvisor.name}` : "Horario General"}
+                                </span>
+                            </div>
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-7 gap-3">
                                         {DAYS_FULL.map((dayLabel, i) => {
@@ -738,18 +783,25 @@ interface TenantConfig {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-2">
-                                    <button onClick={() => loadSlots(selectedAdvisor.id)} title="Deshacer cambios" className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40">
+                                <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
+                                    <button 
+                                        onClick={() => loadSlots(selectedAdvisor?.id || null)} 
+                                        title="Deshacer cambios" 
+                                        className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40"
+                                    >
                                         <RotateCcw className="h-3.5 w-3.5" /> Deshacer
                                     </button>
-                                    <button onClick={handleSaveSlots} disabled={saving} title="Guardar horarios"
-                                        className="flex items-center gap-2 h-9 px-6 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] transition-all">
+                                    <button 
+                                        onClick={handleSaveSlots} 
+                                        disabled={saving} 
+                                        title="Guardar horarios"
+                                        className="flex items-center gap-2 h-9 px-6 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+                                    >
                                         <Save className="h-3.5 w-3.5" /> {saving ? "Guardando..." : "Guardar Horarios"}
                                     </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
                 )}
 
                 {/* ── TOOLS TAB ─────────────────────────────────────────── */}

@@ -13,11 +13,28 @@ import { FactExtractionService } from "@/lib/services/fact-extractor";
  * No AWS dependencies.
  */
 
-export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string) {
-    console.log(`[AI PROCESSOR] 🤖 Thinking for lead ${leadId} (tenant: ${tenantId})`);
+export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, metaId?: string) {
+    if (!incomingMessage) return;
+    
+    console.log(`[AI PROCESSOR] 🤖 Thinking for lead ${leadId} (tenant: ${tenantId}, metaId: ${metaId})`);
 
     try {
         const supabase = getAdminSupabase();
+
+        // 0. Deduplication check (Skip if we already processed this Meta ID)
+        if (metaId) {
+            const { data: existing } = await supabase
+                .from("chat_messages")
+                .select("id")
+                .eq("lead_id", leadId)
+                .eq("metadata->>meta_id", metaId)
+                .maybeSingle();
+            
+            if (existing) {
+                console.log(`[AI PROCESSOR] ⏭️ Skipping duplicate Meta ID: ${metaId}`);
+                return;
+            }
+        }
 
         // 1. Get Lead Context
         const { data: lead } = await (supabase.from("lead" as unknown as string) as any).select("*").eq("id", leadId).single();

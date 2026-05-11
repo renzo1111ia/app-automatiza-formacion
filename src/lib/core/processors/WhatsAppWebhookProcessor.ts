@@ -212,7 +212,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         // 6. Trigger AI Response
         if ((lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled) {
             const { generateAIWhatsAppResponse } = await import("./WhatsAppAIProcessor");
-            await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content);
+            await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content, message.id);
         }
 
     } catch (err: unknown) {
