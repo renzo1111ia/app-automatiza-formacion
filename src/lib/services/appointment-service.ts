@@ -99,26 +99,47 @@ export class AppointmentService {
             const selectedAdvisorId = null; 
             console.log(`[BOOK APPOINTMENT] ✅ Proceeding without advisor assignment (will be assigned later).`);
 
-            // 3. Insert
-            console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data, error: insertError } = await (supabase.from("appointments") as any).insert({
+            // 3. Persist to DB with Retry Logic for Schema Cache issues
+            const appointmentData: any = {
                 tenant_id: tenantId,
                 lead_id: leadId,
-                advisor_id: selectedAdvisorId,
                 scheduled_at: scheduledAt,
-                duration_minutes: 30, // Ensure duration is provided
                 status: "PENDING",
-                notes: notes || `Agendado por IA. Programa: ${programName || 'No especificado'}`
-            }).select().single();
+                advisor_id: selectedAdvisorId,
+                notes: notes ? `${notes}${programName ? ` (Programa: ${programName})` : ""}` : (programName ? `Interesado en: ${programName}` : null),
+                metadata: {
+                    source: "ai_wa_processor",
+                    extracted_program: programName
+                }
+            };
+
+            console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
+            
+            let { data: appointment, error: insertError } = await (supabase.from("appointments") as any)
+                .insert(appointmentData)
+                .select()
+                .single();
+
+            // Retry without 'notes' if column is missing in schema cache
+            if (insertError?.message?.includes("column") && insertError?.message?.includes("notes")) {
+                console.warn("[BOOK APPOINTMENT] 'notes' column not found in cache, retrying without it...");
+                const { notes: _, ...safeData } = appointmentData;
+                const retry = await (supabase.from("appointments") as any)
+                    .insert(safeData)
+                    .select()
+                    .single();
+                
+                appointment = retry.data;
+                insertError = retry.error;
+            }
 
             if (insertError) {
                 console.error(`[BOOK APPOINTMENT] ❌ Insert error:`, insertError);
                 throw new Error(`Error en base de datos al agendar: ${insertError.message}`);
             }
 
-            console.log(`[BOOK APPOINTMENT] 🎉 Success! Appointment ID: ${data.id}`);
-            return data;
+            console.log(`[BOOK APPOINTMENT] 🎉 Success! Appointment ID: ${appointment?.id}`);
+            return appointment;
         } catch (err: unknown) {
             console.error(`[BOOK APPOINTMENT] Critical failure:`, err);
             throw err;
