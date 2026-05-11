@@ -547,6 +547,7 @@ export type Database = {
             tenants: { Row: Tenant; Insert: Omit<Tenant, "id" | "created_at" | "updated_at">; Update: Partial<Tenant>; };
             knowledge_base: { Row: KnowledgeItem; Insert: Omit<KnowledgeItem, "id" | "created_at">; Update: Partial<KnowledgeItem>; };
             knowledge_base_embeddings: { Row: KnowledgeEmbedding; Insert: Omit<KnowledgeEmbedding, "id" | "created_at">; Update: Partial<KnowledgeEmbedding>; };
+            system_logs: { Row: { id: string; tenant_id: string; level: string; message: string; metadata: any; created_at: string }; Insert: Omit<{ id: string; tenant_id: string; level: string; message: string; metadata: any; created_at: string }, 'id' | 'created_at'>; Update: Partial<{ level: string; message: string; metadata: any }>; };
         };
 
         Views: {

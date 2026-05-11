@@ -32,8 +32,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const supabase = getAdminSupabase();
 
         // 1. Identify Tenant by WABA ID (phone_number_id)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: tenants, error: tenantError } = await (supabase.from("tenants") as any)
+        const { data: tenants, error: tenantError } = await supabase.from("tenants")
             .select("id")
             .filter("config->whatsapp->>phoneNumberId", "eq", wabaId);
 
@@ -49,8 +48,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         if (searchPhone.startsWith("+")) searchPhone = searchPhone.slice(1);
 
         // 3. Find or Create Lead
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: leadFound, error: leadError } = await (supabase.from("lead") as any)
+        const { data: leadFound, error: leadError } = await supabase.from("lead")
             .select("*")
             .eq("tenant_id", tenantId)
             .ilike("telefono", `%${searchPhone}%`)
@@ -71,7 +69,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             const location = getLeadLocationData(fromNumber);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: newLead, error: createError } = await (supabase.from("lead") as any)
+            const { data: newLead, error: createError } = await supabase.from("lead")
                 .insert({
                     tenant_id: tenantId,
                     telefono: fromNumber,
@@ -90,8 +88,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             // Update country for existing lead if missing
             const location = getLeadLocationData(fromNumber);
             if (location.countryName) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                await (supabase.from("lead") as any)
+                await supabase.from("lead")
                     .update({ pais: location.countryName })
                     .eq("id", lead.id);
                 lead.pais = location.countryName;
@@ -117,8 +114,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             
             if (mediaId) {
                 try {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const { data: tenantData } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
+                    const { data: tenantData } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const config = (tenantData as any)?.config;
                     const token = config?.whatsapp?.accessToken;
@@ -153,25 +149,39 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
         await ChatSummaryService.appendMessage(tenantId, lead.id, "Usuario", content);
 
-        /* 
-        // LEGACY: Individual message logging (Disabled to save costs as per user request)
-        const { error: logError } = await (supabase.from("chat_messages" as unknown as string) as unknown as { insert: (d: unknown) => Promise<{ error: unknown }> })
-            .insert({
-                tenant_id: tenantId,
-                lead_id: (lead as unknown as { id: string }).id,
-                direction: "INBOUND",
-                message_type: "TEXT",
-                content: content,
-                status: "READ",
-                metadata: { 
-                    meta_id: message.id, 
-                    raw: message as unknown,
-                    media_url: mediaUrl
-                }
-            });
+        // 5b. Individual message logging (Re-enabled for Omnicanal Inbox)
+        try {
+            const { error: logError } = await (supabase.from("chat_messages" as unknown as string) as unknown as { insert: (d: unknown) => Promise<{ error: unknown }> })
+                .insert({
+                    tenant_id: tenantId,
+                    lead_id: (lead as unknown as { id: string }).id,
+                    direction: "INBOUND",
+                    message_type: "TEXT",
+                    content: content,
+                    status: "READ",
+                    metadata: { 
+                        meta_id: message.id, 
+                        raw: message as unknown,
+                        media_url: mediaUrl
+                    }
+                });
 
-        if (logError) console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
-        */
+            if (logError) {
+                console.error("[WHATSAPP PROCESSOR] Failed to log message in Supabase:", logError);
+            } else {
+                console.log(`[WHATSAPP PROCESSOR] Message logged successfully for lead ${lead.id}`);
+            }
+
+            // Log activity for debugging
+            await supabase.from("system_logs").insert({
+                tenant_id: tenantId,
+                level: "INFO",
+                message: `WhatsApp Inbound: ${fromNumber}`,
+                metadata: { lead_id: lead.id, content: content.substring(0, 100) }
+            });
+        } catch (logEx) {
+            console.error("[WHATSAPP PROCESSOR] Exception logging message:", logEx);
+        }
 
         // 6. Trigger AI Response
         if ((lead as unknown as { is_ai_enabled: boolean }).is_ai_enabled) {

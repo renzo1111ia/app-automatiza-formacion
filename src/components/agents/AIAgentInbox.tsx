@@ -86,13 +86,20 @@ export default function AIAgentInbox() {
     // --- Data Loading ---
     const loadLeads = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
-        // Pass tenantId from state to ensure we bypass any cookie lag
-        const currentTenantId = useTenantStore.getState().tenantId;
-        const res = await getInboxLeads(currentTenantId || undefined);
-        if (res.success && typeof res.data !== 'undefined') {
-            setLeads(res.data);
+        try {
+            // Pass tenantId from state to ensure we bypass any cookie lag
+            const currentTenantId = useTenantStore.getState().tenantId;
+            const res = await getInboxLeads(currentTenantId || undefined);
+            if (res.success && typeof res.data !== 'undefined') {
+                setLeads(res.data);
+            } else if (res.error) {
+                console.error("[INBOX] Error loading leads:", res.error);
+            }
+        } catch (error) {
+            console.error("[INBOX] Critical exception in loadLeads:", error);
+        } finally {
+            if (!silent) setLoading(false);
         }
-        if (!silent) setLoading(false);
     }, []);
 
     const loadChat = useCallback(async (leadId: string) => {
@@ -139,22 +146,30 @@ export default function AIAgentInbox() {
         
         // Initial Fetch
         const runInitialFetch = async () => {
-            await Promise.all([
-                loadLeads(),
-                loadTemplates(),
-                loadAvailableAgents()
-            ]);
+            try {
+                await Promise.all([
+                    loadLeads(),
+                    loadTemplates(),
+                    loadAvailableAgents()
+                ]);
+            } catch (err) {
+                console.error("[INBOX] Initial fetch failed:", err);
+            }
         };
         runInitialFetch();
 
-        // 🛡️ Polling Fallback: Check for new messages/leads every 15 seconds
-        // This ensures the UI updates even if Realtime (WebSocket) is blocked by RLS/Network
-        const pollingInterval = setInterval(() => {
+        // 🛡️ Polling Fallback: Check for new messages/leads every 30 seconds
+        // Use a recursive timeout to prevent overlapping requests if the network is slow
+        let timerId: NodeJS.Timeout;
+        const poll = async () => {
             console.log("[POLLING] Syncing inbox...");
-            loadLeads(true); // Silent update
-        }, 15000);
+            await loadLeads(true); // Silent update
+            timerId = setTimeout(poll, 30000);
+        };
+        
+        timerId = setTimeout(poll, 30000);
 
-        return () => clearInterval(pollingInterval);
+        return () => clearTimeout(timerId);
     }, [tenantId, loadLeads, loadTemplates, loadAvailableAgents]);
 
     useEffect(() => {

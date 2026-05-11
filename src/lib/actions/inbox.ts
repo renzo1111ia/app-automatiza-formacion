@@ -65,10 +65,10 @@ interface ChatSummaryRow {
  * Upgraded to show leads even if they don't have conversation history yet.
  */
 export async function getInboxLeads(tenantIdOverride?: string): Promise<{ success: boolean; data?: InboxLead[]; error?: string }> {
-    const tenant = tenantIdOverride ? { id: tenantIdOverride } : await getActiveTenantConfig();
-    if (!tenant) return { success: false, error: "No se encontró configuración de tenant activa." };
-
     try {
+        const tenant = tenantIdOverride ? { id: tenantIdOverride } : await getActiveTenantConfig();
+        if (!tenant) return { success: true, data: [] }; // No tenant, no leads. Return empty instead of error to avoid UI hang.
+
         const supabase = await getAdminSupabaseClient();
         
         // 1. Fetch ALL leads for this tenant (Limit to 50 most recent for performance)
@@ -118,6 +118,8 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
             if (!summaryStr) return;
 
             const lines = summaryStr.split('\n').filter((line: string) => line.trim());
+            if (lines.length === 0) return; // Protección: Si no hay líneas, ignorar
+
             const lastLine = lines[lines.length - 1];
             const match = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
             

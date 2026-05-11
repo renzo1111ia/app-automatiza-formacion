@@ -59,8 +59,8 @@ export async function POST(req: Request) {
                 const supabase = createClient(supabaseUrl, supabaseKey);
                 await supabase.from("system_logs").insert({
                     tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70", // Usamos el ID del tenant principal para debug
-                    event_type: "WHATSAPP_WEBHOOK_RAW",
-                    message: "Cuerpo recibido de Meta",
+                    level: "INFO",
+                    message: "WHATSAPP_WEBHOOK_RAW: Cuerpo recibido de Meta",
                     metadata: body
                 });
             }
