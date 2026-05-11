@@ -70,6 +70,15 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             // Get location data from phone prefix
             const location = getLeadLocationData(fromNumber);
 
+            // Find the default active agent for this tenant to auto-assign
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: defaultAgent } = await (supabase.from("ai_agents") as any)
+                .select("id")
+                .eq("tenant_id", tenantId)
+                .eq("status", "ACTIVE")
+                .limit(1)
+                .maybeSingle();
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
@@ -79,7 +88,10 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                     apellido: lastName,
                     origen: "WHATSAPP_INBOUND",
                     is_ai_enabled: true,
-                    pais: location.countryName
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    ai_agent_id: (defaultAgent as any)?.id || null,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    pais: (location as any).countryName
                 })
                 .select()
                 .single();

@@ -60,11 +60,22 @@ export class Orchestrator {
             // 3. Add Tag
             await provider.addTags(lead.id_lead_externo || "", ["Cualificado_Virginia"]);
 
-            // 4. Update Supabase Stage
+            // 4. Round Robin: Assign next advisor
+            const nextAdvisorId = await this.getNextAdvisor(tenantId, config);
+            
+            // 5. Update Supabase Stage & Advisor
             await (supabase.from("lead") as any).update({ 
                 current_stage: "SCHEDULING",
-                assigned_advisor_id: null 
+                assigned_advisor_id: nextAdvisorId,
+                last_advisor_assignment: new Date().toISOString()
             }).eq("id", leadId);
+
+            // 6. Update Zoho with the selected advisor
+            if (nextAdvisorId) {
+                await provider.updateLead(lead.id_lead_externo || "", {
+                    "Assigned_Advisor": nextAdvisorId 
+                });
+            }
 
             // 5. Create Zoho Task if appointment data exists in metadata
             const meta = lead.metadata || {};
@@ -111,6 +122,26 @@ export class Orchestrator {
 
         // Load tenant's orchestrator config
         const config = await getOrchestratorConfigForTenant(tenantId);
+        
+        // ── ENTRY FILTERS ─────────────────────────────────────────
+        if (config.entry_filters?.enabled) {
+            const { allowed_campaigns, allowed_origins, allowed_countries } = config.entry_filters;
+            
+            const matchesCampaign = !allowed_campaigns?.length || allowed_campaigns.includes(lead.campana || "");
+            const matchesOrigin = !allowed_origins?.length || allowed_origins.includes(lead.origen || "");
+            const matchesCountry = !allowed_countries?.length || allowed_countries.includes(lead.pais || "");
+
+            if (!matchesCampaign || !matchesOrigin || !matchesCountry) {
+                console.log(`[ORCHESTRATOR] 🚫 Lead ${lead.id} filtered out by entry rules.`);
+                await logOrchestrationStep({
+                    tenantId, leadId: lead.id, step: 0,
+                    actionType: "SYSTEM", result: "SKIPPED",
+                    metadata: { reason: "Entry Filter: Criteria not met", filters: config.entry_filters }
+                });
+                return;
+            }
+        }
+
         const sequence = config.sequence;
 
         if (!sequence || sequence.length === 0) {
@@ -180,7 +211,19 @@ export class Orchestrator {
 
         const activeLead = (freshLead as Lead) || lead;
 
-        // ── STOP CONDITION: Lead responded & is active ────────────
+        // ── GLOBAL STOP CONDITION: Qualified / Booked / Discarded ────────
+        const stopNow = await this.shouldStopSequence(activeLead);
+        if (stopNow) {
+            console.log(`[ORCHESTRATOR] Stop condition met for lead ${activeLead.id}. Ending sequence.`);
+            await logOrchestrationStep({
+                tenantId, leadId: activeLead.id, step: step.step,
+                actionType: "SYSTEM", result: "SUCCESS",
+                metadata: { reason: "Goal reached (Qualified/Booked)" }
+            });
+            return;
+        }
+
+        // ── INACTIVITY STOP CONDITION: Lead responded & is active ────────────
         // Check for LAST inbound message time. 
         // If they responded more than 20 minutes ago, we RESUME.
         const { data: lastMsg } = await (supabase.from("chat_messages") as any)
@@ -289,6 +332,10 @@ export class Orchestrator {
                 case "zoho": // Backward compat
                     await this.executeCRMStep(activeLead, tenantId, step, config);
                     break;
+                case "retry_sequence":
+                    await this.executeRetrySequenceStep(activeLead, tenantId, step, stepIndex, config);
+                    // NOTE: retry_sequence handles its own queuing for the NEXT attempt
+                    return; 
                 case "wait":
                     console.log(`[ORCHESTRATOR] Wait step, delay already applied.`);
                     break;
@@ -1093,7 +1140,6 @@ export class Orchestrator {
         const supabase = await getSupabaseServerClient();
 
         // 1. Mark lead as "Handed Off"
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).from("lead").update({ 
             is_handed_off: true,
             handoff_reason: reason,
@@ -1130,6 +1176,123 @@ export class Orchestrator {
             actionType: "SYSTEM", result: "SUCCESS",
             metadata: { escalation: true, reason }
         });
+    }
+
+    // ─── SMART RETRY SEQUENCE LOGIC ───────────────────────────────
+
+    /**
+     * Executes a retry sequence (e.g., 5 calls every 27 hours).
+     * Stops automatically if goal is reached.
+     */
+    private async executeRetrySequenceStep(
+        lead: Lead, 
+        tenantId: string, 
+        step: OrchestratorSequenceStep, 
+        stepIndex: number, 
+        config: TenantOrchestratorConfig
+    ) {
+        const supabase = await getSupabaseServerClient();
+        const meta = lead.metadata || {};
+        const currentAttempt = (meta.sequence_attempts as number) || 0;
+        const maxAttempts = step.max_attempts || 5;
+        const channels = step.channels || ["call", "whatsapp"];
+
+        console.log(`[RETRY-SEQ] Lead ${lead.id} | Attempt ${currentAttempt + 1}/${maxAttempts}`);
+
+        // 1. Perform Actions based on channels
+        if (channels.includes("call")) {
+            try {
+                await this.executeCallStep(lead, tenantId, step, config);
+            } catch {
+                console.error("[RETRY-SEQ] Call failed, fallback to WA if enabled.");
+                if (channels.includes("whatsapp")) await this.executeWhatsAppStep(lead, tenantId, step);
+            }
+        } else if (channels.includes("whatsapp")) {
+            await this.executeWhatsAppStep(lead, tenantId, step);
+        }
+
+        // 2. Increment attempts
+        const nextAttempt = currentAttempt + 1;
+        await (supabase.from("lead" as any) as any)
+            .update({ 
+                metadata: { ...meta, sequence_attempts: nextAttempt } 
+            })
+            .eq("id", lead.id);
+
+        // 3. Check if we should continue or finish
+        if (nextAttempt < maxAttempts) {
+            const delayMs = (step.retry_delay_hours || 27) * 60 * 60 * 1000;
+            console.log(`[RETRY-SEQ] Queuing next attempt in ${step.retry_delay_hours}h for lead ${lead.id}`);
+            await this.queueStep(lead, tenantId, step, stepIndex, config, delayMs);
+        } else {
+            console.log(`[RETRY-SEQ] Max attempts reached for lead ${lead.id}. Marking as ${step.final_status || 'ilocalizable'}.`);
+            
+            // FINAL STATUS: Update Lead & Notify CRM
+            await (supabase.from("lead" as any) as any).update({ 
+                current_stage: "LOST",
+                tipo_lead: step.final_status || "ilocalizable"
+            }).eq("id", lead.id);
+
+            const provider = CRMFactory.getProvider(tenantId, config);
+            await provider.updateLead(lead.id_lead_externo || "", {
+                "Etapa": "ILOCALIZABLE",
+                "Description": "Cerrado automáticamente por IA: Agotados todos los intentos de contacto."
+            });
+        }
+    }
+
+    /**
+     * Checks if a lead has reached its goal, to stop the sequence.
+     */
+    private async shouldStopSequence(lead: Lead): Promise<boolean> {
+        // 1. Stage-based stop
+        if (["SCHEDULING", "CLOSED", "LOST", "COMPLETED"].includes(lead.current_stage || "")) {
+            return true;
+        }
+        
+        // 2. Metadata-based stop (Captured by IA)
+        const meta = lead.metadata || {};
+        if (meta.status === "QUALIFIED" || meta.status === "BOOKED" || meta.status === "DISCARDED") {
+            return true;
+        }
+
+        // 3. Logic: If we have an appointment in agendamientos, stop!
+        const supabase = await getSupabaseServerClient();
+        const { count } = await (supabase.from("agendamientos" as any) as any)
+            .select("*", { count: "exact", head: true })
+            .eq("id_lead", lead.id);
+        
+        if (count && count > 0) return true;
+        
+        return false;
+    }
+
+    /**
+     * Round Robin: Fetches the next advisor in the rotation.
+     */
+    private async getNextAdvisor(tenantId: string, config: TenantOrchestratorConfig): Promise<string | null> {
+        const advisors = config.advisors || [];
+        if (advisors.length === 0) return null;
+        if (advisors.length === 1) return advisors[0];
+
+        const supabase = await getSupabaseServerClient();
+        
+        // Find the last lead assigned in this tenant to see who got it
+        const { data: lastLeads } = await (supabase.from("lead" as any) as any)
+            .select("assigned_advisor_id")
+            .eq("tenant_id", tenantId)
+            .not("assigned_advisor_id", "is", null)
+            .order("last_advisor_assignment", { ascending: false })
+            .limit(1);
+
+        const lastId = lastLeads && lastLeads.length > 0 ? lastLeads[0].assigned_advisor_id : null;
+        
+        if (!lastId) return advisors[0];
+
+        const currentIndex = advisors.indexOf(lastId);
+        const nextIndex = (currentIndex + 1) % advisors.length;
+        
+        return advisors[nextIndex];
     }
 }
 

@@ -43,19 +43,33 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             variantQuery = variantQuery.in("agent_id", agentIds);
         }
 
-        const { data: variants } = await variantQuery;
+        let { data: variants } = await variantQuery;
         
         if (!variants || (variants as any[]).length === 0) {
-            console.warn(`[AI PROCESSOR] ⚠️ No active AI variant found for lead ${leadId}`);
-            return;
+            console.warn(`[AI PROCESSOR] ⚠️ No active AI variant with prompt found for lead ${leadId}. Checking for ANY variant...`);
+            
+            // Second attempt: just ANY variant with a prompt
+            const { data: anyVariants } = await (supabase.from("ai_agent_variants" as unknown as string) as any)
+                .select("*")
+                .eq("agent_id", agentId || "")
+                .neq("prompt_text", "")
+                .limit(1);
+            
+            if (!anyVariants || anyVariants.length === 0) {
+                console.error(`[AI PROCESSOR] ❌ CRITICAL: No variants with prompt_text found for agent ${agentId}`);
+                return;
+            }
+            variants = anyVariants as any;
         }
 
         // Si hay varias, intentamos elegir la que tenga prompt_text más largo o simplemente la primera (que por el orden será Variant A si existe)
         const activeVariant = (variants as any[])[0];
-        const apiKey = activeVariant.api_key || process.env.OPENAI_API_KEY;
+        const apiKey = (activeVariant.api_key && activeVariant.api_key !== "your_api_key_here") 
+            ? activeVariant.api_key 
+            : process.env.OPENAI_API_KEY;
         
         if (!apiKey || apiKey === "your_api_key_here") {
-            console.error(`[AI PROCESSOR] ❌ OpenAI API Key missing or invalid for lead ${leadId}`);
+            console.error(`[AI PROCESSOR] ❌ OpenAI API Key missing both in Variant and System Env for lead ${leadId}`);
             return;
         }
 
