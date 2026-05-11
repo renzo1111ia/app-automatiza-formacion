@@ -31,6 +31,19 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
     try {
         const supabase = getAdminSupabase();
 
+        // 0. Deduplication check (Skip if we already processed this Meta ID)
+        if (message.id) {
+            const { data: existing } = await (supabase.from("chat_messages" as any) as any)
+                .select("id")
+                .eq("metadata->>meta_id", message.id)
+                .maybeSingle();
+            
+            if (existing) {
+                console.log(`[WHATSAPP PROCESSOR] ⏭️ Skipping duplicate Meta ID: ${message.id}`);
+                return;
+            }
+        }
+
         // 1. Identify Tenant by WABA ID (phone_number_id)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: tenants, error: tenantError } = await (supabase.from("tenants") as any)

@@ -14,27 +14,14 @@ import { GlobalLogger } from "../logger";
  * No AWS dependencies.
  */
 
-export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, metaId?: string) {
+export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, _metaId?: string) {
     if (!incomingMessage) return;
     
     try {
         const supabase = getAdminSupabase();
         await GlobalLogger.info(tenantId, "WHATSAPP", `Thinking started for lead ${leadId}`, { message: incomingMessage });
 
-        // 0. Deduplication check (Skip if we already processed this Meta ID)
-        if (metaId) {
-            const { data: existing } = await supabase
-                .from("chat_messages")
-                .select("id")
-                .eq("lead_id", leadId)
-                .eq("metadata->>meta_id", metaId)
-                .maybeSingle();
-            
-            if (existing) {
-                console.log(`[AI PROCESSOR] ⏭️ Skipping duplicate Meta ID: ${metaId}`);
-                return;
-            }
-        }
+        // 0. Deduplication check - Handled by Webhook Processor to avoid self-blocking
 
         // 1. Get Lead Context
         const { data: lead } = await (supabase.from("lead" as unknown as string) as any).select("*").eq("id", leadId).single();
