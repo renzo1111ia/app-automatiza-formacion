@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import { 
     Bot, Zap,
     Save, 
-    BarChart3, TrendingUp, Clock,
     PlusCircle,
     AlarmClock, MessageSquare as MessageSquareIcon,
     Trash2, Edit3,

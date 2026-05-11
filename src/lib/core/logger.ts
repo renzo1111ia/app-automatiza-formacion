@@ -42,7 +42,8 @@ export class GlobalLogger {
             if (error) {
                 // If the error is about the source column missing in schema cache, retry without it
                 if (error.message.includes("column") && error.message.includes("source")) {
-                    const { source: _unused, ...payloadWithoutSource } = payload;
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { source: _s, ...payloadWithoutSource } = payload;
                     const { error: retryError } = await (supabase.from("system_logs" as never) as unknown as { 
                         insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }> 
                     }).insert(payloadWithoutSource);
