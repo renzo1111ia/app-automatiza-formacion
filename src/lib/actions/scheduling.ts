@@ -166,8 +166,8 @@ export async function saveAdvisorSlots(advisorId: string | null, slots: Partial<
     const { error } = await supabase
         .from("availability_slots" as never)
         .insert(slots.map(s => {
-            const formatTime = (t: string) => {
-                if (!t) return t;
+            const formatTime = (t: string | undefined) => {
+                if (!t) return "";
                 if (t.includes('T')) return t;
                 // Si viene solo como "HH:MM", lo convertimos a un timestamp válido genérico
                 return `2000-01-01T${t}:00Z`;
