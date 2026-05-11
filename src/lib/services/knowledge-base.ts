@@ -8,7 +8,8 @@ export class KnowledgeBaseService {
         const supabase = await getSupabaseServerClient();
 
         // Using unknown cast to bypass RPC type definition issues in legacy schemas
-        const rpcArgs = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rpcArgs: any = {
             query_embedding: queryEmbedding,
             match_threshold: threshold,
             match_count: count,
@@ -17,17 +18,28 @@ export class KnowledgeBaseService {
 
         // Only add p_knowledge_base_ids if it's a non-empty array
         if (knowledgeBaseIds && knowledgeBaseIds.length > 0) {
-            (rpcArgs as any).p_knowledge_base_ids = knowledgeBaseIds;
+            rpcArgs.p_knowledge_base_ids = knowledgeBaseIds;
         }
 
-        const { data, error } = await (supabase.rpc as unknown as (name: string, args: unknown) => Promise<{ data: unknown, error: unknown }>)('match_knowledge_base', rpcArgs);
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data, error } = await (supabase.rpc as unknown as (name: string, args: unknown) => Promise<{ data: unknown, error: any }>)('match_knowledge_base', rpcArgs);
 
-        if (error) {
-            console.error('❌ [PGVECTOR_SEARCH] Error:', (error as unknown as { message: string }).message);
+            if (error) {
+                // Check if it's a schema cache issue
+                if (error.message?.includes("function") && error.message?.includes("match_knowledge_base")) {
+                    console.warn("[KNOWLEDGE BASE] match_knowledge_base function not found in cache. This is a known Supabase issue. Proceeding with empty results.");
+                    return [];
+                }
+                console.error('❌ [PGVECTOR_SEARCH] Error:', error.message);
+                return [];
+            }
+
+            return data as Array<{ id: string, content: string, metadata: Record<string, unknown>, similarity: number }>;
+        } catch (err) {
+            console.error('[KNOWLEDGE BASE] Fatal error in search:', err);
             return [];
         }
-
-        return data as Array<{ id: string, content: string, metadata: Record<string, unknown>, similarity: number }>;
     }
 
     /**
@@ -47,7 +59,8 @@ export class KnowledgeBaseService {
             });
 
         if (error) {
-            const msg = (error as unknown as { message: string }).message;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const msg = (error as any).message;
             console.error('❌ [PGVECTOR_ADD] Error:', msg);
             throw new Error(msg);
         }

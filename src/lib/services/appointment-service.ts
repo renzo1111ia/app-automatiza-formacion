@@ -100,7 +100,7 @@ export class AppointmentService {
             const selectedAdvisorId = null; 
             console.log(`[BOOK APPOINTMENT] ✅ Proceeding without advisor assignment (will be assigned later).`);
 
-            // 3. Persist to DB with Retry Logic for Schema Cache issues
+            // 3. Persist to DB with Ultimate Retry Logic for Schema Cache issues
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const appointmentData: any = {
                 tenant_id: tenantId,
@@ -118,29 +118,61 @@ export class AppointmentService {
             console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
             
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let { data: appointment, error: insertError } = await (supabase.from("appointments") as any)
-                .insert(appointmentData)
-                .select()
-                .single();
+            let appointment: any = null;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let insertError: any = null;
+            const currentData = { ...appointmentData };
+            let attempts = 0;
+            const maxAttempts = 3;
 
-            // Retry without 'notes' if column is missing in schema cache
-            if (insertError?.message?.includes("column") && insertError?.message?.includes("notes")) {
-                console.warn("[BOOK APPOINTMENT] 'notes' column not found in cache, retrying without it...");
-                const safeData = { ...appointmentData };
-                delete safeData.notes;
+            while (attempts < maxAttempts) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const retry = await (supabase.from("appointments") as any)
-                    .insert(safeData)
+                const result = await (supabase.from("appointments") as any)
+                    .insert(currentData)
                     .select()
                     .single();
                 
-                appointment = retry.data;
-                insertError = retry.error;
+                if (!result.error) {
+                    appointment = result.data;
+                    insertError = null;
+                    break;
+                }
+
+                insertError = result.error;
+                const errorMsg = insertError?.message || "";
+                
+                // If it's a column error, try to identify and remove the problematic column
+                if (errorMsg.includes("column") || insertError?.code === 'PGRST204') {
+                    console.warn(`[BOOK APPOINTMENT] Attempt ${attempts + 1} failed due to schema issues: ${errorMsg}`);
+                    
+                    if (errorMsg.includes("metadata") && currentData.metadata) {
+                        console.warn("[BOOK APPOINTMENT] Stripping 'metadata' column and retrying...");
+                        delete currentData.metadata;
+                    } else if (errorMsg.includes("notes") && currentData.notes) {
+                        console.warn("[BOOK APPOINTMENT] Stripping 'notes' column and retrying...");
+                        delete currentData.notes;
+                    } else if (errorMsg.includes("advisor_id") && currentData.advisor_id === null) {
+                         // Some schemas might not have advisor_id yet or it's causing issues
+                        console.warn("[BOOK APPOINTMENT] Stripping 'advisor_id' column and retrying...");
+                        delete currentData.advisor_id;
+                    } else {
+                        // If we can't identify the column specifically but it's a column error, 
+                        // try stripping both to be safe on the last attempt
+                        console.warn("[BOOK APPOINTMENT] Unknown column error, stripping all optional fields for last ditch effort");
+                        delete currentData.metadata;
+                        delete currentData.notes;
+                        delete currentData.advisor_id;
+                    }
+                    attempts++;
+                } else {
+                    // Not a schema cache error, break and throw
+                    break;
+                }
             }
 
             if (insertError) {
-                console.error(`[BOOK APPOINTMENT] ❌ Insert error:`, insertError);
-                throw new Error(`Error en base de datos al agendar: ${insertError.message}`);
+                console.error(`[BOOK APPOINTMENT] ❌ Permanent insert error after ${attempts} attempts:`, insertError);
+                throw new Error(`Error persistente en base de datos al agendar: ${insertError.message}`);
             }
 
             console.log(`[BOOK APPOINTMENT] 🎉 Success! Appointment ID: ${appointment?.id}`);
