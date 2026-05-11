@@ -68,10 +68,10 @@ export class AppointmentService {
                 .lte("scheduled_at", `${cleanDate}T23:59:59Z`)
                 .neq("status", "CANCELLED");
 
-            // 1. Get Lead context
+            // 1. Get Lead context (Simple fetch first to avoid relationship errors)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: lead, error: leadError } = await (supabase.from("lead") as any)
-                .select("*, lead_programas(id_programa, programas(nombre))")
+                .select("*")
                 .eq("id", leadId)
                 .single();
             
@@ -80,7 +80,20 @@ export class AppointmentService {
                 throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
             }
 
-            const programName = lead?.lead_programas?.[0]?.programas?.nombre;
+            // 1.1 Try to get program name separately (optional, don't crash if it fails)
+            let programName = null;
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const { data: lp } = await (supabase.from("lead_programas") as any)
+                    .select("programas(nombre)")
+                    .eq("id_lead", leadId)
+                    .limit(1)
+                    .maybeSingle();
+                
+                programName = (lp as any)?.programas?.nombre;
+            } catch (e) {
+                console.warn("[BOOK APPOINTMENT] Could not fetch program name, skipping...", e);
+            }
 
             // 2. Advisor Assignment (Skipped during booking as requested)
             const selectedAdvisorId = null; 
