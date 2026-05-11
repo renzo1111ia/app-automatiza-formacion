@@ -213,7 +213,9 @@ export class AppointmentService {
     }
 
     private static parseTimeToMinutes(timeStr: string): number {
-        const [h, m] = timeStr.split(':').map(Number);
+        // If it's a full ISO string (contains 'T'), extract the time part
+        const actualTime = timeStr.includes('T') ? timeStr.split('T')[1].substring(0, 5) : timeStr;
+        const [h, m] = actualTime.split(':').map(Number);
         return h * 60 + m;
     }
 
