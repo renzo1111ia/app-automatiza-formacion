@@ -340,7 +340,6 @@ export default function AIAgentInbox() {
 
                     setLeads((prev) => {
                         if (prev.find(l => l.id === inboxLead.id)) return prev;
-                        router.refresh(); // Force page refresh as requested by user
                         return [inboxLead, ...prev];
                     });
                 }
