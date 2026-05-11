@@ -120,7 +120,31 @@ export async function getAdvisorSlots(advisorId: string | null) {
     const { data, error } = await query.order("day_of_week");
 
     if (error) return { error: error.message };
-    return { success: true, data: data as unknown as AvailabilitySlot[] };
+
+    // Extraer solo la parte HH:MM para el frontend
+    const formattedData = (data as unknown as AvailabilitySlot[]).map(slot => {
+        const extractTime = (t: string) => {
+            if (!t) return t;
+            if (t.includes('T')) {
+                const dateObj = new Date(t);
+                if (!isNaN(dateObj.getTime())) {
+                    return dateObj.toISOString().substr(11, 5);
+                }
+            }
+            // Si viene con formato "HH:MM:SS" (ej. "20:00:00"), recortar a "HH:MM"
+            if (/^\d{2}:\d{2}:\d{2}/.test(t)) {
+                return t.substring(0, 5);
+            }
+            return t;
+        };
+        return {
+            ...slot,
+            start_time: extractTime(slot.start_time),
+            end_time: extractTime(slot.end_time)
+        };
+    });
+
+    return { success: true, data: formattedData };
 }
 
 export async function saveAdvisorSlots(advisorId: string | null, slots: Partial<AvailabilitySlot>[]) {
@@ -141,11 +165,21 @@ export async function saveAdvisorSlots(advisorId: string | null, slots: Partial<
     // 2. Insert new
     const { error } = await supabase
         .from("availability_slots" as never)
-        .insert(slots.map(s => ({ 
-            ...s, 
-            advisor_id: advisorId || null,
-            tenant_id: tenantId 
-        })) as never);
+        .insert(slots.map(s => {
+            const formatTime = (t: string) => {
+                if (!t) return t;
+                if (t.includes('T')) return t;
+                // Si viene solo como "HH:MM", lo convertimos a un timestamp válido genérico
+                return `2000-01-01T${t}:00Z`;
+            };
+            return { 
+                ...s, 
+                start_time: formatTime(s.start_time),
+                end_time: formatTime(s.end_time),
+                advisor_id: advisorId || null,
+                tenant_id: tenantId 
+            };
+        }) as never);
 
     if (error) {
         console.error("❌ Error saving slots:", error);
