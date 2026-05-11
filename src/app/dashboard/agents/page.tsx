@@ -624,7 +624,7 @@ export default function AgentsPage() {
                                                             </button>
                                                         );
                                                     })}
-                                                </div>                           </div>
+                                                </div>
                                                 <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                                                     <Calendar className="h-32 w-32 -rotate-12" />
                                                 </div>
