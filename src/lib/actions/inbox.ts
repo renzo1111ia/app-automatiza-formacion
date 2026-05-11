@@ -313,7 +313,7 @@ export async function sendManualMessage(
                 // Otherwise, try to auto-resolve {{1}} to name as fallback.
                 const finalComponents = templateComponents || (lead.nombre ? [
                     {
-                        type: "BODY",
+                        type: "body",
                         parameters: [{ type: "text", text: lead.nombre }]
                     }
                 ] : []);

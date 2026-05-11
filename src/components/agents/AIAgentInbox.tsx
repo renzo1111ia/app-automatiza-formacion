@@ -386,20 +386,53 @@ export default function AIAgentInbox() {
         const tpl = templates.find(t => t.name === templateName);
         const lang = tpl?.language || "es";
         
-        // Detect if the template expects parameters in BODY
+        // Detect variables in BODY and HEADER (Case-insensitive)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const hasVariables = tpl?.components?.some((c: any) => 
-            c.type === "BODY" && c.text?.includes("{{1}}")
-        );
+        const bodyComponent = tpl?.components?.find((c: any) => c.type?.toUpperCase() === "BODY");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const headerComponent = tpl?.components?.find((c: any) => c.type?.toUpperCase() === "HEADER");
 
-        // If no variables detected, send an empty array for components to avoid Meta error #132000
+        const bodyText = bodyComponent?.text || "";
+        const headerText = headerComponent?.text || "";
+
+        const bodyVarCount = (bodyText.match(/{{[0-9]+}}/g) || []).length;
+        const headerVarCount = (headerText.match(/{{[0-9]+}}/g) || []).length;
+
+        console.log(`[TEMPLATE DEBUG] ${templateName}: BodyVars=${bodyVarCount}, HeaderVars=${headerVarCount}`);
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const components: any[] = hasVariables ? (selectedLead.nombre ? [
-            {
-                type: "BODY",
-                parameters: [{ type: "text", text: selectedLead.nombre }]
+        const components: any[] = [];
+        
+        // 1. Handle Header Parameters
+        if (headerVarCount > 0) {
+            const headerParams = [];
+            for (let i = 1; i <= headerVarCount; i++) {
+                headerParams.push({ type: "text", text: selectedLead.nombre || "Cliente" });
             }
-        ] : []) : [];
+            components.push({ type: "header", parameters: headerParams });
+        }
+
+        // 2. Handle Body Parameters
+        // If we detect variables OR if we have no component info (cache fail), 
+        // we send at least the name as a safety measure for {{1}}
+        if (bodyVarCount > 0 || (!bodyComponent && selectedLead.nombre)) {
+            const bodyParams = [];
+            const count = bodyVarCount > 0 ? bodyVarCount : 1; 
+            
+            for (let i = 1; i <= count; i++) {
+                let val = "";
+                if (i === 1) val = selectedLead.nombre || "Cliente";
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                else if (i === 2) val = (selectedLead.metadata as any)?.course_name || (selectedLead.metadata as any)?.curso || "nuestro programa";
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                else if (i === 3) val = (selectedLead.metadata as any)?.appointment_date || "próximamente";
+                else val = "...";
+                bodyParams.push({ type: "text", text: val });
+            }
+            components.push({ type: "body", parameters: bodyParams });
+        }
+
+        console.log(`[TEMPLATE DEBUG] Sending components:`, JSON.stringify(components, null, 2));
 
         const res = await sendManualMessage(selectedLead.id, templateName, "TEMPLATE", lang, components);
         if (res.success && res.data) {

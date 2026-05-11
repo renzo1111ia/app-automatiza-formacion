@@ -39,6 +39,15 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
 
         if (tenantError || !tenants || tenants.length === 0) {
             console.warn(`[WHATSAPP PROCESSOR] No tenant found for phone_number_id: ${wabaId}`);
+            
+            // Emergency log for production visibility
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from("system_logs" as any) as any).insert({
+                tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70",
+                level: "WARNING",
+                message: `WHATSAPP_WEBHOOK: Tenant not found for WABA ID: ${wabaId}`,
+                metadata: { wabaId, fromNumber, error: tenantError }
+            });
             return;
         }
 

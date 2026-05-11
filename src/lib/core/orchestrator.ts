@@ -576,29 +576,44 @@ export class Orchestrator {
         const template = step.template || "";
         const mappings = step.variableMappings || {};
 
-        // 1. Resolve parameters for BODY (standard Meta format)
-        // Meta templates use {{1}}, {{2}}... we resolve them in order
-        const parameters: any[] = [];
-        const sortedIndices = Object.keys(mappings).sort((a, b) => parseInt(a) - parseInt(b));
+        // 1. Resolve parameters (Case-insensitive lookup)
+        const bodyComp = (step as any).templateComponents?.find((c: any) => c.type?.toUpperCase() === "BODY");
+        const headerComp = (step as any).templateComponents?.find((c: any) => c.type?.toUpperCase() === "HEADER");
 
-        for (const idx of sortedIndices) {
-            let value = mappings[idx];
-            
-            // Resolve dynamic variables
-            if (value === "lead.nombre") value = lead.nombre || "Cliente";
-            else if (value === "lead.apellido") value = lead.apellido || "";
-            else if (value === "lead.email") value = lead.email || "";
-            // ... add more as needed
+        const components: any[] = [];
+        
+        const resolveVal = (val: string) => {
+            if (val === "lead.nombre") return lead.nombre || "Cliente";
+            if (val === "lead.apellido") return lead.apellido || "";
+            if (val === "lead.email") return lead.email || "";
+            return val;
+        };
 
-            parameters.push({ type: "text", text: value });
+        // Header Params
+        if (headerComp?.parameters) {
+            const hParams = headerComp.parameters.map((p: any) => ({
+                type: "text",
+                text: resolveVal(p.text)
+            }));
+            components.push({ type: "header", parameters: hParams });
         }
 
-        const components = parameters.length > 0 ? [
-            {
-                type: "body",
-                parameters: parameters
+        // Body Params
+        const bodyParams: any[] = [];
+        const sortedIndices = Object.keys(mappings).sort((a, b) => parseInt(a) - parseInt(b));
+
+        if (sortedIndices.length > 0) {
+            for (const idx of sortedIndices) {
+                bodyParams.push({ type: "text", text: resolveVal(mappings[idx]) });
             }
-        ] : [];
+        } else if (lead.nombre) {
+            // Minimal safety fallback
+            bodyParams.push({ type: "text", text: lead.nombre });
+        }
+
+        if (bodyParams.length > 0) {
+            components.push({ type: "body", parameters: bodyParams });
+        }
 
         if (lead.origen === 'Web Simulator' && !waConfig.accessToken) {
             console.log(`[ORCHESTRATOR] [MOCK] Simulating WhatsApp message for lead ${lead.id} with template ${template}`);

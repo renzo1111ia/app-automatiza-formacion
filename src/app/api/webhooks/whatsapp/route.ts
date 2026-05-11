@@ -44,6 +44,20 @@ export async function POST(req: Request) {
 
             if (hash !== signature) {
                 console.warn("[WHATSAPP WEBHOOK] ❌ Invalid signature.");
+                
+                // Log to DB for debugging
+                const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+                const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+                if (supabaseUrl && supabaseKey) {
+                    const supabase = createClient(supabaseUrl, supabaseKey);
+                    await supabase.from("system_logs").insert({
+                        tenant_id: "47e84fa2-73f3-4e23-9267-1e49d4442f70",
+                        level: "WARNING",
+                        message: "WHATSAPP_WEBHOOK: Invalid Signature. Check WHATSAPP_APP_SECRET.",
+                        metadata: { receivedHash: signature, computedHash: hash }
+                    });
+                }
+
                 return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
             }
         }
