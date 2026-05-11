@@ -12,7 +12,10 @@ export class AppointmentService {
     }
 
     private static normalizeDate(dateStr: string): string {
-        if (!dateStr) return dateStr;
+        if (!dateStr) {
+            // Default to today if no date provided
+            return new Date().toISOString().split('T')[0];
+        }
         const lower = dateStr.toLowerCase().trim();
         // Simple normalization for common Spanish relative dates
         if (lower === 'mañana' || lower === 'mañana') {

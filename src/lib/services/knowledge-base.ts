@@ -8,13 +8,19 @@ export class KnowledgeBaseService {
         const supabase = await getSupabaseServerClient();
 
         // Using unknown cast to bypass RPC type definition issues in legacy schemas
-        const { data, error } = await (supabase.rpc as unknown as (name: string, args: unknown) => Promise<{ data: unknown, error: unknown }>)('match_knowledge_base', {
+        const rpcArgs = {
             query_embedding: queryEmbedding,
             match_threshold: threshold,
             match_count: count,
             p_tenant_id: tenantId,
-            p_knowledge_base_ids: knowledgeBaseIds && knowledgeBaseIds.length > 0 ? knowledgeBaseIds : null
-        });
+        };
+
+        // Only add p_knowledge_base_ids if it's a non-empty array
+        if (knowledgeBaseIds && knowledgeBaseIds.length > 0) {
+            (rpcArgs as any).p_knowledge_base_ids = knowledgeBaseIds;
+        }
+
+        const { data, error } = await (supabase.rpc as unknown as (name: string, args: unknown) => Promise<{ data: unknown, error: unknown }>)('match_knowledge_base', rpcArgs);
 
         if (error) {
             console.error('❌ [PGVECTOR_SEARCH] Error:', (error as unknown as { message: string }).message);
