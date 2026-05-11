@@ -12,7 +12,7 @@ import {
     Terminal,
     Play,
     Cpu, Brain, Database as DbIcon,
-    X, Sparkles, Calendar, RefreshCw, Search
+    X, Sparkles, Calendar, RefreshCw, Search, CalendarPlus, CalendarX, RefreshCcw
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -564,9 +564,9 @@ export default function AgentsPage() {
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 gap-6">
                                             {/* Calendario / Bookings */}
-                                            <div className="p-8 bg-card border border-border rounded-[40px] space-y-8 relative overflow-hidden group">
+                                            <div className="p-8 bg-card border border-border rounded-[40px] space-y-8 relative overflow-hidden group w-full">
                                                 <div className="flex items-center justify-between relative z-10">
                                                     <div className="flex items-center gap-4">
                                                         <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-xl shadow-primary/5">
@@ -579,49 +579,73 @@ export default function AgentsPage() {
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
-                                                    {[
-                                                        { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres' },
-                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita reserva directa en el calendario' },
-                                                        { id: 'cancel_appointment', label: 'Cancelar Cita', desc: 'Permite a la IA anular citas existentes' },
-                                                        { id: 'reschedule_appointment', label: 'Reprogramar Cita', desc: 'Permite a la IA cambiar hora de cita' }
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                                                        { id: 'check_availability', label: 'Verificar Disponibilidad', desc: 'Permite a la IA consultar espacios libres en tiempo real.', icon: Search },
+                                                        { id: 'book_appointment', label: 'Agendar Cita', desc: 'Habilita la capacidad de crear nuevas reservas.', icon: CalendarPlus },
+                                                        { id: 'cancel_appointment', label: 'Cancelar Cita', desc: 'Permite a la IA anular citas si el usuario lo solicita.', icon: CalendarX },
+                                                        { id: 'reschedule_appointment', label: 'Reprogramar Cita', desc: 'Gestiona cambios de horario para citas existentes.', icon: RefreshCcw }
                                                     ].map((tool) => {
                                                         const isEnabled = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools?.[tool.id] === true;
+                                                        const Icon = tool.icon;
                                                         return (
-                                                            <button 
-                                                                key={tool.id}
-                                                                onClick={() => {
-                                                                    const currentTools = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools || {};
-                                                                    const newTools = { ...currentTools, [tool.id]: !isEnabled };
-                                                                    setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), tools: newTools}}));
-                                                                }}
-                                                                className={cn(
-                                                                    "w-full p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 group/btn text-left",
-                                                                    isEnabled ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card/40 border-border hover:bg-card/80"
-                                                                )}
-                                                            >
-                                                                <div className="flex items-center justify-between w-full">
+                                                            <div key={tool.id} className="relative group/tool">
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        const currentTools = (variantA.automation_rules as unknown as AIAgentAutomationRules)?.tools || {};
+                                                                        const newTools = { ...currentTools, [tool.id]: !isEnabled };
+                                                                        setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), tools: newTools}}));
+                                                                    }}
+                                                                    className={cn(
+                                                                        "w-full p-5 rounded-[24px] border transition-all flex flex-col items-center gap-4 text-center relative",
+                                                                        isEnabled 
+                                                                            ? "bg-primary/[0.03] border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.05)]" 
+                                                                            : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border"
+                                                                    )}
+                                                                >
                                                                     <div className={cn(
-                                                                        "h-8 w-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0",
-                                                                        isEnabled ? "bg-primary text-white shadow-md shadow-primary/20" : "bg-muted text-muted-foreground"
+                                                                        "h-12 w-12 rounded-2xl flex items-center justify-center transition-all duration-500",
+                                                                        isEnabled 
+                                                                            ? "bg-primary text-white shadow-lg shadow-primary/30 rotate-0 scale-110" 
+                                                                            : "bg-card text-muted-foreground border border-border group-hover/tool:scale-105"
                                                                     )}>
-                                                                        <Search className="h-4 w-4" />
+                                                                        <Icon className="h-6 w-6" />
                                                                     </div>
-                                                                    <div className={cn(
-                                                                        "h-5 w-9 rounded-full relative transition-all duration-300 border flex-shrink-0",
-                                                                        isEnabled ? "bg-primary border-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.3)]" : "bg-muted border-border"
-                                                                    )}>
-                                                                        <div className={cn(
-                                                                            "h-3.5 w-3.5 rounded-full bg-white absolute top-0.5 transition-all duration-300 shadow-sm",
-                                                                            isEnabled ? "left-4.5" : "left-0.5"
-                                                                        )} style={{ left: isEnabled ? 'calc(100% - 16px)' : '2px' }} />
+                                                                    
+                                                                    <div className="space-y-1.5">
+                                                                        <span className={cn(
+                                                                            "text-[10px] font-black uppercase tracking-[0.15em] block transition-colors",
+                                                                            isEnabled ? "text-primary" : "text-muted-foreground"
+                                                                        )}>
+                                                                            {tool.label}
+                                                                        </span>
+                                                                        <div className="flex justify-center">
+                                                                            <div className={cn(
+                                                                                "h-5 w-9 rounded-full relative transition-all duration-300 border",
+                                                                                isEnabled ? "bg-primary border-primary" : "bg-muted border-border"
+                                                                            )}>
+                                                                                <div className={cn(
+                                                                                    "h-3 w-3 rounded-full bg-white absolute top-0.5 transition-all duration-300 shadow-sm",
+                                                                                    isEnabled ? "right-1" : "left-1"
+                                                                                )} />
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
+                                                                </button>
+
+                                                                {/* TOOLTIP / SUBMENU FLOTANTE */}
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-48 p-4 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/tool:opacity-100 group-hover/tool:translate-y-0 transition-all duration-300 z-50">
+                                                                    <div className="flex flex-col gap-2">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                                                                            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Info Herramienta</span>
+                                                                        </div>
+                                                                        <p className="text-[11px] font-medium text-foreground/80 leading-relaxed">
+                                                                            {tool.desc}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-card border-r border-b border-border rotate-45" />
                                                                 </div>
-                                                                <div>
-                                                                    <span className={cn("text-[11px] font-black uppercase tracking-tight block", isEnabled ? "text-primary" : "text-foreground/80")}>{tool.label}</span>
-                                                                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1 block line-clamp-2">{tool.desc}</span>
-                                                                </div>
-                                                            </button>
+                                                            </div>
                                                         );
                                                     })}
                                                 </div>
