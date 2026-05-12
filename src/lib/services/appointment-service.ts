@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime, format } from "date-fns-tz";
 
 export class AppointmentService {
     private static DEFAULT_TIMEZONE = "Europe/Madrid";
@@ -229,9 +229,9 @@ export class AppointmentService {
         return { success: true, newTime: scheduledAt };
     }
 
-    static async checkAvailability(tenantId: string, date: string) {
+    static async checkAvailability(tenantId: string, date: string, leadTimezone?: string) {
         const cleanDate = this.normalizeDate(date);
-        console.log(`[CHECK AVAILABILITY] 🔍 Checking for ${cleanDate} in ${this.DEFAULT_TIMEZONE}`);
+        console.log(`[CHECK AVAILABILITY] 🔍 Checking for ${cleanDate}. Madrid TZ: ${this.DEFAULT_TIMEZONE}, Target TZ: ${leadTimezone || 'none'}`);
         const supabase = this.getSupabase();
 
         // Determine day of week in Madrid timezone
@@ -249,6 +249,18 @@ export class AppointmentService {
         const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();
         const endOfDayUTC = fromZonedTime(`${cleanDate} 23:59:59`, this.DEFAULT_TIMEZONE).toISOString();
 
+        // Get tenant config for default slot duration
+        let globalSlotDuration = 15; // Default if nothing else found
+        try {
+            const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
+            const config = (tenant as any)?.config?.scheduling;
+            if (config?.slot_duration) {
+                globalSlotDuration = Number(config.slot_duration);
+            }
+        } catch (e) {
+            console.warn("[CHECK AVAILABILITY] Could not fetch tenant config:", e);
+        }
+
         // Get existing appointments for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing } = await (supabase.from("appointments") as any)
@@ -258,13 +270,13 @@ export class AppointmentService {
             .lte("scheduled_at", endOfDayUTC)
             .neq("status", "CANCELLED");
 
-        const availableSlots: { time: string, advisor_id: string }[] = [];
+        const availableSlots: { time: string, madrid_time: string, advisor_id: string }[] = [];
 
         if (ranges) {
             for (const range of ranges) {
                 const startTime = range.start_time;
                 const endTime = range.end_time;
-                const duration = range.slot_duration_minutes || 30;
+                const duration = range.slot_duration_minutes || globalSlotDuration;
                 const advisorId = range.advisor_id;
 
                 let currentMin = this.parseTimeToMinutes(startTime);
@@ -281,8 +293,20 @@ export class AppointmentService {
                     });
 
                     if (!isBooked) {
+                        let finalTime = timeStr.substring(0, 5);
+                        
+                        if (leadTimezone) {
+                            try {
+                                const zoned = toZonedTime(new Date(slotUTC), leadTimezone);
+                                finalTime = format(zoned, 'HH:mm', { timeZone: leadTimezone });
+                            } catch (e) {
+                                console.warn(`[CHECK AVAILABILITY] Failed to convert ${slotUTC} to ${leadTimezone}`, e);
+                            }
+                        }
+
                         availableSlots.push({
-                            time: timeStr.substring(0, 5),
+                            time: finalTime,
+                            madrid_time: timeStr.substring(0, 5),
                             advisor_id: advisorId
                         });
                     }
@@ -294,6 +318,7 @@ export class AppointmentService {
         console.log(`[CHECK AVAILABILITY] ✅ Found ${availableSlots.length} available slots.`);
         return {
             date: cleanDate,
+            timezone: leadTimezone || this.DEFAULT_TIMEZONE,
             available_slots: availableSlots
         };
     }

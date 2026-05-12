@@ -7,6 +7,7 @@ import { ChatMemoryService } from "@/lib/services/chat-memory";
 import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowledge-base";
 import { FactExtractionService } from "@/lib/services/fact-extractor";
 import { GlobalLogger } from "../logger";
+import { getTimezoneByCountry } from "@/lib/utils/timezones";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
@@ -14,7 +15,7 @@ import { GlobalLogger } from "../logger";
  * No AWS dependencies.
  */
 
-export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, _metaId?: string) {
+export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string) {
     if (!incomingMessage) return;
     
     try {
@@ -297,7 +298,8 @@ ${conversationContext}
                         const res = await AppointmentService.rescheduleAppointment(args.appointmentId, args.newDate, args.newTime);
                         result = JSON.stringify(res);
                     } else if (name === "check_availability") {
-                        const res = await AppointmentService.checkAvailability(tenantId, args.date);
+                        const leadTimezone = getTimezoneByCountry((lead as any).pais);
+                        const res = await AppointmentService.checkAvailability(tenantId, args.date, leadTimezone);
                         result = JSON.stringify(res);
                     }
                 } catch (e) {
