@@ -81,9 +81,11 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         await GlobalLogger.info(tenantId, "WHATSAPP", `API Key verified, using variant ${activeVariant.id}`);
 
+        const { AppointmentService } = await import("@/lib/services/appointment-service");
+
         // 3-5. Fetch all context data in parallel to reduce latency
         console.log(`[AI PROCESSOR] ⚡ Fetching context data and credentials in parallel...`);
-        const [recentHistory, chatSummary, localKnowledge, tenantData] = await Promise.all([
+        const [recentHistory, chatSummary, localKnowledge, tenantData, leadAppointments] = await Promise.all([
             // 3. Get Recent Context from DB (last 10 messages)
             ChatMemoryService.getRecentContext(leadId).catch(err => {
                 console.warn("[AI PROCESSOR] Memory fetch skipped:", err);
@@ -112,7 +114,12 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
                 }
             })(),
             // 6. Get Tenant WhatsApp Config
-            (supabase.from("tenants" as unknown as string) as any).select("config").eq("id", tenantId).single()
+            (supabase.from("tenants" as unknown as string) as any).select("config").eq("id", tenantId).single(),
+            // 7. Get Lead Appointments
+            AppointmentService.getLeadAppointments(leadId).catch(err => {
+                console.warn("[AI PROCESSOR] Appointments fetch skipped:", err);
+                return [];
+            })
         ]);
 
         const waConfig = (tenantData?.data as any)?.config?.whatsapp;
@@ -190,7 +197,7 @@ IMPORTANTE: NO confirmes una cita al lead (no digas "Cita confirmada" o similare
                     parameters: {
                         type: "object",
                         properties: {
-                            appointmentId: { type: "string", description: "ID de la cita a cancelar" }
+                            appointmentId: { type: "string", description: "ID único (UUID) de la cita a cancelar, obtenido de la lista de CITAS PROGRAMADAS." }
                         },
                         required: ["appointmentId"]
                     }
@@ -204,7 +211,7 @@ IMPORTANTE: NO confirmes una cita al lead (no digas "Cita confirmada" o similare
                     parameters: {
                         type: "object",
                         properties: {
-                            appointmentId: { type: "string", description: "ID de la cita" },
+                            appointmentId: { type: "string", description: "ID único (UUID) de la cita, obtenido de la lista de CITAS PROGRAMADAS." },
                             newDate: { type: "string", description: "Nueva fecha YYYY-MM-DD" },
                             newTime: { type: "string", description: "Nueva hora HH:MM" }
                         },
@@ -239,6 +246,11 @@ ${chatSummary || "Primera interacción con este lead."}
 
 CONTEXTO RECIENTE (Últimas 10 líneas):
 ${conversationContext}
+
+CITAS PROGRAMADAS PARA ESTE LEAD:
+${(leadAppointments as any[]).length > 0 
+    ? (leadAppointments as any[]).map(a => `- ID: ${a.id} | Fecha/Hora: ${new Date(a.scheduled_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })} (Madrid) | Estado: ${a.status} | Asesor: ${a.advisors?.name || 'Por asignar'}`).join("\n")
+    : "No hay citas programadas activas para este lead."}
 `;
 
         // 9. Call OpenAI with Tools

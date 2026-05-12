@@ -11,6 +11,22 @@ export class AppointmentService {
         return createClient<Database>(url!, key!);
     }
 
+    static async getLeadAppointments(leadId: string) {
+        const supabase = this.getSupabase();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase.from("appointments") as any)
+            .select("id, scheduled_at, status, notes, advisors(name)")
+            .eq("lead_id", leadId)
+            .neq("status", "CANCELLED")
+            .order("scheduled_at", { ascending: true });
+
+        if (error) {
+            console.error("[GET LEAD APPOINTMENTS] Error:", error);
+            return [];
+        }
+        return data || [];
+    }
+
     private static normalizeDate(dateStr: string): string {
         if (!dateStr) {
             return new Date().toISOString().split('T')[0];
@@ -239,11 +255,9 @@ export class AppointmentService {
         const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
 
         // Get availability slots for that day
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: ranges } = await (supabase.from("availability_slots") as any)
+        const { data: ranges } = await supabase.from("availability_slots")
             .select("*")
-            .eq("day_of_week", dayOfWeek)
-            .eq("tenant_id", tenantId);
+            .eq("day_of_week", dayOfWeek) as { data: any[] | null };
 
         // Define the time range for the day in UTC
         const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();
@@ -262,8 +276,7 @@ export class AppointmentService {
         }
 
         // Get existing appointments for that day
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: existing } = await (supabase.from("appointments") as any)
+        const { data: existing } = await supabase.from("appointments")
             .select("scheduled_at, advisor_id")
             .eq("tenant_id", tenantId)
             .gte("scheduled_at", startOfDayUTC)
