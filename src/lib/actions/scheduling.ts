@@ -201,9 +201,12 @@ export async function getAppointments(options?: {
     if (!tenantId) return { error: "No hay un cliente seleccionado." };
 
     const supabase = await getAdminSupabaseClient();
+
+    // Build base query WITHOUT the lead join (PostgREST can't always resolve 'lead' relationship)
+    // We'll enrich with lead data manually below.
     let query = supabase
         .from("appointments" as never)
-        .select("*, advisors(name), lead(nombre, apellido, telefono)")
+        .select("*, advisors(name)")
         .eq("tenant_id", tenantId)
         .order("scheduled_at", { ascending: true });
 
@@ -214,7 +217,28 @@ export async function getAppointments(options?: {
 
     const { data, error } = await query;
     if (error) return { error: error.message };
-    return { success: true, data: data as unknown as Appointment[] };
+
+    const appointments = (data as unknown as Appointment[]) || [];
+
+    if (appointments.length === 0) {
+        return { success: true, data: appointments };
+    }
+
+    // Enrich with lead data via a separate query (avoids schema cache relationship issues)
+    const leadIds = [...new Set(appointments.map((a) => a.lead_id).filter(Boolean))];
+    const { data: leads } = await supabase
+        .from("lead" as never)
+        .select("id, nombre, apellido, telefono")
+        .in("id", leadIds as string[]);
+
+    const leadMap = new Map((leads as unknown as { id: string; nombre: string; apellido: string; telefono: string }[] || []).map((l) => [l.id, l]));
+
+    const enriched = appointments.map((apt) => ({
+        ...apt,
+        lead: apt.lead_id ? leadMap.get(apt.lead_id) || null : null,
+    }));
+
+    return { success: true, data: enriched };
 }
 
 export async function updateAppointmentStatus(appointmentId: string, status: string) {
