@@ -13,12 +13,10 @@ export class AppointmentService {
 
     private static normalizeDate(dateStr: string): string {
         if (!dateStr) {
-            // Default to today if no date provided
             return new Date().toISOString().split('T')[0];
         }
         const lower = dateStr.toLowerCase().trim();
-        // Simple normalization for common Spanish relative dates
-        if (lower === 'mañana' || lower === 'mañana') {
+        if (lower === 'mañana' || lower === 'manana') {
             const d = new Date();
             d.setDate(d.getDate() + 1);
             return d.toISOString().split('T')[0];
@@ -26,7 +24,6 @@ export class AppointmentService {
         if (lower === 'hoy') {
             return new Date().toISOString().split('T')[0];
         }
-        // Match YYYY-MM-DD
         if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
             return dateStr.split('T')[0];
         }
@@ -37,16 +34,12 @@ export class AppointmentService {
         const cleanDate = this.normalizeDate(date);
         console.log(`[BOOK APPOINTMENT] 🚀 Starting! Tenant: ${tenantId}, Lead: ${leadId}, Date: ${cleanDate}, Time: ${time}`);
         const supabase = this.getSupabase();
-        
+
         let scheduledAt: string;
-        
+
         if (time) {
-            // If time is provided, we assume it's in Spain's timezone (Europe/Madrid)
-            // unless it already has an offset (which the AI usually doesn't send)
             const timeStr = time.includes(':') ? (time.split(':').length === 2 ? `${time}:00` : time) : `${time}:00:00`;
             const fullLocalString = `${cleanDate} ${timeStr}`;
-            
-            // Create a date object interpreting it as Madrid time, then get ISO UTC
             try {
                 const utcDate = fromZonedTime(fullLocalString, this.DEFAULT_TIMEZONE);
                 scheduledAt = utcDate.toISOString();
@@ -59,29 +52,31 @@ export class AppointmentService {
         }
 
         try {
-            // 0. Auto-cancel previous appointments for this lead on the same day to avoid duplicates
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from("appointments") as any)
-                .update({ status: "CANCELLED", notes: "Cancelado automáticamente por nuevo agendamiento" })
-                .eq("lead_id", leadId)
-                .gte("scheduled_at", `${cleanDate}T00:00:00Z`)
-                .lte("scheduled_at", `${cleanDate}T23:59:59Z`)
-                .neq("status", "CANCELLED");
+            // 0. Auto-cancel existing appointments for this lead that day (best-effort)
+            try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (supabase.from("appointments") as any)
+                    .update({ status: "CANCELLED" })
+                    .eq("lead_id", leadId)
+                    .gte("scheduled_at", `${cleanDate}T00:00:00Z`)
+                    .lte("scheduled_at", `${cleanDate}T23:59:59Z`);
+            } catch (e) {
+                console.warn("[BOOK APPOINTMENT] Auto-cancel skipped (non-fatal):", e);
+            }
 
-            // 1. Get Lead context (Simple fetch first to avoid relationship errors)
+            // 1. Verify lead exists
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: leadError } = await (supabase.from("lead") as any)
-                .select("*")
+                .select("id")
                 .eq("id", leadId)
                 .single();
-            
+
             if (leadError) {
-                console.error(`[BOOK APPOINTMENT] Lead fetch error:`, leadError);
                 throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
             }
 
-            // 1.1 Try to get program name separately (optional, don't crash if it fails)
-            let programName = null;
+            // 2. Try to fetch program name (optional, never crash)
+            let programName: string | null = null;
             try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { data: lp } = await (supabase.from("lead_programas") as any)
@@ -89,94 +84,114 @@ export class AppointmentService {
                     .eq("id_lead", leadId)
                     .limit(1)
                     .maybeSingle();
-                
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                programName = (lp as any)?.programas?.nombre;
+                programName = (lp as any)?.programas?.nombre || null;
             } catch (e) {
                 console.warn("[BOOK APPOINTMENT] Could not fetch program name, skipping...", e);
             }
 
-            // 2. Advisor Assignment (Skipped during booking as requested)
-            const selectedAdvisorId = null; 
-            console.log(`[BOOK APPOINTMENT] ✅ Proceeding without advisor assignment (will be assigned later).`);
+            const notesValue = notes
+                ? `${notes}${programName ? ` (Programa: ${programName})` : ""}`
+                : programName ? `Interesado en: ${programName}` : null;
 
-            // 3. Persist to DB with Ultimate Retry Logic for Schema Cache issues
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const appointmentData: any = {
+            // 3. ADAPTIVE RETRY STRATEGY
+            // We try the insert starting with a full payload.
+            // On each "column not found" error we strip the offending field and retry.
+            // The strip order goes from most optional to least optional.
+            // The absolute bare-minimum (tenant_id, lead_id, scheduled_at) always works.
+            const basePayload: Record<string, unknown> = {
                 tenant_id: tenantId,
                 lead_id: leadId,
                 scheduled_at: scheduledAt,
-                status: "PENDING",
-                advisor_id: selectedAdvisorId,
-                notes: notes ? `${notes}${programName ? ` (Programa: ${programName})` : ""}` : (programName ? `Interesado en: ${programName}` : null),
-                metadata: {
-                    source: "ai_wa_processor",
-                    extracted_program: programName
-                }
             };
 
-            console.log(`[BOOK APPOINTMENT] ✍️ Inserting into DB. ScheduledAt: ${scheduledAt}`);
-            
+            // Full payload — we'll peel these off one by one if the DB rejects them
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const currentData: any = {
+                ...basePayload,
+                status: "PENDING",
+                advisor_id: null,
+                duration_minutes: 30,
+                notes: notesValue,
+                metadata: { source: "ai_wa_processor", extracted_program: programName },
+            };
+
+            // Strip order: most optional first
+            const stripOrder = ["metadata", "notes", "duration_minutes", "advisor_id", "status"];
+
+            console.log(`[BOOK APPOINTMENT] ✍️ Attempting insert with full payload. ScheduledAt: ${scheduledAt}`);
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let appointment: any = null;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let insertError: any = null;
-            const currentData = { ...appointmentData };
-            let attempts = 0;
-            const maxAttempts = 3;
+            let lastError: any = null;
 
-            while (attempts < maxAttempts) {
+            for (let i = 0; i <= stripOrder.length; i++) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = await (supabase.from("appointments") as any)
-                    .insert(currentData)
+                    .insert(i === 0 ? currentData : { ...currentData })
                     .select()
                     .single();
-                
+
                 if (!result.error) {
                     appointment = result.data;
-                    insertError = null;
+                    lastError = null;
+                    console.log(`[BOOK APPOINTMENT] ✅ Insert succeeded on attempt ${i + 1}`);
                     break;
                 }
 
-                insertError = result.error;
-                const errorMsg = insertError?.message || "";
-                
-                // If it's a column error, try to identify and remove the problematic column
-                if (errorMsg.includes("column") || insertError?.code === 'PGRST204') {
-                    console.warn(`[BOOK APPOINTMENT] Attempt ${attempts + 1} failed due to schema issues: ${errorMsg}`);
-                    
-                    if (errorMsg.includes("metadata") && currentData.metadata) {
-                        console.warn("[BOOK APPOINTMENT] Stripping 'metadata' column and retrying...");
-                        delete currentData.metadata;
-                    } else if (errorMsg.includes("notes") && currentData.notes) {
-                        console.warn("[BOOK APPOINTMENT] Stripping 'notes' column and retrying...");
-                        delete currentData.notes;
-                    } else if (errorMsg.includes("advisor_id") && currentData.advisor_id === null) {
-                         // Some schemas might not have advisor_id yet or it's causing issues
-                        console.warn("[BOOK APPOINTMENT] Stripping 'advisor_id' column and retrying...");
-                        delete currentData.advisor_id;
-                    } else {
-                        // If we can't identify the column specifically but it's a column error, 
-                        // try stripping both to be safe on the last attempt
-                        console.warn("[BOOK APPOINTMENT] Unknown column error, stripping all optional fields for last ditch effort");
-                        delete currentData.metadata;
-                        delete currentData.notes;
-                        delete currentData.advisor_id;
+                lastError = result.error;
+                const msg: string = lastError?.message || "";
+
+                // Only retry for schema/column errors
+                const isSchemaError =
+                    msg.includes("column") ||
+                    msg.includes("schema cache") ||
+                    lastError?.code === "PGRST204";
+
+                if (!isSchemaError) {
+                    console.error(`[BOOK APPOINTMENT] ❌ Non-schema error, not retrying: ${msg}`);
+                    break;
+                }
+
+                if (i < stripOrder.length) {
+                    // Identify which column to strip from the error message, or use strip order
+                    let fieldToRemove = stripOrder[i];
+                    for (const f of stripOrder) {
+                        if (msg.includes(f) && currentData[f] !== undefined) {
+                            fieldToRemove = f;
+                            break;
+                        }
                     }
-                    attempts++;
+                    console.warn(`[BOOK APPOINTMENT] ⚠️ Schema issue: "${msg.substring(0, 100)}". Stripping '${fieldToRemove}' and retrying...`);
+                    delete currentData[fieldToRemove];
                 } else {
-                    // Not a schema cache error, break and throw
+                    // All optional fields stripped, try absolute minimum
+                    console.warn(`[BOOK APPOINTMENT] ⚠️ Final attempt with bare minimum payload...`);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const minResult = await (supabase.from("appointments") as any)
+                        .insert(basePayload)
+                        .select()
+                        .single();
+                    if (!minResult.error) {
+                        appointment = minResult.data;
+                        lastError = null;
+                        console.log(`[BOOK APPOINTMENT] ✅ Bare-minimum insert succeeded.`);
+                    } else {
+                        lastError = minResult.error;
+                    }
                     break;
                 }
             }
 
-            if (insertError) {
-                console.error(`[BOOK APPOINTMENT] ❌ Permanent insert error after ${attempts} attempts:`, insertError);
-                throw new Error(`Error persistente en base de datos al agendar: ${insertError.message}`);
+            if (lastError) {
+                console.error(`[BOOK APPOINTMENT] ❌ Permanent insert error after all retries:`, lastError);
+                throw new Error(`Error persistente en base de datos al agendar: ${lastError.message}`);
             }
 
-            console.log(`[BOOK APPOINTMENT] 🎉 Success! Appointment ID: ${appointment?.id}`);
+            console.log(`[BOOK APPOINTMENT] 🎉 Appointment created! ID: ${appointment?.id}`);
             return appointment;
+
         } catch (err: unknown) {
             console.error(`[BOOK APPOINTMENT] Critical failure:`, err);
             throw err;
@@ -198,7 +213,12 @@ export class AppointmentService {
         let scheduledAt = newDate;
         if (newTime) {
             const timeStr = newTime.includes(':') ? (newTime.split(':').length === 2 ? `${newTime}:00` : newTime) : `${newTime}:00:00`;
-            scheduledAt = `${newDate}T${timeStr}Z`;
+            try {
+                const utcDate = fromZonedTime(`${newDate} ${timeStr}`, this.DEFAULT_TIMEZONE);
+                scheduledAt = utcDate.toISOString();
+            } catch {
+                scheduledAt = `${newDate}T${timeStr}Z`;
+            }
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,24 +233,23 @@ export class AppointmentService {
         const cleanDate = this.normalizeDate(date);
         console.log(`[CHECK AVAILABILITY] 🔍 Checking for ${cleanDate} in ${this.DEFAULT_TIMEZONE}`);
         const supabase = this.getSupabase();
-        
-        // 1. Determine day of week in Madrid
-        // Using a fixed time (midday) to ensure we get the correct day of week in that timezone
+
+        // Determine day of week in Madrid timezone
         const referenceDate = fromZonedTime(`${cleanDate} 12:00:00`, this.DEFAULT_TIMEZONE);
         const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
-        
-        // 2. Get availability slots for that day (either for an advisor or general tenant slots)
+
+        // Get availability slots for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: ranges } = await (supabase.from("availability_slots") as any)
             .select("*")
             .eq("day_of_week", dayOfWeek)
             .eq("tenant_id", tenantId);
 
-        // 3. Define the time range for the whole day in UTC to fetch appointments
+        // Define the time range for the day in UTC
         const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();
         const endOfDayUTC = fromZonedTime(`${cleanDate} 23:59:59`, this.DEFAULT_TIMEZONE).toISOString();
 
-        // 4. Get existing appointments for that day (using Madrid day boundaries in UTC)
+        // Get existing appointments for that day
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing } = await (supabase.from("appointments") as any)
             .select("scheduled_at, advisor_id")
@@ -252,14 +271,10 @@ export class AppointmentService {
                 const endMin = this.parseTimeToMinutes(endTime);
 
                 while (currentMin < endMin) {
-                    const timeStr = this.minutesToTimeString(currentMin); // "HH:MM:00"
-                    
-                    // Convert this specific slot to UTC ISO for comparison
+                    const timeStr = this.minutesToTimeString(currentMin);
                     const slotFullString = `${cleanDate} ${timeStr}`;
                     const slotUTC = fromZonedTime(slotFullString, this.DEFAULT_TIMEZONE).toISOString();
-                    
-                    // Check if already booked
-                    // We compare the ISO strings exactly
+
                     const isBooked = (existing as { scheduled_at: string; advisor_id: string }[])?.some((e) => {
                         const existingISO = new Date(e.scheduled_at).toISOString();
                         return existingISO === slotUTC && e.advisor_id === advisorId;
@@ -267,7 +282,7 @@ export class AppointmentService {
 
                     if (!isBooked) {
                         availableSlots.push({
-                            time: timeStr.substring(0, 5), // Return "HH:MM" for AI friendliness
+                            time: timeStr.substring(0, 5),
                             advisor_id: advisorId
                         });
                     }
@@ -284,7 +299,6 @@ export class AppointmentService {
     }
 
     private static parseTimeToMinutes(timeStr: string): number {
-        // If it's a full ISO string (contains 'T'), extract the time part
         const actualTime = timeStr.includes('T') ? timeStr.split('T')[1].substring(0, 5) : timeStr;
         const [h, m] = actualTime.split(':').map(Number);
         return h * 60 + m;
