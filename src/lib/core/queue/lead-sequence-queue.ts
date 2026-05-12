@@ -94,7 +94,7 @@ export async function enqueueLeadStep(
 ): Promise<string> {
     try {
         const queue = getLeadQueue();
-        const jobName = `lead:${data.leadId}:step:${data.step}`;
+        const jobName = `lead-${data.leadId}-step-${data.step}`;
         
         const job = await queue.add(jobName, data, {
             delay: delayMs,
@@ -117,9 +117,11 @@ export async function enqueueQualificationAnalysis(data: {
 }) {
     try {
         const queue = getLeadQueue();
-        await queue.add(`qual:${data.leadId}:${data.callId}`, {
+        await queue.add(`qual-${data.leadId}-${data.callId}`, {
             ...data,
             action: "QUALIFY_ANALYSIS"
+        }, {
+            jobId: `qual-${data.leadId}-${data.callId}`
         });
     } catch (err: any) {
         console.error(`[QUEUE_ERROR] Analysis could not be queued: ${err.message}`);

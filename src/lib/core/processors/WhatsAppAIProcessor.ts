@@ -267,9 +267,13 @@ ${conversationContext}
 
         let aiMessage = completion.choices[0]?.message;
         
-        // 10. Handle Tool Calls
-        if (aiMessage?.tool_calls) {
-            console.log(`[AI PROCESSOR] 🛠️ Tool calls detected: ${aiMessage.tool_calls.length}`);
+        // 10. Handle Tool Calls with recursion (max 2 rounds)
+        let toolRounds = 0;
+        const maxToolRounds = 2;
+
+        while (aiMessage?.tool_calls && toolRounds < maxToolRounds) {
+            toolRounds++;
+            console.log(`[AI PROCESSOR] 🛠️ Tool calls detected (Round ${toolRounds}): ${aiMessage.tool_calls.length}`);
             messages.push(aiMessage);
 
             const { AppointmentService } = await import("@/lib/services/appointment-service");
@@ -312,13 +316,13 @@ ${conversationContext}
                 console.log(`[AI PROCESSOR] ✅ Tool ${name} result:`, result);
             }
 
-            // Get final response after tool execution
-            const secondCompletion = await openai.chat.completions.create({
+            // Get next completion (could be another tool call or final response)
+            const nextCompletion = await openai.chat.completions.create({
                 model: modelName,
                 messages,
                 temperature: 0.7
             });
-            aiMessage = secondCompletion.choices[0]?.message;
+            aiMessage = nextCompletion.choices[0]?.message;
         }
 
         const aiResponse = aiMessage?.content || "";
