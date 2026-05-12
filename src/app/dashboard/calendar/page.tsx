@@ -41,6 +41,7 @@ export default function CalendarPage() {
     const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
     const [editingAdvisor, setEditingAdvisor] = useState<Partial<Advisor> | null>(null);
     const [slots, setSlots] = useState<Record<number, { active: boolean, start: string, end: string }>>({}); // dayOfWeek → config
+    const [slotDuration, setSlotDuration] = useState(15);
     const [saving, setSaving] = useState(false);
     const [weekOffset, setWeekOffset] = useState(0);
     const [leads, setLeads] = useState<InboxLead[]>([]);
@@ -131,6 +132,9 @@ interface TenantConfig {
             const config = (tenant as { config: TenantConfig } | null)?.config;
             if (config?.scheduling?.reminders) {
                 setReminderConfig(config.scheduling.reminders);
+            }
+            if ((config as any)?.scheduling?.slot_duration) {
+                setSlotDuration(Number((config as any).scheduling.slot_duration));
             }
         };
         void loadReminderConfig();
@@ -231,9 +235,19 @@ interface TenantConfig {
                 day_of_week: parseInt(day),
                 start_time: config.start,
                 end_time: config.end,
-                slot_duration_minutes: 30,
+                slot_duration_minutes: slotDuration,
             }));
         
+        // 2. Save duration in tenant config
+        const tenant = await getActiveTenantConfig();
+        if (tenant) {
+            await updateTenantConfig(tenant.id, {
+                scheduling: {
+                    slot_duration: slotDuration
+                }
+            });
+        }
+
         const res = await saveAdvisorSlots(advisorId, slotsToSave);
         if (res.success) {
             alert("✅ Horarios guardados correctamente.");
@@ -716,6 +730,27 @@ interface TenantConfig {
                                     Editando: {selectedAdvisor ? `Asesor ${selectedAdvisor.name}` : "Horario General"}
                                 </span>
                             </div>
+
+                            {/* Slot Duration Selector */}
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Duración de cada cita</p>
+                                    <p className="text-[9px] text-slate-500 dark:text-white/40 font-bold">Define cuánto tiempo dura cada hueco en la agenda</p>
+                                </div>
+                                <select 
+                                    value={slotDuration}
+                                    onChange={(e) => setSlotDuration(Number(e.target.value))}
+                                    className="h-9 px-3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                    <option value={10}>10 Minutos</option>
+                                    <option value={15}>15 Minutos</option>
+                                    <option value={20}>20 Minutos</option>
+                                    <option value={30}>30 Minutos</option>
+                                    <option value={45}>45 Minutos</option>
+                                    <option value={60}>1 Hora</option>
+                                </select>
+                            </div>
+
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-7 gap-3">
                                         {DAYS_FULL.map((dayLabel, i) => {
