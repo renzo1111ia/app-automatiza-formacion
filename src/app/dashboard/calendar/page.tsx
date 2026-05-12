@@ -741,6 +741,7 @@ interface TenantConfig {
                                     value={slotDuration}
                                     onChange={(e) => setSlotDuration(Number(e.target.value))}
                                     className="h-9 px-3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-primary"
+                                    title="Seleccionar duración de cita"
                                 >
                                     <option value={10}>10 Minutos</option>
                                     <option value={15}>15 Minutos</option>
