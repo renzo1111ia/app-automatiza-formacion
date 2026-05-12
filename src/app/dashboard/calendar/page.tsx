@@ -34,6 +34,19 @@ const STATUS_CONFIG = {
 
 type Tab = "agenda" | "advisors" | "slots" | "tools" | "reminders";
 
+interface TenantConfig {
+    scheduling?: {
+        reminders?: {
+            enabled: boolean;
+            lead_time_minutes: number;
+            repetitions: number;
+            mode: 'manual' | 'ai';
+            template: string;
+        };
+        slot_duration?: number;
+    }
+}
+
 export default function CalendarPage() {
     const [tab, setTab] = useState<Tab>("agenda");
     const [advisors, setAdvisors] = useState<Advisor[]>([]);
@@ -114,17 +127,6 @@ export default function CalendarPage() {
         return () => { isMounted = false; };
     }, []);
 
-interface TenantConfig {
-    scheduling?: {
-        reminders?: {
-            enabled: boolean;
-            lead_time_minutes: number;
-            repetitions: number;
-            mode: 'manual' | 'ai';
-            template: string;
-        }
-    }
-}
 
     useEffect(() => {
         const loadReminderConfig = async () => {
@@ -133,8 +135,8 @@ interface TenantConfig {
             if (config?.scheduling?.reminders) {
                 setReminderConfig(config.scheduling.reminders);
             }
-            if ((config as any)?.scheduling?.slot_duration) {
-                setSlotDuration(Number((config as any).scheduling.slot_duration));
+            if (config?.scheduling?.slot_duration) {
+                setSlotDuration(Number(config.scheduling.slot_duration));
             }
         };
         void loadReminderConfig();
