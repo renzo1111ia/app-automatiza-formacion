@@ -34,13 +34,6 @@ interface WhatsAppConfig {
     lastSync?: string;
 }
 
-interface MinioConfig {
-    endpoint?: string;
-    bucketName?: string;
-    accessKey?: string;
-    secretKey?: string;
-}
-
 interface IntegrationsManagerProps {
     tenantId?: string;
     config: Record<string, unknown>; 
@@ -270,6 +263,51 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                             placeholder="+1..."
                             className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold"
                         />
+                    </div>
+                </div>
+            </div>
+
+            {/* ── SECTION: CRM WEBHOOKS ⭐ NUEVO ── */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-orange-600/10 text-orange-600 flex items-center justify-center border border-orange-600/20">
+                            <Database className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">CRM Webhook (Ingesta Inmediata)</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-left">Entrada instantánea de leads desde Zoho, HubSpot, etc.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-slate-950/5 border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+                        <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Endpoint URL (POST)</p>
+                            <code className="text-[10px] font-mono text-orange-600 dark:text-orange-400 break-all select-all">
+                                https://app.automatizaformacion.com/api/webhooks/crm
+                            </code>
+                        </div>
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Cabeceras Obligatorias</p>
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] font-bold text-slate-500 uppercase">Key</span>
+                                    <code className="text-[10px] font-mono font-black">x-tenant-id</code>
+                                </div>
+                                <div className="flex flex-col flex-1">
+                                    <span className="text-[8px] font-bold text-slate-500 uppercase">Value (Tu ID de Cliente)</span>
+                                    <code className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 truncate">{tenantId || "ID_DEL_CLIENTE"}</code>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="pt-2">
+                             <p className="text-[9px] text-slate-400 font-bold uppercase leading-relaxed">
+                                💡 Configura una &quot;Función&quot; o &quot;Webhook&quot; en Zoho que dispare un JSON con: <br/>
+                                <span className="text-slate-900 dark:text-white font-mono text-[8px] italic">{'{ "nombre": "...", "telefono": "...", "email": "...", "id_lead_externo": "..." }'}</span>
+                             </p>
+                        </div>
                     </div>
                 </div>
             </div>

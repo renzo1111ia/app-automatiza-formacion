@@ -31,7 +31,8 @@ export class FactExtractionService {
         dialogue: string, 
         varsToTrack: string[],
         apiKey: string,
-        tenantId?: string
+        tenantId?: string,
+        preFilledData?: Record<string, string>
     ) {
         if (!varsToTrack || varsToTrack.length === 0) return null;
 
@@ -48,20 +49,21 @@ export class FactExtractionService {
             const openai = new OpenAI({ apiKey });
             
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
-Analiza el diálogo y extrae la información ÚNICAMENTE si ha sido mencionada explícitamente por el usuario.
+Analiza el diálogo y extrae la información relevante del perfil del lead.
 
-CLAVES SOLICITADAS: ${normalizedKeys.join(', ')}.
+CLAVES PRIORITARIAS: ${normalizedKeys.join(', ')}.
 
 REGLAS CRÍTICAS:
 1. Devuelve ÚNICAMENTE un JSON plano.
-2. NO INVENTES: Si el usuario no ha mencionado su motivación, NO rellenes la clave "motivations" con frases genéricas como "cumple requisitos" o "interesado". Si no existe la información, omite la clave del JSON.
-3. PRECISIÓN: Extrae valores específicos. Ejemplo: "Aprender marketing digital" en lugar de "Estudios".
-4. FUENTES DE DATOS: Si ves que el usuario menciona su nombre o profesión, extráelos.
-5. NO REDUNDANCIA: No sugieras al asistente pedir el nombre o teléfono si ya están presentes en la conversación o en los metadatos.
-6. "qualified": Usa "SI" solo si el lead cumple con los requisitos mínimos de perfil y muestra interés real. "NO" si no es apto. "PENDIENTE" si falta información crítica.
+2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (nombre real, email, ciudad, motivación, nivel de estudios, etc.), inclúyelos también en el JSON con nombres de clave descriptivos en español (ej: "nombre_completo", "interes_especifico").
+3. FLOW ANALYSIS: Si te piden claves como "REGLA_APLICADA" o "QA_TOPIC", intenta deducirlas basándote en la lógica que el asistente está siguiendo en la conversación.
+4. NO INVENTES: Si el usuario no ha mencionado algo, NO lo rellenes. Si no existe la información, omite la clave.
+5. PRECISIÓN: Extrae valores específicos. Ejemplo: "Aprender marketing digital" en lugar de "Estudios".
+6. "qualified": Siempre intenta evaluar si el lead está "SI", "NO" o "PENDIENTE" basándote en la conversación.
+7. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
 
-EJEMPLO DE SALIDA LIMPIA:
-{"user_name": "Carlos Ruiz", "user_profesion": "Arquitecto", "user_motivation": "Especialización en BIM"}`;
+EJEMPLO DE SALIDA:
+{"user_name": "Carlos Ruiz", "user_profesion": "Arquitecto", "user_motivation": "Especialización en BIM", "qualified": "SI"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -79,23 +81,23 @@ EJEMPLO DE SALIDA LIMPIA:
 
             const extractedData = JSON.parse(rawResult) as Record<string, unknown>;
             
-            // Case-insensitive lookup for better robustness
-            const lowerExtractedData: Record<string, unknown> = {};
-            Object.keys(extractedData).forEach(k => {
-                lowerExtractedData[k.toLowerCase()] = extractedData[k];
+            // 0. Start with pre-filled data (system variables)
+            const result: Record<string, string> = { ...(preFilledData || {}) };
+            
+            // 1. Process tracked variables (maintaining their specific casing)
+            // 2. Process EVERYTHING else the AI discovered (Discovery mode)
+            Object.entries(extractedData).forEach(([key, val]) => {
+                if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).toLowerCase() !== "unknown") {
+                    // Find if this matches a tracked var (case-insensitive)
+                    const trackedMatch = varsToTrack.find(v => this.normalizeKey(v).toLowerCase() === key.toLowerCase());
+                    const finalKey = trackedMatch ? this.normalizeKey(trackedMatch) : key;
+                    result[finalKey] = String(val);
+                }
             });
 
-            const filtered: Record<string, string> = {};
-            for (const key of normalizedKeys) {
-                const val = lowerExtractedData[key.toLowerCase()];
-                if (val !== undefined && val !== null && String(val).trim() !== "") {
-                    filtered[key] = String(val);
-                }
-            }
-            
-            if (Object.keys(filtered).length > 0) {
-                console.log(`[FACT EXTRACTOR] ✅ Captured:`, filtered);
-                await this.saveToLeadMetadata(leadId, filtered);
+            if (Object.keys(result).length > 0) {
+                console.log(`[FACT_EXTRACTOR] ✅ Captured ${Object.keys(result).length} facts:`, result);
+                await this.saveToLeadMetadata(leadId, result);
 
                 // 🟢 TRIGGER CRM SYNC (ONE BY ONE LOGIC)
                 if (tenantId) {
@@ -105,10 +107,10 @@ EJEMPLO DE SALIDA LIMPIA:
                         action: "CRM_SYNC",
                         step: 0
                     });
-                    console.log(`[FACT EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
+                    console.log(`[FACT_EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
                 }
 
-                return filtered;
+                return result;
             }
 
             console.log(`[FACT EXTRACTOR] ℹ️ No new data found in this exchange`);
@@ -135,12 +137,21 @@ EJEMPLO DE SALIDA LIMPIA:
         
         const currentMetadata = (leadFound?.metadata as Record<string, unknown>) || {};
         
-        // 2. Merge: new data overwrites old values for same keys
-        const updatedMetadata = {
-            ...currentMetadata,
-            ...newData,
-            last_fact_update: new Date().toISOString()
-        };
+        // 2. Case-insensitive Merge: new data overwrites old values for same keys (regardless of case)
+        const updatedMetadata = { ...currentMetadata };
+        
+        Object.entries(newData).forEach(([newKey, newVal]) => {
+            const existingKey = Object.keys(updatedMetadata).find(
+                k => k.toLowerCase() === newKey.toLowerCase()
+            );
+            if (existingKey) {
+                updatedMetadata[existingKey] = newVal;
+            } else {
+                updatedMetadata[newKey] = newVal;
+            }
+        });
+
+        updatedMetadata.last_fact_update = new Date().toISOString();
 
         // 3. Propagate name fields to main lead columns
         const mainUpdate: Record<string, unknown> = { metadata: updatedMetadata };

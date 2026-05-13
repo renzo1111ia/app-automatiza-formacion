@@ -243,28 +243,126 @@ export async function getKpiWhatsapp(from: string, to: string, filters: Analytic
     const tenantId = await getActiveTenantId();
     const empty: KpiWhatsapp = { total_conversaciones: 0, total_leads_unicos: 0, total_agendados: 0, total_cualificados: 0, tasa_agendamiento: 0, tasa_conversion: 0, tasa_ilocalizables: 0, por_estado_conversacion: [], por_tipo_lead: [], por_origen: [], conversaciones_por_dia: [] };
     if (!tenantId) return empty;
+    
     try {
-        const q = applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id, id_lead, opt_in_whatsapp, lead:id_lead!inner(id, pais, origen, campana)`).eq("tenant_id", tenantId), filters).gte("fecha_creacion", from).lte("fecha_creacion", to);
-        const { data } = await q;
-        const rows = (data || []) as any[];
-        if (!rows.length) return empty;
-        const leads = new Set(rows.map(r => r.id_lead));
-        return { ...empty, total_conversaciones: rows.length, total_leads_unicos: leads.size };
-    } catch { return empty; }
+        // 1. Fetch WhatsApp conversations for the tenant in range
+        // We fetch id_lead and handle filtering/joining manually to avoid schema cache issues
+        const q = (supabase.from("conversaciones_whatsapp" as any) as any)
+            .select(`id, id_lead, estado, fecha_creacion`)
+            .eq("tenant_id", tenantId)
+            .gte("fecha_creacion", from)
+            .lte("fecha_creacion", to);
+        
+        const { data: wpRowsRaw, error: wpError } = await q;
+        if (wpError || !wpRowsRaw) {
+            console.error("[getKpiWhatsapp] WhatsApp fetch error:", wpError?.message);
+            return empty;
+        }
+        
+        const wpRows = wpRowsRaw as any[];
+        if (!wpRows.length) return empty;
+        
+        // 2. Fetch ALL leads for this tenant once to perform in-memory join
+        // This is more reliable than joins when schema cache is problematic
+        let lq = (supabase.from("lead" as any) as any)
+            .select("id, pais, origen, campana, tipo_lead")
+            .eq("tenant_id", tenantId);
+        
+        lq = applyLeadFilters(lq, filters);
+        const { data: leadsRaw } = await lq;
+        const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
+
+        // 3. Filter conversations based on leads that matched the filters
+        const filteredWpRows = wpRows.filter(r => leadsMap.has(r.id_lead)).map(r => ({
+            ...r,
+            lead: leadsMap.get(r.id_lead)
+        }));
+
+        if (!filteredWpRows.length) return empty;
+
+        const leadIds = Array.from(new Set(filteredWpRows.map(r => r.id_lead)));
+        
+        // 4. Fetch Appointments and Qualifications for THESE leads
+        const [aRes, qRes] = await Promise.all([
+            (supabase.from("agendamientos" as any) as any).select("id, id_lead").in("id_lead", leadIds).eq("confirmado", true),
+            (supabase.from("lead_cualificacion" as any) as any).select("id_lead, cualificacion").in("id_lead", leadIds)
+        ]);
+
+        const agendaData = (aRes.data || []) as any[];
+        const cualData = (qRes.data || []) as any[];
+
+        // 5. Aggregate metrics
+        const total_conversaciones = filteredWpRows.length;
+        const total_leads_unicos = leadIds.length;
+        
+        const uniqueAgendados = new Set(agendaData.map(a => a.id_lead)).size;
+        const uniqueCualificados = new Set(cualData.filter(q => q.cualificacion && q.cualificacion !== "NO").map(q => q.id_lead)).size;
+        
+        const total_ilocalizables = filteredWpRows.filter(r => r.lead?.tipo_lead === "ilocalizable").length;
+
+        // Grouping for charts
+        const byDay: Record<string, number> = {};
+        filteredWpRows.forEach(r => {
+            const d = r.fecha_creacion?.slice(0, 10);
+            if (d) byDay[d] = (byDay[d] || 0) + 1;
+        });
+
+        return {
+            ...empty,
+            total_conversaciones,
+            total_leads_unicos,
+            total_agendados: uniqueAgendados,
+            total_cualificados: uniqueCualificados,
+            tasa_agendamiento: total_leads_unicos ? Math.round((uniqueAgendados / total_leads_unicos) * 100) : 0,
+            tasa_conversion: total_leads_unicos ? Math.round((uniqueCualificados / total_leads_unicos) * 100) : 0,
+            tasa_ilocalizables: total_leads_unicos ? Math.round((total_ilocalizables / total_leads_unicos) * 100) : 0,
+            por_estado_conversacion: groupBy(filteredWpRows, "estado"),
+            por_tipo_lead: groupBy(filteredWpRows.map(r => r.lead), "tipo_lead"),
+            por_origen: groupBy(filteredWpRows.map(r => r.lead), "origen"),
+            conversaciones_por_dia: Object.entries(byDay).map(([label, value]) => ({ label, value })).sort((a,b) => a.label.localeCompare(b.label))
+        };
+    } catch (err) {
+        console.error("[getKpiWhatsapp] Exception:", err);
+        return empty;
+    }
 }
 
 export async function getKpiCampanas(from: string, to: string, filters: AnalyticsFilters = {}): Promise<KpiCampanas> {
     const supabase = await getSupabaseServerClient();
     const tenantId = await getActiveTenantId();
-    if (!tenantId) return { campanas: [], leads_por_campana: [], contactados_por_campana: [], cualif_por_campana: [], agendados_por_campana: [], minutos_por_campana: [], total_leads: 0, total_llamadas: 0, total_contactados: 0, total_agendados: 0, total_cualificados: 0, total_minutos: 0, total_segundos: 0, total_leads_alcanzados: 0, leads_por_dia: [] };
+    const empty: KpiCampanas = { campanas: [], leads_por_campana: [], contactados_por_campana: [], cualif_por_campana: [], agendados_por_campana: [], minutos_por_campana: [], total_leads: 0, total_llamadas: 0, total_contactados: 0, total_agendados: 0, total_cualificados: 0, total_minutos: 0, total_segundos: 0, total_leads_alcanzados: 0, leads_por_dia: [] };
+    
+    if (!tenantId) return empty;
+
     try {
-        const [lRes, llRes, aRes, qRes, wRes] = await Promise.all([
-            applyLeadFilters((supabase.from("lead" as any) as any).select("id, campana").eq("tenant_id", tenantId).gte("fecha_ingreso_crm", from).lte("fecha_ingreso_crm", to), filters),
-            applyLeadFilters((supabase.from("llamadas" as any) as any).select(`id, estado_llamada, duracion_segundos, id_lead, lead:id_lead!inner(campana)`).eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to), filters),
-            applyLeadFilters((supabase.from("agendamientos" as any) as any).select(`id, lead:id_lead!inner(campana)`).eq("tenant_id", tenantId).eq("confirmado", true).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("lead_cualificacion" as any) as any).select(`id, cualificacion, lead:id_lead!inner(campana)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, lead:id_lead!inner(campana)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
+        // 1. Fetch ALL leads for this tenant (with pagination)
+        let allLeads: any[] = [];
+        let fromIdx = 0;
+        const PAGE_SIZE = 1000;
+        while (true) {
+            let lq = (supabase.from("lead" as any) as any)
+                .select("id, campana, pais, origen, tipo_lead")
+                .eq("tenant_id", tenantId);
+            
+            // Apply filters to lead table
+            lq = applyLeadFilters(lq, filters);
+
+            const { data: chunk, error } = await lq.range(fromIdx, fromIdx + PAGE_SIZE - 1);
+            if (error || !chunk || chunk.length === 0) break;
+            allLeads = [...allLeads, ...chunk];
+            if (chunk.length < PAGE_SIZE) break;
+            fromIdx += PAGE_SIZE;
+        }
+        const leadsMap = new Map(allLeads.map((l: any) => [l.id, l]));
+
+        // 2. Fetch all related fact tables for the date range
+        const [llRes, aRes, qRes, wRes] = await Promise.all([
+            (supabase.from("llamadas" as any) as any).select("id, id_lead, estado_llamada, duracion_segundos").eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to),
+            (supabase.from("agendamientos" as any) as any).select("id, id_lead").eq("tenant_id", tenantId).eq("confirmado", true).gte("fecha_creacion", from).lte("fecha_creacion", to),
+            (supabase.from("lead_cualificacion" as any) as any).select("id, id_lead, cualificacion").eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to),
+            (supabase.from("conversaciones_whatsapp" as any) as any).select("id_lead").eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to),
         ]);
+
         const campMap: Record<string, any> = {};
         const getC = (n: string) => campMap[n] || (campMap[n] = { 
             nombre: n, 
@@ -280,23 +378,37 @@ export async function getKpiCampanas(from: string, to: string, filters: Analytic
             total_segundos: 0,
             duracion_media_seg: 0 
         });
-        (lRes.data || []).forEach((l: any) => getC(l.campana || "Sin campaÃ±a").total_leads++);
+
+        // 3. Process Leads (Filtered by the paginated fetch above)
+        allLeads.filter(l => l.campana).forEach((l: any) => getC(l.campana).total_leads++);
+
+        // 4. Manual Join Fact Tables
         (llRes.data || []).forEach((l: any) => {
-            const c = getC((l.lead as any).campana || "Sin campaÃ±a");
+            const lead = leadsMap.get(l.id_lead);
+            if (!lead) return;
+            const c = getC(lead.campana || "Sin campaña");
             c.total_llamadas++;
             c.total_segundos += (l.duracion_segundos || 0);
             c.total_minutos = Math.round(c.total_segundos / 60);
             if (l.estado_llamada === "CONTACTED") c.contactados++; else c.no_contacto++;
         });
-        (aRes.data || []).forEach((a: any) => getC((a.lead as any).campana || "Sin campaÃ±a").agendados++);
+
+        (aRes.data || []).forEach((a: any) => {
+            const lead = leadsMap.get(a.id_lead);
+            if (!lead) return;
+            getC(lead.campana || "Sin campaña").agendados++;
+        });
+
         (qRes.data || []).forEach((q: any) => {
-            const c = getC((q.lead as any).campana || "Sin campaÃ±a");
+            const lead = leadsMap.get(q.id_lead);
+            if (!lead) return;
+            const c = getC(lead.campana || "Sin campaña");
             if (q.cualificacion && q.cualificacion !== "NO") c.cualificados++; else c.no_cualificados++;
         });
 
         const reachedSet = new Set([
-            ...(llRes.data || []).map((l: any) => l.id_lead),
-            ...(wRes.data || []).map((w: any) => w.id_lead)
+            ...(llRes.data || []).filter(l => leadsMap.has(l.id_lead)).map((l: any) => l.id_lead),
+            ...(wRes.data || []).filter(w => leadsMap.has(w.id_lead)).map((w: any) => w.id_lead)
         ].filter(Boolean));
 
         const campanas = Object.values(campMap).map((c: any) => ({
@@ -304,6 +416,7 @@ export async function getKpiCampanas(from: string, to: string, filters: Analytic
             tasa_contacto: c.total_llamadas ? Math.round((c.contactados / c.total_llamadas) * 100) : 0,
             duracion_media_seg: c.total_llamadas ? Math.round(c.total_segundos / c.total_llamadas) : 0
         })).sort((a: any, b: any) => b.total_leads - a.total_leads);
+
         return { 
             campanas, leads_por_campana: campanas.map((c: any) => ({ label: c.nombre, value: c.total_leads })),
             contactados_por_campana: campanas.map((c: any) => ({ label: c.nombre, value: c.contactados })),
@@ -320,7 +433,10 @@ export async function getKpiCampanas(from: string, to: string, filters: Analytic
             total_leads_alcanzados: reachedSet.size,
             leads_por_dia: []
         };
-    } catch { return { campanas: [], leads_por_campana: [], contactados_por_campana: [], cualif_por_campana: [], agendados_por_campana: [], minutos_por_campana: [], total_leads: 0, total_llamadas: 0, total_contactados: 0, total_agendados: 0, total_cualificados: 0, total_minutos: 0, total_segundos: 0, total_leads_alcanzados: 0, leads_por_dia: [] }; }
+    } catch (err) { 
+        console.error("[getKpiCampanas] Exception:", err);
+        return empty; 
+    }
 }
 
 export async function getUniqueCampaigns(): Promise<string[]> {
@@ -341,31 +457,51 @@ export async function getHeatmapData(
     targetCol: string = "fecha_ingreso_crm"
 ) {
     const supabase = await getSupabaseServerClient();
-    try {
-        let q: any;
-        if (targetTable === 'lead') {
-            q = (supabase.from('lead' as any) as any).select(targetCol);
-            q = applyLeadFilters(q, filters);
-        } else {
-            // Join with lead for non-lead tables to ensure tenant context / RLS
-            q = (supabase.from(targetTable as any) as any).select(`${targetCol}, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`);
-            q = applyLeadFilters(q, filters, 'lead');
-        }
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return [];
 
-        if (from) q = q.gte(targetCol, from);
-        if (to) q = q.lte(targetCol, to);
-        
-        const { data, error } = await q;
+    try {
+        // 1. Fetch leads for filtering (with pagination to bypass 1000 row limit)
+        let allLeads: any[] = [];
+        let fromIdx = 0;
+        const PAGE_SIZE = 1000;
+        while (true) {
+            let lq = (supabase.from("lead" as any) as any)
+                .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
+                .eq("tenant_id", tenantId)
+                .range(fromIdx, fromIdx + PAGE_SIZE - 1);
+            
+            lq = applyLeadFilters(lq, filters);
+            const { data: chunk } = await lq;
+            if (!chunk || chunk.length === 0) break;
+            allLeads = [...allLeads, ...chunk];
+            if (chunk.length < PAGE_SIZE) break;
+            fromIdx += PAGE_SIZE;
+        }
+        const leadsMap = new Map(allLeads.map((l: any) => [l.id, l]));
+
+        // 2. Fetch fact rows
+        const q = (supabase.from(targetTable as any) as any)
+            .select(`${targetCol}, id_lead`)
+            .eq("tenant_id", tenantId)
+            .gte(targetCol, from)
+            .lte(targetCol, to);
+
+        const { data: rowsRaw, error } = await q;
         if (error) {
             console.error(`[getHeatmapData] Error for ${targetTable}.${targetCol}:`, error.message);
             return [];
         }
 
+        // 3. Manual join and grid
+        const filteredRows = targetTable === 'lead'
+            ? (rowsRaw || []).filter((r: any) => leadsMap.has(r.id))
+            : (rowsRaw || []).filter((r: any) => leadsMap.has(r.id_lead));
+
         const grid: Record<string, number> = {};
         for (let d = 0; d < 7; d++) for (let h = 0; h < 24; h++) grid[`${d}-${h}`] = 0;
         
-        const rows = (data || []) as any[];
-        rows.forEach(row => {
+        filteredRows.forEach((row: any) => {
             const date = new Date(row[targetCol]);
             if (!isNaN(date.getTime())) {
                 grid[`${date.getDay()}-${date.getHours()}`]++;
@@ -384,8 +520,9 @@ export async function getHeatmapData(
 
 async function getGenericPartData(supabase: any, part: any, from: string, to: string, filters: AnalyticsFilters, isGrouped: boolean = false) {
     const [table, col] = part.targetCol.split('.');
+    const tenantId = await getActiveTenantId();
+    if (!tenantId) return isGrouped ? {} : 0;
 
-    // Correct time/date column per table
     const TIME_COL_MAP: Record<string, string> = {
         lead: 'fecha_ingreso_crm',
         llamadas: 'fecha_inicio',
@@ -396,56 +533,70 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
     };
     const timeCol = TIME_COL_MAP[table] || 'fecha_creacion';
 
-    let q: any;
-    if (table === 'lead') {
-        q = (supabase.from('lead' as any) as any).select(isGrouped ? `${timeCol}, ${col}` : col, { count: 'exact' });
-        q = applyLeadFilters(q, filters);
-    } else {
-        // All non-lead tables have id_lead as the FK to lead
-        q = (supabase
-            .from(table as any) as any)
-            .select(
-                isGrouped
-                    ? `${timeCol}, ${col}, lead_ref:id_lead!inner(id, campana, origen, pais, tipo_lead)`
-                    : `${col}, lead_ref:id_lead!inner(id, campana, origen, pais, tipo_lead)`,
-                { count: 'exact' }
-            );
-        q = applyLeadFilters(q, filters, 'lead_ref');
-    }
+    // 1. Fetch leads for filtering
+    let lq = (supabase.from("lead" as any) as any)
+        .select("id, pais, origen, campana, tipo_lead")
+        .eq("tenant_id", tenantId);
+    lq = applyLeadFilters(lq, filters);
+    const { data: leadsRaw } = await lq;
+    const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
 
-    if (from) q = q.gte(timeCol, from);
-    if (to) q = q.lte(timeCol, to);
+    // 2. Fetch fact rows
+    let q = (supabase.from(table as any) as any)
+        .select(isGrouped ? `${timeCol}, ${col}, id_lead` : `${col}, id_lead`)
+        .eq("tenant_id", tenantId)
+        .gte(timeCol, from)
+        .lte(timeCol, to);
 
+    // Apply fact-table conditions
     if (part.condCol && part.condVal) {
-        let cc = part.condCol;
-        // Lead-side columns need prefixing when querying a related table
-        const LEAD_COLS = ['pais', 'origen', 'campana', 'tipo_lead', 'nombre', 'apellido', 'email'];
-        if (table !== 'lead' && LEAD_COLS.includes(cc)) cc = `lead_ref.${cc}`;
-
-        if (part.condOp === 'ILIKE') q = q.ilike(cc, `%${part.condVal}%`);
-        else if (part.condOp === '>') q = q.gt(cc, part.condVal);
-        else if (part.condOp === '<') q = q.lt(cc, part.condVal);
-        else if (part.condOp === '!=') q = q.neq(cc, part.condVal);
-        else q = q.eq(cc, part.condVal);
+        const LEAD_COLS = ['pais', 'origen', 'campana', 'tipo_lead'];
+        if (!LEAD_COLS.includes(part.condCol)) {
+            const cc = part.condCol;
+            if (part.condOp === 'ILIKE') q = q.ilike(cc, `%${part.condVal}%`);
+            else q = q.eq(cc, part.condVal);
+        }
     }
 
-    const { data, count, error } = await q;
-    if (error) return isGrouped ? {} : 0;
+    const { data: rowsRaw, error } = await q;
+    if (error) {
+        console.error(`[getGenericPartData] Error for ${table}:`, error.message);
+        return isGrouped ? {} : 0;
+    }
+
+    // 3. Manual join and count/group
+    const rows = (rowsRaw || []) as any[];
+    let filteredRows = table === 'lead'
+        ? rows.filter(r => leadsMap.has(r.id))
+        : rows.filter(r => leadsMap.has(r.id_lead)).map(r => ({ ...r, lead: leadsMap.get(r.id_lead) }));
+
+    // Apply lead-side conditions
+    if (part.condCol && part.condVal) {
+        const LEAD_COLS = ['pais', 'origen', 'campana', 'tipo_lead'];
+        if (LEAD_COLS.includes(part.condCol)) {
+            filteredRows = filteredRows.filter(r => {
+                const val = table === 'lead' ? r[part.condCol] : r.lead?.[part.condCol];
+                return part.condOp === '!=' ? val != part.condVal : val == part.condVal;
+            });
+        }
+    }
+
     if (isGrouped) {
         const grouped: Record<string, number> = {};
-        (data || []).forEach((r: any) => {
+        filteredRows.forEach((r: any) => {
             const date = new Date(r[timeCol]);
             if (isNaN(date.getTime())) return;
             const day = date.toISOString().split('T')[0];
-            const val = part.calcType === 'sum' ? (Number(r[col]) || 0) : (part.calcType === 'avg' ? (Number(r[col]) || 0) : 1);
+            const val = part.calcType === 'sum' ? (Number(r[col]) || 0) : 1;
             grouped[day] = (grouped[day] || 0) + val;
         });
         return grouped;
     }
-    if (part.calcType === 'count') return count || 0;
-    const rows = (data || []) as any[];
-    if (part.calcType === 'sum') return rows.reduce((s, r) => s + (Number(r[col]) || 0), 0);
-    if (part.calcType === 'avg') return rows.length ? rows.reduce((s, r) => s + (Number(r[col]) || 0), 0) / rows.length : 0;
+
+    if (part.calcType === 'count') return filteredRows.length;
+    if (part.calcType === 'sum') return filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0);
+    if (part.calcType === 'avg') return filteredRows.length ? filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0) / filteredRows.length : 0;
+    
     return 0;
 }
 
@@ -542,6 +693,25 @@ export async function getDynamicChartSeries(
         conversaciones_whatsapp: 'fecha_creacion',
     };
 
+    // 1. Pre-fetch all leads for this tenant to use for manual joining (with pagination)
+    let allLeads: any[] = [];
+    let fromIdx = 0;
+    const PAGE_SIZE = 1000;
+    while (true) {
+        let lq = (supabase.from("lead" as any) as any)
+            .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
+            .eq("tenant_id", tenantId)
+            .range(fromIdx, fromIdx + PAGE_SIZE - 1);
+        
+        lq = applyLeadFilters(lq, filters);
+        const { data: chunk, error: lErr } = await lq;
+        if (lErr || !chunk || chunk.length === 0) break;
+        allLeads = [...allLeads, ...chunk];
+        if (chunk.length < PAGE_SIZE) break;
+        fromIdx += PAGE_SIZE;
+    }
+    const leadsMap = new Map(allLeads.map((l: any) => [l.id, l]));
+
     const results = await Promise.allSettled(dynamicCharts.map(async c => {
         try {
             const [xTable, xCol] = (c.xKey || '').split('.');
@@ -558,101 +728,58 @@ export async function getDynamicChartSeries(
             // Base Table: Primary table for the query. 
             // If yKey points to a fact table (calls, agendamientos), use that as base.
             const baseTable = (yTable && yTable !== 'lead') ? yTable : xTable;
-            
-            const isDateCol = xCol.includes('fecha');
+            const isDateCol = xCol.includes('fecha') || xCol.includes('at') || xCol.includes('ingreso');
             const timeCol = TIME_COL_MAP[baseTable] || 'fecha_creacion';
             const calcType = c.calcType || 'count';
-            
-            // We use Y column if provided and it belongs to baseTable or lead
             const useYCol = !!(yCol && (yTable === baseTable || yTable === 'lead') && calcType !== 'count');
 
-            // Build select columns
-            let selectCols: string;
-            if (baseTable === 'lead') {
-                // Base is lead: easy access to all lead columns
-                const cols = new Set([xCol]);
-                if (useYCol && yTable === 'lead') cols.add(yCol);
-                selectCols = Array.from(cols).join(', ');
-            } else {
-                // Base is fact table (calls, etc.): Always join with lead hub
-                const baseCols = new Set<string>();
-                if (xTable === baseTable) baseCols.add(xCol);
-                if (useYCol && yTable === baseTable) baseCols.add(yCol);
-                
-                const leadCols = new Set<string>(['id', 'pais', 'origen', 'campana', 'tipo_lead']);
-                if (xTable === 'lead') leadCols.add(xCol);
-                if (useYCol && yTable === 'lead') leadCols.add(yCol);
+            // 2. Fetch base table data (WITHOUT JOINS)
+            const selectFields = new Set<string>();
+            if (xTable === baseTable) selectFields.add(xCol);
+            if (useYCol && yTable === baseTable) selectFields.add(yCol);
+            if (baseTable !== 'lead') selectFields.add('id_lead');
+            selectFields.add(timeCol);
 
-                selectCols = [
-                    ...Array.from(baseCols),
-                    `lead:id_lead!inner(${Array.from(leadCols).join(', ')})`
-                ].join(', ');
-            }
+            let q = (supabase.from(baseTable as any) as any)
+                .select(Array.from(selectFields).join(', '))
+                .eq("tenant_id", tenantId)
+                .gte(timeCol, from)
+                .lte(timeCol, to);
 
-            let q = (supabase.from(baseTable as any) as any).select(selectCols);
+            if (isDateCol && xTable === baseTable) q = q.order(xCol);
+            else q = q.order(timeCol);
 
-            // Apply lead-level/tenant filters
-            if (baseTable === 'lead') {
-                q = applyLeadFilters(q, filters);
-            } else {
-                q = applyLeadFilters(q, filters, 'lead');
-            }
-
-            // Apply date filter on baseTable's primary time column
-            q = q.gte(timeCol, from).lte(timeCol, to);
-            
-            // Order by date if X axis is a date in the base table
-            if (isDateCol && xTable === baseTable) {
-                q = q.order(xCol);
-            } else {
-                q = q.order(timeCol);
-            }
-
-            // Apply user's custom conditional filter
-            if (c.condCol && c.condVal) {
-                let cc = c.condCol;
-                if (baseTable !== 'lead' && ['pais', 'origen', 'campana', 'tipo_lead'].includes(cc)) {
-                    cc = `lead.${cc}`;
-                }
-                
-                if (c.condOp === 'ILIKE') q = q.ilike(cc, `%${c.condVal}%`);
-                else if (c.condOp === '>') q = q.gt(cc, c.condVal);
-                else if (c.condOp === '<') q = q.lt(cc, c.condVal);
-                else if (c.condOp === '!=') q = q.neq(cc, c.condVal);
-                else q = q.eq(cc, c.condVal);
-            }
-
-            const { data, error } = await q;
+            const { data: rowsRaw, error } = await q;
             if (error) {
-                console.error(`[getDynamicChartSeries] Error for "${c.title}" (${c.xKey}):`, error.message);
+                console.error(`[getDynamicChartSeries] Error for "${c.title}":`, error.message);
                 return { id: c.id, data: [] };
             }
 
-            const rows = (data || []) as Record<string, any>[];
+            // 3. Manual Join and Filter
+            const rows = (rowsRaw || []) as any[];
+            const filteredRows = baseTable === 'lead' 
+                ? rows.filter(r => leadsMap.has(r.id))
+                : rows.filter(r => leadsMap.has(r.id_lead)).map(r => ({ ...r, lead: leadsMap.get(r.id_lead) }));
+
             const map: Record<string, { sum: number; count: number }> = {};
             
-            for (const row of rows) {
-                // Extract label (X key) - supports base table or joined lead table
+            for (const row of filteredRows) {
                 let labelVal: any;
-                if (xTable === baseTable) {
-                    labelVal = row[xCol];
-                } else if (xTable === 'lead') {
-                    labelVal = row.lead?.[xCol];
-                }
-
+                if (xTable === baseTable) labelVal = row[xCol];
+                else if (xTable === 'lead') labelVal = row.lead?.[xCol];
+                
                 const key = String(labelVal ?? 'Sin dato');
-                if (!map[key]) map[key] = { sum: 0, count: 0 };
-                map[key].count++;
+                let finalKey = key;
+                if (isDateCol && key !== 'Sin dato') finalKey = key.slice(0, 10);
+                
+                if (!map[finalKey]) map[finalKey] = { sum: 0, count: 0 };
+                map[finalKey].count++;
 
-                // Extract metric (Y key) - supports base table or joined lead table
                 if (useYCol) {
                     let val: any;
-                    if (yTable === baseTable) {
-                        val = row[yCol];
-                    } else if (yTable === 'lead') {
-                        val = row.lead?.[yCol];
-                    }
-                    if (val != null) map[key].sum += Number(val) || 0;
+                    if (yTable === baseTable) val = row[yCol];
+                    else if (yTable === 'lead') val = row.lead?.[yCol];
+                    if (val != null) map[finalKey].sum += Number(val) || 0;
                 }
             }
 

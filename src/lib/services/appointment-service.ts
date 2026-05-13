@@ -110,6 +110,20 @@ export class AppointmentService {
                 ? `${notes}${programName ? ` (Programa: ${programName})` : ""}`
                 : programName ? `Interesado en: ${programName}` : null;
 
+            // 0. Validate availability before booking
+            const scheduledDate = new Date(scheduledAt);
+            const dateForValidation = format(scheduledDate, 'yyyy-MM-dd');
+            const availability = await this.checkAvailability(tenantId, dateForValidation);
+            
+            // Convert requested time to HH:mm in Madrid timezone for comparison
+            const requestedTimeMadrid = format(toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE), 'HH:mm');
+            const isAvailable = availability.available_slots.some(s => s.madrid_time === requestedTimeMadrid);
+
+            if (!isAvailable) {
+                console.warn(`[BOOK APPOINTMENT] ❌ Outside availability: ${requestedTimeMadrid} Madrid time on ${dateForValidation}`);
+                throw new Error(`La hora seleccionada (${requestedTimeMadrid} hora España) no está disponible o está fuera del horario de atención.`);
+            }
+
             // 3. ADAPTIVE RETRY STRATEGY
             // We try the insert starting with a full payload.
             // On each "column not found" error we strip the offending field and retry.
@@ -235,6 +249,26 @@ export class AppointmentService {
             } catch {
                 scheduledAt = `${newDate}T${timeStr}Z`;
             }
+        }
+
+        // 0. Fetch appointment to get tenant_id and validate availability
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: existingApp, error: fetchErr } = await (supabase.from("appointments") as any)
+            .select("tenant_id")
+            .eq("id", appointmentId)
+            .single();
+        
+        if (fetchErr || !existingApp) throw new Error("Cita no encontrada para reprogramar.");
+
+        const scheduledDate = new Date(scheduledAt);
+        const dateForValidation = format(scheduledDate, 'yyyy-MM-dd');
+        const availability = await this.checkAvailability(existingApp.tenant_id, dateForValidation);
+        
+        const requestedTimeMadrid = format(toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE), 'HH:mm');
+        const isAvailable = availability.available_slots.some(s => s.madrid_time === requestedTimeMadrid);
+
+        if (!isAvailable) {
+            throw new Error(`La nueva hora (${requestedTimeMadrid} hora España) no está disponible.`);
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

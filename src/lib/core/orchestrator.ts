@@ -254,14 +254,13 @@ export class Orchestrator {
             config.timezone_rules
         );
 
-        // CHANNEL HOPPING: If outside hours and action is CALL, try WHATSAPP instead of queuing
         if (!decision.canExecuteNow && step.action === "call") {
              console.log(`[ORCHESTRATOR] Outside hours for call. Hopping to WhatsApp fallback for lead ${activeLead.id}`);
              // Check if we have a whatsapp fallback (usually it's the next step or a standard template)
              await this.executeWhatsAppStep(activeLead, tenantId, {
                  ...step,
                  action: "whatsapp",
-                 template: "lead_followup_outside_hours" // Default fallback template
+                 template: config.scheduling?.reminder_template || "appointment_reminder_es" // Use a template that likely exists
              } as any);
              return;
         }
@@ -318,7 +317,7 @@ export class Orchestrator {
                         await this.executeWhatsAppStep(activeLead, tenantId, {
                             ...step,
                             action: "whatsapp",
-                            template: "call_failed_fallback"
+                            template: config.scheduling?.reminder_template || "appointment_reminder_es"
                         } as any);
                     }
                     break;
@@ -577,7 +576,6 @@ export class Orchestrator {
         const mappings = step.variableMappings || {};
 
         // 1. Resolve parameters (Case-insensitive lookup)
-        const bodyComp = (step as any).templateComponents?.find((c: any) => c.type?.toUpperCase() === "BODY");
         const headerComp = (step as any).templateComponents?.find((c: any) => c.type?.toUpperCase() === "HEADER");
 
         const components: any[] = [];
@@ -959,6 +957,23 @@ export class Orchestrator {
             case "CONDITION":
                 // Logic handled after switch for branching
                 break;
+            case "RETRY_SEQUENCE": {
+                // Adapt executeRetrySequenceStep for Graph-based config
+                const stepAdapter: OrchestratorSequenceStep = {
+                    step: rule.sequence_order,
+                    action: "retry_sequence",
+                    max_attempts: conf?.maxAttempts || 5,
+                    channels: conf?.channels || ["call", "whatsapp"],
+                    retry_delay_hours: conf?.retryDelayHours || 27,
+                    final_status: conf?.finalStatus || "ilocalizable",
+                    delay_hours: 0,
+                };
+                
+                const config = await getOrchestratorConfigForTenant(tenantId);
+                await this.executeRetrySequenceStep(lead, tenantId, stepAdapter, rule.sequence_order, config);
+                // The retry sequence handles its own queuing/completion, so we return here.
+                return;
+            }
             case "WAIT":
                 console.log(`[ORCHESTRATOR] ⏳ Wait rule hit. Metadata logic will handle pauses.`);
                 break;
@@ -1198,6 +1213,7 @@ export class Orchestrator {
     /**
      * Executes a retry sequence (e.g., 5 calls every 27 hours).
      * Stops automatically if goal is reached.
+     * v5.2: Alternates channels and respects business hours.
      */
     private async executeRetrySequenceStep(
         lead: Lead, 
@@ -1211,48 +1227,108 @@ export class Orchestrator {
         const currentAttempt = (meta.sequence_attempts as number) || 0;
         const maxAttempts = step.max_attempts || 5;
         const channels = step.channels || ["call", "whatsapp"];
+        const retryDelayHours = step.retry_delay_hours || 27;
+        const lastChannel = meta.last_sequence_channel as string | undefined;
 
         console.log(`[RETRY-SEQ] Lead ${lead.id} | Attempt ${currentAttempt + 1}/${maxAttempts}`);
 
-        // 1. Perform Actions based on channels
-        if (channels.includes("call")) {
-            try {
-                await this.executeCallStep(lead, tenantId, step, config);
-            } catch {
-                console.error("[RETRY-SEQ] Call failed, fallback to WA if enabled.");
-                if (channels.includes("whatsapp")) await this.executeWhatsAppStep(lead, tenantId, step);
-            }
-        } else if (channels.includes("whatsapp")) {
-            await this.executeWhatsAppStep(lead, tenantId, step);
+        // 1. Compliance & Timezone Check
+        const tzRules = config.timezone_rules || { start: "09:00", end: "20:00", working_days: [1,2,3,4,5] };
+        const decision = buildComplianceDecision(lead.telefono, lead.pais, tzRules);
+        
+        console.log(`[RETRY-SEQ] Compliance for lead ${lead.id}: ${decision.reason}`);
+
+        // 2. Determine Channel (Alternating logic based on last used channel)
+        let channelToUse: "call" | "whatsapp";
+        const possibleChannels = channels as ("call" | "whatsapp")[];
+        
+        if (!lastChannel) {
+            // First attempt: Default to first channel in list (usually "call")
+            channelToUse = possibleChannels[0];
+        } else {
+            // Alternate: Find the next channel in the list
+            const lastIdx = channels.indexOf(lastChannel as any);
+            channelToUse = possibleChannels[(lastIdx + 1) % possibleChannels.length];
         }
 
-        // 2. Increment attempts
-        const nextAttempt = currentAttempt + 1;
-        await (supabase.from("lead" as any) as any)
-            .update({ 
-                metadata: { ...meta, sequence_attempts: nextAttempt } 
-            })
-            .eq("id", lead.id);
+        // 3. Execution Logic
+        if (decision.canExecuteNow) {
+            // ─── WITHIN HOURS ───
+            if (channelToUse === "call") {
+                await this.executeCallStep(lead, tenantId, step, config);
+            } else {
+                await this.executeWhatsAppStep(lead, tenantId, step);
+            }
 
-        // 3. Check if we should continue or finish
-        if (nextAttempt < maxAttempts) {
-            const delayMs = (step.retry_delay_hours || 27) * 60 * 60 * 1000;
-            console.log(`[RETRY-SEQ] Queuing next attempt in ${step.retry_delay_hours}h for lead ${lead.id}`);
-            await this.queueStep(lead, tenantId, step, stepIndex, config, delayMs);
+            const nextAttempt = currentAttempt + 1;
+            await (supabase.from("lead" as any) as any)
+                .update({ 
+                    metadata: { 
+                        ...meta, 
+                        sequence_attempts: nextAttempt,
+                        last_sequence_channel: channelToUse 
+                    } 
+                })
+                .eq("id", lead.id);
+
+            if (nextAttempt < maxAttempts) {
+                const delayMs = retryDelayHours * 60 * 60 * 1000;
+                await this.queueStep(lead, tenantId, step, stepIndex, config, delayMs);
+            } else {
+                await this.finishRetrySequence(lead, tenantId, step, config);
+            }
         } else {
-            console.log(`[RETRY-SEQ] Max attempts reached for lead ${lead.id}. Marking as ${step.final_status || 'ilocalizable'}.`);
+            // ─── OUT OF HOURS: Night Bridge Logic ───
+            console.log(`[RETRY-SEQ] Out of hours for lead ${lead.id}. Applying Night Bridge.`);
             
-            // FINAL STATUS: Update Lead & Notify CRM
-            await (supabase.from("lead" as any) as any).update({ 
-                current_stage: "LOST",
-                tipo_lead: step.final_status || "ilocalizable"
-            }).eq("id", lead.id);
+            // User requirement: If night, send WA. If no response, morning Call.
+            if (channels.includes("whatsapp")) {
+                console.log(`[RETRY-SEQ] Night Bridge: Sending WA for lead ${lead.id}`);
+                await this.executeWhatsAppStep(lead, tenantId, step);
+                channelToUse = "whatsapp"; // Record that we used WA
+            }
 
+            const nextAttempt = currentAttempt + 1;
+            await (supabase.from("lead" as any) as any)
+                .update({ 
+                    metadata: { 
+                        ...meta, 
+                        sequence_attempts: nextAttempt,
+                        last_sequence_channel: channelToUse 
+                    } 
+                })
+                .eq("id", lead.id);
+
+            // Queue for the MORNING (decision.scheduledFor)
+            if (nextAttempt < maxAttempts) {
+                const delayMs = decision.delayMs; 
+                await this.queueStep(lead, tenantId, step, stepIndex, config, delayMs);
+            }
+        }
+    }
+
+    private async finishRetrySequence(
+        lead: Lead, 
+        tenantId: string, 
+        step: OrchestratorSequenceStep, 
+        config: TenantOrchestratorConfig
+    ) {
+        const supabase = await getSupabaseServerClient();
+        console.log(`[RETRY-SEQ] Max attempts reached for lead ${lead.id}. Marking as ${step.final_status || 'ilocalizable'}.`);
+        
+        await (supabase.from("lead" as any) as any).update({ 
+            current_stage: "LOST",
+            tipo_lead: step.final_status || "ilocalizable"
+        }).eq("id", lead.id);
+
+        try {
             const provider = CRMFactory.getProvider(tenantId, config);
             await provider.updateLead(lead.id_lead_externo || "", {
                 "Etapa": "ILOCALIZABLE",
                 "Description": "Cerrado automáticamente por IA: Agotados todos los intentos de contacto."
             });
+        } catch (e) {
+            console.warn("[RETRY-SEQ] CRM Update failed during finish:", e);
         }
     }
 
@@ -1260,26 +1336,21 @@ export class Orchestrator {
      * Checks if a lead has reached its goal, to stop the sequence.
      */
     private async shouldStopSequence(lead: Lead): Promise<boolean> {
-        // 1. Stage-based stop
         if (["SCHEDULING", "CLOSED", "LOST", "COMPLETED"].includes(lead.current_stage || "")) {
             return true;
         }
         
-        // 2. Metadata-based stop (Captured by IA)
         const meta = lead.metadata || {};
         if (meta.status === "QUALIFIED" || meta.status === "BOOKED" || meta.status === "DISCARDED") {
             return true;
         }
 
-        // 3. Logic: If we have an appointment in agendamientos, stop!
         const supabase = await getSupabaseServerClient();
         const { count } = await (supabase.from("agendamientos" as any) as any)
             .select("*", { count: "exact", head: true })
             .eq("id_lead", lead.id);
         
-        if (count && count > 0) return true;
-        
-        return false;
+        return (count && count > 0) || false;
     }
 
     /**
@@ -1292,7 +1363,6 @@ export class Orchestrator {
 
         const supabase = await getSupabaseServerClient();
         
-        // Find the last lead assigned in this tenant to see who got it
         const { data: lastLeads } = await (supabase.from("lead" as any) as any)
             .select("assigned_advisor_id")
             .eq("tenant_id", tenantId)
@@ -1301,7 +1371,6 @@ export class Orchestrator {
             .limit(1);
 
         const lastId = lastLeads && lastLeads.length > 0 ? lastLeads[0].assigned_advisor_id : null;
-        
         if (!lastId) return advisors[0];
 
         const currentIndex = advisors.indexOf(lastId);

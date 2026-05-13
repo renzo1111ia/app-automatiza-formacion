@@ -1,21 +1,50 @@
 import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * AI ANALYSIS SERVICE
  * Uses LLMs to extract structured data from conversations.
+ * API key is read from the active agent variant in Supabase.
+ * Falls back to OPENAI_API_KEY env var if not found.
  */
 
-let _openai: OpenAI | null = null;
-
-function getOpenAI() {
-    if (!_openai) {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey || apiKey === "your_api_key_here") {
-            throw new Error("OPENAI_API_KEY no configurada. Por favor, añádela a tu archivo .env.local");
+/**
+ * Resolves the OpenAI API key for a given tenant.
+ * Priority: Supabase tenant variant → env var.
+ */
+async function resolveApiKey(tenantId?: string): Promise<string> {
+    // 1. Try Supabase first
+    if (tenantId) {
+        try {
+            const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (url && key) {
+                const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+                const { data } = await supabase
+                    .from("ai_agent_variants" as unknown as string)
+                    .select("api_key")
+                    .eq("tenant_id", tenantId)
+                    .eq("is_active", true)
+                    .not("api_key", "is", null)
+                    .order("updated_at", { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (data && (data as Record<string, unknown>).api_key && String((data as Record<string, unknown>).api_key).startsWith("sk-")) {
+                    return (data as Record<string, unknown>).api_key as string;
+                }
+            }
+        } catch (e) {
+            console.warn("[AI_ANALYSIS] Could not fetch API key from Supabase:", e);
         }
-        _openai = new OpenAI({ apiKey });
     }
-    return _openai;
+
+    // 2. Fallback to env var
+    const envKey = process.env.OPENAI_API_KEY;
+    if (envKey && !envKey.includes("your_api_key")) {
+        return envKey;
+    }
+
+    throw new Error("No se encontró una API key de OpenAI. Configúrala en el agente activo dentro del dashboard.");
 }
 
 export interface ConversationAnalysis {
@@ -47,7 +76,7 @@ export interface ConversationAnalysis {
     };
 }
 
-export async function analyzeConversation(transcript: string): Promise<ConversationAnalysis> {
+export async function analyzeConversation(transcript: string, tenantId?: string): Promise<ConversationAnalysis> {
     if (!transcript || transcript.length < 50) {
         return {
             qualified: "no",
@@ -60,9 +89,11 @@ export async function analyzeConversation(transcript: string): Promise<Conversat
     }
 
     try {
-        const openai = getOpenAI();
+        const apiKey = await resolveApiKey(tenantId);
+        const openai = new OpenAI({ apiKey });
+
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",

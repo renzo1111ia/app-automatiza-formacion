@@ -87,8 +87,8 @@ async function WhatsappKpis({
 
                     {/* Hero metrics */}
                     <div className="mt-6 flex flex-wrap gap-8">
-                        <HeroStat label="Conversaciones" value={kpi.total_conversaciones.toLocaleString("es-ES")} color="text-foreground" />
-                        <HeroStat label="Leads únicos" value={kpi.total_leads_unicos.toLocaleString("es-ES")} color="text-foreground/70" />
+                        <HeroStat key="hero-conv" label="Conversaciones" value={kpi.total_conversaciones.toLocaleString("es-ES")} color="text-foreground" />
+                        <HeroStat key="hero-leads" label="Leads únicos" value={kpi.total_leads_unicos.toLocaleString("es-ES")} color="text-foreground/70" />
                     </div>
                 </div>
             }

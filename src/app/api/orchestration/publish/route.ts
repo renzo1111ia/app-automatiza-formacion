@@ -127,6 +127,7 @@ function flattenGraph(nodes: Node[], edges: Edge[]) {
         else if (['api', 'flow_http'].includes(type)) actionType = 'HTTP';
         else if (['llm', 'flow_ai'].includes(type)) actionType = 'LLM';
         else if (['crm', 'flow_crm'].includes(type)) actionType = 'CRM';
+        else if (['retrySequence', 'flow_retry'].includes(type)) actionType = 'RETRY_SEQUENCE';
 
         // Find outgoing edges and map to handles
         const outgoing = edges.filter(e => e.source === node.id);

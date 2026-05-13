@@ -47,7 +47,7 @@ export class PostAnalysisService {
 
             // 2. Extract Data with AI (if productive)
             const analysis = !isUnproductive && transcript.length > 50 
-                ? await analyzeConversation(transcript) 
+                ? await analyzeConversation(transcript, tenantId) 
                 : {
                     qualified: "no" as const,
                     scheduled_call_confirmed: false,
@@ -67,7 +67,7 @@ export class PostAnalysisService {
             const lead = leadRaw as unknown as Lead;
 
             // 4. Update qualification in DB
-            await (supabase.from("lead_cualificacion" as any) as any).upsert({
+            await (supabase.from("lead_cualificacion" as unknown as string) as unknown as { upsert: (d: unknown) => Promise<unknown> }).upsert({
                 tenant_id: tenantId,
                 id_lead: leadId,
                 cualificacion: analysis.qualified,
@@ -85,15 +85,15 @@ export class PostAnalysisService {
             });
 
             // 4b. PERSIST METADATA IN LEAD TABLE
-            const currentMetadata = (leadRaw as any).metadata || {};
+            const currentMetadata = (leadRaw as Record<string, unknown>).metadata || {};
             const updatedMetadata = {
-                ...currentMetadata,
+                ...(currentMetadata as Record<string, unknown>),
                 ...analysis.extracted_data,
                 QUALIFIED: analysis.qualified === "si" ? "SI" : "NO",
                 last_fact_update: new Date().toISOString()
             };
 
-            const mainUpdate: Record<string, any> = { metadata: updatedMetadata };
+            const mainUpdate: Record<string, unknown> = { metadata: updatedMetadata };
             if (analysis.extracted_data.USER_NAME) {
                  const parts = String(analysis.extracted_data.USER_NAME).trim().split(' ');
                  mainUpdate.nombre = parts[0];
@@ -103,13 +103,13 @@ export class PostAnalysisService {
                 mainUpdate.pais = analysis.extracted_data.USER_COUNTRY;
             }
 
-            await (supabase.from("lead") as any).update(mainUpdate).eq("id", leadId);
+            await (supabase.from("lead") as unknown as { update: (d: unknown) => { eq: (col: string, val: string) => Promise<unknown> } }).update(mainUpdate).eq("id", leadId);
 
             // 5. Handle Scheduling / Retries
             if (analysis.qualified === "si" && (analysis.scheduled_call_confirmed || analysis.extracted_data.date_time_preferred)) {
                 // Lead is qualified and scheduled a call
                 const fechaCita = analysis.extracted_data.date_time_preferred || new Date().toISOString();
-                await (supabase.from("agendamientos" as any) as any).insert({
+                await (supabase.from("agendamientos" as unknown as string) as unknown as { insert: (d: unknown) => Promise<unknown> }).insert({
                     tenant_id: tenantId,
                     id_lead: leadId,
                     fecha_agendada_lead: fechaCita,
@@ -122,13 +122,13 @@ export class PostAnalysisService {
                     .select("numero_intento")
                     .eq("id_lead", leadId)
                     .order("numero_intento", { ascending: false })
-                    .limit(1) as any);
+                    .limit(1) as unknown as Promise<{ data: Array<{ numero_intento: number }> | null }>);
                  
-                 const lastAttemptNum = (lastAttempts as any)?.[0]?.numero_intento ?? 0;
+                 const lastAttemptNum = (lastAttempts as Array<{ numero_intento: number }> | null)?.[0]?.numero_intento ?? 0;
 
                  if (lastAttemptNum < 4) {
                      const nextRetryDate = SchedulerService.calculateNextRetry(new Date(), lastAttemptNum, lead.pais || "España");
-                     await (supabase.from("intentos_llamadas" as any) as any).insert({
+                     await (supabase.from("intentos_llamadas" as unknown as string) as unknown as { insert: (d: unknown) => Promise<unknown> }).insert({
                          tenant_id: tenantId,
                          id_lead: leadId,
                          numero_intento: lastAttemptNum + 1,
@@ -147,7 +147,7 @@ export class PostAnalysisService {
             const config = await getOrchestratorConfigForTenant(tenantId);
             const crmProvider = CRMFactory.getProvider(tenantId, config);
 
-            const updatePayload: Record<string, any> = {
+            const updatePayload: Record<string, unknown> = {
                 "Estado del lead": analysis.qualified === "si" ? "Interesado" : (analysis.qualified === "anulado" ? "Anulado" : "Ilocalizable"),
                 "Motivo de estado de lead": analysis.extracted_data.motivo_anulacion || analysis.reasons,
                 "Titulacion": analysis.extracted_data.titulacion_lead,
@@ -158,7 +158,7 @@ export class PostAnalysisService {
             await crmProvider.updateLead(lead.id_lead_externo || "", updatePayload);
 
             // 7. Log completion
-            await (supabase.from("orchestration_logs" as any) as any).insert({
+            await (supabase.from("orchestration_logs" as unknown as string) as unknown as { insert: (d: unknown) => Promise<unknown> }).insert({
                 tenant_id: tenantId,
                 lead_id: leadId,
                 step: 0,
@@ -176,11 +176,12 @@ export class PostAnalysisService {
             console.log(`[POST-ANALYSIS] ✅ Completed for lead ${leadId}`);
             return analysis;
 
-        } catch (err: any) {
-            console.error(`[POST-ANALYSIS] ❌ Error:`, err);
+        } catch (err: unknown) {
+            const error = err as Error;
+            console.error(`[POST-ANALYSIS] ❌ Error:`, error);
             
             // Log Failure
-            await (supabase.from("orchestration_logs" as any) as any).insert({
+            await (supabase.from("orchestration_logs" as unknown as string) as unknown as { insert: (d: unknown) => Promise<unknown> }).insert({
                 tenant_id: tenantId,
                 lead_id: leadId,
                 step: 0,
@@ -188,7 +189,7 @@ export class PostAnalysisService {
                 result: "FAILURE",
                 metadata: {
                     type: "POST_ANALYSIS",
-                    error: err.message
+                    error: error.message
                 }
             });
 

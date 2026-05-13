@@ -510,8 +510,6 @@ export async function getAgentTrackedVariables(agentId: string | null): Promise<
         let query = (supabase.from("ai_agent_variants" as any) as any)
             .select("tracked_variables")
             .eq("is_active", true)
-            .neq("prompt_text", "")
-            .not("api_key", "is", null)
             .order("updated_at", { ascending: false });
 
         if (agentId) {

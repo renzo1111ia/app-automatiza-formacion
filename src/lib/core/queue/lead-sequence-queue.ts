@@ -59,7 +59,7 @@ export interface LeadSequenceJob {
     tenantId: string;
     workflowId?: string;
     step?: number;
-    action: "call" | "whatsapp" | "ai_agent" | "zoho" | "CRM_SYNC" | "ZOHO_POLLING" | "QUALIFY_ANALYSIS" | "WATCHDOG_SCAN" | "APPOINTMENT_REMINDER"; 
+    action: "call" | "whatsapp" | "ai_agent" | "zoho" | "CRM_SYNC" | "ZOHO_POLLING" | "QUALIFY_ANALYSIS" | "WATCHDOG_SCAN" | "APPOINTMENT_REMINDER" | "RETRY_SEQUENCE"; 
     appointmentId?: string;
     agentId?: string;
     template?: string;
@@ -103,8 +103,9 @@ export async function enqueueLeadStep(
 
         console.log(`[QUEUE] Enqueued ${jobName} with delay ${Math.round(delayMs / 1000 / 60)}min`);
         return job.id || jobName;
-    } catch (error: any) {
-        console.warn(`[QUEUE_BYPASS] Redis down/error: ${error.message}`);
+    } catch (error: unknown) {
+        const errMsg = error instanceof Error ? error.message : String(error);
+        console.warn(`[QUEUE_BYPASS] Redis down/error: ${errMsg}`);
         return `fallback-${Date.now()}`;
     }
 }
@@ -123,8 +124,9 @@ export async function enqueueQualificationAnalysis(data: {
         }, {
             jobId: `qual-${data.leadId}-${data.callId}`
         });
-    } catch (err: any) {
-        console.error(`[QUEUE_ERROR] Analysis could not be queued: ${err.message}`);
+    } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.error(`[QUEUE_ERROR] Analysis could not be queued: ${errMsg}`);
     }
 }
 
@@ -139,8 +141,9 @@ export async function setupWatchdogCron() {
             repeat: { pattern: "*/15 * * * *" },
             jobId: "watchdog_cron"
         });
-    } catch (err: any) {
-        console.warn("[QUEUE] Could not setup watchdog cron:", err.message);
+    } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn("[QUEUE] Could not setup watchdog cron:", errMsg);
     }
 }
 
@@ -155,8 +158,9 @@ export async function setupZohoCron() {
             repeat: { pattern: "*/10 * * * *" },
             jobId: "zoho_cron"
         });
-    } catch (err: any) {
-        console.warn("[QUEUE] Could not setup Zoho cron:", err.message);
+    } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn("[QUEUE] Could not setup Zoho cron:", errMsg);
     }
 }
 

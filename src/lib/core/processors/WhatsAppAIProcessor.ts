@@ -148,20 +148,11 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // Add implicit context about timezones
         const timezoneContext = `
-[FECHA Y HORA ACTUAL]
-Hoy es: ${new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-Hora actual en España: ${new Date().toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' })}
-
-[CONTEXTO TEMPORAL]
-Zona Horaria del Sistema: ${TZ} (España).
-País del Lead: ${variableMap.pais}.
-IMPORTANTE: El lead SIEMPRE hablará desde su horario local. Si el lead dice "a las 11:30", se refiere a las 11:30 de SU país (${variableMap.pais}). 
-Tu tarea es:
-1. Calcular a qué hora corresponde eso en España (${TZ}).
-2. Verificar disponibilidad o agendar usando SIEMPRE la hora resultante en España.
-3. Confirmar al lead mencionando AMBAS horas para evitar confusiones (ej: "Perfecto, agendado para las 11:30 de tu país, que son las 17:30 aquí en España").
-
-IMPORTANTE: NO confirmes una cita al lead (no digas "Cita confirmada" o similares) HASTA que hayas llamado exitosamente a la herramienta 'book_appointment'. Si el lead acepta una hora, llama primero a la herramienta y luego responde confirmando.
+[REGLAS DE AGENDAMIENTO]
+1. Horario de atención: Solo puedes agendar citas entre las 09:00 y las 20:00 (Hora de España - Europe/Madrid).
+2. NUNCA ofrezcas ni confirmes una hora fuera de este rango. Si el lead pide una hora que cae en la madrugada de España (como las 01:00), dile amablemente que esa hora no está disponible y ofrece una alternativa dentro del horario (09:00 - 20:00 Madrid).
+3. Disponibilidad: Antes de confirmar cualquier hora, DEBES llamar a 'check_availability' para ver si el hueco está libre.
+4. Doble Confirmación: Al confirmar, di siempre: "Perfecto, agendado para las [HORA LOCAL] de tu país, que son las [HORA ESPAÑA] aquí en España".
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
@@ -290,12 +281,21 @@ ${(leadAppointments as any[]).length > 0
             messages.push(aiMessage);
 
             const { AppointmentService } = await import("@/lib/services/appointment-service");
-
+            const executedToolsInRound = new Set<string>();
             for (const toolCall of aiMessage.tool_calls) {
                 if (toolCall.type !== 'function') continue;
 
                 const name = toolCall.function.name;
-                const args = JSON.parse(toolCall.function.arguments);
+                const argsString = toolCall.function.arguments;
+                const toolKey = `${name}:${argsString}`;
+
+                if (executedToolsInRound.has(toolKey)) {
+                    console.log(`[AI PROCESSOR] ⏭️ Skipping duplicate tool call in same round: ${toolKey}`);
+                    continue;
+                }
+                executedToolsInRound.add(toolKey);
+
+                const args = JSON.parse(argsString);
                 console.log(`[AI PROCESSOR] 🛠️ Executing tool: ${name}`, args);
                 let result = "";
 
@@ -372,22 +372,29 @@ ${(leadAppointments as any[]).length > 0
                     }
                 });
 
-                // 12. Autonomous Learning (Fact Extraction)
+                // 12. Autonomous Learning (Fact Extraction & Discovery)
                 const trackedVars = (activeVariant.tracked_variables as string[]) || [];
-                if (trackedVars.length > 0) {
-                    // Use full recent context so variables mentioned earlier are also captured
-                    const dialogueForExtraction = conversationContext 
-                        ? `${conversationContext}\nUsuario: ${incomingMessage}\nAsistente: ${aiResponse}`
-                        : `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;
 
-                    FactExtractionService.extractFromDialogue(
-                        leadId, 
-                        dialogueForExtraction, 
-                        trackedVars, 
-                        apiKey,
-                        tenantId
-                    ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));
-                }
+                // 12b. Inject System Variables into metadata automatically
+                const systemFacts: Record<string, string> = {
+                    "AGENT_MESSAGE": aiResponse.substring(0, 500),
+                    "USER_PHONE": (lead as any).telefono || "",
+                    "RESUMEN_CONVERSACION": chatSummary || "En progreso..."
+                };
+                
+                // We run it even if trackedVars is empty to allow for "Discovery" of other relevant data
+                const dialogueForExtraction = conversationContext 
+                    ? `${conversationContext}\nUsuario: ${incomingMessage}\nAsistente: ${aiResponse}`
+                    : `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;
+
+                FactExtractionService.extractFromDialogue(
+                    leadId, 
+                    dialogueForExtraction, 
+                    trackedVars, 
+                    apiKey,
+                    tenantId,
+                    systemFacts // Passing pre-filled system facts
+                ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));
 
             } else {
                 console.error(`[AI PROCESSOR] ❌ WhatsApp credentials missing for tenant ${tenantId}`);

@@ -398,7 +398,7 @@ export const WebhookResponseNode = memo(({ data, selected }: NodeProps) => {
 });
 
 // ─── WEBHOOK WAIT NODE ────────────────────────────────────────────
-export const WebhookWaitNode = memo(({ data, selected }: NodeProps) => {
+export const WebhookWaitNode = memo(({ selected }: NodeProps) => {
   return (
     <BaseNode 
       label="Espera Callback" 
@@ -419,7 +419,7 @@ export const WebhookWaitNode = memo(({ data, selected }: NodeProps) => {
 });
 
 // ─── END NODE ⭐ NUEVO ────────────────────────────────────────────
-export const EndNode = memo(({ data: _data, selected }: NodeProps) => {
+export const EndNode = memo(({ selected }: NodeProps) => {
   return (
     <div className={cn(
       "min-w-[180px] rounded-2xl bg-black/80 backdrop-blur-xl border-2 transition-all duration-300 shadow-2xl",
@@ -436,6 +436,61 @@ export const EndNode = memo(({ data: _data, selected }: NodeProps) => {
       </div>
       <div className="h-1 w-1/3 bg-gray-400/40 mx-auto rounded-full mb-1 opacity-20" />
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-white border border-gray-500" />
+    </div>
+  );
+});
+
+// ─── RETRY SEQUENCE NODE ⭐ NUEVO (v5.1) ─────────────────────────
+export const RetrySequenceNode = memo(({ data, selected }: NodeProps) => {
+  const maxAttempts = data.config?.maxAttempts || 5;
+  const delayHours = data.config?.retryDelayHours || 27;
+  const channels = data.config?.channels || ["call", "whatsapp"];
+
+  return (
+    <div className={cn(
+      "min-w-[240px] rounded-2xl bg-black/80 backdrop-blur-xl border-2 transition-all duration-300 shadow-2xl overflow-hidden",
+      selected ? "border-orange-500 ring-4 ring-orange-500/20 scale-105" : "border-orange-500/30 hover:border-orange-500/50",
+    )}>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/5 bg-orange-500/10">
+        <div className="h-8 w-8 flex items-center justify-center rounded-xl bg-orange-500/20 text-orange-400">
+          <ArrowRightLeft className="h-4 w-4" />
+        </div>
+        <div className="flex flex-col">
+          <span className="font-bold text-sm tracking-tight text-white/90 uppercase leading-none">Bucle de Contacto</span>
+          <span className="text-[9px] text-orange-400 font-black uppercase tracking-widest mt-0.5">Auto-Retry Engine</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2">
+            <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 text-center">
+                <p className="text-[8px] font-black uppercase text-white/30 mb-1">Intentos</p>
+                <p className="text-lg font-black text-white tabular-nums">{maxAttempts}x</p>
+            </div>
+            <div className="p-2 rounded-xl bg-white/[0.03] border border-white/5 text-center">
+                <p className="text-[8px] font-black uppercase text-white/30 mb-1">Intervalo</p>
+                <p className="text-lg font-black text-white tabular-nums">{delayHours}H</p>
+            </div>
+        </div>
+
+        <div className="flex items-center gap-2 justify-center">
+            {channels.map((c: string) => (
+                <div key={c} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-[9px] font-black text-orange-400 uppercase">
+                    {c === 'call' ? <Phone className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
+                    {c}
+                </div>
+            ))}
+        </div>
+
+        <div className="p-2 rounded-lg bg-orange-500/5 border border-dashed border-orange-500/20 text-[9px] text-orange-400/60 font-bold leading-relaxed text-center">
+            Finaliza tras {maxAttempts} intentos sin éxito o al cualificar.
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Top} className="w-2 h-2 bg-white border border-orange-500" />
+      <Handle type="source" position={Position.Bottom} className="w-2 h-2 bg-white border border-orange-500" />
     </div>
   );
 });
@@ -476,3 +531,4 @@ WebhookNode.displayName = 'WebhookNode';
 WebhookResponseNode.displayName = 'WebhookResponseNode';
 WebhookWaitNode.displayName = 'WebhookWaitNode';
 EndNode.displayName = 'EndNode';
+RetrySequenceNode.displayName = 'RetrySequenceNode';

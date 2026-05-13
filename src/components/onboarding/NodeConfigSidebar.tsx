@@ -6,7 +6,8 @@ import {
     Phone, MessageSquare, BrainCircuit,
     Globe, GitBranchPlus, Clock, Bot,
     Webhook, Copy, Check, Reply, Hourglass, Zap,
-    Timer, Sun, Moon, Globe2, Plus, Database, MessageCircle
+    Timer, Sun, Moon, Globe2, Plus, Database, MessageCircle,
+    ArrowRightLeft
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -798,6 +799,91 @@ export function NodeConfigSidebar({ node, workflowId, onSave, onClose }: NodeCon
                                 </div>
                                 <p className="text-[9px] text-white/20 italic px-1">Si no se recibe la señal en este tiempo, el lead se marcará como &quot;Expirado&quot;.</p>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 5.7 RETRY SEQUENCE CONFIG ⭐ NUEVO ── */}
+                {type === 'retrySequence' && (
+                    <div className="space-y-6 text-left animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-2 text-orange-500">
+                            <ArrowRightLeft className="h-4 w-4" />
+                            <span className="text-xs font-black uppercase tracking-widest text-orange-500/80">Bucle de Reintentos Auto</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label htmlFor="maxAttempts" className="text-[10px] font-bold text-white/40 uppercase">Intentos Máximos</label>
+                                <input
+                                    id="maxAttempts"
+                                    type="number"
+                                    value={(config.maxAttempts as number) || 5}
+                                    onChange={(e) => setConfig({ ...config, maxAttempts: parseInt(e.target.value) })}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xl font-black text-white tabular-nums outline-none"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label htmlFor="retryDelay" className="text-[10px] font-bold text-white/40 uppercase">Horas entre Intentos</label>
+                                <input
+                                    id="retryDelay"
+                                    type="number"
+                                    value={(config.retryDelayHours as number) || 27}
+                                    onChange={(e) => setConfig({ ...config, retryDelayHours: parseInt(e.target.value) })}
+                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xl font-black text-white tabular-nums outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Canales de Contacto</label>
+                            <div className="flex gap-2">
+                                {['call', 'whatsapp'].map(c => {
+                                    const activeChannels = (config.channels as string[]) || ['call', 'whatsapp'];
+                                    const isActive = activeChannels.includes(c);
+                                    return (
+                                        <button
+                                            key={c}
+                                            onClick={() => {
+                                                const updated = isActive
+                                                    ? activeChannels.filter(x => x !== c)
+                                                    : [...activeChannels, c];
+                                                setConfig({ ...config, channels: updated });
+                                            }}
+                                            className={cn(
+                                                "flex-1 h-11 rounded-xl text-[10px] font-black border transition-all uppercase tracking-widest flex items-center justify-center gap-2",
+                                                isActive
+                                                    ? "bg-orange-500/20 border-orange-500/40 text-orange-300 shadow-lg shadow-orange-500/10"
+                                                    : "bg-white/5 border-white/10 text-white/30 hover:text-white/60"
+                                            )}
+                                        >
+                                            {c === 'call' ? <Phone className="h-3 w-3" /> : <MessageSquare className="h-3 w-3" />}
+                                            {c}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/40 uppercase">Estado Final (Si falla todo)</label>
+                            <select
+                                title="Estado Final"
+                                value={(config.finalStatus as string) || "ilocalizable"}
+                                onChange={(e) => setConfig({ ...config, finalStatus: e.target.value })}
+                                className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-bold text-white/80 appearance-none outline-none"
+                            >
+                                <option value="ilocalizable" className="bg-black">Marcar como Ilocalizable</option>
+                                <option value="perdido" className="bg-black">Marcar como Perdido</option>
+                                <option value="seguimiento_manual" className="bg-black">Mover a Seguimiento Manual</option>
+                            </select>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-orange-500/5 border border-dashed border-orange-500/20 space-y-2">
+                            <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest">💡 Inteligencia Nativa</p>
+                            <p className="text-[10px] text-white/50 leading-relaxed font-medium">
+                                Este nodo gestiona solo el bucle de contacto. <br/>
+                                <strong className="text-orange-400/80">Si el lead responde o agenda, el bucle se rompe automáticamente</strong> y el orquestador salta al siguiente paso de éxito.
+                            </p>
                         </div>
                     </div>
                 )}

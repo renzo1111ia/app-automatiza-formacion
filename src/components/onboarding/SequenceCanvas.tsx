@@ -21,14 +21,16 @@ import '@xyflow/react/dist/style.css';
 import { 
   LeadTriggerNode, ActionNode, DelayNode, LLMNode, APINode, 
   SubWorkflowNode, WebhookNode, WebhookResponseNode, WebhookWaitNode,
-  TimeConditionNode, VoiceCallNode, TextAgentNode, WhatsAppNode, EndNode, ConditionNode
+  TimeConditionNode, VoiceCallNode, TextAgentNode, WhatsAppNode, EndNode, ConditionNode,
+  RetrySequenceNode
 } from './nodes/TriggerNodes';
 import { NodeConfigSidebar } from './NodeConfigSidebar';
 import { 
     Save, Plus, Rocket, Trash2, 
     Phone, MessageSquare, BrainCircuit, 
     Globe, Clock, GitBranchPlus, Webhook, 
-    Reply, Hourglass, Timer, Bot, CheckCircle2, MessageCircle
+    Reply, Hourglass, Timer, Bot, CheckCircle2, MessageCircle,
+    ArrowRightLeft
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -40,6 +42,7 @@ const nodeTypes = {
   textAgent: TextAgentNode,
   whatsapp: WhatsAppNode,
   condition: ConditionNode,
+  retrySequence: RetrySequenceNode,
   end: EndNode,
   // Legacy / generic nodes (keep backward compat)
   leadTrigger: LeadTriggerNode,
@@ -64,145 +67,6 @@ const createMinimalNodes = (): Node[] => [
   }
 ];
 
-// ─── DEFAULT FLOW: Lead → CondiciónHoraria → Llamada/WA → Espera → End
-const createInitialNodes = (): Node[] => [
-  { 
-    id: 'trigger-1', 
-    type: 'leadTrigger', 
-    position: { x: 300, y: 50 }, 
-    data: { label: 'Entry Lead' } 
-  },
-  { 
-    id: 'time-1', 
-    type: 'timeCondition', 
-    position: { x: 260, y: 220 }, 
-    data: { 
-      label: 'Condición Horaria',
-      config: { start: '09:00', end: '20:00', working_days: [1,2,3,4,5] }
-    }
-  },
-  // Branch A: In-hours → Voice Call
-  { 
-    id: 'call-1', 
-    type: 'voiceCall', 
-    position: { x: 60, y: 480 }, 
-    data: { 
-      label: 'Llamada IA',
-      config: { agentName: 'Sin Agente', provider: 'retell' }
-    }
-  },
-  // Branch B: Out-of-hours → WhatsApp + Text Agent
-  { 
-    id: 'wa-1', 
-    type: 'whatsapp', 
-    position: { x: 480, y: 480 }, 
-    data: { 
-      label: 'WhatsApp',
-      config: { templateId: 'contact_initial_v1' }
-    }
-  },
-  // Delay after call
-  { 
-    id: 'delay-1', 
-    type: 'delay', 
-    position: { x: 60, y: 680 }, 
-    data: { config: { duration: 27, hours: 27 } }
-  },
-  // Text agent for out-of-hours
-  { 
-    id: 'agent-1', 
-    type: 'textAgent', 
-    position: { x: 480, y: 680 }, 
-    data: { 
-      label: 'Agente Texto',
-      config: { agentName: 'Sin Agente' }
-    }
-  },
-  // Follow-up call after delay
-  { 
-    id: 'call-2', 
-    type: 'voiceCall', 
-    position: { x: 60, y: 880 }, 
-    data: { 
-      label: 'Llamada Seguimiento',
-      config: { agentName: 'Sin Agente', provider: 'retell' }
-    }
-  },
-  // End nodes
-  { 
-    id: 'end-1', 
-    type: 'end', 
-    position: { x: 60, y: 1060 }, 
-    data: {}
-  },
-  { 
-    id: 'end-2', 
-    type: 'end', 
-    position: { x: 480, y: 880 }, 
-    data: {}
-  },
-];
-
-const createInitialEdges = (): Edge[] => [
-  // trigger → timeCondition
-  { 
-    id: 'e-trigger-time', source: 'trigger-1', target: 'time-1', 
-    animated: true, 
-    style: { stroke: '#f97316', strokeWidth: 2.5 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#f97316' } 
-  },
-  // timeCondition → voiceCall (in-hours)
-  { 
-    id: 'e-time-call', source: 'time-1', target: 'call-1',
-    sourceHandle: 'in-hours',
-    label: 'Dentro horario',
-    labelStyle: { fill: '#10b981', fontWeight: 700, fontSize: 10 },
-    labelBgStyle: { fill: '#0a1f0f', fillOpacity: 0.9 },
-    style: { stroke: '#10b981', strokeWidth: 2.5, strokeDasharray: '5,5' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' }
-  },
-  // timeCondition → whatsapp (out-of-hours)
-  { 
-    id: 'e-time-wa', source: 'time-1', target: 'wa-1',
-    sourceHandle: 'out-of-hours',
-    label: 'Fuera de horario',
-    labelStyle: { fill: '#3b82f6', fontWeight: 700, fontSize: 10 },
-    labelBgStyle: { fill: '#0a0f1f', fillOpacity: 0.9 },
-    style: { stroke: '#3b82f6', strokeWidth: 2.5, strokeDasharray: '5,5' },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6' }
-  },
-  // voiceCall → delay
-  { 
-    id: 'e-call-delay', source: 'call-1', target: 'delay-1',
-    style: { stroke: '#f59e0b', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' }
-  },
-  // whatsapp → textAgent
-  { 
-    id: 'e-wa-agent', source: 'wa-1', target: 'agent-1',
-    style: { stroke: '#a855f7', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' }
-  },
-  // delay → call2 (follow-up)
-  { 
-    id: 'e-delay-call2', source: 'delay-1', target: 'call-2',
-    style: { stroke: '#3b82f6', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6' }
-  },
-  // call2 → end
-  { 
-    id: 'e-call2-end', source: 'call-2', target: 'end-1',
-    style: { stroke: '#6b7280', strokeWidth: 1.5 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6b7280' }
-  },
-  // textAgent → end
-  { 
-    id: 'e-agent-end', source: 'agent-1', target: 'end-2',
-    style: { stroke: '#6b7280', strokeWidth: 1.5 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6b7280' }
-  },
-];
-
 // ─── NODE MENU CONFIG ─────────────────────────────────────────────
 const NODE_MENU = [
   {
@@ -217,6 +81,7 @@ const NODE_MENU = [
     section: "⚙️ Lógica de Sistema",
     items: [
       { type: 'timeCondition', label: 'Condición Horaria', icon: <Timer className="h-4 w-4" />, color: 'text-yellow-400 hover:bg-yellow-500/20', data: { config: { start: '09:00', end: '20:00', working_days: [1,2,3,4,5] } } },
+      { type: 'retrySequence', label: 'Bucle de Reintentos', icon: <ArrowRightLeft className="h-4 w-4" />, color: 'text-orange-400 hover:bg-orange-500/20', data: { config: { maxAttempts: 5, retryDelayHours: 27, channels: ['call', 'whatsapp'] } } },
       { type: 'condition', label: 'Condición (IF/ELSE)', icon: <GitBranchPlus className="h-4 w-4" />, color: 'text-indigo-400 hover:bg-indigo-500/20' },
       { type: 'delay', label: 'Espera (Wait)', icon: <Clock className="h-4 w-4" />, color: 'text-amber-400 hover:bg-amber-500/20', data: { config: { duration: 2 } } },
     ]

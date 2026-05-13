@@ -27,18 +27,32 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            // Normalize metadata before saving: merge case-insensitive duplicates
+            const normalizedMeta: Record<string, unknown> = {};
+            Object.entries(metadata).forEach(([k, v]) => {
+                const existingKey = Object.keys(normalizedMeta).find(
+                    mk => mk.toLowerCase() === k.toLowerCase()
+                );
+                if (existingKey) {
+                    // If we have "nombre" and "Nombre", keep the one that actually has content
+                    if (!normalizedMeta[existingKey] && v) normalizedMeta[existingKey] = v;
+                } else {
+                    normalizedMeta[k] = v;
+                }
+            });
+
             const updates = {
                 nombre: editedLead.nombre,
                 apellido: editedLead.apellido,
                 email: editedLead.email,
                 telefono: editedLead.telefono,
                 pais: editedLead.pais,
-                metadata: metadata
+                metadata: normalizedMeta
             };
 
             const res = await updateLeadInfo(lead.id, updates);
             if (res.success) {
-                onUpdate({ ...editedLead, metadata });
+                onUpdate({ ...editedLead, metadata: normalizedMeta });
                 onClose();
             } else {
                 alert("Error al guardar: " + res.error);
@@ -153,10 +167,13 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                                                 const { runManualAnalysis } = await import("@/lib/actions/analysis");
                                                 const res = await runManualAnalysis(lead.id, lead.tenant_id);
                                                 if (res.success) {
-                                                    alert("Análisis completado. Los datos se han sincronizado con Zoho.");
-                                                    if (res.data?.extracted_data) {
-                                                        setMetadata(prev => ({ ...prev, ...res.data?.extracted_data }));
-                                                    }
+                                                    // Merge extracted_data into local metadata state
+                                                    const extracted = (res.data?.extracted_data || {}) as Record<string, unknown>;
+                                                    const updatedMeta = { ...metadata, ...extracted };
+                                                    setMetadata(updatedMeta);
+                                                    // ✅ Propagate to parent sidebar so variables refresh immediately
+                                                    onUpdate({ ...editedLead, metadata: updatedMeta });
+                                                    alert(`✅ Análisis completado. ${Object.keys(extracted).length} campos extraídos.`);
                                                 } else {
                                                     alert("Error en análisis: " + res.error);
                                                 }

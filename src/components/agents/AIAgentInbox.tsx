@@ -1031,106 +1031,124 @@ export default function AIAgentInbox() {
                                     <div className="flex items-center gap-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Variables Capturadas</p>
                                         <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[8px] font-black uppercase tracking-tighter animate-pulse">Live</span>
-                                        {Object.keys(selectedLead.metadata || {}).filter(k => k !== 'last_fact_update').length > trackedVariables.length && (
-                                            <button 
-                                                onClick={() => setIsProfileModalOpen(true)}
-                                                className="px-1.5 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-primary text-[8px] font-black uppercase tracking-tighter hover:bg-primary/20 transition-all"
-                                            >
-                                                +{Object.keys(selectedLead.metadata || {}).filter(k => k !== 'last_fact_update').length - trackedVariables.filter(v => {
-                                                    const k = v.replace(/^\{\{|\}\}$/g, '').trim();
-                                                    return (selectedLead.metadata || {})[k] !== undefined;
-                                                }).length} ocultas
-                                            </button>
-                                        )}
                                     </div>
-                                    {typeof selectedLead.metadata?.last_fact_update === 'string' && (
-                                        <span className="text-[8px] font-bold text-muted-foreground/20 italic">
-                                            v{new Date(selectedLead.metadata.last_fact_update as string).toLocaleTimeString()}
-                                        </span>
-                                    )}
-                                    <button 
-                                        onClick={async () => {
-                                            if (confirm("¿Estás seguro de que deseas borrar todas las variables capturadas para este lead? Esto reiniciará la memoria de la IA.")) {
-                                                const res = await deleteLeadFacts(selectedLead.id);
-                                                if (res.success) {
-                                                    const updated = { ...selectedLead, metadata: {} };
-                                                    setSelectedLead(updated);
-                                                    setLeads(prev => prev.map(l => l.id === selectedLead.id ? updated : l));
-                                                } else {
-                                                    alert("Error al borrar variables: " + res.error);
-                                                }
-                                            }
-                                        }}
-                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 transition-all group"
-                                    >
-                                        <Trash2 className="h-3 w-3 group-hover:scale-110 transition-transform" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Depurar</span>
-                                    </button>
-                                </div>
-                                {trackedVariables.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {trackedVariables.map((varName) => {
-                                            // Robust lookup: strip wrapping, exact match, then case-insensitive
-                                            const key = varName.replace(/^\{\{|\}\}$/g, '').trim();
-                                            const meta = selectedLead.metadata || {};
-                                            
-                                            let capturedValue = meta[key];
-                                            if (capturedValue === undefined) {
-                                                // Try finding key with {{ }} in metadata just in case
-                                                capturedValue = meta[`{{${key}}}`];
-                                            }
-                                            if (capturedValue === undefined) {
-                                                // Try case-insensitive
-                                                const metaKeys = Object.keys(meta);
-                                                const match = metaKeys.find(k => 
-                                                    k.toLowerCase() === key.toLowerCase() || 
-                                                    k.toLowerCase() === `{{${key.toLowerCase()}}}`
-                                                );
-                                                if (match) capturedValue = meta[match];
-                                            }
-                                            const hasCaptured = capturedValue !== undefined && capturedValue !== null && String(capturedValue).trim() !== '';
-                                            return (
-                                                <div
-                                                    key={key}
-                                                    className={cn(
-                                                        "px-4 py-3 rounded-2xl border flex items-center justify-between gap-3 transition-colors",
-                                                        hasCaptured
-                                                            ? "bg-emerald-500/[0.05] border-emerald-500/15 hover:bg-emerald-500/10"
-                                                            : "bg-card border-border"
-                                                    )}
-                                                >
-                                                    <div className="flex flex-col gap-0.5 min-w-0">
-                                                        <span className={cn(
-                                                            "text-[8px] font-black uppercase tracking-tighter",
-                                                            hasCaptured ? "text-emerald-500/50" : "text-muted-foreground/20"
-                                                        )}>{'{{' + key + '}}'}</span>
-                                                        <span className={cn(
-                                                            "text-[11px] font-bold truncate",
-                                                            hasCaptured ? "text-emerald-400" : "text-muted-foreground/20 italic"
-                                                        )}>
-                                                            {hasCaptured ? String(capturedValue) : 'Pendiente...'}
-                                                        </span>
-                                                    </div>
-                                                    {hasCaptured && (
-                                                        <div className="h-4 w-4 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                                                            <Check className="h-2.5 w-2.5 text-emerald-500" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="flex items-center gap-2">
+                                        {typeof selectedLead.metadata?.last_fact_update === 'string' && (
+                                            <span className="text-[8px] font-bold text-muted-foreground/20 italic">
+                                                v{new Date(selectedLead.metadata.last_fact_update as string).toLocaleTimeString()}
+                                            </span>
+                                        )}
                                         <button 
-                                            onClick={() => setIsProfileModalOpen(true)}
-                                            className="w-full py-2 rounded-xl border border-dashed border-border text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 hover:bg-card/60 hover:text-primary transition-all"
+                                            onClick={async () => {
+                                                if (confirm("¿Estás seguro de que deseas borrar todas las variables capturadas para este lead? Esto reiniciará la memoria de la IA.")) {
+                                                    const res = await deleteLeadFacts(selectedLead.id);
+                                                    if (res.success) {
+                                                        const updated = { ...selectedLead, metadata: {} };
+                                                        setSelectedLead(updated);
+                                                        setLeads(prev => prev.map(l => l.id === selectedLead.id ? updated : l));
+                                                    } else {
+                                                        alert("Error al borrar variables: " + res.error);
+                                                    }
+                                                }
+                                            }}
+                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/20 transition-all group"
                                         >
-                                            Ver Perfil Completo
+                                            <Trash2 className="h-3 w-3 group-hover:scale-110 transition-transform" />
+                                            <span className="text-[9px] font-black uppercase tracking-widest">Depurar</span>
                                         </button>
                                     </div>
-                                ) : (
-                                    <div className="p-4 rounded-2xl bg-card border border-border border-dashed text-center">
-                                        <p className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-widest">Sin variables configuradas en el agente</p>
-                                    </div>
-                                )}
+                                </div>
+
+                                {/* Build unified list: all metadata keys + pending tracked vars */}
+                                {(() => {
+                                    const meta = selectedLead.metadata || {};
+                                    const SKIP_KEYS = new Set(['last_fact_update', 'meta_id', 'raw', 'media_url']);
+                                    
+                                    // 1. All captured keys from metadata (excluding system keys)
+                                    // Deduplicate case-insensitively for the UI
+                                    const rawKeys = Object.keys(meta).filter(k => 
+                                        !SKIP_KEYS.has(k) && String(meta[k]).trim() !== ''
+                                    );
+                                    
+                                    const capturedKeys: string[] = [];
+                                    const seenKeys = new Set<string>();
+                                    // We process in order, but deduplicate by lowercase
+                                    rawKeys.forEach(k => {
+                                        if (!seenKeys.has(k.toLowerCase())) {
+                                            capturedKeys.push(k);
+                                            seenKeys.add(k.toLowerCase());
+                                        }
+                                    });
+
+                                    // 2. Pending tracked vars (those NOT already in metadata)
+                                    const pendingVars = trackedVariables
+                                        .map(v => v.replace(/^\{\{|\}\}$/g, '').trim())
+                                        .filter(k => {
+                                            const found = Object.keys(meta).find(mk => 
+                                                mk.toLowerCase() === k.toLowerCase() ||
+                                                mk.toLowerCase() === `{{${k.toLowerCase()}}}`
+                                            );
+                                            return !found && String(meta[k] ?? '').trim() === '';
+                                        });
+
+                                    const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;
+
+                                    if (!hasAnything) {
+                                        return (
+                                            <div className="p-4 rounded-2xl bg-card border border-border border-dashed text-center">
+                                                <p className="text-[9px] font-bold text-muted-foreground/20 uppercase tracking-widest">Sin datos capturados aún</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="space-y-2">
+                                            {/* Captured (green) */}
+                                            {capturedKeys.map((key) => (
+                                                <div
+                                                    key={key}
+                                                    className="px-4 py-3 rounded-2xl border flex items-center justify-between gap-3 bg-emerald-500/[0.05] border-emerald-500/15 hover:bg-emerald-500/10 transition-colors"
+                                                >
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-500/50">
+                                                            {'{{'}{key}{'}}'}
+                                                        </span>
+                                                        <span className="text-[11px] font-bold truncate text-emerald-400">
+                                                            {String(meta[key])}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-4 w-4 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                                                        <Check className="h-2.5 w-2.5 text-emerald-500" />
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Pending tracked vars (gray) */}
+                                            {pendingVars.map((key) => (
+                                                <div
+                                                    key={key}
+                                                    className="px-4 py-3 rounded-2xl border flex items-center justify-between gap-3 bg-card border-border transition-colors"
+                                                >
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <span className="text-[8px] font-black uppercase tracking-tighter text-muted-foreground/20">
+                                                            {'{{'}{key}{'}}'}
+                                                        </span>
+                                                        <span className="text-[11px] font-bold truncate text-muted-foreground/20 italic">
+                                                            Pendiente...
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <button 
+                                                onClick={() => setIsProfileModalOpen(true)}
+                                                className="w-full py-2 rounded-xl border border-dashed border-border text-[9px] font-black uppercase tracking-widest text-muted-foreground/40 hover:bg-card/60 hover:text-primary transition-all"
+                                            >
+                                                Ver Perfil Completo
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             {/* Automation Timeline */}
