@@ -103,22 +103,14 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
         // 3. Map latest messages to their leads
         const latestMsgByLead = new Map<string, { content: string; time: string }>();
         
-        // Legacy messages first
-        const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
-        msgList.forEach((m: { lead_id: string; content: string; created_at: string }) => {
-            if (m.lead_id && !latestMsgByLead.has(m.lead_id)) {
-                latestMsgByLead.set(m.lead_id, { content: m.content, time: m.created_at });
-            }
-        });
-
-        // Consolidates summaries override legacy
+        // 3a. Start with summaries as a base (good for bulk)
         (summaries || []).forEach((s: unknown) => {
             const summaryRow = s as unknown as ChatSummaryRow;
             const summaryStr = summaryRow.summary;
             if (!summaryStr) return;
 
             const lines = summaryStr.split('\n').filter((line: string) => line.trim());
-            if (lines.length === 0) return; // Protección: Si no hay líneas, ignorar
+            if (lines.length === 0) return;
 
             const lastLine = lines[lines.length - 1];
             const match = lastLine?.match(/^\[(.*?)\] (.*?): (.*)$/);
@@ -128,8 +120,19 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
                 const [, , , content] = match;
                 latestMsgByLead.set(leadId, { 
                     content: content, 
-                    time: summaryRow.last_interaction_at || new Date().toISOString() 
+                    time: summaryRow.last_interaction_at || new Date(0).toISOString() 
                 });
+            }
+        });
+
+        // 3b. OVERRIDE with real messages if they are newer
+        const msgList = (messages || []) as unknown as Array<{ lead_id: string; content: string; created_at: string }>;
+        msgList.forEach((m) => {
+            if (m.lead_id) {
+                const existing = latestMsgByLead.get(m.lead_id);
+                if (!existing || new Date(m.created_at) > new Date(existing.time)) {
+                    latestMsgByLead.set(m.lead_id, { content: m.content, time: m.created_at });
+                }
             }
         });
 
@@ -185,45 +188,47 @@ export async function getChatHistory(leadId: string): Promise<{ success: boolean
 
     const supabase = await getAdminSupabaseClient();
     
-    // 1. Fetch Consolidated History (New low-cost strategy)
-    const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
-    const summary = await ChatSummaryService.getSummary(leadId);
-
     let messages: ChatMessage[] = [];
 
-    if (summary) {
-        const lines = summary.split('\n').filter(l => l.trim());
-        messages = lines.map((line, idx) => {
-            const match = line.match(/^\[(.*?)\] (.*?): (.*)$/);
-            if (match) {
-                const [, time, role, content] = match;
-                return {
-                    id: `sum-${leadId}-${idx}`,
-                    tenant_id: tenant.id,
-                    lead_id: leadId,
-                    direction: role === 'Usuario' ? 'INBOUND' : 'OUTBOUND',
-                    message_type: 'TEXT',
-                    content: content,
-                    sent_by: role === 'Usuario' ? null : 'AI_AGENT',
-                    status: 'READ',
-                    created_at: new Date().toISOString(),
-                    metadata: { time_label: time }
-                } as ChatMessage;
-            }
-            return null;
-        }).filter(m => m !== null) as ChatMessage[];
-    } else {
-        // 2. Legacy Fallback
-        const { data: legacyMsgs, error: msgError } = await supabase
-            .from("chat_messages")
-            .select("*")
-            .eq("tenant_id", tenant.id)
-            .eq("lead_id", leadId)
-            .order("created_at", { ascending: false })
-            .limit(100);
+    // 1. Fetch REAL messages directly from DB (Priority for accuracy)
+    const { data: realMsgs, error: msgError } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("tenant_id", tenant.id)
+        .eq("lead_id", leadId)
+        .order("created_at", { ascending: true }) // Order for UI
+        .limit(200);
 
-        if (msgError) return { success: false, error: msgError.message };
-        messages = (legacyMsgs as ChatMessage[] || []).reverse();
+    if (msgError) return { success: false, error: msgError.message };
+    messages = (realMsgs as ChatMessage[] || []);
+
+    // 2. If NO messages found, check for a summary as a fallback
+    if (messages.length === 0) {
+        const { ChatSummaryService } = await import("@/lib/services/knowledge-base");
+        const summary = await ChatSummaryService.getSummary(leadId);
+
+        if (summary) {
+            const lines = summary.split('\n').filter(l => l.trim());
+            messages = lines.map((line, idx) => {
+                const match = line.match(/^\[(.*?)\] (.*?): (.*)$/);
+                if (match) {
+                    const [, time, role, content] = match;
+                    return {
+                        id: `sum-${leadId}-${idx}`,
+                        tenant_id: tenant.id,
+                        lead_id: leadId,
+                        direction: role === 'Usuario' ? 'INBOUND' : 'OUTBOUND',
+                        message_type: 'TEXT',
+                        content: content,
+                        sent_by: role === 'Usuario' ? null : 'AI_AGENT',
+                        status: 'READ',
+                        created_at: new Date().toISOString(),
+                        metadata: { time_label: time }
+                    } as ChatMessage;
+                }
+                return null;
+            }).filter(m => m !== null) as ChatMessage[];
+        }
     }
 
     // Fetch Calls to show in timeline

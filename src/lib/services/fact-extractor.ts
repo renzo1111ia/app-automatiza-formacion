@@ -107,23 +107,20 @@ ${programRequirements || "No hay criterios específicos definidos. Usa criterios
 CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.join(', ')}.
 
 REGLAS CRÍTICAS:
-1. Devuelve ÚNICAMENTE un JSON plano. Debes incluir SIEMPRE las CLAVES PRIORITARIAS OBLIGATORIAS. Si el valor de alguna clave aún no se menciona en la charla, asigna el valor null.
-2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (ej. empresa, cargo, experiencia, disponibilidad, interes_especifico), inclúyelos también en el JSON con nombres de clave descriptivos en español. ¡NO DEJES NADA FUERA!
-3. FLOW ANALYSIS: Intenta deducir "REGLA_APLICADA" o "QA_TOPIC" basándote en la lógica del asistente.
+1. Devuelve ÚNICAMENTE un JSON plano.
+2. "RESUMEN_EJECUTIVO": Genera un resumen BREVE (máximo 2 líneas) de la situación actual del lead. NO transcribas la conversación, resume lo más importante (ej: "Interesado en MBA, enfermera titulada, busca cambio de carrera").
+3. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (ej. empresa, cargo, experiencia, disponibilidad, interes_especifico), inclúyelos también en el JSON con nombres de clave descriptivos en español (Grit Case).
 4. NO INVENTES: Si el usuario no ha mencionado algo, usa null para las prioritarias y omite para las extra.
-5. PRECISIÓN: Extrae valores específicos.
-6. "qualified": Evalúa si el lead está "SI", "NO" o "PENDIENTE" basándote en los CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS arriba mencionados.
-7. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
-8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
-9. "ha_respondido": Extrae "SI" si el lead ha contestado al asistente, o "NO" si no lo ha hecho.
-10. "requiere_seguimiento": Extrae "SI" si hay que volver a contactar a este lead en el futuro, o "NO" si ya se cerró/descartó.
-11. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA".
+5. "qualified": Evalúa si el lead está "SI", "NO" o "PENDIENTE" basándote en los CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS.
+6. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
+7. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
+8. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA".
     CRITERIOS PARA "FINALIZADA": ${finalizationRules}
 
 ¡EXTRAE EL MÁXIMO DE INFORMACIÓN POSIBLE PARA EL CRM!
 
 EJEMPLO DE SALIDA:
-{"user_name": "Carlos Ruiz", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA"}`;
+{"user_name": "Carlos Ruiz", "RESUMEN_EJECUTIVO": "Profesional de salud interesado en Fashion Management con 5 años de experiencia.", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -133,7 +130,7 @@ EJEMPLO DE SALIDA:
                 ],
                 response_format: { type: "json_object" },
                 temperature: 0,
-                max_tokens: 200
+                max_tokens: 400
             });
 
             const rawResult = completion.choices[0]?.message?.content;
@@ -142,13 +139,25 @@ EJEMPLO DE SALIDA:
             const extractedData = JSON.parse(rawResult) as ExtractedData;
             const result: Record<string, string> = { ...(preFilledData || {}) };
             
+            // Map AI extracted data to result, respecting tracked variables names EXACTLY
             Object.entries(extractedData).forEach(([key, val]) => {
                 if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).toLowerCase() !== "unknown") {
-                    const trackedMatch = varsToTrack.find(v => FactExtractionService.normalizeKey(v).toLowerCase() === key.toLowerCase());
-                    const finalKey = trackedMatch ? FactExtractionService.normalizeKey(trackedMatch) : key;
+                    // Look for a case-insensitive match in tracked variables
+                    const trackedMatch = varsToTrack.find(v => {
+                        const normalizedV = FactExtractionService.normalizeKey(v).toLowerCase();
+                        return normalizedV === key.toLowerCase() || v.toLowerCase() === key.toLowerCase();
+                    });
+
+                    // If it's a tracked variable, use the EXACT original name (e.g. {{ESTUDIOS}})
+                    const finalKey = trackedMatch ? trackedMatch : key;
                     result[finalKey] = String(val);
                 }
             });
+
+            // Specific handling for the summary to overwrite the long one if exists
+            if (extractedData.RESUMEN_EJECUTIVO) {
+                result["RESUMEN_CONVERSACION"] = String(extractedData.RESUMEN_EJECUTIVO);
+            }
 
             if (Object.keys(result).length > 0) {
                 console.log(`[FACT_EXTRACTOR] ✅ Captured facts:`, Object.keys(result));
@@ -212,7 +221,13 @@ EJEMPLO DE SALIDA:
         const updatedMetadata = { ...currentMetadata };
         
         Object.entries(newData).forEach(([newKey, newVal]) => {
-            const existingKey = Object.keys(updatedMetadata).find(k => k.toLowerCase() === newKey.toLowerCase());
+            // Find existing key by comparing lowercase and also checking with/without curly braces
+            const existingKey = Object.keys(updatedMetadata).find(k => {
+                const k1 = k.toLowerCase().replace(/^\{\{|\}\}$/g, "");
+                const k2 = newKey.toLowerCase().replace(/^\{\{|\}\}$/g, "");
+                return k1 === k2;
+            });
+
             if (existingKey) {
                 updatedMetadata[existingKey] = newVal;
             } else {

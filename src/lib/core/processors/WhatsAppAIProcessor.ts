@@ -9,6 +9,7 @@ import { FactExtractionService } from "@/lib/services/fact-extractor";
 import { GlobalLogger } from "../logger";
 import { getTimezoneByCountry } from "@/lib/utils/timezones";
 import { resolveCountryFromPhone } from "@/lib/utils/location-client";
+import { ensurePlusPrefix } from "@/lib/utils/phone-helper";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
@@ -140,7 +141,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // 🟢 EARLY TYPING INDICATOR: Trigger as soon as credentials are ready to show while AI is thinking
         if (waConfig?.accessToken && waConfig?.phoneNumberId && incomingMessageId) {
-            whatsappBridge.sendTypingIndicator((lead as any).telefono!, incomingMessageId, {
+            whatsappBridge.sendTypingIndicator(ensurePlusPrefix((lead as any).telefono!), incomingMessageId, {
                 accessToken: waConfig.accessToken,
                 phoneNumberId: waConfig.phoneNumberId
             }).catch(() => {});
@@ -155,7 +156,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         const variableMap = {
             nombre: (lead as any).nombre || 'estudiante',
             email: (lead as any).email || '',
-            telefono: (lead as any).telefono || '',
+            telefono: ensurePlusPrefix((lead as any).telefono || ''),
             fecha: now.toLocaleDateString('es-ES', { timeZone: TZ }),
             hora: now.toLocaleTimeString('es-ES', { timeZone: TZ }),
             now: now.toLocaleString('es-ES', { timeZone: TZ }),
@@ -170,13 +171,15 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };
 
-        // Add implicit context about timezones
+        // Add implicit context about timezones (MASTER RULES)
         const timezoneContext = `
-[REGLAS DE AGENDAMIENTO]
-1. Horario de atención: Solo puedes agendar citas entre las 09:00 y las 20:00 (Hora de España - Europe/Madrid).
-2. NUNCA ofrezcas ni confirmes una hora fuera de este rango. Si el lead pide una hora que cae en la madrugada de España (como las 01:00), dile amablemente que esa hora no está disponible y ofrece una alternativa dentro del horario (09:00 - 20:00 Madrid).
-3. Disponibilidad: Antes de confirmar cualquier hora, DEBES llamar a 'check_availability' para ver si el hueco está libre.
-4. Doble Confirmación: Al confirmar, di siempre: "Perfecto, agendado para las [HORA LOCAL] de tu país, que son las [HORA ESPAÑA] aquí en España".
+### REGLAS MAESTRAS DE HORARIO Y ZONAS HORARIAS (CRÍTICO):
+1. Nuestra sede está en MADRID, ESPAÑA. Los horarios de atención se rigen estrictamente por la hora de Madrid (09:00 a 20:00).
+2. DEBES comunicarte usando el HORARIO LOCAL DEL PROSPECTO (${variableMap.pais}, ${variableMap.$timezone_lead || 'su zona'}).
+3. Los huecos de disponibilidad que recibes de 'check_availability' ya están convertidos a la hora local del prospecto. ÚSALOS COMO ÚNICA REFERENCIA.
+4. Si el prospecto pide una hora que NO aparece en la lista, es porque en Madrid es fuera de horario.
+5. Ejemplo: Si un lead de Bolivia pide las 19:30, debes saber que en Madrid son las 01:30 AM. Debes decirle: "A esa hora nuestras oficinas en España están cerradas (es madrugada allí). Lo más tarde que podemos atenderte en tu horario local es a las [ÚLTIMA_HORA_DISPONIBLE]".
+6. DOBLE CONFIRMACIÓN: Al agendar, confirma siempre así: "Agendado para las [HORA_LOCAL] de tu país (que son las [HORA_MADRID] en España)".
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
@@ -253,7 +256,11 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         const systemPrompt = `
 ${finalPrompt}
 
-DATOS CONOCIDOS DEL LEAD (NO LOS PIDAS SI YA ESTÁN AQUÍ):
+### CONTEXTO TEMPORAL ACTUAL:
+- En ${variableMap.pais}: ${variableMap.$time} (${variableMap.$date})
+- En Madrid (Referencia): ${now.toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid' })}
+
+### DATOS DEL PROSPECTO:
 - Nombre: ${variableMap.nombre}
 - Teléfono: ${variableMap.telefono}
 - País: ${variableMap.pais}
@@ -261,6 +268,10 @@ DATOS CONOCIDOS DEL LEAD (NO LOS PIDAS SI YA ESTÁN AQUÍ):
 
 CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS POR PROGRAMA:
 ${programRequirements || "No hay criterios específicos definidos para los programas actuales de este lead. Usa criterios generales de admisión."}
+
+VARIABLES A CAPTURAR (OBLIGATORIO):
+${(activeVariant.tracked_variables as string[] || []).map(v => `- ${v}`).join("\n") || "No hay variables específicas configuradas."}
+*Nota: Intenta obtener estos datos de forma sutil durante la charla.*
 
 INFORMACIÓN ADICIONAL (CEREBRO):
 ${localKnowledge || "No hay información específica en la base de conocimiento para este mensaje."}
@@ -339,7 +350,6 @@ ${(leadAppointments as any[]).length > 0
                         // AUTO-QUALIFY: If appointment is booked, automatically qualify the lead
                         try {
                             // Fetch dynamic segments to find the one for "appointments"
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             const { data: tenant } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
                             let targetSegment = "AGENDADO"; // fallback
                             if (tenant?.config?.segmentations) {
@@ -414,9 +424,10 @@ ${(leadAppointments as any[]).length > 0
                     await new Promise(resolve => setTimeout(resolve, typingDuration - elapsed));
                 }
 
-                await whatsappBridge.sendTextMessage((lead as any).telefono, aiResponse, waConfig);
+                await whatsappBridge.sendTextMessage(ensurePlusPrefix((lead as any).telefono), aiResponse, waConfig);
                 
-                await (supabase.from("chat_messages" as unknown as string) as any).insert({
+                // 11b. Resilient Save to Database (Ensures visibility in Dashboard)
+                const messagePayload: any = {
                     tenant_id: tenantId,
                     lead_id: leadId,
                     direction: "OUTBOUND",
@@ -427,9 +438,59 @@ ${(leadAppointments as any[]).length > 0
                     metadata: { 
                         model: modelName,
                         variant_id: activeVariant.id,
-                        token_usage: completion.usage
+                        token_usage: completion.usage,
+                        meta_id: completion.id // Store the OpenAI completion ID as reference
                     }
-                });
+                };
+
+                const stripOrder = ["metadata", "sent_by", "status", "message_type"];
+                let lastInsertError: any = null;
+
+                for (let i = 0; i <= stripOrder.length; i++) {
+                    const { error: insertError } = await (supabase.from("chat_messages") as any)
+                        .insert(i === 0 ? messagePayload : { ...messagePayload });
+
+                    if (!insertError) {
+                        lastInsertError = null;
+                        console.log(`[AI PROCESSOR] ✅ Message saved to DB for lead ${leadId}`);
+                        break;
+                    }
+
+                    lastInsertError = insertError;
+                    const msg = insertError.message || "";
+                    if (msg.includes("column") || insertError.code === "PGRST204") {
+                        const fieldToRemove = stripOrder[i];
+                        if (fieldToRemove) {
+                            console.warn(`[AI PROCESSOR] ⚠️ Schema mismatch saving message: ${msg}. Stripping '${fieldToRemove}'...`);
+                            delete messagePayload[fieldToRemove];
+                        }
+                    } else {
+                        break; // Non-schema error, stop retrying
+                    }
+                }
+
+                if (lastInsertError) {
+                    console.error(`[AI PROCESSOR] ❌ Failed to save message to DB:`, lastInsertError);
+                    await (supabase.from("system_logs") as any).insert({
+                        tenant_id: tenantId,
+                        level: "ERROR",
+                        message: `No se pudo guardar mensaje de IA en chat_messages: ${lastInsertError.message}`,
+                        metadata: { leadId, error: lastInsertError }
+                    }).catch(() => {});
+                } else {
+                    // 11c. REFRESH DASHBOARD (Crucial for visibility)
+                    try {
+                        await (supabase.from("conversaciones_whatsapp") as any).upsert({
+                            tenant_id: tenantId,
+                            id_lead: leadId,
+                            fecha_ultimo_mensaje: new Date().toISOString(),
+                            estado: "ACTIVA"
+                        }, { onConflict: "tenant_id,id_lead" });
+                        console.log(`[AI PROCESSOR] 🔄 Dashboard refreshed for lead ${leadId}`);
+                    } catch (refreshErr) {
+                        console.warn(`[AI PROCESSOR] Failed to refresh dashboard:`, refreshErr);
+                    }
+                }
 
                 // 12. Autonomous Learning (Fact Extraction & Discovery)
                 const trackedVars = (activeVariant.tracked_variables as string[]) || [];
@@ -437,11 +498,12 @@ ${(leadAppointments as any[]).length > 0
                 // 12b. Inject System Variables into metadata automatically
                 const systemFacts: Record<string, string> = {
                     "AGENT_MESSAGE": aiResponse.substring(0, 500),
-                    "USER_PHONE": (lead as any).telefono || "",
-                    "RESUMEN_CONVERSACION": chatSummary || "En progreso..."
+                    "USER_PHONE": ensurePlusPrefix((lead as any).telefono || ""),
+                    "USER_COUNTRY": variableMap.pais
                 };
                 
                 // We run it even if trackedVars is empty to allow for "Discovery" of other relevant data
+                // The dialogue includes recent history to provide enough context for a good summary
                 const dialogueForExtraction = conversationContext 
                     ? `${conversationContext}\nUsuario: ${incomingMessage}\nAsistente: ${aiResponse}`
                     : `Usuario: ${incomingMessage}\nAsistente: ${aiResponse}`;

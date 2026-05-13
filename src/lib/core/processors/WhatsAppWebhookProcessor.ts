@@ -3,7 +3,7 @@ import { Database } from "@/types/database";
 import { uploadToMinio } from "@/lib/integrations/minio";
 import axios from "axios";
 import { getLeadLocationData } from "@/lib/core/compliance";
-import { normalizeWhatsAppNumber } from "@/lib/utils/phone-helper";
+import { normalizeWhatsAppNumber, ensurePlusPrefix } from "@/lib/utils/phone-helper";
 
 /**
  * WHATSAPP WEBHOOK PROCESSOR
@@ -100,13 +100,17 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                 .limit(1)
                 .maybeSingle();
 
+            // Generate a professional avatar URL as fallback
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&color=fff&size=128`;
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data: newLead, error: createError } = await (supabase.from("lead") as any)
                 .insert({
                     tenant_id: tenantId,
-                    telefono: fromNumber,
+                    telefono: ensurePlusPrefix(fromNumber),
                     nombre: firstName,
                     apellido: lastName,
+                    foto_url: avatarUrl,
                     origen: "WHATSAPP_INBOUND",
                     is_ai_enabled: true,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,15 +123,29 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             
             if (createError) throw createError;
             lead = newLead;
-        } else if (!lead.pais) {
+        } else {
+            const updates: Record<string, unknown> = {};
+            
+            // 3b. If existing lead doesn't have a photo, generate one
+            if (!lead.foto_url) {
+                const fullName = `${lead.nombre || ''} ${lead.apellido || ''}`.trim() || "Prospecto WhatsApp";
+                updates.foto_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&color=fff&size=128`;
+            }
+
             // Update country for existing lead if missing
-            const location = getLeadLocationData(fromNumber);
-            if (location.countryName) {
+            if (!lead.pais) {
+                const location = getLeadLocationData(fromNumber);
+                if (location.countryName) {
+                    updates.pais = location.countryName;
+                }
+            }
+
+            if (Object.keys(updates).length > 0) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await (supabase.from("lead") as any)
-                    .update({ pais: location.countryName })
+                    .update(updates)
                     .eq("id", lead.id);
-                lead.pais = location.countryName;
+                Object.assign(lead, updates);
             }
         }
 

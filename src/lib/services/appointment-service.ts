@@ -340,22 +340,31 @@ export class AppointmentService {
                     });
 
                     if (!isBooked) {
-                        let finalTime = timeStr.substring(0, 5);
+                        const nowUTC = new Date();
+                        const slotDate = new Date(slotUTC);
                         
-                        if (leadTimezone) {
-                            try {
-                                const zoned = toZonedTime(new Date(slotUTC), leadTimezone);
-                                finalTime = format(zoned, 'HH:mm', { timeZone: leadTimezone });
-                            } catch (e) {
-                                console.warn(`[CHECK AVAILABILITY] Failed to convert ${slotUTC} to ${leadTimezone}`, e);
-                            }
-                        }
+                        // If checking for today, skip slots that already passed (plus 15 min buffer)
+                        const isPast = slotDate.getTime() < (nowUTC.getTime() + 15 * 60 * 1000);
+                        const isToday = cleanDate === nowUTC.toISOString().split('T')[0];
 
-                        availableSlots.push({
-                            time: finalTime,
-                            madrid_time: timeStr.substring(0, 5),
-                            advisor_id: advisorId
-                        });
+                        if (!(isToday && isPast)) {
+                            let finalTime = timeStr.substring(0, 5);
+                            
+                            if (leadTimezone) {
+                                try {
+                                    const zoned = toZonedTime(new Date(slotUTC), leadTimezone);
+                                    finalTime = format(zoned, 'HH:mm', { timeZone: leadTimezone });
+                                } catch (e) {
+                                    console.warn(`[CHECK AVAILABILITY] Failed to convert ${slotUTC} to ${leadTimezone}`, e);
+                                }
+                            }
+
+                            availableSlots.push({
+                                time: finalTime,
+                                madrid_time: timeStr.substring(0, 5),
+                                advisor_id: advisorId
+                            });
+                        }
                     }
                     currentMin += duration;
                 }

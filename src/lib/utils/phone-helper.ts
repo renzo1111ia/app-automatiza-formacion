@@ -26,3 +26,20 @@ export function normalizeWhatsAppNumber(phone: string): string {
 
     return cleanNumber;
 }
+
+export function ensurePlusPrefix(phone: string): string {
+    if (!phone) return "";
+    
+    // 1. Remove all non-numeric characters EXCEPT '+'
+    let clean = phone.replace(/[^\d+]/g, '');
+    
+    // 2. If it doesn't start with '+', add it
+    if (!clean.startsWith('+')) {
+        // Ensure there's a number to add it to
+        if (clean.length > 0) {
+            clean = '+' + clean;
+        }
+    }
+    
+    return clean;
+}

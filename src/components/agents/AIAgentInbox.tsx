@@ -327,6 +327,37 @@ export default function AIAgentInbox() {
             )
             .on(
                 'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `tenant_id=eq.${tenantId}` },
+                (payload) => {
+                    const newMsg = payload.new as ChatMessage;
+                    console.log('[REALTIME] New message detected:', newMsg.id);
+                    
+                    if (selectedLeadRef.current?.id === newMsg.lead_id) {
+                        setMessages(prev => {
+                            // Avoid duplicates
+                            if (prev.find(m => m.id === newMsg.id)) return prev;
+                            const updated = [...prev, newMsg];
+                            // Auto-scroll
+                            setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                            return updated;
+                        });
+                    }
+
+                    // Also update the lead preview in the sidebar
+                    setLeads((prev) => {
+                        const updated = prev.map(l =>
+                            l.id === newMsg.lead_id
+                                ? { ...l, last_message: newMsg.content, last_message_time: newMsg.created_at }
+                                : l
+                        );
+                        return [...updated].sort((a, b) => 
+                            new Date(b.last_message_time || 0).getTime() - new Date(a.last_message_time || 0).getTime()
+                        );
+                    });
+                }
+            )
+            .on(
+                'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `tenant_id=eq.${tenantId}` },
                 (payload) => {
                     const updatedMsg = payload.new as ChatMessage;
