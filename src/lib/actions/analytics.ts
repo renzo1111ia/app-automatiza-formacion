@@ -167,19 +167,19 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
         const agendaData = (aRes.data || []) as any[];
         const wpData = (wRes.data || []) as any[];
 
-        const contactados = llamadasData.filter(l => l.estado_llamada === "CONTACTED");
-        const totalSecs = llamadasData.reduce((s, l) => s + (l.duracion_segundos || 0), 0);
-        const reachedSet = new Set([...llamadasData.map(l => l.lead?.id), ...wpData.map(w => w.id_lead)].filter(Boolean));
+        const contactados = llamadasData.filter((l: any) => l.estado_llamada === "CONTACTED");
+        const totalSecs = llamadasData.reduce((s: number, l: any) => s + (l.duracion_segundos || 0), 0);
+        const reachedSet = new Set([...llamadasData.map((l: any) => l.lead?.id), ...wpData.map((w: any) => w.id_lead)].filter(Boolean));
 
-        const total_cualificados = cualData.filter(c => c.cualificacion && c.cualificacion !== "NO").length;
+        const total_cualificados = cualData.filter((c: any) => c.cualificacion && c.cualificacion !== "NO").length;
         const total_leads = leadsData.length;
 
         const allReasons: any[] = [];
-        cualData.forEach(c => { if (c.motivo_anulacion) allReasons.push({ m: c.motivo_anulacion }); });
-        llamadasData.forEach(l => { if (l.estado_llamada !== "CONTACTED" && l.razon_termino) allReasons.push({ m: l.razon_termino }); });
+        cualData.forEach((c: any) => { if (c.motivo_anulacion) allReasons.push({ m: c.motivo_anulacion }); });
+        llamadasData.forEach((l: any) => { if (l.estado_llamada !== "CONTACTED" && l.razon_termino) allReasons.push({ m: l.razon_termino }); });
 
         const agendaMap: Record<string, number> = {};
-        agendaData.forEach(a => { if (a.fecha_agendada_cliente) { const d = a.fecha_agendada_cliente.slice(0,10); agendaMap[d] = (agendaMap[d] || 0) + 1; } });
+        agendaData.forEach((a: any) => { if (a.fecha_agendada_cliente) { const d = a.fecha_agendada_cliente.slice(0,10); agendaMap[d] = (agendaMap[d] || 0) + 1; } });
 
         return {
             ...empty,
@@ -273,14 +273,14 @@ export async function getKpiWhatsapp(from: string, to: string, filters: Analytic
         const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
 
         // 3. Filter conversations based on leads that matched the filters
-        const filteredWpRows = wpRows.filter(r => leadsMap.has(r.id_lead)).map(r => ({
+        const filteredWpRows = wpRows.filter((r: any) => leadsMap.has(r.id_lead)).map((r: any) => ({
             ...r,
             lead: leadsMap.get(r.id_lead)
         }));
 
         if (!filteredWpRows.length) return empty;
 
-        const leadIds = Array.from(new Set(filteredWpRows.map(r => r.id_lead)));
+        const leadIds = Array.from(new Set(filteredWpRows.map((r: any) => r.id_lead)));
         
         // 4. Fetch Appointments and Qualifications for THESE leads
         const [aRes, qRes] = await Promise.all([
@@ -295,14 +295,14 @@ export async function getKpiWhatsapp(from: string, to: string, filters: Analytic
         const total_conversaciones = filteredWpRows.length;
         const total_leads_unicos = leadIds.length;
         
-        const uniqueAgendados = new Set(agendaData.map(a => a.id_lead)).size;
-        const uniqueCualificados = new Set(cualData.filter(q => q.cualificacion && q.cualificacion !== "NO").map(q => q.id_lead)).size;
+        const uniqueAgendados = new Set(agendaData.map((a: any) => a.id_lead)).size;
+        const uniqueCualificados = new Set(cualData.filter((q: any) => q.cualificacion && q.cualificacion !== "NO").map((q: any) => q.id_lead)).size;
         
-        const total_ilocalizables = filteredWpRows.filter(r => r.lead?.tipo_lead === "ilocalizable").length;
+        const total_ilocalizables = filteredWpRows.filter((r: any) => r.lead?.tipo_lead === "ilocalizable").length;
 
         // Grouping for charts
         const byDay: Record<string, number> = {};
-        filteredWpRows.forEach(r => {
+        filteredWpRows.forEach((r: any) => {
             const d = r.fecha_creacion?.slice(0, 10);
             if (d) byDay[d] = (byDay[d] || 0) + 1;
         });
@@ -407,8 +407,8 @@ export async function getKpiCampanas(from: string, to: string, filters: Analytic
         });
 
         const reachedSet = new Set([
-            ...(llRes.data || []).filter(l => leadsMap.has(l.id_lead)).map((l: any) => l.id_lead),
-            ...(wRes.data || []).filter(w => leadsMap.has(w.id_lead)).map((w: any) => w.id_lead)
+            ...(llRes.data || []).filter((l: any) => leadsMap.has(l.id_lead)).map((l: any) => l.id_lead),
+            ...(wRes.data || []).filter((w: any) => leadsMap.has(w.id_lead)).map((w: any) => w.id_lead)
         ].filter(Boolean));
 
         const campanas = Object.values(campMap).map((c: any) => ({
