@@ -4,27 +4,52 @@ import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
 import { orchestrator } from "@/lib/core/orchestrator";
 
+interface ExtractedData {
+    user_name?: string;
+    nombre?: string;
+    apellido?: string;
+    user_phone?: string;
+    qualified?: string;
+    segmentacion?: string;
+    estado_conversacion?: string;
+    [key: string]: unknown;
+}
+
+interface LeadRecord {
+    id: string;
+    tenant_id: string;
+    nombre: string | null;
+    apellido: string | null;
+    telefono: string | null;
+    metadata: Record<string, unknown> | null;
+}
+
+interface TenantRecord {
+    id: string;
+    config: {
+        segmentations?: string[];
+    } | null;
+}
+
+interface AgentRecord {
+    id: string;
+    ai_agent_variants: Array<{
+        automation_rules?: {
+            finalization_criteria?: string;
+        };
+    }>;
+}
+
 /**
  * FACT EXTRACTION SERVICE
  * Analyzes conversation to extract structured data based on tracked variables.
- * Variables are stored with {{}} but keys in metadata are stored without them.
  */
 export class FactExtractionService {
     
-    /**
-     * Strips {{ }} from a variable name: "{{user_name}}" → "user_name"
-     */
     private static normalizeKey(varName: string): string {
         return varName.replace(/^\{\{|\}\}$/g, "").trim();
     }
 
-    /**
-     * Analyzes the conversation to find values for tracked variables.
-     * @param leadId - Lead ID to update
-     * @param dialogue - Full or recent conversation text
-     * @param varsToTrack - Array of variable names, e.g. ["{{user_name}}", "{{user_country}}"]
-     * @param apiKey - OpenAI API key
-     */
     static async extractFromDialogue(
         leadId: string, 
         dialogue: string, 
@@ -35,8 +60,7 @@ export class FactExtractionService {
     ) {
         if (!varsToTrack || varsToTrack.length === 0) return null;
 
-        // Normalize: strip {{ }} so OpenAI returns clean JSON keys
-        const normalizedKeys = varsToTrack.map(v => this.normalizeKey(v));
+        const normalizedKeys = varsToTrack.map(v => FactExtractionService.normalizeKey(v));
 
         console.log(`[FACT EXTRACTOR] 🧠 Extracting for lead ${leadId}: [${normalizedKeys.join(', ')}]`);
 
@@ -46,30 +70,31 @@ export class FactExtractionService {
                 return null;
             }
             const openai = new OpenAI({ apiKey });
-            // Fetch tenant segmentations to instruct AI
             const supabase = await getAdminSupabaseClient();
             let validSegments = ['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'];
             
             if (tenantId) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const { data: tenant } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
+                const { data: tenant } = await supabase.from("tenants")
+                    .select("config")
+                    .eq("id", tenantId)
+                    .single() as unknown as { data: TenantRecord | null };
+
                 if (tenant?.config?.segmentations) {
-                    validSegments = tenant.config.segmentations as string[];
+                    validSegments = tenant.config.segmentations;
                 }
             }
 
-            // Fetch Agent finalization criteria
             let finalizationRules = "El usuario se despidió, la cita quedó confirmada, o se descartó explícitamente.";
-            const { data: agent } = await (supabase.from("ai_agents" as any) as any)
+            const { data: agent } = await supabase.from("ai_agents")
                 .select("id, ai_agent_variants(automation_rules)")
-                .eq("tenant_id", tenantId)
+                .eq("tenant_id", tenantId || "")
                 .eq("status", "ACTIVE")
                 .limit(1)
-                .single();
+                .maybeSingle() as unknown as { data: AgentRecord | null };
             
-            const variantRules = (agent?.ai_agent_variants?.[0] as any)?.automation_rules;
-            if (variantRules?.finalization_criteria) {
-                finalizationRules = variantRules.finalization_criteria;
+            const variant = agent?.ai_agent_variants?.[0];
+            if (variant?.automation_rules?.finalization_criteria) {
+                finalizationRules = variant.automation_rules.finalization_criteria;
             }
 
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
@@ -110,13 +135,9 @@ EJEMPLO DE SALIDA:
             const rawResult = completion.choices[0]?.message?.content;
             if (!rawResult) return null;
 
-            const extractedData = JSON.parse(rawResult) as Record<string, unknown>;
-            
-            // 0. Start with pre-filled data (system variables)
+            const extractedData = JSON.parse(rawResult) as ExtractedData;
             const result: Record<string, string> = { ...(preFilledData || {}) };
             
-            // 1. Process tracked variables (maintaining their specific casing)
-            // 2. Process EVERYTHING else the AI discovered (Discovery mode)
             Object.entries(extractedData).forEach(([key, val]) => {
                 if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).toLowerCase() !== "unknown") {
                     const trackedMatch = varsToTrack.find(v => FactExtractionService.normalizeKey(v).toLowerCase() === key.toLowerCase());
@@ -125,7 +146,6 @@ EJEMPLO DE SALIDA:
                 }
             });
 
-            // Always save metadata if we have at least system facts or extracted data
             if (Object.keys(result).length > 0) {
                 console.log(`[FACT_EXTRACTOR] ✅ Captured facts:`, Object.keys(result));
                 await FactExtractionService.saveToLeadMetadata(leadId, result);
@@ -142,7 +162,6 @@ EJEMPLO DE SALIDA:
             return result;
         } catch (err) {
             console.error("[FACT EXTRACTOR] ❌ Error:", err);
-            // Even on error, try to save what we already have (preFilledData)
             if (preFilledData && Object.keys(preFilledData).length > 0) {
                 await FactExtractionService.saveToLeadMetadata(leadId, preFilledData).catch(() => {});
             }
@@ -153,34 +172,31 @@ EJEMPLO DE SALIDA:
     private static async saveToLeadMetadata(leadId: string, newData: Record<string, string>) {
         const supabase = await getAdminSupabaseClient();
 
-        // 1. Get current metadata
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: leadFound, error: fetchError } = await (supabase.from("lead") as any)
+        const { data: leadFound, error: fetchError } = await supabase.from("lead")
             .select("metadata, nombre, apellido, telefono, tenant_id")
             .eq("id", leadId)
-            .single();
+            .single() as unknown as { data: LeadRecord | null, error: { message: string } | null };
         
         if (fetchError) {
             console.error(`[FACT_EXTRACTOR] ❌ Error fetching lead ${leadId}:`, fetchError.message);
-            // Log to system_logs for visibility
-            await (supabase.from("system_logs" as any) as any).insert({
-                tenant_id: (leadFound as any)?.tenant_id || "00000000-0000-0000-0000-000000000000",
-                level: "ERROR",
-                message: `Error obteniendo metadatos del lead: ${fetchError.message}`,
-                metadata: { leadId, error: fetchError }
-            }).catch(() => {});
+            try {
+                await supabase.from("system_logs").insert({
+                    tenant_id: leadFound?.tenant_id || "00000000-0000-0000-0000-000000000000",
+                    level: "ERROR",
+                    message: `Error obteniendo metadatos del lead: ${fetchError.message}`,
+                    metadata: { leadId, error: fetchError }
+                } as never);
+            } catch (logErr) {
+                console.error("[FACT_EXTRACTOR] Failed to log fetch error:", logErr);
+            }
             return;
         }
         
-        const currentMetadata = (leadFound?.metadata as Record<string, unknown>) || {};
-        
-        // 2. Case-insensitive Merge: new data overwrites old values for same keys (regardless of case)
+        const currentMetadata = leadFound?.metadata || {};
         const updatedMetadata = { ...currentMetadata };
         
         Object.entries(newData).forEach(([newKey, newVal]) => {
-            const existingKey = Object.keys(updatedMetadata).find(
-                k => k.toLowerCase() === newKey.toLowerCase()
-            );
+            const existingKey = Object.keys(updatedMetadata).find(k => k.toLowerCase() === newKey.toLowerCase());
             if (existingKey) {
                 updatedMetadata[existingKey] = newVal;
             } else {
@@ -189,17 +205,13 @@ EJEMPLO DE SALIDA:
         });
 
         updatedMetadata.last_fact_update = new Date().toISOString();
-
-        // 3. Propagate name fields to main lead columns
         const mainUpdate: Record<string, unknown> = { metadata: updatedMetadata };
         
-        // If user_name was captured, split into nombre/apellido
         if (newData.user_name) {
             const parts = newData.user_name.trim().split(' ');
             mainUpdate.nombre = parts[0];
             if (parts.length > 1) mainUpdate.apellido = parts.slice(1).join(' ');
         }
-        // Legacy support for "nombre" key
         if (newData.nombre) {
             const parts = newData.nombre.trim().split(' ');
             mainUpdate.nombre = parts[0];
@@ -208,23 +220,19 @@ EJEMPLO DE SALIDA:
         if (newData.apellido) {
             mainUpdate.apellido = newData.apellido;
         }
-        // Propagate phone if captured
         if (newData.user_phone && !leadFound?.telefono) {
             mainUpdate.telefono = newData.user_phone;
         }
-        // Propagate qualification to tipo_lead
         if (newData.qualified) {
             const q = newData.qualified.toUpperCase();
             if (q === 'SI') mainUpdate.tipo_lead = 'CUALIFICADO';
             else if (q === 'NO') mainUpdate.tipo_lead = 'DESCARTADO';
             else if (q === 'PENDIENTE') mainUpdate.tipo_lead = 'EN SEGUIMIENTO';
         }
-        // Propagate AI-predicted segmentacion to the main lead record
         if (newData.segmentacion && String(newData.segmentacion).trim() !== "") {
             mainUpdate.segmentacion = String(newData.segmentacion).trim().toUpperCase();
         }
 
-        // 🟢 AUTO-FILL SYSTEM VARIABLES
         if (!updatedMetadata.USER_PHONE && leadFound?.telefono) {
             updatedMetadata.USER_PHONE = leadFound.telefono;
         }
@@ -232,23 +240,10 @@ EJEMPLO DE SALIDA:
         if (!updatedMetadata.USER_COUNTRY && leadFound?.telefono) {
             const phone = leadFound.telefono.replace(/\D/g, "");
             const countryMap: Record<string, string> = {
-                "56": "Chile",
-                "591": "Bolivia",
-                "57": "Colombia",
-                "34": "España",
-                "52": "México",
-                "54": "Argentina",
-                "51": "Perú",
-                "593": "Ecuador",
-                "502": "Guatemala",
-                "503": "El Salvador",
-                "504": "Honduras",
-                "505": "Nicaragua",
-                "506": "Costa Rica",
-                "507": "Panamá",
-                "1": "USA/Canada",
+                "56": "Chile", "591": "Bolivia", "57": "Colombia", "34": "España", "52": "México",
+                "54": "Argentina", "51": "Perú", "593": "Ecuador", "502": "Guatemala", "503": "El Salvador",
+                "504": "Honduras", "505": "Nicaragua", "506": "Costa Rica", "507": "Panamá", "1": "USA/Canada",
             };
-            // Check prefixes
             for (const [prefix, country] of Object.entries(countryMap)) {
                 if (phone.startsWith(prefix)) {
                     updatedMetadata.USER_COUNTRY = country;
@@ -261,61 +256,50 @@ EJEMPLO DE SALIDA:
             updatedMetadata.USER_NAME = `${leadFound.nombre || ""} ${leadFound.apellido || ""}`.trim();
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: updateError } = await (supabase.from("lead") as any)
-            .update(mainUpdate)
+        const { error: updateError } = await supabase.from("lead")
+            .update(mainUpdate as never)
             .eq("id", leadId);
 
         if (updateError) {
             console.error(`[FACT_EXTRACTOR] ❌ Failed to save metadata:`, updateError.message);
-            // Log to system_logs for visibility
-            await (supabase.from("system_logs" as any) as any).insert({
-                tenant_id: (leadFound as any)?.tenant_id || "00000000-0000-0000-0000-000000000000",
-                level: "ERROR",
-                message: `Error guardando metadatos del lead: ${updateError.message}`,
-                metadata: { leadId, error: updateError, mainUpdate }
-            }).catch(() => {});
+            try {
+                await supabase.from("system_logs").insert({
+                    tenant_id: leadFound?.tenant_id || "00000000-0000-0000-0000-000000000000",
+                    level: "ERROR",
+                    message: `Error guardando metadatos del lead: ${updateError.message}`,
+                    metadata: { leadId, error: updateError, mainUpdate }
+                } as never);
+            } catch (logErr) {
+                console.error("[FACT_EXTRACTOR] Failed to log update error:", logErr);
+            }
         } else {
             console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
             
-            // 🟣 AUTO-QUALIFICATION CHECK
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const meta = updatedMetadata as any;
+            const meta = updatedMetadata as Record<string, unknown>;
             const studies = meta.estudios || meta.nivel_estudios;
             const exp = meta.experiencia || meta.years_experience;
 
             if (studies && exp) {
                 const result = evaluateLeadQualification({
                     nivel_estudios: String(studies),
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    years_experience: exp as any
+                    years_experience: Number(exp) || 0
                 });
 
                 if (result.status === "cualificado") {
-                    // Get lead to find tenant_id if not passed
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
+                    const { data: lead } = await supabase.from("lead").select("tenant_id").eq("id", leadId).single() as unknown as { data: { tenant_id: string } | null };
                     if (lead) {
                         await orchestrator.handleLeadQualification(leadId, lead.tenant_id, result.reason);
                     }
                 } else {
-                    console.log(`[FACT EXTRACTOR] ℹ️ Lead ${leadId} evaluated but NOT qualified yet: ${result.reason}`);
-                    
-                    // 🟢 DYNAMIC RESUME: If we captured new data but not qualified, 
-                    // ask orchestrator to check if we can skip the wait
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
+                    console.log(`[FACT_EXTRACTOR] ℹ️ Lead ${leadId} evaluated but NOT qualified yet: ${result.reason}`);
+                    const { data: lead } = await supabase.from("lead").select("tenant_id").eq("id", leadId).single() as unknown as { data: { tenant_id: string } | null };
                     if (lead) {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        await orchestrator.triggerDynamicResume(leadId, (lead as any).tenant_id);
+                        await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
                     }
                 }
             } else if (Object.keys(newData).length > 0) {
-                // Even if not enough for auto-qual, trigger resume to see if we skip wait
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const { data: lead } = await (supabase.from("lead") as any).select("tenant_id").eq("id", leadId).single();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (lead) await orchestrator.triggerDynamicResume(leadId, (lead as any).tenant_id);
+                const { data: lead } = await supabase.from("lead").select("tenant_id").eq("id", leadId).single() as unknown as { data: { tenant_id: string } | null };
+                if (lead) await orchestrator.triggerDynamicResume(leadId, lead.tenant_id);
             }
         }
     }
