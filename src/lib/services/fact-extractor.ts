@@ -56,7 +56,8 @@ export class FactExtractionService {
         varsToTrack: string[],
         apiKey: string,
         tenantId?: string,
-        preFilledData?: Record<string, string>
+        preFilledData?: Record<string, string>,
+        programRequirements?: string
     ) {
         if (!varsToTrack || varsToTrack.length === 0) return null;
 
@@ -100,6 +101,9 @@ export class FactExtractionService {
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
 Analiza el diálogo y extrae la información relevante del perfil del lead.
 
+CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS POR PROGRAMA:
+${programRequirements || "No hay criterios específicos definidos. Usa criterios generales de admisión (Estudios Universitarios o >= 5 años de experiencia)."}
+
 CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.join(', ')}.
 
 REGLAS CRÍTICAS:
@@ -108,7 +112,7 @@ REGLAS CRÍTICAS:
 3. FLOW ANALYSIS: Intenta deducir "REGLA_APLICADA" o "QA_TOPIC" basándote en la lógica del asistente.
 4. NO INVENTES: Si el usuario no ha mencionado algo, usa null para las prioritarias y omite para las extra.
 5. PRECISIÓN: Extrae valores específicos.
-6. "qualified": Siempre intenta evaluar si el lead está "SI", "NO" o "PENDIENTE" basándote en la conversación.
+6. "qualified": Evalúa si el lead está "SI", "NO" o "PENDIENTE" basándote en los CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS arriba mencionados.
 7. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
 8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
 9. "ha_respondido": Extrae "SI" si el lead ha contestado al asistente, o "NO" si no lo ha hecho.
@@ -152,6 +156,18 @@ EJEMPLO DE SALIDA:
 
                 if (tenantId) {
                     await enqueueLeadStep({ leadId, tenantId, action: "CRM_SYNC", step: 0 });
+                    
+                    // Trigger Google Sheets Sync for testing/backup
+                    try {
+                        const { GoogleSheetsService } = await import("./google-sheets-service");
+                        const { data: fullLead } = await supabase.from("lead").select("*").eq("id", leadId).single();
+                        if (fullLead) {
+                            await GoogleSheetsService.appendLead(tenantId, fullLead);
+                        }
+                    } catch (sheetErr) {
+                        console.warn("[FACT_EXTRACTOR] Google Sheets sync failed:", sheetErr);
+                    }
+
                     if (result.estado_conversacion?.toUpperCase() === 'FINALIZADA') {
                         const { enqueueQualificationAnalysis } = await import("@/lib/core/queue/lead-sequence-queue");
                         await enqueueQualificationAnalysis({ leadId, tenantId, transcript: dialogue, callId: "whatsapp" });

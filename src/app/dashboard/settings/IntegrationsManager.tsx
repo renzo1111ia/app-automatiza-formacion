@@ -3,7 +3,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { 
     MessageSquare, Key, Phone, Mic, 
-    PhoneCall, Zap, RefreshCw, CheckCircle2, Database
+    PhoneCall, Zap, RefreshCw, CheckCircle2, Database,
+    FileSpreadsheet
 } from "lucide-react";
 import { syncRetellResources } from "@/lib/actions/retell-sync";
 import { syncWhatsAppTemplates } from "@/lib/actions/whatsapp-sync";
@@ -411,6 +412,66 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ── SECTION: GOOGLE SHEETS (NEW) ── */}
+            <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-green-500/10 text-green-600 flex items-center justify-center border border-green-500/20">
+                            <FileSpreadsheet className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Google Sheets / Drive</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-left">Exportación automática de leads a Excel en la nube</p>
+                        </div>
+                    </div>
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                            if (!tenantId) {
+                                alert("Guarda el cliente antes de conectar con Google.");
+                                return;
+                            }
+                            window.location.href = `/api/integrations/google/auth?tenantId=${tenantId}`;
+                        }}
+                        className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest gap-2 bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    >
+                        <RefreshCw className="h-3 w-3" />
+                        {(config?.google as any)?.connected ? "Reconectar Google" : "Conectar Google"}
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2 text-left">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Spreadsheet ID</Label>
+                        <Input 
+                            value={(config?.google as any)?.spreadsheetId || ""}
+                            onChange={(e) => updateField('google', { spreadsheetId: e.target.value })}
+                            placeholder="ID de la hoja de cálculo (de la URL)"
+                            className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-sm"
+                        />
+                        <p className="text-[9px] text-slate-400 font-medium">Ejemplo: 1abc123... (se encuentra en la URL del documento)</p>
+                    </div>
+                    <div className="space-y-2 text-left">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Nombre de la Pestaña</Label>
+                        <Input 
+                            value={(config?.google as any)?.sheetName || "Leads"}
+                            onChange={(e) => updateField('google', { sheetName: e.target.value })}
+                            placeholder="Hoja1"
+                            className="h-11 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl text-sm"
+                        />
+                    </div>
+                </div>
+
+                {(config?.google as any)?.connected && (
+                    <div className="p-3 rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/30 flex items-center gap-3">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-tight">Cuenta de Google vinculada correctamente</span>
                     </div>
                 )}
             </div>

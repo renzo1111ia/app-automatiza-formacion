@@ -89,7 +89,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // 3-5. Fetch all context data in parallel to reduce latency
         console.log(`[AI PROCESSOR] ⚡ Fetching context data and credentials in parallel...`);
-        const [recentHistory, chatSummary, localKnowledge, tenantData, leadAppointments] = await Promise.all([
+        const [recentHistory, chatSummary, localKnowledge, tenantData, leadAppointments, leadProgramsData] = await Promise.all([
             // 3. Get Recent Context from DB (last 10 messages)
             ChatMemoryService.getRecentContext(leadId).catch(err => {
                 console.warn("[AI PROCESSOR] Memory fetch skipped:", err);
@@ -123,8 +123,18 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             AppointmentService.getLeadAppointments(leadId).catch(err => {
                 console.warn("[AI PROCESSOR] Appointments fetch skipped:", err);
                 return [];
-            })
+            }),
+            // 8. Get Lead Programs Requirements
+            (supabase.from("lead_programas") as any)
+                .select("programas(nombre, requisitos_cualificacion)")
+                .eq("id_lead", leadId)
         ]);
+
+        const leadPrograms = (leadProgramsData?.data as any[]) || [];
+        const programRequirements = leadPrograms
+            .filter(p => p.programas?.requisitos_cualificacion)
+            .map(p => `### ${p.programas.nombre}:\n${p.programas.requisitos_cualificacion}`)
+            .join("\n\n");
 
         const waConfig = (tenantData?.data as any)?.config?.whatsapp;
 
@@ -242,6 +252,9 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         // 8. Build System Prompt
         const systemPrompt = `
 ${finalPrompt}
+
+CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS POR PROGRAMA:
+${programRequirements || "No hay criterios específicos definidos para los programas actuales de este lead. Usa criterios generales de admisión."}
 
 INFORMACIÓN ADICIONAL (CEREBRO):
 ${localKnowledge || "No hay información específica en la base de conocimiento para este mensaje."}
@@ -433,8 +446,9 @@ ${(leadAppointments as any[]).length > 0
                     trackedVars, 
                     apiKey,
                     tenantId,
-                    systemFacts // Passing pre-filled system facts
-                ).catch((e: any) => console.error("[AI PROCESSOR] Fact extraction error:", e));
+                    systemFacts, // Passing pre-filled system facts
+                    programRequirements
+                ).catch((e: unknown) => console.error("[AI PROCESSOR] Fact extraction error:", e));
 
             } else {
                 console.error(`[AI PROCESSOR] ❌ WhatsApp credentials missing for tenant ${tenantId}`);
