@@ -1200,11 +1200,17 @@ export default function AIAgentInbox() {
                                     const pendingVars = trackedVariables
                                         .map(v => v.replace(/^\{\{|\}\}$/g, '').trim())
                                         .filter(k => {
-                                            const found = Object.keys(meta).find(mk => 
+                                            // Find if ANY key in meta matches k case-insensitively
+                                            const matchingKey = Object.keys(meta).find(mk => 
                                                 mk.toLowerCase() === k.toLowerCase() ||
                                                 mk.toLowerCase() === `{{${k.toLowerCase()}}}`
                                             );
-                                            return !found && String(meta[k] ?? '').trim() === '';
+                                            
+                                            if (!matchingKey) return true; // Not found -> Pending
+                                            
+                                            // If found, check if it has a value
+                                            const value = meta[matchingKey];
+                                            return !value || String(value).trim() === '' || String(value).toLowerCase() === 'pendiente...';
                                         });
 
                                     const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;

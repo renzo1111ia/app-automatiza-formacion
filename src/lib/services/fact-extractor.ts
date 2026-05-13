@@ -119,47 +119,33 @@ EJEMPLO DE SALIDA:
             // 2. Process EVERYTHING else the AI discovered (Discovery mode)
             Object.entries(extractedData).forEach(([key, val]) => {
                 if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).toLowerCase() !== "unknown") {
-                    // Find if this matches a tracked var (case-insensitive)
-                    const trackedMatch = varsToTrack.find(v => this.normalizeKey(v).toLowerCase() === key.toLowerCase());
-                    const finalKey = trackedMatch ? this.normalizeKey(trackedMatch) : key;
+                    const trackedMatch = varsToTrack.find(v => FactExtractionService.normalizeKey(v).toLowerCase() === key.toLowerCase());
+                    const finalKey = trackedMatch ? FactExtractionService.normalizeKey(trackedMatch) : key;
                     result[finalKey] = String(val);
                 }
             });
 
+            // Always save metadata if we have at least system facts or extracted data
             if (Object.keys(result).length > 0) {
-                console.log(`[FACT_EXTRACTOR] ✅ Captured ${Object.keys(result).length} facts:`, result);
-                await this.saveToLeadMetadata(leadId, result);
+                console.log(`[FACT_EXTRACTOR] ✅ Captured facts:`, Object.keys(result));
+                await FactExtractionService.saveToLeadMetadata(leadId, result);
 
-                // 🟢 TRIGGER CRM SYNC (ONE BY ONE LOGIC)
                 if (tenantId) {
-                    await enqueueLeadStep({
-                        leadId,
-                        tenantId,
-                        action: "CRM_SYNC",
-                        step: 0
-                    });
-                    console.log(`[FACT_EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
-
-                    // 🏁 TRIGGER DEEP ANALYSIS IF CONVERSATION ENDED
-                    if (result.estado_conversacion && result.estado_conversacion.toUpperCase() === 'FINALIZADA') {
+                    await enqueueLeadStep({ leadId, tenantId, action: "CRM_SYNC", step: 0 });
+                    if (result.estado_conversacion?.toUpperCase() === 'FINALIZADA') {
                         const { enqueueQualificationAnalysis } = await import("@/lib/core/queue/lead-sequence-queue");
-                        await enqueueQualificationAnalysis({
-                            leadId,
-                            tenantId,
-                            transcript: dialogue,
-                            callId: "whatsapp"
-                        });
-                        console.log(`[FACT_EXTRACTOR] 🏁 Conversation ended. Deep Qualification Analysis enqueued for lead ${leadId}`);
+                        await enqueueQualificationAnalysis({ leadId, tenantId, transcript: dialogue, callId: "whatsapp" });
                     }
                 }
-
-                return result;
             }
 
-            console.log(`[FACT EXTRACTOR] ℹ️ No new data found in this exchange`);
-            return null;
+            return result;
         } catch (err) {
             console.error("[FACT EXTRACTOR] ❌ Error:", err);
+            // Even on error, try to save what we already have (preFilledData)
+            if (preFilledData && Object.keys(preFilledData).length > 0) {
+                await FactExtractionService.saveToLeadMetadata(leadId, preFilledData).catch(() => {});
+            }
             return null;
         }
     }
