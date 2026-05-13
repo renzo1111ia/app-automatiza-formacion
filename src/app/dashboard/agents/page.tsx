@@ -41,6 +41,7 @@ interface AIAgentAutomationRules {
     working_hours?: { start: string; end: string; days: number[] };
     retry_delay?: number;
     tools?: Record<string, boolean>;
+    finalization_criteria?: string;
 }
 
 
@@ -372,6 +373,25 @@ export default function AgentsPage() {
                                             onChange={(e) => setVariantA(p => ({...p, prompt_text: e.target.value}))} 
                                             className="w-full h-[400px] bg-card/40 border border-border rounded-[40px] p-10 text-base leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-foreground shadow-2xl backdrop-blur-xl border-t-primary/20" 
                                             placeholder="Eres un agente experto en cualificación de leads..." 
+                                        />
+                                    </div>
+
+                                    {/* SECCIÓN 2.5: POLÍTICA DE FINALIZACIÓN */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                                                <X className="h-6 w-6 text-red-500" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black uppercase tracking-tight">Política de Finalización</h3>
+                                                <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-1">Define cuándo se considera que la charla ha terminado para el análisis profundo</p>
+                                            </div>
+                                        </div>
+                                        <textarea 
+                                            value={(variantA.automation_rules as unknown as AIAgentAutomationRules)?.finalization_criteria || ""} 
+                                            onChange={(e) => setVariantA(p => ({...p, automation_rules: {...(p.automation_rules as unknown as AIAgentAutomationRules), finalization_criteria: e.target.value}}))} 
+                                            className="w-full h-[150px] bg-card/40 border border-border rounded-[32px] p-8 text-sm leading-relaxed font-medium focus:ring-4 focus:ring-primary/5 transition-all resize-none outline-none text-foreground shadow-xl backdrop-blur-xl" 
+                                            placeholder="Ej: Cuando el usuario confirme la cita, cuando se despida explícitamente, o cuando el lead diga que no le interesa..." 
                                         />
                                     </div>
 

@@ -47,14 +47,29 @@ export class FactExtractionService {
             }
             const openai = new OpenAI({ apiKey });
             // Fetch tenant segmentations to instruct AI
+            const supabase = await getAdminSupabaseClient();
             let validSegments = ['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'];
+            
             if (tenantId) {
-                const supabase = await getAdminSupabaseClient();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { data: tenant } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
                 if (tenant?.config?.segmentations) {
                     validSegments = tenant.config.segmentations as string[];
                 }
+            }
+
+            // Fetch Agent finalization criteria
+            let finalizationRules = "El usuario se despidió, la cita quedó confirmada, o se descartó explícitamente.";
+            const { data: agent } = await (supabase.from("ai_agents" as any) as any)
+                .select("id, ai_agent_variants(automation_rules)")
+                .eq("tenant_id", tenantId)
+                .eq("status", "ACTIVE")
+                .limit(1)
+                .single();
+            
+            const variantRules = (agent?.ai_agent_variants?.[0] as any)?.automation_rules;
+            if (variantRules?.finalization_criteria) {
+                finalizationRules = variantRules.finalization_criteria;
             }
 
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
@@ -73,7 +88,8 @@ REGLAS CRÍTICAS:
 8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
 9. "ha_respondido": Extrae "SI" si el lead ha contestado al asistente, o "NO" si no lo ha hecho.
 10. "requiere_seguimiento": Extrae "SI" si hay que volver a contactar a este lead en el futuro, o "NO" si ya se cerró/descartó.
-11. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA" (ej. el usuario se despidió, la cita quedó confirmada, o se descartó).
+11. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA".
+    CRITERIOS PARA "FINALIZADA": ${finalizationRules}
 
 ¡EXTRAE EL MÁXIMO DE INFORMACIÓN POSIBLE PARA EL CRM!
 
@@ -208,6 +224,43 @@ EJEMPLO DE SALIDA:
         // Propagate AI-predicted segmentacion to the main lead record
         if (newData.segmentacion && String(newData.segmentacion).trim() !== "") {
             mainUpdate.segmentacion = String(newData.segmentacion).trim().toUpperCase();
+        }
+
+        // 🟢 AUTO-FILL SYSTEM VARIABLES
+        if (!updatedMetadata.USER_PHONE && leadFound?.telefono) {
+            updatedMetadata.USER_PHONE = leadFound.telefono;
+        }
+
+        if (!updatedMetadata.USER_COUNTRY && leadFound?.telefono) {
+            const phone = leadFound.telefono.replace(/\D/g, "");
+            const countryMap: Record<string, string> = {
+                "56": "Chile",
+                "591": "Bolivia",
+                "57": "Colombia",
+                "34": "España",
+                "52": "México",
+                "54": "Argentina",
+                "51": "Perú",
+                "593": "Ecuador",
+                "502": "Guatemala",
+                "503": "El Salvador",
+                "504": "Honduras",
+                "505": "Nicaragua",
+                "506": "Costa Rica",
+                "507": "Panamá",
+                "1": "USA/Canada",
+            };
+            // Check prefixes
+            for (const [prefix, country] of Object.entries(countryMap)) {
+                if (phone.startsWith(prefix)) {
+                    updatedMetadata.USER_COUNTRY = country;
+                    break;
+                }
+            }
+        }
+
+        if (!updatedMetadata.USER_NAME && (leadFound?.nombre || leadFound?.apellido)) {
+            updatedMetadata.USER_NAME = `${leadFound.nombre || ""} ${leadFound.apellido || ""}`.trim();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
