@@ -1007,29 +1007,6 @@ export default function AIAgentInbox() {
                                 <div>
                                     <h3 className="text-[16px] font-black tracking-tight text-foreground">{selectedLead.nombre ? `${selectedLead.nombre} ${selectedLead.apellido || ''}` : selectedLead.telefono}</h3>
                                     <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-[0.2em] mt-1">{selectedLead.tipo_lead || 'LEAD SIN REVISAR'}</p>
-                                    <div className="flex justify-center mt-4">
-                                        <button 
-                                            onClick={async () => {
-                                                if (isAnalyzing) return;
-                                                setIsAnalyzing(true);
-                                                try {
-                                                    const { runManualAnalysis } = await import("@/lib/actions/analysis");
-                                                    const res = await runManualAnalysis(selectedLead.id, selectedLead.tenant_id);
-                                                    if (res.success) {
-                                                        alert("✅ Análisis completado. El lead ha sido cualificado y segmentado con los datos más recientes.");
-                                                    } else {
-                                                        alert("Error en análisis: " + res.error);
-                                                    }
-                                                } finally {
-                                                    setIsAnalyzing(false);
-                                                }
-                                            }}
-                                            disabled={isAnalyzing}
-                                            className="h-8 px-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Zap className="h-3 w-3" /> {isAnalyzing ? "Analizando..." : "Analizar Conversación"}
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
 

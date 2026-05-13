@@ -1,11 +1,8 @@
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
 import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
+import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
 import { orchestrator } from "@/lib/core/orchestrator";
-
-import { getAdminSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * FACT EXTRACTION SERVICE
@@ -67,16 +64,18 @@ CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.join(', ')}.
 
 REGLAS CRÍTICAS:
 1. Devuelve ÚNICAMENTE un JSON plano. Debes incluir SIEMPRE las CLAVES PRIORITARIAS OBLIGATORIAS. Si el valor de alguna clave aún no se menciona en la charla, asigna el valor null.
-2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles, inclúyelos también en el JSON con nombres de clave descriptivos en español.
+2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (ej. empresa, cargo, experiencia, disponibilidad, interes_especifico), inclúyelos también en el JSON con nombres de clave descriptivos en español. ¡NO DEJES NADA FUERA!
 3. FLOW ANALYSIS: Intenta deducir "REGLA_APLICADA" o "QA_TOPIC" basándote en la lógica del asistente.
-4. NO INVENTES: Si el usuario no ha mencionado algo, omite la clave.
+4. NO INVENTES: Si el usuario no ha mencionado algo, usa null para las prioritarias y omite para las extra.
 5. PRECISIÓN: Extrae valores específicos.
 6. "qualified": Siempre intenta evaluar si el lead está "SI", "NO" o "PENDIENTE" basándote en la conversación.
 7. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
-8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}]. Si no hay suficiente información, omite esta clave.
+8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
 9. "ha_respondido": Extrae "SI" si el lead ha contestado al asistente, o "NO" si no lo ha hecho.
 10. "requiere_seguimiento": Extrae "SI" si hay que volver a contactar a este lead en el futuro, o "NO" si ya se cerró/descartó.
 11. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA" (ej. el usuario se despidió, la cita quedó confirmada, o se descartó).
+
+¡EXTRAE EL MÁXIMO DE INFORMACIÓN POSIBLE PARA EL CRM!
 
 EJEMPLO DE SALIDA:
 {"user_name": "Carlos Ruiz", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA"}`;
