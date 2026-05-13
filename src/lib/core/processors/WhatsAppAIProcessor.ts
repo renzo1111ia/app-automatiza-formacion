@@ -386,10 +386,13 @@ ${(leadAppointments as any[]).length > 0
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
                 // 11. Send response via WhatsApp
-                // Ensure at least 3 seconds have passed since we started thinking for natural feel
+                // Ensure a natural delay based on message length (approx 30ms per char)
+                // Min 1.5s, Max 6s
+                const typingDuration = Math.max(1500, Math.min(6000, aiResponse.length * 30));
                 const elapsed = Date.now() - startTime;
-                if (elapsed < 3000) {
-                    await new Promise(resolve => setTimeout(resolve, 3000 - elapsed));
+                
+                if (elapsed < typingDuration) {
+                    await new Promise(resolve => setTimeout(resolve, typingDuration - elapsed));
                 }
 
                 await whatsappBridge.sendTextMessage((lead as any).telefono, aiResponse, waConfig);
