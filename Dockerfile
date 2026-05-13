@@ -20,6 +20,9 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+# Aumentamos la memoria de Node para evitar el error de Out of Memory en Dokploy/VPS
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 RUN npm run build
 
 # Stage 3: Production image, copy all the files and run next
