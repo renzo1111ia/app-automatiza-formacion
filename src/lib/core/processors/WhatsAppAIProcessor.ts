@@ -382,8 +382,8 @@ ${(leadAppointments as any[]).length > 0
             await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
-                // 11.5 Simulate human typing delay (30ms per character, min 1s, max 4s)
-                const typingDelay = Math.min(Math.max(aiResponse.length * 30, 1000), 4000);
+                // 11.5 Simulate human typing delay (30ms per character, min 3s, max 6s)
+                const typingDelay = Math.min(Math.max(aiResponse.length * 30, 3000), 6000);
                 
                 console.log(`[AI PROCESSOR] ⏳ Simulating typing delay of ${typingDelay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, typingDelay));
