@@ -209,6 +209,16 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                 console.log(`[WHATSAPP PROCESSOR] Message logged successfully for lead ${lead.id}`);
             }
 
+            // 5c. Ensure conversation entry exists for Dashboard/WhatsApp
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from("conversaciones_whatsapp") as any)
+                .upsert({
+                    tenant_id: tenantId,
+                    id_lead: (lead as unknown as { id: string }).id,
+                    fecha_ultimo_mensaje: new Date().toISOString(),
+                    estado: "ACTIVA"
+                }, { onConflict: "tenant_id,id_lead" });
+
             // activity log for debugging
             const { GlobalLogger } = await import("../logger");
             await GlobalLogger.info(tenantId, "WHATSAPP", `WhatsApp Inbound: ${fromNumber}`, { 
