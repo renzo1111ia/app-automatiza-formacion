@@ -101,7 +101,7 @@ export class WhatsAppBridge {
                     messaging_product: "whatsapp",
                     to: normalizedTo,
                     type: "text",
-                    text: { body: body },
+                    text: { preview_url: false, body: body },
                 },
                 {
                     headers: {
@@ -111,7 +111,6 @@ export class WhatsAppBridge {
                 }
             );
 
-            console.log(`[WHATSAPP BRIDGE] ✅ Text message sent to ${to}.`);
             return response.data;
         } catch (error: unknown) {
             const err = error as { response?: { data?: unknown }; message?: string };
@@ -121,20 +120,25 @@ export class WhatsAppBridge {
     }
 
     /**
-     * Sends a typing indicator ("typing...") to the user's WhatsApp.
+     * Sends a typing indicator (Beta/New feature in Meta Cloud API)
+     * Marks the message as 'read' and shows typing dots.
      */
-    public async sendTypingIndicator(to: string, config: WhatsAppConfig) {
+    public async sendTypingIndicator(to: string, messageId: string, config: WhatsAppConfig) {
         try {
-            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
+            const normalizedTo = to.replace(/\D/g, "");
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             
+            // Note: In Cloud API, sending a 'read' status with typing_indicator
             await axios.post(
                 url,
                 {
                     messaging_product: "whatsapp",
-                    recipient_type: "individual",
+                    status: "read",
+                    message_id: messageId,
                     to: normalizedTo,
-                    sender_status: "typing_on"
+                    typing_indicator: {
+                        type: "text"
+                    }
                 },
                 {
                     headers: {
@@ -143,11 +147,40 @@ export class WhatsAppBridge {
                     },
                 }
             );
-            console.log(`[WHATSAPP BRIDGE] ⌨️ Typing indicator sent to ${to}`);
+            console.log(`[WHATSAPP BRIDGE] ✍️ Typing indicator sent for message ${messageId}`);
+            return { success: true };
         } catch (error: unknown) {
-            // Silently fail typing indicator as it's not critical and might not be supported on all accounts
+            // We don't throw here to avoid blocking the main flow if typing fail
             const err = error as { response?: { data?: unknown }; message?: string };
-            console.warn("[WHATSAPP BRIDGE] Could not send typing indicator:", err.response?.data || err.message);
+            console.warn("[WHATSAPP BRIDGE] ⚠️ Failed to send typing indicator:", err.response?.data || err.message);
+            return { success: false };
+        }
+    }
+
+    /**
+     * Sends a typing indicator ("typing...") to the user's WhatsApp.
+     */
+    public async sendLegacyTypingIndicator(to: string, config: WhatsAppConfig) {
+        try {
+            const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
+            await axios.post(
+                url,
+                {
+                    messaging_product: "whatsapp",
+                    to: to.replace(/\D/g, ""),
+                    type: "text",
+                    text: { body: "..." } // Legacy simulation
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${config.accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            return { success: true };
+        } catch (error: unknown) {
+            return { success: false };
         }
     }
 

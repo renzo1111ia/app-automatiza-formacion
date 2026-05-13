@@ -16,12 +16,15 @@ import { resolveCountryFromPhone } from "@/lib/utils/location-client";
  * No AWS dependencies.
  */
 
-export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string) {
+export async function generateAIWhatsAppResponse(tenantId: string, leadId: string, incomingMessage: string, incomingMessageId?: string) {
     if (!incomingMessage) return;
     
+    const startTime = Date.now();
     try {
         const supabase = getAdminSupabase();
         await GlobalLogger.info(tenantId, "WHATSAPP", `Thinking started for lead ${leadId}`, { message: incomingMessage });
+
+        // 0. Deduplication check - Handled by Webhook Processor to avoid self-blocking
 
         // 0. Deduplication check - Handled by Webhook Processor to avoid self-blocking
 
@@ -126,8 +129,8 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         const waConfig = (tenantData?.data as any)?.config?.whatsapp;
 
         // 🟢 EARLY TYPING INDICATOR: Trigger as soon as credentials are ready to show while AI is thinking
-        if (waConfig?.accessToken && waConfig?.phoneNumberId) {
-            whatsappBridge.sendTypingIndicator((lead as any).telefono!, {
+        if (waConfig?.accessToken && waConfig?.phoneNumberId && incomingMessageId) {
+            whatsappBridge.sendTypingIndicator((lead as any).telefono!, incomingMessageId, {
                 accessToken: waConfig.accessToken,
                 phoneNumberId: waConfig.phoneNumberId
             }).catch(() => {});
@@ -382,21 +385,17 @@ ${(leadAppointments as any[]).length > 0
             await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
-                // 11.5 Simulate human typing delay (30ms per character, min 3s, max 6s)
-                const typingDelay = Math.min(Math.max(aiResponse.length * 30, 3000), 6000);
+                // 11. Send response via WhatsApp
+                const whatsappConfig = tenantData.config.whatsapp;
                 
-                console.log(`[AI PROCESSOR] ⏳ Simulating typing delay of ${typingDelay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, typingDelay));
+                // Ensure at least 3 seconds have passed since we started thinking for natural feel
+                const elapsed = Date.now() - startTime;
+                if (elapsed < 3000) {
+                    await new Promise(resolve => setTimeout(resolve, 3000 - elapsed));
+                }
 
-                await whatsappBridge.sendTextMessage((lead as any).telefono!, aiResponse, {
-                    accessToken: waConfig.accessToken,
-                    phoneNumberId: waConfig.phoneNumberId
-                });
-
-                // 12. Log Outbound Message (Consolidated)
-                await ChatSummaryService.appendMessage(tenantId, leadId, "Asistente", aiResponse);
-
-                // 12. Individual message logging (REQUIRED FOR DASHBOARD INBOX)
+                await whatsappBridge.sendTextMessage((lead as any).telefono, aiResponse, whatsappConfig);
+                
                 await (supabase.from("chat_messages" as unknown as string) as any).insert({
                     tenant_id: tenantId,
                     lead_id: leadId,

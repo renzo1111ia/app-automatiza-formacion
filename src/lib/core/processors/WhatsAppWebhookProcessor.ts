@@ -235,7 +235,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
             const { GlobalLogger } = await import("../logger");
             await GlobalLogger.info(tenantId, "WHATSAPP", `🤖 Calling AI Processor for lead ${lead.id}`);
             const { generateAIWhatsAppResponse } = await import("./WhatsAppAIProcessor");
-            await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content);
+            await generateAIWhatsAppResponse(tenantId, (lead as unknown as { id: string }).id, content, message.id);
         } else {
             const { GlobalLogger } = await import("../logger");
             await GlobalLogger.warn(tenantId, "WHATSAPP", `AI is DISABLED for lead ${lead.id}. Skipping.`);
