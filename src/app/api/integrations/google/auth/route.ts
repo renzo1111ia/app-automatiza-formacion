@@ -1,37 +1,32 @@
+import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const tenantId = searchParams.get('tenantId');
 
     if (!tenantId) {
-        return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
+        return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
 
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/integrations/google/callback`;
-    
-    // Scopes needed for Google Sheets and Drive
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/integrations/google/callback`
+    );
+
     const scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.metadata.readonly',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'openid'
+        'https://www.googleapis.com/auth/drive.metadata.readonly'
     ];
 
-    if (!clientId) {
-        console.error("[GOOGLE AUTH] Missing GOOGLE_CLIENT_ID in environment variables");
-        return NextResponse.json({ error: 'Google Integration not configured on server' }, { status: 500 });
-    }
+    const url = oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        prompt: 'consent',
+        state: tenantId // Pass tenantId in state to retrieve it in callback
+    });
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
-        `scope=${encodeURIComponent(scopes.join(' '))}&` +
-        `access_type=offline&` +
-        `prompt=consent&` +
-        `state=${tenantId}`;
-
-    return NextResponse.redirect(authUrl);
+    return NextResponse.redirect(url);
 }
