@@ -386,15 +386,13 @@ ${(leadAppointments as any[]).length > 0
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
                 // 11. Send response via WhatsApp
-                const whatsappConfig = tenantData.config.whatsapp;
-                
                 // Ensure at least 3 seconds have passed since we started thinking for natural feel
                 const elapsed = Date.now() - startTime;
                 if (elapsed < 3000) {
                     await new Promise(resolve => setTimeout(resolve, 3000 - elapsed));
                 }
 
-                await whatsappBridge.sendTextMessage((lead as any).telefono, aiResponse, whatsappConfig);
+                await whatsappBridge.sendTextMessage((lead as any).telefono, aiResponse, waConfig);
                 
                 await (supabase.from("chat_messages" as unknown as string) as any).insert({
                     tenant_id: tenantId,
