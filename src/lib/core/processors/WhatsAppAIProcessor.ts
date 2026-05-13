@@ -180,6 +180,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 4. Si el prospecto pide una hora que NO aparece en la lista, es porque en Madrid es fuera de horario.
 5. Ejemplo: Si un lead de Bolivia pide las 19:30, debes saber que en Madrid son las 01:30 AM. Debes decirle: "A esa hora nuestras oficinas en España están cerradas (es madrugada allí). Lo más tarde que podemos atenderte en tu horario local es a las [ÚLTIMA_HORA_DISPONIBLE]".
 6. DOBLE CONFIRMACIÓN: Al agendar, confirma siempre así: "Agendado para las [HORA_LOCAL] de tu país (que son las [HORA_MADRID] en España)".
+7. NO PREGUNTES POR DATOS QUE YA TIENES: Si en la sección 'DATOS DEL PROSPECTO' ya aparece el Nombre, País o Teléfono, NO se los preguntes al usuario. Actúa como si ya lo supieras.
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
@@ -427,28 +428,29 @@ ${(leadAppointments as any[]).length > 0
                 await whatsappBridge.sendTextMessage(ensurePlusPrefix((lead as any).telefono), aiResponse, waConfig);
                 
                 // 11b. Resilient Save to Database (Ensures visibility in Dashboard)
+                // Using EXACT SAME format as Inbound messages which are working
                 const messagePayload: any = {
                     tenant_id: tenantId,
                     lead_id: leadId,
                     direction: "OUTBOUND",
                     message_type: "TEXT",
                     content: aiResponse,
-                    sent_by: "AI_AGENT",
                     status: "SENT",
                     metadata: { 
-                        model: modelName,
-                        variant_id: activeVariant.id,
-                        token_usage: completion.usage,
-                        meta_id: completion.id // Store the OpenAI completion ID as reference
+                        meta_id: completion.id,
+                        model: modelName
                     }
                 };
 
                 const stripOrder = ["metadata", "sent_by", "status", "message_type"];
                 let lastInsertError: any = null;
 
+                // Create a working copy to avoid modifying the original payload during retries
+                let currentPayload = { ...messagePayload };
+
                 for (let i = 0; i <= stripOrder.length; i++) {
                     const { error: insertError } = await (supabase.from("chat_messages") as any)
-                        .insert(i === 0 ? messagePayload : { ...messagePayload });
+                        .insert(currentPayload);
 
                     if (!insertError) {
                         lastInsertError = null;
@@ -458,11 +460,16 @@ ${(leadAppointments as any[]).length > 0
 
                     lastInsertError = insertError;
                     const msg = insertError.message || "";
-                    if (msg.includes("column") || insertError.code === "PGRST204") {
+                    console.warn(`[AI PROCESSOR] ⚠️ Attempt ${i+1} failed: ${msg}`);
+
+                    if (msg.includes("column") || insertError.code === "PGRST204" || msg.includes("not found")) {
                         const fieldToRemove = stripOrder[i];
                         if (fieldToRemove) {
-                            console.warn(`[AI PROCESSOR] ⚠️ Schema mismatch saving message: ${msg}. Stripping '${fieldToRemove}'...`);
-                            delete messagePayload[fieldToRemove];
+                            console.warn(`[AI PROCESSOR] 🛠️ Stripping '${fieldToRemove}' and retrying...`);
+                            const { [fieldToRemove]: _, ...rest } = currentPayload;
+                            currentPayload = rest as any;
+                        } else {
+                            break;
                         }
                     } else {
                         break; // Non-schema error, stop retrying
