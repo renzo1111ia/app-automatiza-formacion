@@ -388,7 +388,7 @@ export default function AIAgentInbox() {
                         nombre: (newLead.nombre as string) || null,
                         apellido: (newLead.apellido as string) || null,
                         telefono: phone,
-                        foto_url: null,
+                        foto_url: (newLead.foto_url as string) || null,
                         is_ai_enabled: (newLead.is_ai_enabled as boolean) ?? true,
                         ai_agent_id: (newLead.ai_agent_id as string) || null,
                         last_message: 'Nueva conversación',
