@@ -159,33 +159,7 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                             <div className="flex items-center justify-between">
                                 <SectionHeader icon={Target} title="Datos Capturados (IA / Sistema)" />
                                 <div className="flex items-center gap-2">
-                                    <button 
-                                        onClick={async () => {
-                                            if (isSaving) return;
-                                            setIsSaving(true);
-                                            try {
-                                                const { runManualAnalysis } = await import("@/lib/actions/analysis");
-                                                const res = await runManualAnalysis(lead.id, lead.tenant_id);
-                                                if (res.success) {
-                                                    // Merge extracted_data into local metadata state
-                                                    const extracted = (res.data?.extracted_data || {}) as Record<string, unknown>;
-                                                    const updatedMeta = { ...metadata, ...extracted };
-                                                    setMetadata(updatedMeta);
-                                                    // ✅ Propagate to parent sidebar so variables refresh immediately
-                                                    onUpdate({ ...editedLead, metadata: updatedMeta });
-                                                    alert(`✅ Análisis completado. ${Object.keys(extracted).length} campos extraídos.`);
-                                                } else {
-                                                    alert("Error en análisis: " + res.error);
-                                                }
-                                            } finally {
-                                                setIsSaving(false);
-                                            }
-                                        }}
-                                        disabled={isSaving}
-                                        className="h-8 px-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center gap-2"
-                                    >
-                                        <Zap className="h-3 w-3" /> {isSaving ? "Analizando..." : "Analizar Conversación"}
-                                    </button>
+
                                     <button 
                                         onClick={addMetadataKey}
                                         className="h-8 px-3 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all flex items-center gap-2"

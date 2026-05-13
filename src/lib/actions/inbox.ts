@@ -38,7 +38,7 @@ export interface InboxLead {
     pais?: string | null;
     origen?: string | null;
     campana?: string | null;
-    segmentacion?: 'PUESTO 1' | 'REVISADO' | 'CUALIFICADO' | 'SIN INTERÉS' | null;
+    segmentacion?: string | null;
     created_at?: string | null;
     metadata?: Record<string, unknown> | null;
 }

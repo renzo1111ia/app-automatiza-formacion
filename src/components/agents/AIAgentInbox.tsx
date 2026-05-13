@@ -31,6 +31,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import { LeadProfileModal } from "./LeadProfileModal";
 import type { LucideIcon } from "lucide-react";
 import { resolveCountryFromPhone } from "@/lib/utils/location-client";
+import { getActiveTenantConfig, updateTenantConfig } from "@/lib/actions/tenant";
 
 
 export default function AIAgentInbox() {
@@ -60,6 +61,11 @@ export default function AIAgentInbox() {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     
+    // Config
+    const [segmentations, setSegmentations] = useState<string[]>(['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS']);
+    const [isEditingSegments, setIsEditingSegments] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    
     // Filters
     const [segmentFilter, setSegmentFilter] = useState<string | null>(null);
     const [aiFilter, setAiFilter] = useState<boolean | null>(null);
@@ -82,6 +88,13 @@ export default function AIAgentInbox() {
     
     // Refs
     const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // AI Typing Indicator State
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 2000);
+        return () => clearInterval(interval);
+    }, []);
 
     // --- Data Loading ---
     const loadLeads = useCallback(async (silent = false) => {
@@ -147,6 +160,13 @@ export default function AIAgentInbox() {
         // Initial Fetch
         const runInitialFetch = async () => {
             try {
+                // Fetch config
+                getActiveTenantConfig().then(config => {
+                    if (config?.config?.segmentations) {
+                        setSegmentations(config.config.segmentations as string[]);
+                    }
+                }).catch(e => console.error(e));
+
                 await Promise.all([
                     loadLeads(),
                     loadTemplates(),
@@ -567,7 +587,15 @@ export default function AIAgentInbox() {
                 </div>
             </div>
         );
-    }    return (
+    }
+    
+    // Compute AI Typing state
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    const isAITyping = selectedLead?.is_ai_enabled && 
+                       lastMessage?.direction === 'INBOUND' && 
+                       (now - new Date(lastMessage.created_at).getTime() < 15000);
+
+    return (
         <div className="h-full flex text-foreground selection:bg-primary/30 font-sans overflow-hidden">
             
             {/* ─── COLUMN 1: CONVERSATION LIST (Standard 320px) ───────────────────────── */}
@@ -866,13 +894,29 @@ export default function AIAgentInbox() {
                     ) : loadingChat ? (
                         <div className="h-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                     ) : (
-                        messages.map((msg) => (
-                            <ChatMessageBubble 
-                                key={msg.id} 
-                                message={msg} 
-                                templates={templates}
-                            />
-                        ))
+                        <>
+                            {messages.map((msg) => (
+                                <ChatMessageBubble 
+                                    key={msg.id} 
+                                    message={msg} 
+                                    templates={templates}
+                                />
+                            ))}
+                            {isAITyping && (
+                                <div className="flex w-full justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="flex gap-4 max-w-[85%] items-end">
+                                        <div className="h-8 w-8 rounded-2xl flex-shrink-0 bg-primary/20 border border-primary/40 flex items-center justify-center">
+                                            <Bot className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div className="rounded-2xl rounded-bl-sm px-5 py-4 bg-card/60 border border-border shadow-sm flex items-center gap-1 h-11">
+                                            <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                            <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                     <div ref={chatEndRef} />
                 </div>
@@ -963,46 +1007,127 @@ export default function AIAgentInbox() {
                                 <div>
                                     <h3 className="text-[16px] font-black tracking-tight text-foreground">{selectedLead.nombre ? `${selectedLead.nombre} ${selectedLead.apellido || ''}` : selectedLead.telefono}</h3>
                                     <p className="text-[10px] font-bold text-foreground/50 uppercase tracking-[0.2em] mt-1">{selectedLead.tipo_lead || 'LEAD SIN REVISAR'}</p>
+                                    <div className="flex justify-center mt-4">
+                                        <button 
+                                            onClick={async () => {
+                                                if (isAnalyzing) return;
+                                                setIsAnalyzing(true);
+                                                try {
+                                                    const { runManualAnalysis } = await import("@/lib/actions/analysis");
+                                                    const res = await runManualAnalysis(selectedLead.id, selectedLead.tenant_id);
+                                                    if (res.success) {
+                                                        alert("✅ Análisis completado. El lead ha sido cualificado y segmentado con los datos más recientes.");
+                                                    } else {
+                                                        alert("Error en análisis: " + res.error);
+                                                    }
+                                                } finally {
+                                                    setIsAnalyzing(false);
+                                                }
+                                            }}
+                                            disabled={isAnalyzing}
+                                            className="h-8 px-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <Zap className="h-3 w-3" /> {isAnalyzing ? "Analizando..." : "Analizar Conversación"}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Segmentation Panel */}
                             <div className="space-y-6">
                                 <div className="space-y-3">
-                                    <p className="px-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Segmentación</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {(['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'] as const).map((seg) => (
-                                            <button
-                                                key={seg}
-                                                onClick={async () => {
-                                                    console.log("Segmenting lead:", selectedLead.id, "to:", seg);
-                                                    
-                                                    // OPTIMISTIC UI: Update immediately
-                                                    const previousSegment = selectedLead.segmentacion;
-                                                    
-                                                    // Functional updates to avoid closure issues
-                                                    setSelectedLead((prev: InboxLead | null) => prev ? { ...prev, segmentacion: seg } : null);
-                                                    setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? { ...l, segmentacion: seg } : l));
-
-                                                    const res = await updateLeadSegment(selectedLead.id, seg);
-                                                    
-                                                    if (!res.success) {
-                                                        setSelectedLead((prev: InboxLead | null) => prev ? { ...prev, segmentacion: previousSegment } : null);
-                                                        setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? { ...l, segmentacion: previousSegment } : l));
-                                                        alert("Error al guardar segmentación: " + res.error);
-                                                    }
-                                                }}
-                                                className={cn(
-                                                    "px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
-                                                    selectedLead.segmentacion === seg 
-                                                        ? "bg-primary border-primary/20 text-primary-foreground shadow-lg shadow-primary/20" 
-                                                        : "bg-card/40 border-border text-muted-foreground hover:bg-card/60"
-                                                )}
-                                            >
-                                                {seg}
-                                            </button>
-                                        ))}
+                                    <div className="flex items-center justify-between px-1">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">Segmentación</p>
+                                        <button 
+                                            onClick={() => setIsEditingSegments(!isEditingSegments)}
+                                            className="text-[9px] font-bold text-primary hover:text-primary/80 transition-colors uppercase"
+                                        >
+                                            {isEditingSegments ? "Guardar" : "Editar"}
+                                        </button>
                                     </div>
+                                    
+                                    {isEditingSegments ? (
+                                        <div className="space-y-2">
+                                            {segmentations.map((seg, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <input 
+                                                        value={seg}
+                                                        onChange={(e) => {
+                                                            const newSegs = [...segmentations];
+                                                            newSegs[idx] = e.target.value;
+                                                            setSegmentations(newSegs);
+                                                        }}
+                                                        placeholder="Nombre del segmento"
+                                                        title={`Editar segmento ${seg}`}
+                                                        className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-[10px] font-bold focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                                    />
+                                                    <button 
+                                                        onClick={() => setSegmentations(segmentations.filter((_, i) => i !== idx))}
+                                                        title={`Eliminar segmento ${seg}`}
+                                                        aria-label={`Eliminar segmento ${seg}`}
+                                                        className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div className="flex gap-2 pt-2">
+                                                <button 
+                                                    onClick={() => setSegmentations([...segmentations, "NUEVO SEGMENTO"])}
+                                                    className="flex-1 h-8 rounded-lg bg-card border border-border border-dashed text-[9px] font-black uppercase text-muted-foreground hover:bg-card/60 flex items-center justify-center gap-1"
+                                                >
+                                                    <PlusCircle className="h-3 w-3" /> Añadir
+                                                </button>
+                                                <button 
+                                                    onClick={async () => {
+                                                        const cleanSegs = segmentations.map(s => s.trim().toUpperCase()).filter(Boolean);
+                                                        setSegmentations(cleanSegs);
+                                                        setIsEditingSegments(false);
+                                                        if (tenantId) {
+                                                            await updateTenantConfig(tenantId, { segmentations: cleanSegs });
+                                                        }
+                                                    }}
+                                                    className="flex-1 h-8 rounded-lg bg-primary text-primary-foreground text-[9px] font-black uppercase hover:bg-primary/90"
+                                                >
+                                                    Confirmar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {segmentations.map((seg) => (
+                                                <button
+                                                    key={seg}
+                                                    onClick={async () => {
+                                                        console.log("Segmenting lead:", selectedLead.id, "to:", seg);
+                                                        
+                                                        // OPTIMISTIC UI: Update immediately
+                                                        const previousSegment = selectedLead.segmentacion;
+                                                        
+                                                        // Functional updates to avoid closure issues
+                                                        setSelectedLead((prev: InboxLead | null) => prev ? { ...prev, segmentacion: seg } : null);
+                                                        setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? { ...l, segmentacion: seg } : l));
+
+                                                        const res = await updateLeadSegment(selectedLead.id, seg);
+                                                        
+                                                        if (!res.success) {
+                                                            setSelectedLead((prev: InboxLead | null) => prev ? { ...prev, segmentacion: previousSegment } : null);
+                                                            setLeads((prev: InboxLead[]) => prev.map(l => l.id === selectedLead.id ? { ...l, segmentacion: previousSegment } : l));
+                                                            alert("Error al guardar segmentación: " + res.error);
+                                                        }
+                                                    }}
+                                                    className={cn(
+                                                        "px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
+                                                        selectedLead.segmentacion === seg 
+                                                            ? "bg-primary border-primary/20 text-primary-foreground shadow-lg shadow-primary/20" 
+                                                            : "bg-card/40 border-border text-muted-foreground hover:bg-card/60"
+                                                    )}
+                                                >
+                                                    {seg}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                                 <DetailField 
                                     label="Teléfono" 

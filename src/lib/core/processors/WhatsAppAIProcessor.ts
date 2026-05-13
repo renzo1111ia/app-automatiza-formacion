@@ -8,6 +8,7 @@ import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowled
 import { FactExtractionService } from "@/lib/services/fact-extractor";
 import { GlobalLogger } from "../logger";
 import { getTimezoneByCountry } from "@/lib/utils/timezones";
+import { resolveCountryFromPhone } from "@/lib/utils/location-client";
 
 /**
  * WHATSAPP AI PROCESSOR (CEREBRO v3.0)
@@ -137,7 +138,9 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             fecha: now.toLocaleDateString('es-ES', { timeZone: TZ }),
             hora: now.toLocaleTimeString('es-ES', { timeZone: TZ }),
             now: now.toLocaleString('es-ES', { timeZone: TZ }),
-            pais: (lead as any).pais || 'Desconocido',
+            pais: ((lead as any).pais && (lead as any).pais !== 'Desconocido' && (lead as any).pais !== 'Identificando...') 
+                  ? (lead as any).pais 
+                  : (resolveCountryFromPhone((lead as any).telefono) || 'Desconocido'),
             "$now": now.toLocaleString('es-ES', { timeZone: TZ }),
             "$date": now.toLocaleDateString('es-ES', { timeZone: TZ }),
             "$time": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
@@ -302,6 +305,29 @@ ${(leadAppointments as any[]).length > 0
                 try {
                     if (name === "book_appointment") {
                         const appt = await AppointmentService.bookAppointment(tenantId, leadId, args.date, args.time, args.notes);
+                        
+                        // AUTO-QUALIFY: If appointment is booked, automatically qualify the lead
+                        try {
+                            // Fetch dynamic segments to find the one for "appointments"
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const { data: tenant } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
+                            let targetSegment = "AGENDADO"; // fallback
+                            if (tenant?.config?.segmentations) {
+                                const segs = (tenant.config as { segmentations: string[] }).segmentations || [];
+                                // Look for anything containing "AGENDA", "CITA", or "BOOK"
+                                const matched = segs.find(s => s.toUpperCase().includes("AGENDA") || s.toUpperCase().includes("CITA"));
+                                if (matched) targetSegment = matched;
+                            }
+
+                            await (supabase.from("lead") as any).update({
+                                tipo_lead: 'CUALIFICADO',
+                                segmentacion: targetSegment
+                            }).eq("id", leadId);
+                            console.log(`[AI PROCESSOR] 🎯 Goal met! Auto-qualifying lead ${leadId} as CUALIFICADO / ${targetSegment}.`);
+                        } catch (err) {
+                            console.error("[AI PROCESSOR] Failed to auto-qualify lead:", err);
+                        }
+
                         result = JSON.stringify({ success: true, appointment: appt });
                     } else if (name === "cancel_appointment") {
                         const res = await AppointmentService.cancelAppointment(args.appointmentId);
@@ -348,6 +374,11 @@ ${(leadAppointments as any[]).length > 0
             await ChatMemoryService.addMessage(leadId, 'assistant', aiResponse);
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
+                // 11.5 Simulate human typing delay (30ms per character, min 1s, max 4s)
+                const typingDelay = Math.min(Math.max(aiResponse.length * 30, 1000), 4000);
+                console.log(`[AI PROCESSOR] ⏳ Simulating typing delay of ${typingDelay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, typingDelay));
+
                 await whatsappBridge.sendTextMessage((lead as any).telefono!, aiResponse, {
                     accessToken: waConfig.accessToken,
                     phoneNumberId: waConfig.phoneNumberId

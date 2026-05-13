@@ -143,6 +143,43 @@ export class WhatsAppBridge {
             return [];
         }
     }
+
+    /**
+     * Sends a typing indicator command ("escribiendo...") to the WhatsApp client.
+     */
+    public async sendTypingIndicator(to: string, config: WhatsAppConfig) {
+        try {
+            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
+            const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
+            
+            console.log(`[WHATSAPP BRIDGE] ⌨️ Sending typing indicator to ${to}`);
+            
+            await axios.post(
+                url,
+                {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: normalizedTo,
+                    type: "command",
+                    command: {
+                        event: "typing_on"
+                    }
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${config.accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            return { success: true };
+        } catch (error: unknown) {
+            // Silently fail as this is not critical for the flow
+            const err = error as { response?: { data?: unknown }; message?: string };
+            console.warn("[WHATSAPP BRIDGE] Failed to send typing indicator:", err.response?.data || err.message);
+            return { success: false };
+        }
+    }
 }
 
 export const whatsappBridge = new WhatsAppBridge();

@@ -115,8 +115,12 @@ export class QualificationProcessor {
         if (error) console.error("[QUAL-PROCESSOR] Error saving results:", error);
 
         // 6. Update Lead Status
+        let finalStatus = "EN SEGUIMIENTO";
+        if (analysis.interest_score >= 7) finalStatus = "CUALIFICADO";
+        else if (analysis.interest_score <= 4) finalStatus = "DESCARTADO";
+
         await (supabase.from("lead" as any) as any).update({
-            tipo_lead: analysis.interest_score >= 7 ? "CALIFICADO" : "Poco Interés"
+            tipo_lead: finalStatus
         }).eq("id", params.leadId);
 
         console.log(`[QUAL-PROCESSOR] ✅ Deep analysis completed for lead ${params.leadId}. Score: ${analysis.interest_score} (Variant: ${variant?.version_label || 'Default'})`);

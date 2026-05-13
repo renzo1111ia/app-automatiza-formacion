@@ -5,6 +5,8 @@ import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
 import { orchestrator } from "@/lib/core/orchestrator";
 
+import { getAdminSupabaseClient } from "@/lib/supabase/server";
+
 /**
  * FACT EXTRACTION SERVICE
  * Analyzes conversation to extract structured data based on tracked variables.
@@ -47,23 +49,37 @@ export class FactExtractionService {
                 return null;
             }
             const openai = new OpenAI({ apiKey });
-            
+            // Fetch tenant segmentations to instruct AI
+            let validSegments = ['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'];
+            if (tenantId) {
+                const supabase = await getAdminSupabaseClient();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const { data: tenant } = await (supabase.from("tenants") as any).select("config").eq("id", tenantId).single();
+                if (tenant?.config?.segmentations) {
+                    validSegments = tenant.config.segmentations as string[];
+                }
+            }
+
             const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
 Analiza el diálogo y extrae la información relevante del perfil del lead.
 
-CLAVES PRIORITARIAS: ${normalizedKeys.join(', ')}.
+CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.join(', ')}.
 
 REGLAS CRÍTICAS:
-1. Devuelve ÚNICAMENTE un JSON plano.
-2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (nombre real, email, ciudad, motivación, nivel de estudios, etc.), inclúyelos también en el JSON con nombres de clave descriptivos en español (ej: "nombre_completo", "interes_especifico").
-3. FLOW ANALYSIS: Si te piden claves como "REGLA_APLICADA" o "QA_TOPIC", intenta deducirlas basándote en la lógica que el asistente está siguiendo en la conversación.
-4. NO INVENTES: Si el usuario no ha mencionado algo, NO lo rellenes. Si no existe la información, omite la clave.
-5. PRECISIÓN: Extrae valores específicos. Ejemplo: "Aprender marketing digital" en lugar de "Estudios".
+1. Devuelve ÚNICAMENTE un JSON plano. Debes incluir SIEMPRE las CLAVES PRIORITARIAS OBLIGATORIAS. Si el valor de alguna clave aún no se menciona en la charla, asigna el valor null.
+2. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles, inclúyelos también en el JSON con nombres de clave descriptivos en español.
+3. FLOW ANALYSIS: Intenta deducir "REGLA_APLICADA" o "QA_TOPIC" basándote en la lógica del asistente.
+4. NO INVENTES: Si el usuario no ha mencionado algo, omite la clave.
+5. PRECISIÓN: Extrae valores específicos.
 6. "qualified": Siempre intenta evaluar si el lead está "SI", "NO" o "PENDIENTE" basándote en la conversación.
 7. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
+8. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}]. Si no hay suficiente información, omite esta clave.
+9. "ha_respondido": Extrae "SI" si el lead ha contestado al asistente, o "NO" si no lo ha hecho.
+10. "requiere_seguimiento": Extrae "SI" si hay que volver a contactar a este lead en el futuro, o "NO" si ya se cerró/descartó.
+11. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA" (ej. el usuario se despidió, la cita quedó confirmada, o se descartó).
 
 EJEMPLO DE SALIDA:
-{"user_name": "Carlos Ruiz", "user_profesion": "Arquitecto", "user_motivation": "Especialización en BIM", "qualified": "SI"}`;
+{"user_name": "Carlos Ruiz", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA"}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -108,6 +124,18 @@ EJEMPLO DE SALIDA:
                         step: 0
                     });
                     console.log(`[FACT_EXTRACTOR] 🚀 CRM Sync enqueued for lead ${leadId}`);
+
+                    // 🏁 TRIGGER DEEP ANALYSIS IF CONVERSATION ENDED
+                    if (result.estado_conversacion && result.estado_conversacion.toUpperCase() === 'FINALIZADA') {
+                        const { enqueueQualificationAnalysis } = await import("@/lib/core/queue/lead-sequence-queue");
+                        await enqueueQualificationAnalysis({
+                            leadId,
+                            tenantId,
+                            transcript: dialogue,
+                            callId: "whatsapp"
+                        });
+                        console.log(`[FACT_EXTRACTOR] 🏁 Conversation ended. Deep Qualification Analysis enqueued for lead ${leadId}`);
+                    }
                 }
 
                 return result;
@@ -122,11 +150,7 @@ EJEMPLO DE SALIDA:
     }
 
     private static async saveToLeadMetadata(leadId: string, newData: Record<string, string>) {
-        const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        const supabase = createClient<Database>(url!, key!, {
-            auth: { persistSession: false, autoRefreshToken: false }
-        });
+        const supabase = await getAdminSupabaseClient();
 
         // 1. Get current metadata
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,6 +198,17 @@ EJEMPLO DE SALIDA:
         // Propagate phone if captured
         if (newData.user_phone && !leadFound?.telefono) {
             mainUpdate.telefono = newData.user_phone;
+        }
+        // Propagate qualification to tipo_lead
+        if (newData.qualified) {
+            const q = newData.qualified.toUpperCase();
+            if (q === 'SI') mainUpdate.tipo_lead = 'CUALIFICADO';
+            else if (q === 'NO') mainUpdate.tipo_lead = 'DESCARTADO';
+            else if (q === 'PENDIENTE') mainUpdate.tipo_lead = 'EN SEGUIMIENTO';
+        }
+        // Propagate AI-predicted segmentacion to the main lead record
+        if (newData.segmentacion && String(newData.segmentacion).trim() !== "") {
+            mainUpdate.segmentacion = String(newData.segmentacion).trim().toUpperCase();
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
