@@ -19,9 +19,9 @@ export class GoogleSheetsService {
         // Listen for token refresh events to save new tokens
         oauth2Client.on('tokens', async (tokens) => {
             console.log(`[SHEETS SERVICE] 🔄 Tokens refreshed for tenant ${tenantId}`);
-            const supabase = await getAdminSupabaseClient();
+            const supabase = await getAdminSupabaseClient() as any;
             const { data: tenant } = await supabase.from('tenants').select('config').eq('id', tenantId).single();
-            const currentConfig = (tenant?.config as any) || {};
+            const currentConfig = tenant?.config || {};
             
             const updatedConfig = {
                 ...currentConfig,
@@ -31,7 +31,7 @@ export class GoogleSheetsService {
                 }
             };
 
-            await supabase.from('tenants').update({ config: updatedConfig }).eq('id', tenantId);
+            await supabase.from('tenants').update({ config: updatedConfig } as any).eq('id', tenantId);
         });
 
         return oauth2Client;
@@ -42,14 +42,14 @@ export class GoogleSheetsService {
      */
     static async appendLead(tenantId: string, lead: any) {
         try {
-            const supabase = await getAdminSupabaseClient();
+            const supabase = await getAdminSupabaseClient() as any;
             const { data: tenant } = await supabase
                 .from('tenants')
                 .select('config')
                 .eq('id', tenantId)
                 .single();
 
-            const config = (tenant?.config as any)?.google;
+            const config = tenant?.config?.google;
             
             if (!config || !config.connected || !config.tokens || !config.spreadsheetId) {
                 console.log(`[SHEETS SERVICE] ℹ️ Google Sheets not connected or configured for tenant ${tenantId}`);
