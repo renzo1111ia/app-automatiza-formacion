@@ -253,6 +253,12 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         const systemPrompt = `
 ${finalPrompt}
 
+DATOS CONOCIDOS DEL LEAD (NO LOS PIDAS SI YA ESTÁN AQUÍ):
+- Nombre: ${variableMap.nombre}
+- Teléfono: ${variableMap.telefono}
+- País: ${variableMap.pais}
+- Email: ${variableMap.email || 'No proporcionado'}
+
 CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS POR PROGRAMA:
 ${programRequirements || "No hay criterios específicos definidos para los programas actuales de este lead. Usa criterios generales de admisión."}
 
