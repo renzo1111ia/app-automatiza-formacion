@@ -57,6 +57,18 @@ export class QualificationProcessor {
 
         if (error) console.error("[QUAL-PROCESSOR] Error saving results:", error);
 
+        // 5.5 Save to Lead Metadata for UI visibility
+        const { data: lead } = await (supabase.from("lead" as any) as any).select("metadata").eq("id", params.leadId).single();
+        const currentMeta = lead?.metadata || {};
+        const updatedMeta = {
+            ...currentMeta,
+            RESUMEN_CONVERSACION: analysis.summary,
+            MOTIVO_DESCARTE: analysis.interest_score <= 4 ? (analysis.objections.join(", ") || "Bajo interés") : null,
+            REGLA_APLICADA: analysis.profile_fit ? "Cualificado por Perfil" : "No encaja en Perfil",
+            QA_TOPIC: analysis.objections[0] || "Consulta General",
+            last_deep_analysis: new Date().toISOString()
+        };
+
         // 6. Update Lead Status and Segmentation
         let finalStatus = "EN SEGUIMIENTO";
         if (analysis.interest_score >= 7) finalStatus = "CUALIFICADO";
@@ -68,9 +80,13 @@ export class QualificationProcessor {
 
         if (analysis.suggested_segment) {
             updatePayload.segmentacion = analysis.suggested_segment;
+            updatedMeta.segmentacion = analysis.suggested_segment;
         }
 
-        await (supabase.from("lead" as any) as any).update(updatePayload).eq("id", params.leadId);
+        await (supabase.from("lead" as any) as any).update({
+            ...updatePayload,
+            metadata: updatedMeta
+        }).eq("id", params.leadId);
 
         console.log(`[QUAL-PROCESSOR] ✅ Deep analysis completed for lead ${params.leadId}. Score: ${analysis.interest_score} (Variant: ${variant?.version_label || 'Default'})`);
     }
