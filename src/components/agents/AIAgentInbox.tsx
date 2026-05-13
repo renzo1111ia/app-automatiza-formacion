@@ -104,7 +104,21 @@ export default function AIAgentInbox() {
             const currentTenantId = useTenantStore.getState().tenantId;
             const res = await getInboxLeads(currentTenantId || undefined);
             if (res.success && typeof res.data !== 'undefined') {
-                setLeads(res.data);
+                const newLeads = res.data;
+                setLeads(newLeads);
+
+                // 🔄 Sync selectedLead if it's currently open
+                if (selectedLeadRef.current) {
+                    const updatedLead = newLeads.find(l => l.id === selectedLeadRef.current?.id);
+                    if (updatedLead) {
+                        // Only update if there's an actual change in metadata or status
+                        if (JSON.stringify(updatedLead.metadata) !== JSON.stringify(selectedLeadRef.current.metadata) || 
+                            updatedLead.tipo_lead !== selectedLeadRef.current.tipo_lead ||
+                            updatedLead.segmentacion !== selectedLeadRef.current.segmentacion) {
+                            setSelectedLead(updatedLead);
+                        }
+                    }
+                }
             } else if (res.error) {
                 console.error("[INBOX] Error loading leads:", res.error);
             }
@@ -184,10 +198,10 @@ export default function AIAgentInbox() {
         const poll = async () => {
             console.log("[POLLING] Syncing inbox...");
             await loadLeads(true); // Silent update
-            timerId = setTimeout(poll, 30000);
+            timerId = setTimeout(poll, 10000);
         };
         
-        timerId = setTimeout(poll, 30000);
+        timerId = setTimeout(poll, 10000);
 
         return () => clearTimeout(timerId);
     }, [tenantId, loadLeads, loadTemplates, loadAvailableAgents]);
