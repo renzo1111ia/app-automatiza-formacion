@@ -155,10 +155,22 @@ EJEMPLO DE SALIDA:
 
         // 1. Get current metadata
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: leadFound } = await (supabase.from("lead") as any)
-            .select("metadata, nombre, apellido, telefono")
+        const { data: leadFound, error: fetchError } = await (supabase.from("lead") as any)
+            .select("metadata, nombre, apellido, telefono, tenant_id")
             .eq("id", leadId)
             .single();
+        
+        if (fetchError) {
+            console.error(`[FACT_EXTRACTOR] ❌ Error fetching lead ${leadId}:`, fetchError.message);
+            // Log to system_logs for visibility
+            await (supabase.from("system_logs" as any) as any).insert({
+                tenant_id: (leadFound as any)?.tenant_id || "00000000-0000-0000-0000-000000000000",
+                level: "ERROR",
+                message: `Error obteniendo metadatos del lead: ${fetchError.message}`,
+                metadata: { leadId, error: fetchError }
+            }).catch(() => {});
+            return;
+        }
         
         const currentMetadata = (leadFound?.metadata as Record<string, unknown>) || {};
         
@@ -250,12 +262,19 @@ EJEMPLO DE SALIDA:
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase.from("lead") as any)
+        const { error: updateError } = await (supabase.from("lead") as any)
             .update(mainUpdate)
             .eq("id", leadId);
 
-        if (error) {
-            console.error("[FACT EXTRACTOR] ❌ Failed to save metadata:", error.message);
+        if (updateError) {
+            console.error(`[FACT_EXTRACTOR] ❌ Failed to save metadata:`, updateError.message);
+            // Log to system_logs for visibility
+            await (supabase.from("system_logs" as any) as any).insert({
+                tenant_id: (leadFound as any)?.tenant_id || "00000000-0000-0000-0000-000000000000",
+                level: "ERROR",
+                message: `Error guardando metadatos del lead: ${updateError.message}`,
+                metadata: { leadId, error: updateError, mainUpdate }
+            }).catch(() => {});
         } else {
             console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
             
