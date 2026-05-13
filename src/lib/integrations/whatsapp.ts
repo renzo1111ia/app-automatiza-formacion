@@ -121,6 +121,37 @@ export class WhatsAppBridge {
     }
 
     /**
+     * Sends a typing indicator ("typing...") to the user's WhatsApp.
+     */
+    public async sendTypingIndicator(to: string, config: WhatsAppConfig) {
+        try {
+            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
+            const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
+            
+            await axios.post(
+                url,
+                {
+                    messaging_product: "whatsapp",
+                    recipient_type: "individual",
+                    to: normalizedTo,
+                    sender_status: "typing_on"
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${config.accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            console.log(`[WHATSAPP BRIDGE] ⌨️ Typing indicator sent to ${to}`);
+        } catch (error: unknown) {
+            // Silently fail typing indicator as it's not critical and might not be supported on all accounts
+            const err = error as { response?: { data?: unknown }; message?: string };
+            console.warn("[WHATSAPP BRIDGE] Could not send typing indicator:", err.response?.data || err.message);
+        }
+    }
+
+    /**
      * Fetches available templates from the WhatsApp Business Account.
      */
     public async getAvailableTemplates(config: WhatsAppConfig): Promise<WhatsAppTemplate[]> {
@@ -141,43 +172,6 @@ export class WhatsAppBridge {
             const err = error as { response?: { data?: unknown }; message?: string };
             console.error("[WHATSAPP BRIDGE] Error fetching templates:", err.response?.data || err.message);
             return [];
-        }
-    }
-
-    /**
-     * Sends a typing indicator command ("escribiendo...") to the WhatsApp client.
-     */
-    public async sendTypingIndicator(to: string, config: WhatsAppConfig) {
-        try {
-            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
-            const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
-            
-            console.log(`[WHATSAPP BRIDGE] ⌨️ Sending typing indicator to ${to}`);
-            
-            await axios.post(
-                url,
-                {
-                    messaging_product: "whatsapp",
-                    recipient_type: "individual",
-                    to: normalizedTo,
-                    type: "command",
-                    command: {
-                        event: "typing_on"
-                    }
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${config.accessToken}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-            return { success: true };
-        } catch (error: unknown) {
-            // Silently fail as this is not critical for the flow
-            const err = error as { response?: { data?: unknown }; message?: string };
-            console.warn("[WHATSAPP BRIDGE] Failed to send typing indicator:", err.response?.data || err.message);
-            return { success: false };
         }
     }
 }

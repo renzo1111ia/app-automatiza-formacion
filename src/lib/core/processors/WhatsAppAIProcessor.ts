@@ -125,6 +125,14 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         const waConfig = (tenantData?.data as any)?.config?.whatsapp;
 
+        // 🟢 EARLY TYPING INDICATOR: Trigger as soon as credentials are ready to show while AI is thinking
+        if (waConfig?.accessToken && waConfig?.phoneNumberId) {
+            whatsappBridge.sendTypingIndicator((lead as any).telefono!, {
+                accessToken: waConfig.accessToken,
+                phoneNumberId: waConfig.phoneNumberId
+            }).catch(() => {});
+        }
+
         const conversationContext = recentHistory.map(m =>
             `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`
         ).join("\n");
@@ -376,6 +384,7 @@ ${(leadAppointments as any[]).length > 0
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
                 // 11.5 Simulate human typing delay (30ms per character, min 1s, max 4s)
                 const typingDelay = Math.min(Math.max(aiResponse.length * 30, 1000), 4000);
+                
                 console.log(`[AI PROCESSOR] ⏳ Simulating typing delay of ${typingDelay}ms...`);
                 await new Promise(resolve => setTimeout(resolve, typingDelay));
 
