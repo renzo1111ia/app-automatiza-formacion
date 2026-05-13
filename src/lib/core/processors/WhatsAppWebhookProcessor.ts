@@ -3,6 +3,7 @@ import { Database } from "@/types/database";
 import { uploadToMinio } from "@/lib/integrations/minio";
 import axios from "axios";
 import { getLeadLocationData } from "@/lib/core/compliance";
+import { normalizeWhatsAppNumber } from "@/lib/utils/phone-helper";
 
 /**
  * WHATSAPP WEBHOOK PROCESSOR
@@ -66,8 +67,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
         const tenantId = (tenants as unknown as Array<{ id: string }>)[0].id;
 
         // 2. Normalize Phone Number
-        let searchPhone = fromNumber;
-        if (searchPhone.startsWith("+")) searchPhone = searchPhone.slice(1);
+        const searchPhone = normalizeWhatsAppNumber(fromNumber);
 
         // 3. Find or Create Lead
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

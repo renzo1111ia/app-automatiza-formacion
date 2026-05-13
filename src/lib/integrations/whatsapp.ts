@@ -1,4 +1,5 @@
 import axios from "axios";
+import { normalizeWhatsAppNumber } from "../utils/phone-helper";
 
 /**
  * WHATSAPP CLOUD API BRIDGE
@@ -41,7 +42,7 @@ export class WhatsAppBridge {
         config: WhatsAppConfig
     ) {
         try {
-            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
+            const normalizedTo = normalizeWhatsAppNumber(to);
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             const response = await axios.post(
                 url,
@@ -90,7 +91,7 @@ export class WhatsAppBridge {
                 console.warn("[WHATSAPP BRIDGE] Failed to check pause status:", e);
             }
 
-            const normalizedTo = to.replace(/\+/g, "").replace(/\s/g, "");
+            const normalizedTo = normalizeWhatsAppNumber(to);
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             
             console.log(`[WHATSAPP BRIDGE] 📤 Sending text to ${to}: "${body.substring(0, 50)}..."`);
@@ -125,7 +126,7 @@ export class WhatsAppBridge {
      */
     public async sendTypingIndicator(to: string, messageId: string, config: WhatsAppConfig) {
         try {
-            const normalizedTo = to.replace(/\D/g, "");
+            const normalizedTo = normalizeWhatsAppNumber(to);
             const url = `${WhatsAppBridge.API_URL}/${config.phoneNumberId}/messages`;
             
             // Note: In Cloud API, sending a 'read' status with typing_indicator
