@@ -288,10 +288,34 @@ export class AppointmentService {
         const referenceDate = fromZonedTime(`${cleanDate} 12:00:00`, this.DEFAULT_TIMEZONE);
         const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
 
-        // Get availability slots for that day
-        const { data: ranges } = await supabase.from("availability_slots")
+        // availability_slots has no direct tenant_id column — it links via advisor_id → advisors.tenant_id
+        // First, get all advisor IDs that belong to this tenant
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: tenantAdvisors } = await (supabase.from("advisors") as any)
+            .select("id")
+            .eq("tenant_id", tenantId)
+            .eq("is_active", true) as { data: { id: string }[] | null };
+
+        const advisorIds = (tenantAdvisors || []).map((a) => a.id);
+
+        // Get availability slots for that day, filtered to this tenant's advisors
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let rangesQuery = (supabase.from("availability_slots") as any)
             .select("*")
-            .eq("day_of_week", dayOfWeek) as { data: any[] | null };
+            .eq("day_of_week", dayOfWeek);
+
+        if (advisorIds.length > 0) {
+            // Include both advisor-specific slots AND general tenant slots (advisor_id IS NULL)
+            rangesQuery = rangesQuery.or(`advisor_id.in.(${advisorIds.join(",")}),and(tenant_id.eq.${tenantId},advisor_id.is.null)`);
+        } else {
+            // No advisors configured — fall back to general tenant-level slots
+            rangesQuery = rangesQuery.eq("tenant_id", tenantId).is("advisor_id", null);
+            console.warn(`[CHECK AVAILABILITY] ⚠️ No active advisors found for tenant ${tenantId}. Using general tenant slots.`);
+        }
+
+        const { data: ranges } = await rangesQuery as {
+            data: { start_time: string; end_time: string; slot_duration_minutes: number | null; advisor_id: string }[] | null
+        };
 
         // Define the time range for the day in UTC
         const startOfDayUTC = fromZonedTime(`${cleanDate} 00:00:00`, this.DEFAULT_TIMEZONE).toISOString();
@@ -300,8 +324,9 @@ export class AppointmentService {
         // Get tenant config for default slot duration
         let globalSlotDuration = 15; // Default if nothing else found
         try {
-            const { data: tenant } = await supabase.from("tenants").select("config").eq("id", tenantId).single();
-            const config = (tenant as any)?.config?.scheduling;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: tenant } = await (supabase as any).from("tenants").select("config").eq("id", tenantId).single() as { data: { config: { scheduling?: { slot_duration?: number } } } | null };
+            const config = tenant?.config?.scheduling;
             if (config?.slot_duration) {
                 globalSlotDuration = Number(config.slot_duration);
             }
@@ -345,18 +370,29 @@ export class AppointmentService {
                         
                         // If checking for today, skip slots that already passed (plus 15 min buffer)
                         const isPast = slotDate.getTime() < (nowUTC.getTime() + 15 * 60 * 1000);
-                        const isToday = cleanDate === nowUTC.toISOString().split('T')[0];
+                        // Compare using Madrid timezone to avoid UTC date mismatch (e.g. UTC is still yesterday)
+                        const todayInMadrid = format(toZonedTime(nowUTC, this.DEFAULT_TIMEZONE), 'yyyy-MM-dd');
+                        const isToday = cleanDate === todayInMadrid;
 
                         if (!(isToday && isPast)) {
                             let finalTime = timeStr.substring(0, 5);
-                            
+                            let localHour = -1;
+
                             if (leadTimezone) {
                                 try {
                                     const zoned = toZonedTime(new Date(slotUTC), leadTimezone);
                                     finalTime = format(zoned, 'HH:mm', { timeZone: leadTimezone });
+                                    localHour = zoned.getHours();
                                 } catch (e) {
                                     console.warn(`[CHECK AVAILABILITY] Failed to convert ${slotUTC} to ${leadTimezone}`, e);
                                 }
+                            }
+
+                            // Skip slots that fall in the dead of night for the lead (00:00–06:59 local time)
+                            if (leadTimezone && localHour >= 0 && localHour < 7) {
+                                console.log(`[CHECK AVAILABILITY] ⏭️ Skipping slot ${finalTime} (${leadTimezone}) — unreasonable local hour`);
+                                currentMin += duration;
+                                continue;
                             }
 
                             availableSlots.push({

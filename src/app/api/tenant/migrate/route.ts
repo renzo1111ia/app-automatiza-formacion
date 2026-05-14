@@ -61,12 +61,16 @@ CREATE TABLE IF NOT EXISTS advisors (
 -- ─── Availability Slots (Weekly recurring schedule) ───────────────
 CREATE TABLE IF NOT EXISTS availability_slots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id TEXT,
     advisor_id UUID REFERENCES advisors(id) ON DELETE CASCADE,
     day_of_week INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     slot_duration_minutes INT DEFAULT 30
 );
+
+-- Add tenant_id if not present (safe ALTER for existing tenants)
+ALTER TABLE availability_slots ADD COLUMN IF NOT EXISTS tenant_id TEXT;
 
 -- ─── Appointments (Real booked sessions) ─────────────────────────
 CREATE TABLE IF NOT EXISTS appointments (
@@ -201,6 +205,7 @@ CREATE INDEX IF NOT EXISTS idx_orchestration_logs_lead ON orchestration_logs(lea
 CREATE INDEX IF NOT EXISTS idx_appointments_advisor ON appointments(advisor_id, scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_appointments_tenant ON appointments(tenant_id, status);
 CREATE INDEX IF NOT EXISTS idx_availability_advisor_day ON availability_slots(advisor_id, day_of_week);
+CREATE INDEX IF NOT EXISTS idx_availability_tenant_day ON availability_slots(tenant_id, day_of_week);
 CREATE INDEX IF NOT EXISTS idx_planned_actions_scheduled ON planned_actions(scheduled_for, status);
 CREATE INDEX IF NOT EXISTS idx_orchestration_rules_workflow ON orchestration_rules(workflow_id, sequence_order);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_lead ON chat_messages(lead_id, created_at DESC);

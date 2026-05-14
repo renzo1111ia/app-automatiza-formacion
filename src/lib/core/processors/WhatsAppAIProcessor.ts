@@ -153,20 +153,25 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         const TZ = "Europe/Madrid";
         const now = new Date();
+        const leadPais = ((lead as any).pais && (lead as any).pais !== 'Desconocido' && (lead as any).pais !== 'Identificando...') 
+            ? (lead as any).pais 
+            : (resolveCountryFromPhone((lead as any).telefono) || 'Desconocido');
+        const leadTZ = getTimezoneByCountry(leadPais);
         const variableMap = {
             nombre: (lead as any).nombre || 'estudiante',
             email: (lead as any).email || '',
             telefono: ensurePlusPrefix((lead as any).telefono || ''),
-            fecha: now.toLocaleDateString('es-ES', { timeZone: TZ }),
-            hora: now.toLocaleTimeString('es-ES', { timeZone: TZ }),
-            now: now.toLocaleString('es-ES', { timeZone: TZ }),
-            pais: ((lead as any).pais && (lead as any).pais !== 'Desconocido' && (lead as any).pais !== 'Identificando...') 
-                  ? (lead as any).pais 
-                  : (resolveCountryFromPhone((lead as any).telefono) || 'Desconocido'),
-            "$now": now.toLocaleString('es-ES', { timeZone: TZ }),
-            "$date": now.toLocaleDateString('es-ES', { timeZone: TZ }),
-            "$time": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
-            "$timezone": "Europe/Madrid (CET/CEST)",
+            fecha: now.toLocaleDateString('es-ES', { timeZone: leadTZ }),
+            hora: now.toLocaleTimeString('es-ES', { timeZone: leadTZ }),
+            now: now.toLocaleString('es-ES', { timeZone: leadTZ }),
+            pais: leadPais,
+            "$now": now.toLocaleString('es-ES', { timeZone: leadTZ }),
+            "$date": now.toLocaleDateString('es-ES', { timeZone: leadTZ }),
+            "$time": now.toLocaleTimeString('es-ES', { timeZone: leadTZ }),
+            "$timezone": leadTZ,
+            "$timezone_lead": leadTZ,
+            "$time_madrid": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
+            "$date_madrid": now.toLocaleDateString('es-ES', { timeZone: TZ }),
             ...((lead as any).metadata || {}), // CAPTURED MEMORY
             ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
         };
@@ -174,12 +179,12 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         // Add implicit context about timezones (MASTER RULES)
         const timezoneContext = `
 ### REGLAS MAESTRAS DE HORARIO Y ZONAS HORARIAS (CRÍTICO):
-1. Nuestra sede está en MADRID, ESPAÑA. Los horarios de atención se rigen estrictamente por la hora de Madrid (09:00 a 20:00).
-2. DEBES comunicarte usando el HORARIO LOCAL DEL PROSPECTO (${variableMap.pais}, ${variableMap.$timezone_lead || 'su zona'}).
-3. Los huecos de disponibilidad que recibes de 'check_availability' ya están convertidos a la hora local del prospecto. ÚSALOS COMO ÚNICA REFERENCIA.
-4. Si el prospecto pide una hora que NO aparece en la lista, es porque en Madrid es fuera de horario.
-5. Ejemplo: Si un lead de Bolivia pide las 19:30, debes saber que en Madrid son las 01:30 AM. Debes decirle: "A esa hora nuestras oficinas en España están cerradas (es madrugada allí). Lo más tarde que podemos atenderte en tu horario local es a las [ÚLTIMA_HORA_DISPONIBLE]".
-6. DOBLE CONFIRMACIÓN: Al agendar, confirma siempre así: "Agendado para las [HORA_LOCAL] de tu país (que son las [HORA_MADRID] en España)".
+1. Nuestra sede está en MADRID, ESPAÑA. Los horarios de atención son LUNES A VIERNES de 09:00 a 20:00 (hora de Madrid).
+2. El prospecto está en: ${leadPais} (zona horaria: ${leadTZ}).
+3. Los huecos de disponibilidad que recibes de 'check_availability' YA ESTÁN CONVERTIDOS a la hora local del prospecto (${leadTZ}). DEBES mostrarlos TAL CUAL al usuario, sin alterar las horas.
+4. IMPORTANTE: Nunca muestres horas de madrugada (00:00–07:00) al prospecto. Si la lista de slots empieza antes de las 07:00 hora local del prospecto, significa que hay un problema de zona horaria — en ese caso avisa: "Déjame verificar los horarios disponibles", y llama a check_availability pasando la fecha nuevamente.
+5. Si el prospecto pide una hora que NO aparece en la lista, explícale que nuestras oficinas en España estarían cerradas a esa hora.
+6. DOBLE CONFIRMACIÓN: Al agendar, confirma siempre así: "Agendado para las [HORA_LOCAL] hora de ${leadPais} (que son las [HORA_MADRID] en España)".
 7. NO PREGUNTES POR DATOS QUE YA TIENES: Si en la sección 'DATOS DEL PROSPECTO' ya aparece el Nombre, País o Teléfono, NO se los preguntes al usuario. Actúa como si ya lo supieras.
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
@@ -258,8 +263,8 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 ${finalPrompt}
 
 ### CONTEXTO TEMPORAL ACTUAL:
-- En ${variableMap.pais}: ${variableMap.$time} (${variableMap.$date})
-- En Madrid (Referencia): ${now.toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid' })}
+- En ${leadPais} (${leadTZ}): ${variableMap.$time} del ${variableMap.$date}
+- En Madrid (España): ${variableMap.$time_madrid} del ${variableMap.$date_madrid}
 
 ### DATOS DEL PROSPECTO:
 - Nombre: ${variableMap.nombre}

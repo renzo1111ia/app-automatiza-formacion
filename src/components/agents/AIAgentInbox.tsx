@@ -1264,7 +1264,7 @@ export default function AIAgentInbox() {
                                                 >
                                                     <div className="flex flex-col gap-0.5 min-w-0">
                                                         <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-500/50">
-                                                            {'{{'}{key}{'}}'}
+                                                            {'{{'}{key.replace(/^\{\{|\}\}$/g, '')}{'}}'}
                                                         </span>
                                                         <span className="text-[11px] font-bold truncate text-emerald-400">
                                                             {String(meta[key])}

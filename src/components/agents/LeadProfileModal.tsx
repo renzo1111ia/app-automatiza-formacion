@@ -22,7 +22,20 @@ interface LeadProfileModalProps {
 export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [editedLead, setEditedLead] = useState<InboxLead>({ ...lead });
-    const [metadata, setMetadata] = useState<Record<string, unknown>>(lead.metadata || {});
+    const [metadata, setMetadata] = useState<Record<string, unknown>>(() => {
+        const normalizedMeta: Record<string, unknown> = {};
+        Object.entries(lead.metadata || {}).forEach(([k, v]) => {
+            const existingKey = Object.keys(normalizedMeta).find(
+                mk => mk.toLowerCase() === k.toLowerCase()
+            );
+            if (existingKey) {
+                if (!normalizedMeta[existingKey] && v) normalizedMeta[existingKey] = v;
+            } else {
+                normalizedMeta[k] = v;
+            }
+        });
+        return normalizedMeta;
+    });
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -170,16 +183,20 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
                             </div>
 
                             <div className="bg-card border border-border rounded-3xl p-6 space-y-6">
-                                {Object.keys(metadata).length === 0 ? (
+                                {Object.keys(metadata).filter(k => !['last_fact_update', 'meta_id', 'raw', 'media_url'].includes(k)).length === 0 ? (
                                     <div className="py-10 text-center space-y-3 text-muted-foreground/20">
                                         <AlertCircle className="h-8 w-8 mx-auto" />
                                         <p className="text-[10px] font-black uppercase tracking-widest">No hay datos adicionales capturados</p>
                                     </div>
                                 ) : (
-                                    Object.entries(metadata).map(([key, value]) => (
+                                    Object.entries(metadata)
+                                        .filter(([key]) => !['last_fact_update', 'meta_id', 'raw', 'media_url'].includes(key))
+                                        .map(([key, value]) => (
                                         <div key={key} className="relative group">
                                             <div className="flex items-center justify-between mb-2 px-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">{key.replace(/_/g, ' ')}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40">
+                                                    {key.replace(/^\{\{|\}\}$/g, '').replace(/_/g, ' ')}
+                                                </label>
                                                 <button 
                                                     onClick={() => removeMetadataKey(key)}
                                                     title={`Eliminar campo ${key}`}
