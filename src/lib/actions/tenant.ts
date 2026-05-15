@@ -166,7 +166,8 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
 
         // We move is_admin, username and api_type into config, then remove them from the top-level insert
         // password is for auth only
-        const { is_admin, username, api_type, password, ...tenantData } = tenant;
+        const { is_admin, username, api_type, password: _password, ...tenantData } = tenant;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const config = {
             ...(tenantData.config || {}),
             is_admin: !!is_admin,
@@ -201,10 +202,25 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
         const supabase = await getAdminSupabase();
         const serviceSupabase = await getServiceSupabase();
 
-        // 1. If password is provided AND auth_user_id exists, update it
-        if (updates.password && updates.auth_user_id) {
+        let targetAuthUserId = updates.auth_user_id;
+
+        // 0. Self-healing: If auth_user_id is missing, try to find the user by email
+        if (!targetAuthUserId && updates.client_email) {
+            const { data: userData, error: findError } = await serviceSupabase.auth.admin.listUsers();
+            if (!findError && userData.users) {
+                const existingUser = userData.users.find(u => u.email === updates.client_email);
+                if (existingUser) {
+                    targetAuthUserId = existingUser.id;
+                    // Update the tenant record immediately to link it for the future
+                    await supabase.from("tenants").update({ auth_user_id: targetAuthUserId }).eq("id", id);
+                }
+            }
+        }
+
+        // 1. If password is provided AND we have/found an auth_user_id, update it
+        if (updates.password && targetAuthUserId) {
             const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
-                updates.auth_user_id,
+                targetAuthUserId,
                 {
                     password: updates.password,
                     user_metadata: {
@@ -217,10 +233,31 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
                 console.error("AUTH USER UPDATE ERROR:", authError.message);
                 return { error: `Error actualizando usuario en Auth: ${authError.message}` };
             }
-        } else if ((updates.is_admin !== undefined || updates.username !== undefined) && updates.auth_user_id) {
+        } 
+        // 1b. If password is provided but NO user exists yet, CREATE it
+        else if (updates.password && !targetAuthUserId && updates.client_email) {
+            const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
+                email: updates.client_email,
+                password: updates.password,
+                email_confirm: true,
+                user_metadata: {
+                    admin: !!updates.is_admin,
+                    username: updates.username || ""
+                }
+            });
+
+            if (authError) {
+                console.error("AUTH USER CREATION ON UPDATE ERROR:", authError.message);
+                return { error: `Error creando usuario en Auth: ${authError.message}` };
+            }
+            targetAuthUserId = authData.user?.id;
+            // We'll update the tenant record with the new auth_user_id below in the main update
+            updates.auth_user_id = targetAuthUserId;
+        }
+        else if ((updates.is_admin !== undefined || updates.username !== undefined) && targetAuthUserId) {
             // Update metadata even if password is not provided
             const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
-                updates.auth_user_id,
+                targetAuthUserId,
                 {
                     user_metadata: {
                         admin: !!updates.is_admin,
@@ -236,7 +273,8 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
 
         // We move is_admin, username and api_type into config to avoid needing a new column in the table
         // password is for auth only
-        const { is_admin, username, api_type, password, ...cleanUpdates } = updates;
+        const { is_admin, username, api_type, password: _password, ...cleanUpdates } = updates;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         
         const newConfig = { ...(cleanUpdates.config as Record<string, unknown> || {}) };
         if (is_admin !== undefined) newConfig.is_admin = !!is_admin;
