@@ -120,15 +120,15 @@ const NAV_ITEMS: NavItem[] = [
         ]
     },
     {
-        label: "Ajustes",
-        href: "/dashboard/settings",
-        icon: <Settings className="h-5 w-5" strokeWidth={1.8} />,
-        adminOnly: true
-    },
-    {
         label: "Docs",
         href: "/dashboard/docs",
         icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true
+    },
+    {
+        label: "Ajustes",
+        href: "/dashboard/settings",
+        icon: <Settings className="h-5 w-5" strokeWidth={1.8} />,
         adminOnly: true
     },
 ];

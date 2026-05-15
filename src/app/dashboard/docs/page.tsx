@@ -1,88 +1,326 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import fs from 'fs';
-import path from 'path';
-import { Book, ChevronRight, Home, Terminal, Layers, ShieldCheck, Zap, Globe, BookOpen } from 'lucide-react';
+import { 
+    Book, ChevronRight, Home, Terminal, Layers, 
+    ShieldCheck, Zap, Globe, BookOpen, Search,
+    Cpu, MessageSquare, Database, Activity,
+    Scale, UserCheck, Layout, GitBranch,
+    ArrowUpRight, Info
+} from 'lucide-react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Fases y Capítulos mapeados del Dossier v5.0
+const DOC_STRUCTURE = [
+    {
+        phase: "FASE I: Cimientos y Visión Estratégica",
+        color: "from-blue-500 to-indigo-600",
+        items: [
+            { id: "1", title: "Visión Técnica", icon: <Layout className="h-4 w-4" /> },
+            { id: "2", title: "Arquitectura Backend", icon: <Database className="h-4 w-4" /> },
+            { id: "3", title: "Ingeniería de Resiliencia", icon: <Zap className="h-4 w-4" /> },
+            { id: "4", title: "Centro de Comando", icon: <Layout className="h-4 w-4" /> },
+            { id: "5", title: "Manual de Referencia (Tomo IV)", icon: <BookOpen className="h-4 w-4" /> },
+        ]
+    },
+    {
+        phase: "FASE II: Núcleo de Ingeniería y Workflow",
+        color: "from-emerald-500 to-teal-600",
+        items: [
+            { id: "14", title: "The Worker Engine", icon: <Cpu className="h-4 w-4" /> },
+            { id: "12", title: "Contratos de API", icon: <Terminal className="h-4 w-4" /> },
+            { id: "13", title: "Plan de Contingencia", icon: <Activity className="h-4 w-4" /> },
+            { id: "20", title: "Enciclopedia de Nodos", icon: <GitBranch className="h-4 w-4" /> },
+        ]
+    },
+    {
+        phase: "FASE III: Inteligencia y Cualificación",
+        color: "from-purple-500 to-pink-600",
+        items: [
+            { id: "11", title: "Motor de Cognición", icon: <MessageSquare className="h-4 w-4" /> },
+            { id: "17", title: "La Joya: Realismo IA", icon: <Zap className="h-4 w-4" /> },
+            { id: "18", title: "Diccionario de Variables", icon: <BookOpen className="h-4 w-4" /> },
+            { id: "19", title: "Anatomía del Agente", icon: <UserCheck className="h-4 w-4" /> },
+        ]
+    },
+    {
+        phase: "FASE IV: Gobernanza y Entrega",
+        color: "from-orange-500 to-amber-600",
+        items: [
+            { id: "6", title: "Seguridad y Soberanía", icon: <ShieldCheck className="h-4 w-4" /> },
+            { id: "16", title: "Compliance y GDPR", icon: <Scale className="h-4 w-4" /> },
+            { id: "23", title: "Ciclo de Vida del Dato", icon: <Database className="h-4 w-4" /> },
+            { id: "25", title: "Protocolo de Handover", icon: <ArrowUpRight className="h-4 w-4" /> },
+            { id: "26", title: "Blueprint Maestro", icon: <Layers className="h-4 w-4" /> },
+        ]
+    }
+];
 
 export default function DocsPage() {
-    // Read the DOCUMENTATION.md file from the root
-    let content = "";
-    try {
-        const filePath = path.join(process.cwd(), 'DOCUMENTATION.md');
-        content = fs.readFileSync(filePath, 'utf8');
-    } catch {
-        content = "# Error\nNo se pudo cargar la documentación maestro.";
-    }
+    const [content, setContent] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [activeSection, setActiveSection] = useState("1");
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const response = await fetch('/api/docs/content');
+                const data = await response.json();
+                setContent(data.content);
+            } catch (error) {
+                console.error("Error loading docs:", error);
+                setContent("# Error\nNo se pudo cargar la documentación maestra.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchContent();
+    }, []);
+
+    // Filtrar contenido por la sección activa (buscando el heading ## X.)
+    const displayedContent = useMemo(() => {
+        if (!content) return "";
+        const sections = content.split(/---/); // El dossier usa --- como separadores
+        
+        // Buscamos la sección que empiece con el ID
+        const targetSection = sections.find(s => {
+            const trimmed = s.trim();
+            return trimmed.startsWith(`## ${activeSection}.`) || trimmed.includes(`## ${activeSection}.`);
+        });
+
+        return targetSection || sections[0]; // Si no encuentra, muestra el intro
+    }, [content, activeSection]);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-slate-100 pb-20">
-            {/* Header / Breadcrumbs */}
-            <div className="sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4">
-                <div className="max-w-5xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500/10 rounded-lg">
-                            <Book className="h-5 w-5 text-indigo-500" />
+        <div className="min-h-screen bg-[#FDFDFF] dark:bg-[#020617] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30">
+            {/* Nav Superior Glassmorphism */}
+            <div className="sticky top-0 z-[60] bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+                <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-grad-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                            <Book className="h-5 w-5 text-white" />
                         </div>
-                        <div className="flex items-center gap-2 text-sm font-medium opacity-60">
-                            <Link href="/dashboard" className="hover:text-indigo-500 transition-colors">Dashboard</Link>
-                            <ChevronRight className="h-4 w-4" />
-                            <span className="text-slate-900 dark:text-white font-bold">Documentación Maestra</span>
+                        <div>
+                            <h1 className="text-sm font-black tracking-widest uppercase text-slate-400">Sistema v5.0</h1>
+                            <p className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                Dossier Técnico de Entrega
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">Bulletproof</span>
+                            </p>
                         </div>
                     </div>
-                    <Link 
-                        href="/dashboard"
-                        className="text-xs font-bold px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-2"
-                    >
-                        <Home className="h-3.5 w-3.5" />
-                        Volver
-                    </Link>
+
+                    <div className="hidden md:flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <input 
+                                type="text" 
+                                placeholder="Buscar en los tomos..."
+                                className="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border-none rounded-xl text-sm focus:ring-2 ring-indigo-500/50 transition-all w-64"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <Link 
+                            href="/dashboard"
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                        >
+                            <Home className="h-5 w-5" />
+                        </Link>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-12">
-                {/* Sidebar Navigation */}
-                <aside className="hidden lg:block space-y-8 sticky top-32 h-fit">
-                    <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Estructura Maestra</h3>
-                        <nav className="space-y-1">
-                            {[
-                                { label: "1. Visión Arquitectónica", icon: <Layers className="h-4 w-4" /> },
-                                { label: "2. Gobernanza y Blindaje", icon: <ShieldCheck className="h-4 w-4" /> },
-                                { label: "3. Manual de Operaciones", icon: <Home className="h-4 w-4" /> },
-                                { label: "4. Manual de Ingeniería", icon: <Terminal className="h-4 w-4" /> },
-                                { label: "5. Diccionario Técnico", icon: <BookOpen className="h-4 w-4" /> },
-                                { label: "6. Integraciones", icon: <Globe className="h-4 w-4" /> },
-                                { label: "7. Protocolo Supabase", icon: <Zap className="h-4 w-4" /> },
-                            ].map((item) => (
-                                <button key={item.label} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-xl transition-all text-left">
-                                    {item.icon}
-                                    {item.label}
-                                </button>
-                            ))}
-                        </nav>
+            <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12">
+                
+                {/* SIDEBAR DE FASES Y TOMOS */}
+                <aside className="space-y-10 sticky top-28 h-fit max-h-[calc(100vh-140px)] overflow-y-auto pr-4 scrollbar-hide">
+                    {DOC_STRUCTURE.map((phase) => (
+                        <div key={phase.phase} className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${phase.color}`} />
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                    {phase.phase}
+                                </h3>
+                            </div>
+                            <nav className="space-y-1.5">
+                                {phase.items.map((item) => (
+                                    <button 
+                                        key={item.id} 
+                                        onClick={() => {
+                                            setActiveSection(item.id);
+                                            scrollToTop();
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition-all text-left group
+                                            ${activeSection === item.id 
+                                                ? "bg-indigo-500/10 text-indigo-500 shadow-sm border border-indigo-500/10" 
+                                                : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900"
+                                            }`}
+                                    >
+                                        <span className={`${activeSection === item.id ? "text-indigo-500" : "text-slate-400 group-hover:text-indigo-500"} transition-colors`}>
+                                            {item.icon}
+                                        </span>
+                                        <span className="flex-1 truncate">{item.title}</span>
+                                        {activeSection === item.id && (
+                                            <motion.div layoutId="active-pill" className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                        )}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    ))}
+
+                    <div className="p-6 rounded-[2rem] bg-grad-primary text-white overflow-hidden relative group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                            <ShieldCheck className="h-20 w-20" />
+                        </div>
+                        <h4 className="text-xs font-black uppercase tracking-widest mb-2 opacity-80 text-white/70">Certificación Técnica</h4>
+                        <p className="text-sm font-bold leading-relaxed relative z-10">
+                            Este dossier representa la propiedad intelectual íntegra del sistema v5.0.
+                        </p>
+                        <button 
+                            onClick={() => window.print()}
+                            className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase bg-white/20 px-3 py-1.5 rounded-full hover:bg-white/30 transition-all"
+                        >
+                            Descargar PDF <ArrowUpRight className="h-3 w-3" />
+                        </button>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                        <p className="text-[10px] font-bold text-indigo-500 uppercase mb-2">Soporte Ejecutivo</p>
-                        <p className="text-xs text-slate-500 leading-relaxed">Guía exclusiva para el propietario del sistema v3.0.</p>
-                    </div>
+                    <style jsx global>{`
+                        @media print {
+                            body * {
+                                visibility: hidden;
+                            }
+                            main, main * {
+                                visibility: visible;
+                            }
+                            main {
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                width: 100%;
+                            }
+                            aside, nav, .sticky {
+                                display: none !important;
+                            }
+                            .prose {
+                                max-width: none !important;
+                                color: black !important;
+                            }
+                        }
+                    `}</style>
                 </aside>
 
-                {/* Main Content Render */}
-                <main className="prose prose-slate dark:prose-invert max-w-none 
-                    prose-headings:font-black prose-headings:tracking-tight
-                    prose-h1:text-5xl prose-h1:mb-8
-                    prose-h2:text-3xl prose-h2:mt-12 prose-h2:border-b prose-h2:pb-4 prose-h2:border-slate-200 dark:prose-h2:border-slate-800
-                    prose-p:text-lg prose-p:leading-relaxed prose-p:text-slate-600 dark:prose-p:text-slate-400
-                    prose-code:bg-indigo-500/10 prose-code:text-indigo-500 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
-                    prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-2xl prose-pre:shadow-2xl
-                    prose-li:text-lg
-                    ">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {content}
-                    </ReactMarkdown>
+                {/* VISOR DE CONTENIDO MAESTRO */}
+                <main className="relative">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeSection}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 md:p-16 shadow-xl shadow-slate-200/50 dark:shadow-none min-h-[800px]"
+                        >
+                            {/* Banner de Info */}
+                            <div className="mb-12 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-start gap-4">
+                                <Info className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
+                                <p className="text-xs text-indigo-900/60 dark:text-indigo-300/60 font-medium leading-relaxed">
+                                    Estás visualizando el <span className="font-bold text-indigo-500">Tomo {activeSection}</span> del manual de ingeniería. Toda la información aquí contenida es confidencial y estratégica para la operación del sistema.
+                                </p>
+                            </div>
+
+                            {isLoading ? (
+                                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                                    <div className="w-10 h-10 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                                    <p className="text-sm font-bold text-slate-400">Sincronizando Dossier...</p>
+                                </div>
+                            ) : (
+                                <article className="prose prose-slate dark:prose-invert max-w-none 
+                                    prose-headings:font-black prose-headings:tracking-tight
+                                    prose-h1:text-5xl prose-h1:mb-8 prose-h1:text-indigo-500
+                                    prose-h2:text-4xl prose-h2:mt-16 prose-h2:mb-8 prose-h2:pb-4 prose-h2:border-b prose-h2:border-slate-100 dark:prose-h2:border-slate-800
+                                    prose-h3:text-2xl prose-h3:mt-12 prose-h3:text-slate-800 dark:prose-h3:text-slate-200
+                                    prose-p:text-lg prose-p:leading-relaxed prose-p:text-slate-600 dark:prose-p:text-slate-400
+                                    prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
+                                    prose-code:bg-indigo-500/5 dark:prose-code:bg-indigo-500/10 prose-code:text-indigo-600 dark:prose-code:text-indigo-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-lg prose-code:before:content-none prose-code:after:content-none prose-code:font-bold
+                                    prose-pre:bg-[#0f172a] prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-[2rem] prose-pre:shadow-2xl prose-pre:p-8
+                                    prose-li:text-lg prose-li:text-slate-600 dark:prose-li:text-slate-400
+                                    prose-table:border prose-table:border-slate-200 dark:prose-table:border-slate-800 prose-table:rounded-xl prose-table:overflow-hidden
+                                    prose-th:bg-slate-50 dark:prose-th:bg-slate-800/50 prose-th:p-4 prose-th:text-sm prose-th:font-black
+                                    prose-td:p-4 prose-td:text-sm prose-td:border-t prose-td:border-slate-100 dark:prose-td:border-slate-800
+                                    print:prose-h1:text-4xl print:prose-h2:text-2xl print:prose-p:text-sm print:prose-li:text-sm print:prose-pre:bg-white print:prose-pre:text-black print:prose-pre:border-slate-200
+                                    ">
+                                    <ReactMarkdown 
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            code({node, inline, className, children, ...props}: any) {
+                                                const match = /language-(\w+)/.exec(className || '');
+                                                if (!inline && match) {
+                                                    return (
+                                                        <div className="relative group/code">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(String(children));
+                                                                }}
+                                                                className="absolute right-2 top-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg opacity-0 group-hover/code:opacity-100 transition-all text-[10px] font-black uppercase text-white/70"
+                                                            >
+                                                                Copiar
+                                                            </button>
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        </div>
+                                                    );
+                                                }
+                                                return <code className={className} {...props}>{children}</code>;
+                                            }
+                                        }}
+                                    >
+                                        {displayedContent}
+                                    </ReactMarkdown>
+                                </article>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+
+                    {/* Footer de Navegación de Página */}
+                    <div className="mt-12 flex items-center justify-between px-4">
+                        <button 
+                            className="flex flex-col items-start gap-1 group"
+                            onClick={() => {
+                                const prevId = (parseInt(activeSection) - 1).toString();
+                                if (parseInt(prevId) > 0) setActiveSection(prevId);
+                                scrollToTop();
+                            }}
+                        >
+                            <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">Anterior</span>
+                            <span className="text-sm font-bold flex items-center gap-1">
+                                <ChevronRight className="h-4 w-4 rotate-180" /> Tomo {parseInt(activeSection) - 1}
+                            </span>
+                        </button>
+                        
+                        <button 
+                            className="flex flex-col items-end gap-1 group text-right"
+                            onClick={() => {
+                                const nextId = (parseInt(activeSection) + 1).toString();
+                                if (parseInt(nextId) <= 26) setActiveSection(nextId);
+                                scrollToTop();
+                            }}
+                        >
+                            <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">Siguiente</span>
+                            <span className="text-sm font-bold flex items-center gap-1">
+                                Tomo {parseInt(activeSection) + 1} <ChevronRight className="h-4 w-4" />
+                            </span>
+                        </button>
+                    </div>
                 </main>
             </div>
         </div>
