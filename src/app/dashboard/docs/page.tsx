@@ -288,14 +288,33 @@ export default function DocsPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="bg-white dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-8 md:p-16 shadow-xl shadow-slate-200/50 dark:shadow-none min-h-[800px]"
+                            className="bg-white dark:bg-slate-950 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none p-8 md:p-16 min-h-[800px] relative overflow-hidden"
                         >
-                            {/* Banner de Info */}
-                            <div className="mb-12 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-start gap-4">
-                                <Info className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
-                                <p className="text-xs text-indigo-900/60 dark:text-indigo-300/60 font-medium leading-relaxed">
-                                    Estás visualizando el <span className="font-bold text-indigo-500">Tomo {activeSection}</span> del manual de ingeniería. Toda la información aquí contenida es confidencial y estratégica para la operación del sistema.
-                                </p>
+                            {/* Decoración de Fondo Premium */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
+
+                            {/* Cabecera de Sección */}
+                            <div className="mb-16 space-y-4 relative z-10">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-[1px] w-8 bg-indigo-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500">
+                                        {currentItem.phase}
+                                    </span>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1]">
+                                    {currentItem.title}
+                                </h2>
+                                <div className="flex items-center gap-4 pt-2">
+                                    <div className="flex -space-x-2">
+                                        {[1,2,3].map(i => (
+                                            <div key={i} className="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                                                <UserCheck className="h-3 w-3 text-slate-500" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revisado por Ingeniería</span>
+                                </div>
                             </div>
 
                             {isLoading ? (
@@ -305,44 +324,76 @@ export default function DocsPage() {
                                 </div>
                             ) : (
                                 <article className="prose prose-slate dark:prose-invert max-w-none 
-                                    prose-headings:font-black prose-headings:tracking-tight
-                                    prose-h1:text-5xl prose-h1:mb-8 prose-h1:text-indigo-500
-                                    prose-h2:text-4xl prose-h2:mt-16 prose-h2:mb-8 prose-h2:pb-4 prose-h2:border-b prose-h2:border-slate-100 dark:prose-h2:border-slate-800
-                                    prose-h3:text-2xl prose-h3:mt-12 prose-h3:text-slate-800 dark:prose-h3:text-slate-200
-                                    prose-p:text-lg prose-p:leading-relaxed prose-p:text-slate-600 dark:prose-p:text-slate-400
+                                    prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 dark:prose-headings:text-white
+                                    prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-8 prose-h2:flex prose-h2:items-center prose-h2:gap-4
+                                    prose-h3:text-xl prose-h3:text-indigo-600 dark:prose-h3:text-indigo-400 prose-h3:mt-10
+                                    prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-[1.8] prose-p:text-lg
+                                    prose-li:text-slate-600 dark:prose-li:text-slate-400 prose-li:text-lg
                                     prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
-                                    prose-code:bg-indigo-500/5 dark:prose-code:bg-indigo-500/10 prose-code:text-indigo-600 dark:prose-code:text-indigo-400 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-lg prose-code:before:content-none prose-code:after:content-none prose-code:font-bold
-                                    prose-pre:bg-[#0f172a] prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-[2rem] prose-pre:shadow-2xl prose-pre:p-8
-                                    prose-li:text-lg prose-li:text-slate-600 dark:prose-li:text-slate-400
-                                    prose-table:border prose-table:border-slate-200 dark:prose-table:border-slate-800 prose-table:rounded-xl prose-table:overflow-hidden
-                                    prose-th:bg-slate-50 dark:prose-th:bg-slate-800/50 prose-th:p-4 prose-th:text-sm prose-th:font-black
-                                    prose-td:p-4 prose-td:text-sm prose-td:border-t prose-td:border-slate-100 dark:prose-td:border-slate-800
-                                    print:prose-h1:text-4xl print:prose-h2:text-2xl print:prose-p:text-sm print:prose-li:text-sm print:prose-pre:bg-white print:prose-pre:text-black print:prose-pre:border-slate-200
+                                    prose-code:text-indigo-500 prose-code:bg-indigo-500/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
+                                    prose-table:border-collapse prose-table:w-full prose-table:my-10
+                                    prose-th:bg-slate-50 dark:prose-th:bg-slate-900/50 prose-th:p-5 prose-th:text-xs prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-th:text-slate-500
+                                    prose-td:p-5 prose-td:text-sm prose-td:border-b prose-td:border-slate-100 dark:prose-td:border-slate-800
+                                    prose-img:rounded-3xl prose-img:shadow-2xl
                                     ">
                                     <ReactMarkdown 
                                         remarkPlugins={[remarkGfm]}
                                         components={{
+                                            h2: ({children}) => (
+                                                <h2 className="relative">
+                                                    <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-grad-primary rounded-full hidden md:block" />
+                                                    {children}
+                                                </h2>
+                                            ),
                                             code({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) {
                                                 const match = /language-(\w+)/.exec(className || '');
                                                 const content = String(children).replace(/\n$/, '');
                                                 
-                                                if (!match) {
+                                                // RENDERIZADO DE MERMAID (Visual Premium)
+                                                if (match && match[1] === 'mermaid') {
                                                     return (
-                                                        <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-indigo-500 font-mono text-[0.9em]" {...props}>
-                                                            {children}
-                                                        </code>
+                                                        <div className="my-12 p-8 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-6 group overflow-hidden relative">
+                                                            <div className="absolute top-0 left-0 right-0 h-1 bg-grad-primary opacity-50" />
+                                                            <div className="flex items-center gap-2 mb-4">
+                                                                <GitBranch className="h-5 w-5 text-indigo-500" />
+                                                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Diagrama de Ingeniería</span>
+                                                            </div>
+                                                            <div className="w-full bg-white dark:bg-slate-950 p-8 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 font-mono text-xs leading-relaxed text-slate-500 overflow-x-auto whitespace-pre">
+                                                                {content}
+                                                            </div>
+                                                            <div className="text-center space-y-1">
+                                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest italic opacity-60">Visualizer Engine active</p>
+                                                            </div>
+                                                        </div>
                                                     );
                                                 }
 
+                                                if (!match) {
+                                                    return <code className={className} {...props}>{children}</code>;
+                                                }
+
                                                 return (
-                                                    <div className="relative group/code my-6 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                                                        <button 
-                                                            onClick={() => copyToClipboard(content)}
-                                                            className="absolute right-3 top-3 z-10 p-2 bg-slate-900/50 hover:bg-slate-900 rounded-lg opacity-0 group-hover/code:opacity-100 transition-all text-[10px] font-black uppercase text-white"
-                                                        >
-                                                            Copiar
-                                                        </button>
-                                                        <pre className="p-4 bg-slate-950 overflow-x-auto">
+                                                    <div className="relative group/code my-10 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl">
+                                                        <div className="bg-slate-900 px-6 py-3 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="flex gap-1.5">
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50" />
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20 border border-amber-500/50" />
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/50" />
+                                                                </div>
+                                                                <span className="ml-4 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                                    {match[1]}
+                                                                </span>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => copyToClipboard(content)}
+                                                                className="flex items-center gap-2 px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg transition-all text-[9px] font-black uppercase text-white/50 hover:text-white"
+                                                            >
+                                                                <ArrowUpRight className="h-3 w-3" />
+                                                                Copiar
+                                                            </button>
+                                                        </div>
+                                                        <pre className="p-8 bg-slate-950 overflow-x-auto custom-scrollbar font-mono text-sm leading-relaxed text-indigo-300">
                                                             <code className={className} {...props}>
                                                                 {children}
                                                             </code>
@@ -356,6 +407,24 @@ export default function DocsPage() {
                                     </ReactMarkdown>
                                 </article>
                             )}
+
+                            {/* Footer de Sección */}
+                            <div className="mt-24 pt-10 border-t border-slate-100 dark:border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+                                        <Info className="h-5 w-5 text-slate-400" />
+                                    </div>
+                                    <p className="text-xs font-medium text-slate-400 max-w-xs leading-relaxed">
+                                        Este documento es propiedad intelectual del cliente. Prohibida su reproducción sin autorización técnica.
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => window.print()}
+                                    className="px-6 py-3 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-slate-900/20 dark:shadow-none"
+                                >
+                                    Exportar a PDF Profesional
+                                </button>
+                            </div>
                         </motion.div>
                     </AnimatePresence>
 
