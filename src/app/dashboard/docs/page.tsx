@@ -8,52 +8,60 @@ import {
     ShieldCheck, Zap, BookOpen, Search,
     Cpu, MessageSquare, Database, Activity,
     Scale, UserCheck, Layout, GitBranch,
-    ArrowUpRight, Info
+    ArrowUpRight, Info, Brain
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Fases y Capítulos mapeados del Dossier v5.0
+// Fases y Tomos mapeados exactamente del Dossier Maestro v5.0 (26 Tomos)
 const DOC_STRUCTURE = [
     {
-        phase: "FASE I: Cimientos y Visión Estratégica",
-        color: "from-blue-500 to-indigo-600",
+        phase: "FASE I: Cimientos y Estrategia",
+        color: "from-blue-600 to-indigo-600",
         items: [
             { id: "1", title: "Visión Técnica", icon: <Layout className="h-4 w-4" /> },
             { id: "2", title: "Arquitectura Backend", icon: <Database className="h-4 w-4" /> },
-            { id: "3", title: "Ingeniería de Resiliencia", icon: <Zap className="h-4 w-4" /> },
-            { id: "4", title: "Centro de Comando", icon: <Layout className="h-4 w-4" /> },
-            { id: "5", title: "Manual de Referencia (Tomo IV)", icon: <BookOpen className="h-4 w-4" /> },
+            { id: "3", title: "Ingeniería de Resiliencia", icon: <ShieldCheck className="h-4 w-4" /> },
+            { id: "4", title: "Centro de Comando (UI)", icon: <Cpu className="h-4 w-4" /> },
+            { id: "5", title: "Referencia Técnica", icon: <Terminal className="h-4 w-4" /> },
         ]
     },
     {
-        phase: "FASE II: Núcleo de Ingeniería y Workflow",
+        phase: "FASE II: Operación y Seguridad",
         color: "from-emerald-500 to-teal-600",
         items: [
-            { id: "14", title: "The Worker Engine", icon: <Cpu className="h-4 w-4" /> },
-            { id: "12", title: "Contratos de API", icon: <Terminal className="h-4 w-4" /> },
-            { id: "13", title: "Plan de Contingencia", icon: <Activity className="h-4 w-4" /> },
-            { id: "20", title: "Enciclopedia de Nodos", icon: <GitBranch className="h-4 w-4" /> },
+            { id: "6", title: "Seguridad y Soberanía", icon: <ShieldCheck className="h-4 w-4" /> },
+            { id: "7", title: "Estrategias de Conversión", icon: <Zap className="h-4 w-4" /> },
+            { id: "8", title: "Manual de Supervivencia", icon: <Activity className="h-4 w-4" /> },
+            { id: "9", title: "Roadmap y Handover", icon: <GitBranch className="h-4 w-4" /> },
+            { id: "10", title: "Anexos de Onboarding", icon: <Layers className="h-4 w-4" /> },
         ]
     },
     {
         phase: "FASE III: Inteligencia y Cualificación",
         color: "from-purple-500 to-pink-600",
         items: [
-            { id: "11", title: "Motor de Cognición", icon: <MessageSquare className="h-4 w-4" /> },
-            { id: "17", title: "La Joya: Realismo IA", icon: <Zap className="h-4 w-4" /> },
-            { id: "18", title: "Diccionario de Variables", icon: <BookOpen className="h-4 w-4" /> },
-            { id: "19", title: "Anatomía del Agente", icon: <UserCheck className="h-4 w-4" /> },
+            { id: "11", title: "Motor de Cualificación", icon: <Brain className="h-4 w-4" /> },
+            { id: "12", title: "Contratos de API", icon: <Terminal className="h-4 w-4" /> },
+            { id: "13", title: "Plan de Contingencia", icon: <Activity className="h-4 w-4" /> },
+            { id: "14", title: "Worker Engine (BullMQ)", icon: <Cpu className="h-4 w-4" /> },
+            { id: "15", title: "Gobernanza de IA", icon: <MessageSquare className="h-4 w-4" /> },
         ]
     },
     {
-        phase: "FASE IV: Gobernanza y Entrega",
+        phase: "FASE IV: Excelencia y Entrega",
         color: "from-orange-500 to-amber-600",
         items: [
-            { id: "6", title: "Seguridad y Soberanía", icon: <ShieldCheck className="h-4 w-4" /> },
-            { id: "16", title: "Compliance y GDPR", icon: <Scale className="h-4 w-4" /> },
+            { id: "16", title: "GDPR & Compliance", icon: <Scale className="h-4 w-4" /> },
+            { id: "17", title: "Baja Latencia (<800ms)", icon: <Zap className="h-4 w-4" /> },
+            { id: "18", title: "Diccionario de Variables", icon: <BookOpen className="h-4 w-4" /> },
+            { id: "19", title: "Anatomía del Agente", icon: <UserCheck className="h-4 w-4" /> },
+            { id: "20", title: "Enciclopedia de Nodos", icon: <Layout className="h-4 w-4" /> },
+            { id: "21", title: "Glosario de Módulos", icon: <Info className="h-4 w-4" /> },
+            { id: "22", title: "Guía Command Center", icon: <Layout className="h-4 w-4" /> },
             { id: "23", title: "Ciclo de Vida del Dato", icon: <Database className="h-4 w-4" /> },
-            { id: "25", title: "Protocolo de Handover", icon: <ArrowUpRight className="h-4 w-4" /> },
+            { id: "24", title: "Optimización de Costes", icon: <Activity className="h-4 w-4" /> },
+            { id: "25", title: "Handover Humano", icon: <UserCheck className="h-4 w-4" /> },
             { id: "26", title: "Blueprint Maestro", icon: <Layers className="h-4 w-4" /> },
         ]
     }
