@@ -114,7 +114,7 @@ export class AppointmentService {
             const scheduledDate = new Date(scheduledAt);
             const dateForValidation = format(scheduledDate, 'yyyy-MM-dd');
             const availability = await this.checkAvailability(tenantId, dateForValidation);
-            
+
             // Convert requested time to HH:mm in Madrid timezone for comparison
             const requestedTimeMadrid = format(toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE), 'HH:mm');
             const isAvailable = availability.available_slots.some(s => s.madrid_time === requestedTimeMadrid);
@@ -257,13 +257,13 @@ export class AppointmentService {
             .select("tenant_id")
             .eq("id", appointmentId)
             .single();
-        
+
         if (fetchErr || !existingApp) throw new Error("Cita no encontrada para reprogramar.");
 
         const scheduledDate = new Date(scheduledAt);
         const dateForValidation = format(scheduledDate, 'yyyy-MM-dd');
         const availability = await this.checkAvailability(existingApp.tenant_id, dateForValidation);
-        
+
         const requestedTimeMadrid = format(toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE), 'HH:mm');
         const isAvailable = availability.available_slots.some(s => s.madrid_time === requestedTimeMadrid);
 
@@ -367,7 +367,7 @@ export class AppointmentService {
                     if (!isBooked) {
                         const nowUTC = new Date();
                         const slotDate = new Date(slotUTC);
-                        
+
                         // If checking for today, skip slots that already passed (plus 15 min buffer)
                         const isPast = slotDate.getTime() < (nowUTC.getTime() + 15 * 60 * 1000);
                         // Compare using Madrid timezone to avoid UTC date mismatch (e.g. UTC is still yesterday)
