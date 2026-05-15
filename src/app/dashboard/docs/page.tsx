@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import fs from 'fs';
 import path from 'path';
-import { Book, ChevronRight, Home, Terminal, Share2, Layers, ShieldCheck, Zap, Globe } from 'lucide-react';
+import { Book, ChevronRight, Home, Terminal, Layers, ShieldCheck, Zap, Globe, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DocsPage() {
@@ -13,7 +13,7 @@ export default function DocsPage() {
         const filePath = path.join(process.cwd(), 'DOCUMENTATION.md');
         content = fs.readFileSync(filePath, 'utf8');
     } catch {
-        content = "# Error\nNo se pudo cargar la documentación.";
+        content = "# Error\nNo se pudo cargar la documentación maestro.";
     }
 
     return (
@@ -28,7 +28,7 @@ export default function DocsPage() {
                         <div className="flex items-center gap-2 text-sm font-medium opacity-60">
                             <Link href="/dashboard" className="hover:text-indigo-500 transition-colors">Dashboard</Link>
                             <ChevronRight className="h-4 w-4" />
-                            <span className="text-slate-900 dark:text-white font-bold">Documentación</span>
+                            <span className="text-slate-900 dark:text-white font-bold">Documentación Maestra</span>
                         </div>
                     </div>
                     <Link 
@@ -45,16 +45,16 @@ export default function DocsPage() {
                 {/* Sidebar Navigation */}
                 <aside className="hidden lg:block space-y-8 sticky top-32 h-fit">
                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Secciones</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Estructura Maestra</h3>
                         <nav className="space-y-1">
                             {[
-                                { label: "Visión General", icon: <Layers className="h-4 w-4" /> },
-                                { label: "Guía de Usuario", icon: <Home className="h-4 w-4" /> },
-                                { label: "Guía de Admin", icon: <Terminal className="h-4 w-4" /> },
-                                { label: "Variables", icon: <Share2 className="h-4 w-4" /> },
-                                { label: "Nodos y Tools", icon: <Zap className="h-4 w-4" /> },
-                                { label: "Integraciones", icon: <Globe className="h-4 w-4" /> },
-                                { label: "Supabase Externo", icon: <ShieldCheck className="h-4 w-4" /> },
+                                { label: "1. Visión Arquitectónica", icon: <Layers className="h-4 w-4" /> },
+                                { label: "2. Gobernanza y Blindaje", icon: <ShieldCheck className="h-4 w-4" /> },
+                                { label: "3. Manual de Operaciones", icon: <Home className="h-4 w-4" /> },
+                                { label: "4. Manual de Ingeniería", icon: <Terminal className="h-4 w-4" /> },
+                                { label: "5. Diccionario Técnico", icon: <BookOpen className="h-4 w-4" /> },
+                                { label: "6. Integraciones", icon: <Globe className="h-4 w-4" /> },
+                                { label: "7. Protocolo Supabase", icon: <Zap className="h-4 w-4" /> },
                             ].map((item) => (
                                 <button key={item.label} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-xl transition-all text-left">
                                     {item.icon}
@@ -65,8 +65,8 @@ export default function DocsPage() {
                     </div>
 
                     <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10">
-                        <p className="text-[10px] font-bold text-indigo-500 uppercase mb-2">Ayuda</p>
-                        <p className="text-xs text-slate-500 leading-relaxed">¿Necesitas soporte adicional? Contacta con el equipo de IA.</p>
+                        <p className="text-[10px] font-bold text-indigo-500 uppercase mb-2">Soporte Ejecutivo</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">Guía exclusiva para el propietario del sistema v3.0.</p>
                     </div>
                 </aside>
 
