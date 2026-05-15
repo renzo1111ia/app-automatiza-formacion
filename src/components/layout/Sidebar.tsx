@@ -135,6 +135,11 @@ const NAV_ITEMS: NavItem[] = [
         href: "/dashboard/settings",
         icon: <Settings className="h-5 w-5" strokeWidth={1.8} />
     },
+    {
+        label: "Documentación",
+        href: "/dashboard/docs",
+        icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />
+    },
 ];
 
 export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
