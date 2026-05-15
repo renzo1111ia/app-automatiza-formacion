@@ -38,6 +38,7 @@
     "langchain": "^1.2.39",
     "libphonenumber-js": "^1.12.42",
     "lucide-react": "^0.575.0",
+    "mermaid": "^11.15.0",
     "next": "16.1.6",
     "pdf-parse": "^2.4.5",
     "postgres": "^3.4.9",

@@ -51,20 +51,35 @@ A diferencia de los sistemas lineales tradicionales, nuestro **Orchestrator Engi
 
 ```mermaid
 graph TD
-    A[Lead Ingress: CRM/Webhook] --> B{Entry Filters}
-    B -- Match --> C[Orchestrator Engine]
-    B -- No Match --> D[Discard/Log]
-    C --> E{Circuit Breaker}
-    E -- Budget OK --> F{Compliance Guard}
-    E -- Limit Reached --> G[Alert/Pause]
-    F -- Work Hours --> H[Execution: Voice/WA]
-    F -- Off Hours --> I[Queue for Next Window]
-    H --> J[AI Cognition/Extraction]
-    J --> K[Data Sync: CRM/Supabase]
-    K --> L{Goal Reached?}
-    L -- Yes --> M[End Sequence]
-    L -- No --> N[Wait/Retry Logic]
+    A["📥 Entrada de Lead\n(CRM / Webhook)"] --> B{"🔍 Filtros de Entrada"}
+    B -- "✅ Coincidencia" --> C["⚙️ Motor Orquestador"]
+    B -- "❌ Sin Coincidencia" --> D["🗑️ Descartar / Registrar"]
+    C --> E{"⚡ Disyuntor\nde Presupuesto"}
+    E -- "✅ Presupuesto OK" --> F{"🛡️ Control de\nCumplimiento"}
+    E -- "🔴 Límite Alcanzado" --> G["🚨 Alerta / Pausar"]
+    F -- "🕐 Horario Laboral" --> H["🚀 Ejecución\nVoz / WhatsApp"]
+    F -- "🌙 Fuera de Horario" --> I["⏳ Cola para\nPróxima Ventana"]
+    H --> J["🧠 Cognición IA\nExtracción de Datos"]
+    J --> K["🔄 Sincronización\nCRM / Supabase"]
+    K --> L{"🎯 ¿Meta\nAlcanzada?"}
+    L -- "✅ Sí" --> M["🏁 Fin de Secuencia\n(Éxito)"]
+    L -- "🔁 No" --> N["⏱️ Lógica de Espera\ny Reintento"]
     N --> C
+
+    style A fill:#6366f1,stroke:#4338ca,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#f59e0b,stroke:#d97706,color:#fff
+    style F fill:#10b981,stroke:#059669,color:#fff
+    style H fill:#3b82f6,stroke:#2563eb,color:#fff
+    style J fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style K fill:#06b6d4,stroke:#0891b2,color:#fff
+    style L fill:#f59e0b,stroke:#d97706,color:#fff
+    style M fill:#10b981,stroke:#059669,color:#fff
+    style D fill:#ef4444,stroke:#dc2626,color:#fff
+    style G fill:#ef4444,stroke:#dc2626,color:#fff
+    style N fill:#6366f1,stroke:#4338ca,color:#fff
+    style I fill:#64748b,stroke:#475569,color:#fff
+    style B fill:#334155,stroke:#1e293b,color:#fff
 ```
 
 ---

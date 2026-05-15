@@ -12,6 +12,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const MermaidDiagram = dynamic(() => import('@/components/docs/MermaidDiagram'), { ssr: false });
+
 
 // Fases y Tomos mapeados exactamente del Dossier Maestro v5.0 (26 Tomos)
 const DOC_STRUCTURE = [
@@ -351,21 +355,7 @@ export default function DocsPage() {
                                                 
                                                 // RENDERIZADO DE MERMAID (Visual Premium)
                                                 if (match && match[1] === 'mermaid') {
-                                                    return (
-                                                        <div className="my-12 p-8 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-6 group overflow-hidden relative">
-                                                            <div className="absolute top-0 left-0 right-0 h-1 bg-grad-primary opacity-50" />
-                                                            <div className="flex items-center gap-2 mb-4">
-                                                                <GitBranch className="h-5 w-5 text-indigo-500" />
-                                                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Diagrama de Ingeniería</span>
-                                                            </div>
-                                                            <div className="w-full bg-white dark:bg-slate-950 p-8 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 font-mono text-xs leading-relaxed text-slate-500 overflow-x-auto whitespace-pre">
-                                                                {content}
-                                                            </div>
-                                                            <div className="text-center space-y-1">
-                                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest italic opacity-60">Visualizer Engine active</p>
-                                                            </div>
-                                                        </div>
-                                                    );
+                                                    return <MermaidDiagram chart={content} />;
                                                 }
 
                                                 if (!match) {
