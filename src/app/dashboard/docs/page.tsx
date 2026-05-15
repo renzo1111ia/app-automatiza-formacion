@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
     Book, ChevronRight, Home, Terminal, Layers, 
-    ShieldCheck, Zap, Globe, BookOpen, Search,
+    ShieldCheck, Zap, BookOpen, Search,
     Cpu, MessageSquare, Database, Activity,
     Scale, UserCheck, Layout, GitBranch,
     ArrowUpRight, Info
@@ -65,6 +65,10 @@ export default function DocsPage() {
     const [activeSection, setActiveSection] = useState("1");
     const [isLoading, setIsLoading] = useState(true);
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+    };
+
     useEffect(() => {
         const fetchContent = async () => {
             try {
@@ -81,76 +85,112 @@ export default function DocsPage() {
         fetchContent();
     }, []);
 
-    // Filtrar contenido por la sección activa (buscando el heading ## X.)
+    // Filtrar contenido por la sección activa (buscando el heading ## SECCIÓN X.)
     const displayedContent = useMemo(() => {
         if (!content) return "";
-        const sections = content.split(/---/); // El dossier usa --- como separadores
         
-        // Buscamos la sección que empiece con el ID
+        // Separamos por el separador horizontal ---
+        const sections = content.split(/---/);
+        
+        // Buscamos la sección que contenga el encabezado de la sección activa
         const targetSection = sections.find(s => {
             const trimmed = s.trim();
-            return trimmed.startsWith(`## ${activeSection}.`) || trimmed.includes(`## ${activeSection}.`);
+            // Buscamos coincidencia con "## SECCIÓN X." o "## X." (por si acaso)
+            const sectionPattern = new RegExp(`## (SECCIÓN )?${activeSection}\\.`, 'i');
+            return sectionPattern.test(trimmed);
         });
 
-        return targetSection || sections[0]; // Si no encuentra, muestra el intro
+        // Si estamos en la sección "1", y no hay coincidencia exacta (ej. el intro), 
+        // podríamos querer mostrar el primer bloque que no sea el índice.
+        return targetSection || sections[0];
     }, [content, activeSection]);
 
+    // Encontrar el título actual para el breadcrumb
+    const currentItem = useMemo(() => {
+        for (const phase of DOC_STRUCTURE) {
+            const item = phase.items.find(i => i.id === activeSection);
+            if (item) return { phase: phase.phase, title: item.title };
+        }
+        return { phase: "Documentación", title: "Introducción" };
+    }, [activeSection]);
+
     const scrollToTop = () => {
+        const container = document.getElementById('docs-content-area');
+        if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
-        <div className="min-h-screen bg-[#FDFDFF] dark:bg-[#020617] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#020617] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30">
             {/* Nav Superior Glassmorphism */}
-            <div className="sticky top-0 z-[60] bg-white/70 dark:bg-slate-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 py-4">
-                <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-grad-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                            <Book className="h-5 w-5 text-white" />
+            <div className="sticky top-0 z-[60] bg-white/80 dark:bg-slate-950/80 backdrop-blur-2xl border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+                <div className="max-w-[1500px] mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        <div className="h-12 w-12 bg-grad-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/40 group cursor-pointer overflow-hidden relative">
+                            <motion.div 
+                                className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"
+                            />
+                            <Book className="h-6 w-6 text-white relative z-10" />
                         </div>
-                        <div>
-                            <h1 className="text-sm font-black tracking-widest uppercase text-slate-400">Sistema v5.0</h1>
-                            <p className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                                Dossier Técnico de Entrega
-                                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">Bulletproof</span>
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-[10px] font-black tracking-[0.3em] uppercase text-indigo-500 dark:text-indigo-400">Knowledge Base v5.0</h1>
+                                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enterprise Edition</span>
+                            </div>
+                            <p className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+                                {currentItem.title}
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full border border-emerald-500/20 shadow-sm shadow-emerald-500/10">
+                                    Certificado
+                                </span>
                             </p>
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <input 
-                                type="text" 
-                                placeholder="Buscar en los tomos..."
-                                className="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-900 border-none rounded-xl text-sm focus:ring-2 ring-indigo-500/50 transition-all w-64"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                    <div className="hidden md:flex items-center gap-6">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Status</span>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-xs font-bold">Sincronizado</span>
+                            </div>
                         </div>
+                        <div className="h-10 w-[1px] bg-slate-200 dark:border-slate-800" />
                         <Link 
                             href="/dashboard"
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl font-bold text-sm transition-all border border-slate-200 dark:border-slate-800"
                         >
-                            <Home className="h-5 w-5" />
+                            <Home className="h-4 w-4 text-slate-500" />
+                            Dashboard
                         </Link>
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12">
+            <div className="max-w-[1500px] mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-10">
                 
-                {/* SIDEBAR DE FASES Y TOMOS */}
-                <aside className="space-y-10 sticky top-28 h-fit max-h-[calc(100vh-140px)] overflow-y-auto pr-4 scrollbar-hide">
+                {/* SIDEBAR DE FASES Y TOMOS (MÁS ORDENADO) */}
+                <aside className="space-y-8 sticky top-32 h-fit max-h-[calc(100vh-160px)] overflow-y-auto pr-2 custom-scrollbar pb-10">
+                    <div className="relative mb-8">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input 
+                            type="text" 
+                            placeholder="Buscar en el Dossier..."
+                            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-medium focus:ring-2 ring-indigo-500/20 transition-all shadow-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
                     {DOC_STRUCTURE.map((phase) => (
-                        <div key={phase.phase} className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-1 h-4 rounded-full bg-gradient-to-b ${phase.color}`} />
-                                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <div key={phase.phase} className="bg-white/40 dark:bg-slate-900/40 rounded-[2rem] p-5 border border-slate-200/60 dark:border-slate-800/60 space-y-4">
+                            <div className="flex items-center gap-3 px-1">
+                                <div className={`w-1.5 h-5 rounded-full bg-gradient-to-b ${phase.color} shadow-lg`} />
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 leading-tight">
                                     {phase.phase}
                                 </h3>
                             </div>
-                            <nav className="space-y-1.5">
+                            <nav className="space-y-1">
                                 {phase.items.map((item) => (
                                     <button 
                                         key={item.id} 
@@ -158,18 +198,25 @@ export default function DocsPage() {
                                             setActiveSection(item.id);
                                             scrollToTop();
                                         }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-2xl transition-all text-left group
+                                        className={`w-full flex items-center gap-3 px-4 py-3.5 text-[13px] font-bold rounded-2xl transition-all text-left group relative overflow-hidden
                                             ${activeSection === item.id 
-                                                ? "bg-indigo-500/10 text-indigo-500 shadow-sm border border-indigo-500/10" 
-                                                : "text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900"
+                                                ? "bg-grad-primary text-white shadow-xl shadow-indigo-500/25 border-none" 
+                                                : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-500/5"
                                             }`}
                                     >
-                                        <span className={`${activeSection === item.id ? "text-indigo-500" : "text-slate-400 group-hover:text-indigo-500"} transition-colors`}>
+                                        <span className={`${activeSection === item.id ? "text-white" : "text-slate-400 group-hover:text-indigo-500"} transition-colors relative z-10`}>
                                             {item.icon}
                                         </span>
-                                        <span className="flex-1 truncate">{item.title}</span>
+                                        <span className="flex-1 truncate relative z-10">{item.title}</span>
+                                        <span className={`text-[9px] font-black opacity-40 uppercase relative z-10 ${activeSection === item.id ? "text-white" : ""}`}>
+                                            Tomo {item.id}
+                                        </span>
                                         {activeSection === item.id && (
-                                            <motion.div layoutId="active-pill" className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                            <motion.div 
+                                                layoutId="active-bg" 
+                                                className="absolute inset-0 bg-grad-primary" 
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
                                         )}
                                     </button>
                                 ))}
@@ -261,26 +308,33 @@ export default function DocsPage() {
                                     <ReactMarkdown 
                                         remarkPlugins={[remarkGfm]}
                                         components={{
-                                            code({node, inline, className, children, ...props}: any) {
+                                            code({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) {
                                                 const match = /language-(\w+)/.exec(className || '');
-                                                if (!inline && match) {
+                                                const content = String(children).replace(/\n$/, '');
+                                                
+                                                if (!match) {
                                                     return (
-                                                        <div className="relative group/code">
-                                                            <button 
-                                                                onClick={() => {
-                                                                    navigator.clipboard.writeText(String(children));
-                                                                }}
-                                                                className="absolute right-2 top-2 p-2 bg-white/10 hover:bg-white/20 rounded-lg opacity-0 group-hover/code:opacity-100 transition-all text-[10px] font-black uppercase text-white/70"
-                                                            >
-                                                                Copiar
-                                                            </button>
+                                                        <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-indigo-500 font-mono text-[0.9em]" {...props}>
+                                                            {children}
+                                                        </code>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <div className="relative group/code my-6 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+                                                        <button 
+                                                            onClick={() => copyToClipboard(content)}
+                                                            className="absolute right-3 top-3 z-10 p-2 bg-slate-900/50 hover:bg-slate-900 rounded-lg opacity-0 group-hover/code:opacity-100 transition-all text-[10px] font-black uppercase text-white"
+                                                        >
+                                                            Copiar
+                                                        </button>
+                                                        <pre className="p-4 bg-slate-950 overflow-x-auto">
                                                             <code className={className} {...props}>
                                                                 {children}
                                                             </code>
-                                                        </div>
-                                                    );
-                                                }
-                                                return <code className={className} {...props}>{children}</code>;
+                                                        </pre>
+                                                    </div>
+                                                );
                                             }
                                         }}
                                     >
