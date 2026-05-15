@@ -304,20 +304,21 @@ export default function DocsPage() {
                             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
                             <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
-                            {/* Cabecera de Sección */}
-                            <div className="mb-16 space-y-4 relative z-10">
-                                <div className="flex items-center gap-2">
-                                    <span className="h-[1px] w-8 bg-indigo-500" />
+                            {/* Cabecera de Sección Centralizada */}
+                            <div className="mb-20 space-y-6 relative z-10 text-center flex flex-col items-center">
+                                <div className="flex items-center gap-3 justify-center">
+                                    <span className="h-[1px] w-12 bg-indigo-500/30" />
                                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500">
                                         {currentItem.phase}
                                     </span>
+                                    <span className="h-[1px] w-12 bg-indigo-500/30" />
                                 </div>
-                                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1]">
+                                <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1] max-w-3xl mx-auto">
                                     {currentItem.title}
                                 </h2>
-                                <div className="flex items-center gap-4 pt-2">
+                                <div className="flex items-center gap-4 pt-4 justify-center">
                                     <div className="flex -space-x-2">
-                                        {[1,2,3].map(i => (
+                                        {[1, 2, 3].map(i => (
                                             <div key={i} className="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
                                                 <UserCheck className="h-3 w-3 text-slate-500" />
                                             </div>
@@ -333,18 +334,18 @@ export default function DocsPage() {
                                     <p className="text-sm font-bold text-slate-400">Sincronizando Dossier...</p>
                                 </div>
                             ) : (
-                                <article className="max-w-none text-slate-700 dark:text-slate-300">
+                                <article className="max-w-4xl mx-auto text-slate-700 dark:text-slate-300">
                                     <ReactMarkdown 
                                         remarkPlugins={[remarkGfm]}
                                         components={{
                                             h2: ({children}) => (
-                                                <h2 className="relative text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-16 mb-6 pb-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                                                <h2 className="relative text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-16 mb-6 pb-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center gap-3 justify-center">
                                                     <span className="w-1 h-7 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full shrink-0" />
                                                     {children}
                                                 </h2>
                                             ),
                                             h3: ({children}) => (
-                                                <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-10 mb-4 flex items-center gap-2">
+                                                <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-10 mb-4 flex items-center gap-2 justify-center">
                                                     <span className="text-indigo-300 dark:text-indigo-600 font-mono text-sm">▸</span>
                                                     {children}
                                                 </h3>
