@@ -7,7 +7,7 @@ import {
     Book, ChevronRight, Home, Terminal, Layers, 
     ShieldCheck, Zap, BookOpen, Search,
     Cpu, MessageSquare, Database, Activity,
-    Scale, UserCheck, Layout, GitBranch,
+    Scale, UserCheck, Layout,
     ArrowUpRight, Info, Brain
 } from 'lucide-react';
 import Link from 'next/link';
@@ -333,39 +333,103 @@ export default function DocsPage() {
                                     <p className="text-sm font-bold text-slate-400">Sincronizando Dossier...</p>
                                 </div>
                             ) : (
-                                <article className="prose prose-slate dark:prose-invert max-w-none 
-                                    prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 dark:prose-headings:text-white
-                                    prose-h2:text-3xl prose-h2:mt-16 prose-h2:mb-8 prose-h2:flex prose-h2:items-center prose-h2:gap-4
-                                    prose-h3:text-xl prose-h3:text-indigo-600 dark:prose-h3:text-indigo-400 prose-h3:mt-10
-                                    prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-[1.8] prose-p:text-lg
-                                    prose-li:text-slate-600 dark:prose-li:text-slate-400 prose-li:text-lg
-                                    prose-strong:text-slate-900 dark:prose-strong:text-white prose-strong:font-black
-                                    prose-code:text-indigo-500 prose-code:bg-indigo-500/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
-                                    prose-table:border-collapse prose-table:w-full prose-table:my-10
-                                    prose-th:bg-slate-50 dark:prose-th:bg-slate-900/50 prose-th:p-5 prose-th:text-xs prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-th:text-slate-500
-                                    prose-td:p-5 prose-td:text-sm prose-td:border-b prose-td:border-slate-100 dark:prose-td:border-slate-800
-                                    prose-img:rounded-3xl prose-img:shadow-2xl
-                                    ">
+                                <article className="max-w-none text-slate-700 dark:text-slate-300">
                                     <ReactMarkdown 
                                         remarkPlugins={[remarkGfm]}
                                         components={{
                                             h2: ({children}) => (
-                                                <h2 className="relative">
-                                                    <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-grad-primary rounded-full hidden md:block" />
+                                                <h2 className="relative text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-16 mb-6 pb-4 border-b-2 border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                                                    <span className="w-1 h-7 bg-gradient-to-b from-indigo-500 to-violet-500 rounded-full shrink-0" />
                                                     {children}
                                                 </h2>
+                                            ),
+                                            h3: ({children}) => (
+                                                <h3 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-10 mb-4 flex items-center gap-2">
+                                                    <span className="text-indigo-300 dark:text-indigo-600 font-mono text-sm">▸</span>
+                                                    {children}
+                                                </h3>
+                                            ),
+                                            h4: ({children}) => (
+                                                <h4 className="text-base font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mt-8 mb-3">
+                                                    {children}
+                                                </h4>
+                                            ),
+                                            p: ({children}) => (
+                                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.9] mb-6">
+                                                    {children}
+                                                </p>
+                                            ),
+                                            ul: ({children}) => (
+                                                <ul className="my-8 space-y-4 pl-6 list-disc marker:text-indigo-500">
+                                                    {children}
+                                                </ul>
+                                            ),
+                                            ol: ({children}) => (
+                                                <ol className="my-8 space-y-4 pl-6 list-decimal marker:text-indigo-500 marker:font-black">
+                                                    {children}
+                                                </ol>
+                                            ),
+                                            li: ({children}) => (
+                                                <li className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.8] pl-2">
+                                                    {children}
+                                                </li>
+                                            ),
+                                            blockquote: ({children}) => (
+                                                <blockquote className="my-8 pl-6 border-l-4 border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-r-2xl py-5 pr-6">
+                                                    <div className="text-base md:text-lg text-indigo-700 dark:text-indigo-300 font-medium leading-[1.8] italic">
+                                                        {children}
+                                                    </div>
+                                                </blockquote>
+                                            ),
+                                            hr: () => (
+                                                <div className="my-12 flex items-center gap-4">
+                                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                                                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
+                                                </div>
+                                            ),
+                                            strong: ({children}) => (
+                                                <strong className="font-black text-slate-900 dark:text-white">
+                                                    {children}
+                                                </strong>
+                                            ),
+                                            table: ({children}) => (
+                                                <div className="my-10 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 shadow-lg">
+                                                    <table className="w-full border-collapse">
+                                                        {children}
+                                                    </table>
+                                                </div>
+                                            ),
+                                            thead: ({children}) => (
+                                                <thead className="bg-slate-50 dark:bg-slate-900/60">
+                                                    {children}
+                                                </thead>
+                                            ),
+                                            th: ({children}) => (
+                                                <th className="px-6 py-4 text-left text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                                                    {children}
+                                                </th>
+                                            ),
+                                            td: ({children}) => (
+                                                <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                                                    {children}
+                                                </td>
                                             ),
                                             code({ className, children, ...props }: React.ComponentPropsWithoutRef<'code'>) {
                                                 const match = /language-(\w+)/.exec(className || '');
                                                 const content = String(children).replace(/\n$/, '');
-                                                
+                                                if (!match) {
+                                                    return (
+                                                        <code className="bg-indigo-500/5 text-indigo-500 dark:text-indigo-400 px-1.5 py-0.5 rounded-md font-mono text-[0.9em]" {...props}>
+                                                            {children}
+                                                        </code>
+                                                    );
+                                                }
+
+
                                                 // RENDERIZADO DE MERMAID (Visual Premium)
                                                 if (match && match[1] === 'mermaid') {
                                                     return <MermaidDiagram chart={content} />;
-                                                }
-
-                                                if (!match) {
-                                                    return <code className={className} {...props}>{children}</code>;
                                                 }
 
                                                 return (
