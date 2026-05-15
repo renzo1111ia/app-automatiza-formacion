@@ -1,114 +1,141 @@
-# Documentación Técnica: IA CRM & Orchestrator v3.0
+# 📘 Documentación Maestra: AI CRM & Workflow Orchestrator v3.0
 
-Esta documentación describe el funcionamiento interno, las integraciones y la lógica de negocio del sistema de orquestación de leads basado en IA.
-
----
-
-## 1. Arquitectura General
-El sistema funciona como un motor de ejecución de grafos (Workflow Engine) que gestiona el ciclo de vida de un Lead desde su entrada hasta su cualificación o agendamiento.
-
-- **Frontend**: Next.js 14 (App Router).
-- **Backend**: Supabase (PostgreSQL, Auth, Edge Functions).
-- **Motor de Orquestación**: `Orchestrator.ts` (Core Engine).
-- **Canales**: WhatsApp (Meta Cloud API), Llamadas (Retell AI / Ultravox).
+Esta es la guía definitiva para operar, configurar y escalar el ecosistema de orquestación de leads impulsado por Inteligencia Artificial.
 
 ---
 
-## 2. Ingesta de Leads (Webhook/API)
-Para introducir leads al sistema desde fuentes externas (Zoho, Facebook, Formularios Web), se utiliza el endpoint universal de ingesta.
+## 📑 Índice de Contenidos
 
-### Endpoint: `POST /api/leads/ingest`
-**Headers:**
-- `Content-Type: application/json`
-- `x-api-key: [TU_TENANT_API_KEY]`
+1. [Introducción](#1-introducción)
+2. [Sección de Usuario (Operaciones)](#2-sección-de-usuario-operaciones)
+   - [Gestión de Leads](#gestión-de-leads)
+   - [Constructor de Flujos (Canvas)](#constructor-de-flujos-canvas)
+   - [Configuración de Agentes (Voz y Texto)](#configuración-de-agentes-voz-y-texto)
+3. [Sección de Administrador (Setup)](#3-sección-de-administrador-setup)
+   - [Creación de Clientes (Tenants)](#creación-de-clientes-tenants)
+   - [Conexión de APIs (Meta, OpenAI, Retell)](#conexión-de-apis-meta-openai-retell)
+   - [Ingesta de Datos (Webhooks)](#ingesta-de-datos-webhooks)
+4. [Variables y Lógica Avanzada](#4-variables-y-lógica-avanzada)
+5. [Infraestructura y Seguridad](#5-infraestructura-y-seguridad)
 
-**Payload (Ejemplo):**
+---
+
+## 🚀 1. Introducción
+
+El **AI CRM & Orchestrator** es un motor de automatización diseñado para eliminar el trabajo manual en el seguimiento de leads. A diferencia de un CRM tradicional, este sistema "piensa" y "ejecuta" acciones (llamadas, mensajes, análisis) de forma autónoma basándose en un grafo de decisión.
+
+**Valor Clave:**
+
+- **Respuesta inmediata:** Menor a 1 minuto desde que entra el lead.
+- **Persistencia inteligente:** Bucle de reintentos dinámico.
+- **Omnicanalidad real:** Coordinación perfecta entre Voz y WhatsApp.
+- **Sin Dependencias Externas:** Ejecución nativa en Supabase (adiós a Airtable).
+
+---
+
+## 👥 2. Sección de Usuario (Operaciones)
+
+Esta sección está dirigida a los operadores, cerradores y gestores de marketing.
+
+### Gestión de Leads
+
+En el dashboard principal, el sistema categoriza los leads según su madurez:
+
+- **QUALIFICATION:** La IA está validando el interés y capturando variables (Presupuesto, Ciudad, Programa).
+- **SCHEDULING:** El lead ha sido cualificado y la IA está negociando una fecha en el calendario.
+- **BOOKED:** Éxito total. La cita ya está en el calendario del asesor.
+- **DISCARDED:** Leads que no cumplen criterios o no tienen interés real.
+
+### Constructor de Flujos (Canvas)
+
+El canvas es la herramienta visual donde defines la estrategia de contacto.
+
+**Nodos Disponibles:**
+
+- **Lead Trigger:** El nodo naranja. Recibe el lead y dispara el flujo.
+- **Time Condition:** El nodo amarillo. Define "ventanas de contacto". Si un lead entra a las 3 AM, este nodo lo retiene hasta las 9 AM para no incumplir normativas.
+- **Llamada IA:** El nodo azul. Conecta con Retell o Ultravox para una conversación de voz fluida.
+- **WhatsApp Template:** El nodo verde. Envía mensajes oficiales usando la API de Meta.
+- **Bucle de Reintentos:** El nodo marrón. Gestiona la insistencia. Si un lead no contesta, este nodo espera X horas y vuelve a intentar por el canal alternativo.
+- **Condición (If/Else):** El nodo índigo. Ramifica según variables como `{{call.status}}`.
+
+### Configuración de Agentes (Voz y Texto)
+
+- **Identidad:** Define el nombre, tono (formal/cercano) y objetivo del agente.
+- **Knowledge Base:** Sube tus manuales de ventas en PDF. La IA los indexará y usará como única fuente de verdad durante las llamadas.
+
+---
+
+## 🔑 3. Sección de Administrador (Setup)
+
+Guía para la configuración técnica inicial de cada cliente.
+
+### Creación de Clientes (Tenants)
+
+Un "Tenant" es una instancia aislada para un cliente.
+
+1.  **Registro:** Crea el perfil en el Admin Panel.
+2.  **API Key:** Genera la llave única. Esta llave debe ir en el Header `x-api-key` de todas las peticiones externas.
+3.  **Límites:** Configura el presupuesto diario en USD. Si el cliente gasta más de lo permitido, el sistema detiene las llamadas automáticamente (Circuit Breaker).
+
+### Conexión de APIs (Meta, OpenAI, Retell)
+
+Para que el sistema tenga "vida", debes configurar las conexiones:
+
+- **Meta (WhatsApp API):** Requiere `AccessToken`, `PhoneNumberID` y `WABA_ID`. Configura los Webhooks en el panel de Meta para que el sistema reciba las respuestas de los leads.
+- **OpenAI:** El cerebro detrás del análisis. Se recomienda usar modelos `gpt-4o` para una precisión del 100% en la extracción de datos.
+- **Retell AI / Ultravox:** Los motores de voz. Requieren API Keys que se pegan en la configuración del Tenant.
+
+### Ingesta de Datos (Webhooks)
+
+El sistema es agnóstico a la fuente. Puedes enviar leads desde Zoho, Facebook Ads o tu propia web.
+
+**Endpoint Universal:** `https://tu-dominio.com/api/leads/ingest`
+
+**Cuerpo del JSON Requerido:**
+
 ```json
 {
-  "nombre": "Juan",
-  "apellido": "Pérez",
-  "email": "juan@example.com",
+  "nombre": "Nombre del Lead",
   "telefono": "+34600000000",
-  "pais": "España",
-  "origen": "Web Form",
-  "campana": "Master_MBA",
+  "campana": "Nombre_Campana",
+  "origen": "Facebook_Ads",
   "extra": {
-    "interes": "Finanzas",
-    "id_externo": "ZOHO-12345"
+    "campo_personalizado": "valor"
   }
 }
 ```
 
 ---
 
-## 3. El Motor de Orquestación (The Engine)
-Una vez el lead es ingerido, el motor lee la configuración del **Tenant** y comienza la secuencia definida en el constructor de flujos.
+## 🧠 4. Variables y Lógica Avanzada
 
-### Lógica de Ejecución:
-1. **Gatekeeper**: Filtra leads por campaña u origen antes de empezar.
-2. **Compliance Guard**: Verifica el huso horario del lead según su prefijo telefónico para asegurar que las llamadas/mensajes se realicen en horas hábiles.
-3. **Pacing Control**: Controla el ritmo de salida para no saturar los canales.
-4. **Circuit Breaker**: Detiene la orquestación si se alcanza el límite de gasto diario configurado.
+El sistema mapea automáticamente los datos del lead para que los uses en mensajes:
 
----
-
-## 4. Nodos del Workflow (Canvas)
-El sistema utiliza un constructor visual con los siguientes nodos principales:
-
-| Nodo | Función | Salidas |
-| :--- | :--- | :--- |
-| **Lead Trigger** | Punto de entrada del lead. | Única |
-| **Time Condition** | Bifurca el flujo según si es horario laboral o no. | Horario ✓ / Fuera ✗ |
-| **Bucle de Reintentos** | Motor de reintentos automáticos (Auto-Retry). | Llamada / WhatsApp |
-| **Llamada IA** | Dispara una llamada con un agente de voz (Retell/Ultravox). | Única |
-| **WhatsApp** | Envía una plantilla de WhatsApp (Meta API). | Única |
-| **Condición (IF/ELSE)** | Evalúa variables (ej: `{{call.status}}`) para decidir camino. | Sí / No |
-| **Espera (Wait)** | Pausa el flujo durante X horas. | Única |
+- `{{lead.nombre}}`: Para saludos personalizados.
+- `{{course.name}}`: El curso detectado por la IA.
+- `{{call.summary}}`: Resumen automático de la conversación.
+- `{{appointment.link}}`: Link dinámico de agendamiento.
 
 ---
 
-## 5. Variables y Mapeo
-El sistema permite usar variables dinámicas en prompts y mensajes usando la sintaxis `{{variable}}`.
+## 🛡️ 5. Infraestructura y Seguridad
 
-### Variables Disponibles:
-- `{{lead.nombre}}`: Nombre del lead.
-- `{{lead.email}}`: Email del lead.
-- `{{lead.telefono}}`: Teléfono con prefijo.
-- `{{lead.metadata.X}}`: Cualquier campo extra enviado en la ingesta.
-- `{{course.name}}`: Nombre del programa vinculado.
-- `{{call.outcome}}`: Resultado de la última llamada (Cualificado, No Contesta, etc).
+El sistema corre sobre **Supabase**, lo que garantiza:
+
+1.  **Escalabilidad:** Soporta miles de leads concurrentes sin latencia.
+2.  **Seguridad:** Los datos de cada cliente están aislados lógicamente.
+3.  **Transparencia:** Cada segundo de llamada y cada céntimo gastado queda auditado en los logs de orquestación.
 
 ---
 
-## 6. Base de Datos (Supabase)
-Toda la persistencia se realiza en Supabase. Tablas clave:
+## 🎬 Guion para Video Explicativo
 
-- `tenants`: Configuración global de cada cliente (API Keys, Límites).
-- `lead`: El registro central de cada persona.
-- `appointments`: Citas agendadas por la IA.
-- `orchestration_logs`: Historial detallado de cada paso ejecutado por el motor.
-- `voice_agents`: Configuración de los agentes de voz (Prompts, IDs).
+1.  **El Problema:** "Los leads se enfrían en minutos".
+2.  **La Solución:** "IA que llama y chatea al instante".
+3.  **Demostración:** Muestra el Canvas y una llamada real.
+4.  **Cierre:** "Escala tu negocio sin contratar más personal".
 
 ---
 
-## 7. Guion para Video Explicativo (Propuesta)
-
-### Bloque 1: Introducción (0:00 - 0:30)
-*Visual: Dashboard principal con leads entrando en tiempo real.*
-"Bienvenidos al nuevo ecosistema de orquestación IA. Hoy veremos cómo transformamos un lead frío en una cita agendada de forma 100% autónoma usando Supabase y agentes de voz de última generación."
-
-### Bloque 2: Ingesta y Webhooks (0:30 - 1:15)
-*Visual: Pantalla de Postman o código de API Ingest.*
-"Todo comienza aquí. Nuestra API universal recibe leads de cualquier fuente. Al entrar, el sistema valida el API Key del tenant y aplica reglas de filtrado instantáneas."
-
-### Bloque 3: El Constructor de Flujos (1:15 - 2:30)
-*Visual: Canvas interactivo moviendo nodos.*
-"Este es el cerebro. Aquí diseñamos la estrategia. Podemos arrastrar un **Bucle de Reintentos** para que el sistema insista de forma inteligente, o usar **Condiciones Horarias** para que la IA solo llame cuando el lead está despierto."
-
-### Bloque 4: La Experiencia del Lead (2:30 - 3:30)
-*Visual: Captura de pantalla de chat de WhatsApp y grabación de llamada IA.*
-"La magia ocurre en la interacción. El sistema utiliza variables dinámicas para que cada mensaje sea personal. Si el lead no contesta la llamada, el motor detecta el fallo y salta automáticamente a WhatsApp."
-
-### Bloque 5: Analítica y Cierre (3:30 - 4:00)
-*Visual: Tabla de logs de orquestación y calendario de citas.*
-"Todo queda registrado en Supabase para una trazabilidad total. Desde el gasto por llamada hasta el motivo exacto de la cualificación. Bienvenidos al futuro del CRM."
+*Documentación Oficial - Versión 3.0 (Mayo 2026)*
