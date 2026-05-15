@@ -356,28 +356,28 @@ export default function DocsPage() {
                                                 </h4>
                                             ),
                                             p: ({children}) => (
-                                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.9] mb-6">
+                                                <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.9] mb-6 text-center">
                                                     {children}
                                                 </p>
                                             ),
                                             ul: ({children}) => (
-                                                <ul className="my-8 space-y-4 pl-6 list-disc marker:text-indigo-500">
+                                                <ul className="my-8 space-y-4 list-none text-center">
                                                     {children}
                                                 </ul>
                                             ),
                                             ol: ({children}) => (
-                                                <ol className="my-8 space-y-4 pl-6 list-decimal marker:text-indigo-500 marker:font-black">
+                                                <ol className="my-8 space-y-4 list-none text-center">
                                                     {children}
                                                 </ol>
                                             ),
                                             li: ({children}) => (
-                                                <li className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.8] pl-2">
+                                                <li className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.8] flex flex-col items-center">
                                                     {children}
                                                 </li>
                                             ),
                                             blockquote: ({children}) => (
-                                                <blockquote className="my-8 pl-6 border-l-4 border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-r-2xl py-5 pr-6">
-                                                    <div className="text-base md:text-lg text-indigo-700 dark:text-indigo-300 font-medium leading-[1.8] italic">
+                                                <blockquote className="my-10 border-t-2 border-b-2 border-indigo-500/20 bg-indigo-500/5 dark:bg-indigo-500/10 py-8 px-6 text-center italic">
+                                                    <div className="text-base md:text-lg text-indigo-700 dark:text-indigo-300 font-medium leading-[1.8]">
                                                         {children}
                                                     </div>
                                                 </blockquote>

@@ -146,6 +146,60 @@ graph TD
     style B fill:#334155,stroke:#1e293b,color:#fff
 ```
 
+### Desglose Detallado del Flujo Maestro (Punto por Punto)
+
+Para que tengas total claridad sobre cómo se procesa cada euro invertido en captación, aquí tienes la explicación de cada paso del diagrama:
+
+#### 1. 📥 Entrada de Lead (CRM / Webhook)
+Es el punto de inicio. Aquí es donde el sistema recibe la información desde Facebook Ads, Google Forms, HubSpot o tu propia web. El sistema está "escuchando" las 24 horas del día para capturar el lead en el segundo exacto en que se registra.
+
+#### 2. 🔍 Filtros de Entrada (El Portero)
+Como te comentaba, este es el filtro de calidad. El sistema realiza 3 comprobaciones en milisegundos:
+- **¿Es un número real?** Valida el formato internacional.
+- **¿Es nuevo?** Verifica que no sea un lead que ya estamos gestionando (evita spam).
+- **¿Tiene datos mínimos?** Si falta el nombre o el teléfono, se marca como "Incompleto" para no gastar presupuesto de llamada en él.
+
+#### 3. ⚙️ Motor Orquestador (El Cerebro)
+Una vez validado, el Motor toma el control. Consulta tu configuración, elige qué agente de IA (como Virginia) debe hablar y qué "personalidad" o guion debe usar según el producto por el que el lead preguntó.
+
+#### 4. 🗑️ Descartar / Registrar
+Si el lead no pasa los filtros (es un número falso o duplicado), el sistema no lo borra, lo **archiva con una etiqueta de error**. Así tú puedes auditar por qué se descartó y asegurarte de que no se perdió nada importante.
+
+#### 5. ⚡ Disyuntor de Presupuesto (Circuit Breaker)
+Antes de llamar, el sistema mira tu billetera. Si has puesto un límite de, por ejemplo, €50 al día y ya se ha alcanzado, el sistema "salta" (como los plomos de una casa) y detiene las operaciones para que nunca gastes más de lo planeado.
+
+#### 6. 🚨 Alerta / Pausar
+Si el disyuntor salta por presupuesto o por algún error técnico externo (ej. se cae WhatsApp), el sistema te envía una notificación inmediata y pausa las llamadas hasta que tú le des permiso para seguir.
+
+#### 7. 🛡️ Control de Cumplimiento (Compliance Guard)
+Este filtro asegura que no llames a horas prohibidas. Si un lead entra un domingo a las 11 PM, el sistema dice: *"Espera, no es ético llamar ahora"*. Bloquea la ejecución inmediata por respeto a la privacidad del lead y cumplimiento legal.
+
+#### 8. 🌙 Cola para Próxima Ventana
+Los leads que entraron fuera de horario se guardan en una "sala de espera" especial. En cuanto llega la hora permitida (ej. lunes a las 9:00 AM), el sistema los dispara automáticamente para ser los primeros en ser contactados.
+
+#### 9. 🚀 Ejecución Voz / WhatsApp
+Aquí ocurre la magia. Virginia realiza la llamada de voz o envía el mensaje de WhatsApp. Es el momento del contacto humano-IA donde se inicia la conversación de venta.
+
+#### 10. 🧠 Cognición IA / Extracción de Datos
+Mientras Virginia habla, el sistema está "pensando". Extrae datos clave de la conversación: ¿Tiene dinero?, ¿Tiene prisa?, ¿Qué objeciones puso? Toda esa información se convierte en texto estructurado automáticamente.
+
+#### 11. 🔄 Sincronización (CRM / Supabase)
+Toda la información que Virginia extrajo se guarda en **tiempo real** en tu base de datos y se envía de vuelta a tu CRM. Si tú abres tu ficha de cliente, verás lo que Virginia acaba de descubrir.
+
+#### 12. 🎯 ¿Meta Alcanzada?
+El sistema evalúa el resultado de la conversación:
+- **Éxito:** ¿Agendó la cita? ¿Compró?
+- **En proceso:** ¿Dijo que le llamáramos luego?
+- **Negativo:** ¿Dijo que no le interesa?
+
+#### 13. 🏁 Fin de Secuencia (Éxito)
+Si se agendó la cita, el sistema marca el lead como "Convertido", envía las confirmaciones y termina este flujo. ¡Objetivo cumplido!
+
+#### 14. 🔁 Lógica de Espera y Reintento
+Si el lead no contestó o pidió que le llamáramos en 2 horas, el sistema vuelve al Motor Orquestador con una orden de **"espera 120 minutos y vuelve a intentar"**. Así, el sistema persigue al lead incansablemente pero de forma inteligente hasta obtener una respuesta definitiva.
+
+---
+
 ---
 
 ## SECCIÓN 2. El "Backend": Arquitectura de Soporte e Ingeniería
