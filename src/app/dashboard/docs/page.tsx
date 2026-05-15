@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import fs from 'fs';
 import path from 'path';
-import { Book, ChevronRight, Home, Terminal, Share2, Layers, ShieldCheck } from 'lucide-react';
+import { Book, ChevronRight, Home, Terminal, Share2, Layers, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DocsPage() {
@@ -48,11 +48,13 @@ export default function DocsPage() {
                         <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Secciones</h3>
                         <nav className="space-y-1">
                             {[
-                                { label: "1. Introducción", icon: <Layers className="h-4 w-4" /> },
-                                { label: "2. Sección de Usuario", icon: <Home className="h-4 w-4" /> },
-                                { label: "3. Sección de Admin", icon: <Terminal className="h-4 w-4" /> },
-                                { label: "4. Variables", icon: <Share2 className="h-4 w-4" /> },
-                                { label: "5. Infraestructura", icon: <ShieldCheck className="h-4 w-4" /> },
+                                { label: "Visión General", icon: <Layers className="h-4 w-4" /> },
+                                { label: "Guía de Usuario", icon: <Home className="h-4 w-4" /> },
+                                { label: "Guía de Admin", icon: <Terminal className="h-4 w-4" /> },
+                                { label: "Variables", icon: <Share2 className="h-4 w-4" /> },
+                                { label: "Nodos y Tools", icon: <Zap className="h-4 w-4" /> },
+                                { label: "Integraciones", icon: <Globe className="h-4 w-4" /> },
+                                { label: "Supabase Externo", icon: <ShieldCheck className="h-4 w-4" /> },
                             ].map((item) => (
                                 <button key={item.label} className="w-full flex items-center gap-3 px-3 py-2 text-sm font-bold text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/5 rounded-xl transition-all text-left">
                                     {item.icon}
