@@ -97,19 +97,25 @@ export default function DocsPage() {
     const displayedContent = useMemo(() => {
         if (!content) return "";
         
-        // Separamos por el separador horizontal ---
-        const sections = content.split(/---/);
+        // 1. Intentar por separadores ---
+        const sections = content.split(/\n---\n/);
+        const sectionPattern = new RegExp(`## (SECCIÓN )?${activeSection}\\.`, 'i');
         
-        // Buscamos la sección que contenga el encabezado de la sección activa
-        const targetSection = sections.find(s => {
-            const trimmed = s.trim();
-            // Buscamos coincidencia con "## SECCIÓN X." o "## X." (por si acaso)
-            const sectionPattern = new RegExp(`## (SECCIÓN )?${activeSection}\\.`, 'i');
-            return sectionPattern.test(trimmed);
-        });
+        let targetSection = sections.find(s => sectionPattern.test(s));
 
-        // Si estamos en la sección "1", y no hay coincidencia exacta (ej. el intro), 
-        // podríamos querer mostrar el primer bloque que no sea el índice.
+        // 2. Si no se encuentra por separadores, buscar en todo el texto (Fallback)
+        if (!targetSection) {
+            const allLines = content.split('\n');
+            const startIndex = allLines.findIndex(line => sectionPattern.test(line));
+            
+            if (startIndex !== -1) {
+                // Buscamos hasta el siguiente encabezado o el final
+                const nextSectionIndex = allLines.findIndex((line, idx) => idx > startIndex && line.startsWith('## SECCIÓN'));
+                targetSection = allLines.slice(startIndex, nextSectionIndex !== -1 ? nextSectionIndex : undefined).join('\n');
+            }
+        }
+
+        // Si estamos en la sección "1" y no hay match (ej. el intro), mostramos el bloque 0 (Intro)
         return targetSection || sections[0];
     }, [content, activeSection]);
 
