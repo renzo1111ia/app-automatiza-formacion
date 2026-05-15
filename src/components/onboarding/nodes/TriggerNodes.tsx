@@ -490,7 +490,31 @@ export const RetrySequenceNode = memo(({ data, selected }: NodeProps) => {
       </div>
 
       <Handle type="target" position={Position.Top} className="w-2 h-2 bg-white border border-orange-500" />
-      <Handle type="source" position={Position.Bottom} className="w-2 h-2 bg-white border border-orange-500" />
+      
+      {/* Bottom handles row */}
+      <div className="relative w-full h-8">
+        {/* Output A - Vía Llamada (left 30%) */}
+        <div className="absolute left-[30%] bottom-0 -translate-x-1/2">
+          <Handle 
+            type="source" 
+            id="call"
+            position={Position.Bottom} 
+            className="!relative !left-0 !bottom-0 w-3 h-3 bg-blue-500 border-2 border-white"
+          />
+         <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-blue-400 uppercase tracking-wider">Llamada</span>
+        </div>
+
+        {/* Output B - Vía WhatsApp (left 70%) */}
+        <div className="absolute left-[70%] bottom-0 -translate-x-1/2">
+          <Handle 
+            type="source" 
+            id="whatsapp"
+            position={Position.Bottom} 
+            className="!relative !left-0 !bottom-0 w-3 h-3 bg-emerald-500 border-2 border-white"
+          />
+         <span className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-black text-emerald-400 uppercase tracking-wider">WhatsApp</span>
+        </div>
+      </div>
     </div>
   );
 });
