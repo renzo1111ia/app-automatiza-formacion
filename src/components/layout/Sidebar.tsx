@@ -20,13 +20,47 @@ interface NavItem {
     href: string;
     icon?: React.ReactNode;
     subItems?: NavItem[];
+    adminOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
     {
-        label: "Gestión v2.0",
+        label: "Métricas",
+        href: "/dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
+        subItems: [
+            {
+                label: "Llamadas",
+                href: "/dashboard/minutos",
+                icon: <Clock className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "WhatsApp",
+                href: "/dashboard/whatsapp",
+                icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Campañas",
+                href: "/dashboard/campanas",
+                icon: <Megaphone className="h-4 w-4" strokeWidth={1.8} />,
+            },
+            {
+                label: "Historial",
+                href: "/dashboard/historial",
+                icon: <History className="h-4 w-4" strokeWidth={1.8} />
+            },
+        ]
+    },
+    {
+        label: "Calendario",
+        href: "/dashboard/calendar",
+        icon: <Calendar className="h-5 w-5" strokeWidth={1.8} />
+    },
+    {
+        label: "Constructor & IA",
         href: "/dashboard/onboarding",
         icon: <Workflow className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true,
         subItems: [
             {
                 label: "Constructor",
@@ -48,7 +82,6 @@ const NAV_ITEMS: NavItem[] = [
                 href: "/dashboard/voice-agents",
                 icon: <Mic className="h-4 w-4" strokeWidth={1.8} />
             },
-
             {
                 label: "Conversaciones",
                 href: "/dashboard/conversaciones",
@@ -58,11 +91,6 @@ const NAV_ITEMS: NavItem[] = [
                 label: "Chatbot Web",
                 href: "/dashboard/web-chatbot",
                 icon: <Globe className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
-                label: "Calendario",
-                href: "/dashboard/calendar",
-                icon: <Calendar className="h-4 w-4" strokeWidth={1.8} />
             },
             {
                 label: "Simulador",
@@ -75,46 +103,7 @@ const NAV_ITEMS: NavItem[] = [
                 icon: <Terminal className="h-4 w-4" strokeWidth={1.8} />
             },
             {
-                label: "Admin Panel",
-                href: "/dashboard/admin",
-                icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
-            },
-        ]
-    },
-    {
-        label: "Informes",
-        href: "/dashboard",
-        icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
-        subItems: [
-            {
-                label: "Llamadas",
-                href: "/dashboard/minutos",
-                icon: <Clock className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
-                label: "WhatsApp",
-                href: "/dashboard/whatsapp",
-                icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
-                label: "Campañas",
-                href: "/dashboard/campanas",
-                icon: <Megaphone className="h-4 w-4" strokeWidth={1.8} />,
-                subItems: [
-                    {
-                        label: "Ver Campañas",
-                        href: "/dashboard/campanas",
-                        icon: <Megaphone className="h-3.5 w-3.5" strokeWidth={1.8} />
-                    },
-                    {
-                        label: "Crear Campañas",
-                        href: "/dashboard/campanas/nuevo",
-                        icon: <PlusCircle className="h-3.5 w-3.5" strokeWidth={1.8} />
-                    }
-                ]
-            },
-            {
-                label: "Auditoría de IA",
+                label: "Auditoría Logs",
                 href: "/dashboard/logs",
                 icon: <Terminal className="h-4 w-4" strokeWidth={1.8} />
             },
@@ -124,21 +113,23 @@ const NAV_ITEMS: NavItem[] = [
                 icon: <DollarSign className="h-4 w-4" strokeWidth={1.8} />
             },
             {
-                label: "Historial",
-                href: "/dashboard/historial",
-                icon: <History className="h-4 w-4" strokeWidth={1.8} />
+                label: "Admin Panel",
+                href: "/dashboard/admin",
+                icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
             },
         ]
     },
     {
-        label: "Config",
+        label: "Ajustes",
         href: "/dashboard/settings",
-        icon: <Settings className="h-5 w-5" strokeWidth={1.8} />
+        icon: <Settings className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true
     },
     {
-        label: "Documentación",
+        label: "Docs",
         href: "/dashboard/docs",
-        icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />
+        icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true
     },
 ];
 
@@ -149,7 +140,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
 }) {
     const pathname = usePathname();
     const [collapsed, setCollapsed] = useState(false);
-    const [expandedItems, setExpandedItems] = useState<string[]>(["Informes", "Campañas"]);
+    const [expandedItems, setExpandedItems] = useState<string[]>(["Métricas", "Constructor & IA"]);
     const isConfigured = useTenantStore((s) => s.isConfigured);
 
     // Close mobile sidebar on navigation
@@ -167,9 +158,7 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
     };
 
     const visibleNavItems = NAV_ITEMS.filter(item => {
-        if (item.href === "/dashboard/settings") {
-            return isAdmin;
-        }
+        if (item.adminOnly && !isAdmin) return false;
         return true;
     });
 
