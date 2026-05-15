@@ -17,56 +17,62 @@ import dynamic from 'next/dynamic';
 const MermaidDiagram = dynamic(() => import('@/components/docs/MermaidDiagram'), { ssr: false });
 
 
-// Fases y Tomos mapeados exactamente del Dossier Maestro v5.0 (26 Tomos)
+// Fases y Tomos — Lenguaje de negocio para el cliente
 const DOC_STRUCTURE = [
     {
-        phase: "FASE I: Cimientos y Estrategia",
+        phase: "🚀 INICIO: Guía del Propietario",
+        color: "from-indigo-600 to-violet-600",
+        items: [
+            { id: "0", title: "¿Qué hace el sistema?", icon: <BookOpen className="h-4 w-4" /> },
+        ]
+    },
+    {
+        phase: "FASE I: El Sistema y sus Partes",
         color: "from-blue-600 to-indigo-600",
         items: [
-            { id: "1", title: "Visión Técnica", icon: <Layout className="h-4 w-4" /> },
-            { id: "2", title: "Arquitectura Backend", icon: <Database className="h-4 w-4" /> },
-            { id: "3", title: "Ingeniería de Resiliencia", icon: <ShieldCheck className="h-4 w-4" /> },
-            { id: "4", title: "Centro de Comando (UI)", icon: <Cpu className="h-4 w-4" /> },
-            { id: "5", title: "Referencia Técnica", icon: <Terminal className="h-4 w-4" /> },
+            { id: "1", title: "Cómo funciona todo junto", icon: <Layout className="h-4 w-4" /> },
+            { id: "2", title: "Dónde viven tus datos", icon: <Database className="h-4 w-4" /> },
+            { id: "3", title: "Por qué nunca se cae", icon: <ShieldCheck className="h-4 w-4" /> },
+            { id: "4", title: "Tu panel de control", icon: <Cpu className="h-4 w-4" /> },
+            { id: "5", title: "Todos los módulos del sistema", icon: <Terminal className="h-4 w-4" /> },
         ]
     },
     {
-        phase: "FASE II: Operación y Seguridad",
+        phase: "FASE II: Seguridad y Resultados",
         color: "from-emerald-500 to-teal-600",
         items: [
-            { id: "6", title: "Seguridad y Soberanía", icon: <ShieldCheck className="h-4 w-4" /> },
-            { id: "7", title: "Estrategias de Conversión", icon: <Zap className="h-4 w-4" /> },
-            { id: "8", title: "Manual de Supervivencia", icon: <Activity className="h-4 w-4" /> },
-            { id: "9", title: "Roadmap y Handover", icon: <GitBranch className="h-4 w-4" /> },
-            { id: "10", title: "Anexos de Onboarding", icon: <Layers className="h-4 w-4" /> },
+            { id: "6", title: "Tus datos son 100% tuyos", icon: <ShieldCheck className="h-4 w-4" /> },
+            { id: "7", title: "Cómo el sistema convierte leads", icon: <Zap className="h-4 w-4" /> },
+            { id: "8", title: "Qué hacer si algo falla", icon: <Activity className="h-4 w-4" /> },
+            { id: "10", title: "Cómo activar un nuevo cliente", icon: <Layers className="h-4 w-4" /> },
         ]
     },
     {
-        phase: "FASE III: Inteligencia y Cualificación",
+        phase: "FASE III: La Inteligencia Artificial",
         color: "from-purple-500 to-pink-600",
         items: [
-            { id: "11", title: "Motor de Cualificación", icon: <Brain className="h-4 w-4" /> },
-            { id: "12", title: "Contratos de API", icon: <Terminal className="h-4 w-4" /> },
-            { id: "13", title: "Plan de Contingencia", icon: <Activity className="h-4 w-4" /> },
-            { id: "14", title: "Worker Engine (BullMQ)", icon: <Cpu className="h-4 w-4" /> },
-            { id: "15", title: "Gobernanza de IA", icon: <MessageSquare className="h-4 w-4" /> },
+            { id: "11", title: "Cómo califica a tus leads", icon: <Brain className="h-4 w-4" /> },
+            { id: "12", title: "Cómo se conecta con otros sistemas", icon: <Database className="h-4 w-4" /> },
+            { id: "13", title: "Plan ante cualquier emergencia", icon: <Activity className="h-4 w-4" /> },
+            { id: "14", title: "El motor que nunca descansa", icon: <Cpu className="h-4 w-4" /> },
+            { id: "15", title: "Cómo se controla el agente IA", icon: <MessageSquare className="h-4 w-4" /> },
         ]
     },
     {
-        phase: "FASE IV: Excelencia y Entrega",
+        phase: "FASE IV: Detalles y Referencia",
         color: "from-orange-500 to-amber-600",
         items: [
-            { id: "16", title: "GDPR & Compliance", icon: <Scale className="h-4 w-4" /> },
-            { id: "17", title: "Baja Latencia (<800ms)", icon: <Zap className="h-4 w-4" /> },
-            { id: "18", title: "Diccionario de Variables", icon: <BookOpen className="h-4 w-4" /> },
-            { id: "19", title: "Anatomía del Agente", icon: <UserCheck className="h-4 w-4" /> },
-            { id: "20", title: "Enciclopedia de Nodos", icon: <Layout className="h-4 w-4" /> },
-            { id: "21", title: "Glosario de Módulos", icon: <Info className="h-4 w-4" /> },
-            { id: "22", title: "Guía Command Center", icon: <Layout className="h-4 w-4" /> },
-            { id: "23", title: "Ciclo de Vida del Dato", icon: <Database className="h-4 w-4" /> },
-            { id: "24", title: "Optimización de Costes", icon: <Activity className="h-4 w-4" /> },
-            { id: "25", title: "Handover Humano", icon: <UserCheck className="h-4 w-4" /> },
-            { id: "26", title: "Blueprint Maestro", icon: <Layers className="h-4 w-4" /> },
+            { id: "16", title: "Privacidad y cumplimiento legal", icon: <Scale className="h-4 w-4" /> },
+            { id: "17", title: "Por qué suena tan humano", icon: <Zap className="h-4 w-4" /> },
+            { id: "18", title: "Variables que usa el sistema", icon: <BookOpen className="h-4 w-4" /> },
+            { id: "19", title: "Cómo funciona el agente por dentro", icon: <UserCheck className="h-4 w-4" /> },
+            { id: "20", title: "Guía de todos los módulos", icon: <Layout className="h-4 w-4" /> },
+            { id: "21", title: "Glosario de términos", icon: <Info className="h-4 w-4" /> },
+            { id: "22", title: "Cómo usar el panel de control", icon: <Layout className="h-4 w-4" /> },
+            { id: "23", title: "Qué pasa con tus datos", icon: <Database className="h-4 w-4" /> },
+            { id: "24", title: "Cuánto cuesta operar", icon: <Activity className="h-4 w-4" /> },
+            { id: "25", title: "Cuándo entra un humano", icon: <UserCheck className="h-4 w-4" /> },
+            { id: "26", title: "El mapa completo del sistema", icon: <Layers className="h-4 w-4" /> },
         ]
     }
 ];
@@ -74,7 +80,7 @@ const DOC_STRUCTURE = [
 export default function DocsPage() {
     const [content, setContent] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeSection, setActiveSection] = useState("1");
+    const [activeSection, setActiveSection] = useState("0");
     const [isLoading, setIsLoading] = useState(true);
 
     const copyToClipboard = (text: string) => {

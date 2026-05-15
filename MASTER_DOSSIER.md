@@ -6,6 +6,70 @@
 
 ---
 
+## SECCIÓN 0. ¿Qué hace este sistema? Guía del Propietario
+
+> **Esta sección está escrita para ti, el dueño del negocio. Sin tecnicismos. Solo resultados.**
+
+### El problema que resuelve
+
+Imagina que inviertes en publicidad. Entran 200 leads al mes. Tu equipo llama al día siguiente, cuando ya enfriaron. Contactas a 60. Cierras 8. El resto se perdió.
+
+**Este sistema cambia esa ecuación.**
+
+### ¿Qué hace exactamente?
+
+Cuando alguien rellena tu formulario en menos de **30 segundos** recibe una llamada de Virginia — tu asistente con inteligencia artificial. Suena natural, habla en español, responde preguntas, maneja objeciones y, si el lead está interesado, **agenda la cita directamente en tu calendario**. Automático. Las 24 horas, los 7 días.
+
+### Qué pasa paso a paso
+
+1. **El lead rellena un formulario** (Facebook, Google, tu web...)
+2. **En 30 segundos**, Virginia lo llama con su nombre y el nombre de tu programa.
+3. **Mantiene una conversación real:** pregunta sobre intereses, presupuesto y disponibilidad.
+4. **Si hay interés**, agenda la cita y envía confirmación por WhatsApp.
+5. **Si no contesta**, manda un WhatsApp y reintenta en el momento óptimo.
+6. **Tu equipo recibe el lead ya cualificado**, con resumen de la conversación y cita en el calendario.
+
+### ¿Cuánto mejora el resultado?
+
+| Situación | Sin el sistema | Con el sistema |
+| :--- | :--- | :--- |
+| Tiempo de primera respuesta | 24 - 48 horas | **< 30 segundos** |
+| Leads contactados de 100 | ~30 | **> 65** |
+| Citas agendadas de 100 leads | ~5 | **> 15** |
+| Horas de tu equipo invertidas | 20h/semana | **< 2h/semana** |
+| Coste por cita agendada | Variable alto | **< €5** |
+
+### ¿Qué hace Virginia cuando el lead responde?
+
+Virginia no sigue un guión rígido. Tiene:
+
+* ✅ **Conocimiento de tu negocio:** Ha leído tus materiales y puede responder preguntas específicas.
+* ✅ **Memoria:** Recuerda lo que el lead dijo y lo usa para cerrar mejor.
+* ✅ **Manejo de objeciones:** Si el lead pone excusas, las trabaja con argumentos reales.
+* ✅ **Acción directa:** Agenda, envía información o te pasa el lead en caliente si está listo para cerrar.
+
+### ¿Y si el lead no quiere?
+
+Lo archiva correctamente. Si en el futuro lanzas una nueva campaña, puedes reactivarlo. **Nada se pierde.**
+
+### ¿Dónde están tus datos?
+
+**En tus servidores, bajo tu control.** Si mañana decides cambiar de plataforma, te llevas tus datos con un clic. Son tuyos, siempre.
+
+### ¿Qué necesitas hacer tú?
+
+Prácticamente nada. Solo:
+
+1. **Revisar el panel** una vez al día para ver el rendimiento.
+2. **Atender las citas** que Virginia agendó para ti.
+3. **Actualizar el agente** si lanzas un nuevo programa (subir un PDF es suficiente).
+
+### Resumen en una frase
+
+> *"Este sistema convierte tus leads en citas de forma automática, en menos de 30 segundos, con la calidad de un comercial de primer nivel — sin que tú tengas que intervenir."*
+
+---
+
 ## 📑 Índice General
 
 1. **Visión Técnica** (SECCIÓN 1)
