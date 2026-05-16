@@ -14,6 +14,9 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
+import { Outfit } from 'next/font/google';
+
+const outfit = Outfit({ subsets: ['latin'], weight: ['400', '700', '900'] });
 const MermaidDiagram = dynamic(() => import('@/components/docs/MermaidDiagram'), { ssr: false });
 
 
@@ -145,7 +148,50 @@ export default function DocsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#020617] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30">
+        <div className={`min-h-screen bg-[#f8fafc] dark:bg-slate-900 flex ${outfit.className}`}>
+            <style jsx global>{`
+                .edgeLabel {
+                    background-color: #f1f5f9 !important;
+                    stroke: none !important;
+                    color: #1e293b !important;
+                    font-weight: 800 !important;
+                    padding: 4px 8px !important;
+                    border-radius: 4px !important;
+                }
+                .edgeLabel rect {
+                    fill: #f1f5f9 !important;
+                    stroke: #cbd5e1 !important;
+                }
+                .label foreignObject div {
+                    color: #ffffff !important;
+                    font-weight: 900 !important;
+                }
+                .node rect, .node circle, .node ellipse, .node polygon, .node path {
+                    stroke-width: 2px !important;
+                }
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    main, main * {
+                        visibility: visible;
+                    }
+                    main {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                    aside, nav, .sticky {
+                        display: none !important;
+                    }
+                    .prose {
+                        max-width: none !important;
+                        color: black !important;
+                    }
+                }
+            `}</style>
+            
             {/* Nav Superior Glassmorphism */}
             <div className="sticky top-0 z-[60] bg-white/80 dark:bg-slate-950/80 backdrop-blur-2xl border-b border-slate-200 dark:border-slate-800 px-6 py-4">
                 <div className="max-w-[1500px] mx-auto flex items-center justify-between">

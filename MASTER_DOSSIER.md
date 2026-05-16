@@ -200,8 +200,6 @@ Si el lead no contestó o pidió que le llamáramos en 2 horas, el sistema vuelv
 
 ---
 
----
-
 ## SECCIÓN 2. El "Backend": Arquitectura de Soporte e Ingeniería
 
 ### Orchestrator Engine: Lógica Nodal Basada en Grafos
