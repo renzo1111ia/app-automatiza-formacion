@@ -1233,11 +1233,34 @@ export default function AIAgentInbox() {
 
                                 {/* Build unified list: all metadata keys + pending tracked vars */}
                                  {(() => {
-                                     // 1. Create a normalized copy of metadata (uppercase keys)
+                                     // 1. Create a normalized copy of metadata (uppercase keys, internal spaces removed)
                                      const meta: Record<string, any> = {};
                                      if (selectedLead.metadata) {
                                          Object.entries(selectedLead.metadata).forEach(([k, val]) => {
-                                             meta[k.toUpperCase()] = val;
+                                             const normKey = k.replace(/\s+/g, '').toUpperCase();
+                                             
+                                             // If we already have a value for this key, prioritize clean relative days over hallucinated ISO dates
+                                             if (meta[normKey]) {
+                                                 const currentVal = String(meta[normKey]).trim();
+                                                 const newVal = String(val).trim();
+                                                 
+                                                 // List of human-friendly days/dates to preserve
+                                                 const isHumanDate = (s: string) => {
+                                                     const l = s.toLowerCase();
+                                                     return l.includes('lunes') || l.includes('martes') || 
+                                                            l.includes('miércoles') || l.includes('jueves') || 
+                                                            l.includes('viernes') || l.includes('sábado') || 
+                                                            l.includes('domingo') || (!s.includes('2023-10-10') && s.length < 20);
+                                                 };
+
+                                                 if (isHumanDate(currentVal) && newVal.includes('2023-10-10')) {
+                                                     return; // Preserve the human selected day (e.g., "Martes")
+                                                 }
+                                                 if (newVal.includes('2023-10-10') && !currentVal.includes('2023-10-10')) {
+                                                     return; // Prevent overwriting with hallucinated date
+                                                 }
+                                             }
+                                             meta[normKey] = val;
                                          });
                                      }
 
@@ -1274,7 +1297,9 @@ export default function AIAgentInbox() {
                                          'MEDIA_URL', 
                                          'ESTADO_CONVERSACION', 
                                          'MOTIVOS_DESCARTE', 
-                                         'FECHA_DE_AGENDA'
+                                         'FECHA_DE_AGENDA',
+                                         'DATE_TIME_PREFERRED',
+                                         'SCHEDULED_CALL_CONFIRMED'
                                      ]);
                                      
                                      // 4. All captured keys from normalized metadata (excluding system keys)
@@ -1293,7 +1318,7 @@ export default function AIAgentInbox() {
 
                                      // 5. Pending tracked vars (those NOT already in normalized metadata)
                                      const pendingVars = trackedVariables
-                                         .map(v => v.replace(/^{{|\}}$/g, '').trim().toUpperCase())
+                                         .map(v => v.replace(/^{{|}}$/g, '').trim().toUpperCase())
                                          .filter(k => {
                                              const value = meta[k];
                                              return !value || String(value).trim() === '' || String(value).toLowerCase() === 'pendiente...';
