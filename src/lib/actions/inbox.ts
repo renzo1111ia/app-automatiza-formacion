@@ -33,6 +33,7 @@ export interface InboxLead {
     last_message_time?: string | null;
     unread_count?: number;
     ai_agent_id?: string | null;
+    id_lead_externo?: string | null;
     // Fields for detailed view
     tipo_lead?: string | null;
     pais?: string | null;
@@ -155,6 +156,7 @@ export async function getInboxLeads(tenantIdOverride?: string): Promise<{ succes
                 foto_url: (l as LeadRow & { foto_url?: string }).foto_url || null,
                 is_ai_enabled: l.is_ai_enabled ?? true,
                 ai_agent_id: (l as unknown as Lead).ai_agent_id || null,
+                id_lead_externo: l.id_lead_externo || null,
                 last_message: msg?.content || "Nueva conversación (sin mensajes)",
                 last_message_time: msg?.time || l.fecha_creacion || null, 
                 created_at: l.fecha_creacion || null,
