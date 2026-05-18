@@ -1232,52 +1232,73 @@ export default function AIAgentInbox() {
                                 </div>
 
                                 {/* Build unified list: all metadata keys + pending tracked vars */}
-                                {(() => {
-                                    const meta = selectedLead.metadata || {};
-                                    const SKIP_KEYS = new Set(['last_fact_update', 'meta_id', 'raw', 'media_url']);
-                                    
-                                    // 1. All captured keys from metadata (excluding system keys)
-                                    // Deduplicate case-insensitively for the UI
-                                    const rawKeys = Object.keys(meta).filter(k => 
-                                        !SKIP_KEYS.has(k) && String(meta[k]).trim() !== ''
-                                    );
-                                    
-                                    const capturedKeys: string[] = [];
-                                    const seenKeys = new Set<string>();
-                                    // We process in order, but deduplicate by lowercase
-                                    rawKeys.forEach(k => {
-                                        if (!seenKeys.has(k.toLowerCase())) {
-                                            capturedKeys.push(k);
-                                            seenKeys.add(k.toLowerCase());
-                                        }
-                                    });
+                                 {(() => {
+                                     // 1. Create a normalized copy of metadata (uppercase keys)
+                                     const meta: Record<string, any> = {};
+                                     if (selectedLead.metadata) {
+                                         Object.entries(selectedLead.metadata).forEach(([k, val]) => {
+                                             meta[k.toUpperCase()] = val;
+                                         });
+                                     }
 
-                                    // 2. Pending tracked vars (those NOT already in metadata)
-                                    const pendingVars = trackedVariables
-                                        .map(v => v.replace(/^\{\{|\}\}$/g, '').trim())
-                                        .filter(k => {
-                                            // Find if ANY key in meta matches k case-insensitively
-                                            const matchingKey = Object.keys(meta).find(mk => 
-                                                mk.toLowerCase() === k.toLowerCase() ||
-                                                mk.toLowerCase() === `{{${k.toLowerCase()}}}`
-                                            );
-                                            
-                                            if (!matchingKey) return true; // Not found -> Pending
-                                            
-                                            // If found, check if it has a value
-                                            const value = meta[matchingKey];
-                                            return !value || String(value).trim() === '' || String(value).toLowerCase() === 'pendiente...';
-                                        });
+                                     // 2. Map known equivalents
+                                     if (meta.ESTADO_CONVERSACION && !meta.CONVERSATION_STATUS) {
+                                         meta.CONVERSATION_STATUS = meta.ESTADO_CONVERSACION;
+                                     }
+                                     if (meta.MOTIVOS_DESCARTE && !meta.MOTIVO_DESCARTE) {
+                                         meta.MOTIVO_DESCARTE = meta.MOTIVOS_DESCARTE;
+                                     }
+                                     if (meta.FECHA_DE_AGENDA && !meta.FECHA_AGENDA) {
+                                         meta.FECHA_AGENDA = meta.FECHA_DE_AGENDA;
+                                     }
 
-                                    console.log("[DEBUG SIDEBAR DETAILED] Selected Lead:", selectedLead.nombre, {
-                                        metaKeys: Object.keys(meta),
-                                        metaValues: Object.values(meta),
-                                        trackedVariables,
-                                        capturedKeys,
-                                        pendingVars
-                                    });
+                                     // 3. Fallbacks and defaults requested by the user
+                                     // Show lead ID under ID_LEAD
+                                     if (!meta.ID_LEAD) {
+                                         meta.ID_LEAD = selectedLead.id;
+                                     }
+                                     // If there is no discard reason, show "null"
+                                     if (!meta.MOTIVO_DESCARTE) {
+                                         meta.MOTIVO_DESCARTE = "null";
+                                     }
+                                     // If no Q&A topic, show "null"
+                                     if (!meta.QA_TOPIC) {
+                                         meta.QA_TOPIC = "null";
+                                     }
 
-                                    const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;
+                                     const SKIP_KEYS = new Set(['LAST_FACT_UPDATE', 'META_ID', 'RAW', 'MEDIA_URL']);
+                                     
+                                     // 4. All captured keys from normalized metadata (excluding system keys)
+                                     const rawKeys = Object.keys(meta).filter(k => 
+                                         !SKIP_KEYS.has(k) && String(meta[k]).trim() !== ''
+                                     );
+                                     
+                                     const capturedKeys: string[] = [];
+                                     const seenKeys = new Set<string>();
+                                     rawKeys.forEach(k => {
+                                         if (!seenKeys.has(k.toUpperCase())) {
+                                             capturedKeys.push(k.toUpperCase());
+                                             seenKeys.add(k.toUpperCase());
+                                         }
+                                     });
+
+                                     // 5. Pending tracked vars (those NOT already in normalized metadata)
+                                     const pendingVars = trackedVariables
+                                         .map(v => v.replace(/^{{|\}}$/g, '').trim().toUpperCase())
+                                         .filter(k => {
+                                             const value = meta[k];
+                                             return !value || String(value).trim() === '' || String(value).toLowerCase() === 'pendiente...';
+                                         });
+
+                                     console.log("[DEBUG SIDEBAR DETAILED] Selected Lead:", selectedLead.nombre, {
+                                         metaKeys: Object.keys(meta),
+                                         metaValues: Object.values(meta),
+                                         trackedVariables,
+                                         capturedKeys,
+                                         pendingVars
+                                     });
+
+                                     const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;
 
                                     if (!hasAnything) {
                                         return (
