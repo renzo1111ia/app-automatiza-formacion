@@ -310,7 +310,7 @@ export default function DocsPage() {
                         </button>
                     </div>
 
-                    <style jsx global>{`
+                    <style dangerouslySetInnerHTML={{ __html: `
                         @media print {
                             body * {
                                 visibility: hidden;
@@ -332,7 +332,7 @@ export default function DocsPage() {
                                 color: black !important;
                             }
                         }
-                    `}</style>
+                    `}} />
                 </aside>
 
                 {/* VISOR DE CONTENIDO MAESTRO */}
