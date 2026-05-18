@@ -557,8 +557,11 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
         const LEAD_COLS = ['pais', 'origen', 'campana', 'tipo_lead'];
         if (!LEAD_COLS.includes(part.condCol)) {
             const cc = part.condCol;
+            let val: any = part.condVal;
+            if (val === 'true') val = true;
+            if (val === 'false') val = false;
             if (part.condOp === 'ILIKE') q = q.ilike(cc, `%${part.condVal}%`);
-            else q = q.eq(cc, part.condVal);
+            else q = q.eq(cc, val);
         }
     }
 
