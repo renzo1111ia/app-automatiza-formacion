@@ -75,6 +75,7 @@ export default function AIAgentInbox() {
     const [isAssigningAgent, setIsAssigningAgent] = useState(false);
     const [trackedVariables, setTrackedVariables] = useState<string[]>([]);
     const [isSyncingVars, setIsSyncingVars] = useState(false);
+    const [selectedLeadAppointment, setSelectedLeadAppointment] = useState<any | null>(null);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
         type: 'LEAD' | 'CHAT';
@@ -218,6 +219,23 @@ export default function AIAgentInbox() {
         if (selectedLead && selectedLead.id !== lastSelectedId.current) {
             lastSelectedId.current = selectedLead.id;
             setTimeout(() => loadChat(selectedLead.id), 0);
+
+            // Fetch latest active appointment for the selected lead
+            const supabase = getSupabaseClient();
+            supabase.from('appointments')
+                .select('*')
+                .eq('lead_id', selectedLead.id)
+                .neq('status', 'CANCELLED')
+                .order('scheduled_at', { ascending: false })
+                .limit(1)
+                .then(({ data }) => {
+                    if (data && data.length > 0) {
+                        setSelectedLeadAppointment(data[0]);
+                    } else {
+                        setSelectedLeadAppointment(null);
+                    }
+                });
+
             // Load the configured tracked variables for this lead's agent
             getAgentTrackedVariables(selectedLead.ai_agent_id || null).then(res => {
                 if (res.success && res.data) setTrackedVariables(res.data);
@@ -228,6 +246,7 @@ export default function AIAgentInbox() {
                 lastSelectedId.current = null;
                 setTimeout(() => setMessages([]), 0);
                 setTrackedVariables([]);
+                setSelectedLeadAppointment(null);
             }
         }
     }, [selectedLead, loadChat]);
@@ -1276,6 +1295,24 @@ export default function AIAgentInbox() {
                                      }
 
                                      // 3. Fallbacks and defaults requested by the user
+                                     // If we have a confirmed appointment in the database, override FECHA_AGENDA with the formatted date & time (dd/mm/aaaa hh:mm)
+                                     if (selectedLeadAppointment && selectedLeadAppointment.scheduled_at) {
+                                         const dateStr = selectedLeadAppointment.scheduled_at;
+                                         try {
+                                             const dateObj = new Date(dateStr);
+                                             if (!isNaN(dateObj.getTime())) {
+                                                 const day = String(dateObj.getDate()).padStart(2, '0');
+                                                 const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                                 const year = dateObj.getFullYear();
+                                                 const hours = String(dateObj.getHours()).padStart(2, '0');
+                                                 const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                                                 meta.FECHA_AGENDA = `${day}/${month}/${year} ${hours}:${minutes}`;
+                                             }
+                                         } catch (e) {
+                                             console.error("[INBOX] Error formatting appointment date:", e);
+                                         }
+                                     }
+
                                      // Show the external CRM lead ID under ID_LEAD, showing "null" if not present
                                      if (!meta.ID_LEAD) {
                                          meta.ID_LEAD = selectedLead.id_lead_externo || "null";
