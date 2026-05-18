@@ -1253,9 +1253,9 @@ export default function AIAgentInbox() {
                                      }
 
                                      // 3. Fallbacks and defaults requested by the user
-                                     // Show lead ID under ID_LEAD
+                                     // Show the external CRM lead ID under ID_LEAD, showing "null" if not present
                                      if (!meta.ID_LEAD) {
-                                         meta.ID_LEAD = selectedLead.id;
+                                         meta.ID_LEAD = selectedLead.id_lead_externo || "null";
                                      }
                                      // If there is no discard reason, show "null"
                                      if (!meta.MOTIVO_DESCARTE) {
