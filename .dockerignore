@@ -1,0 +1,11 @@
+.next
+node_modules
+.env*
+.git
+README.md
+Dockerfile
+docker-compose.yml
+.prettierrc
+eslint.config.mjs
+tsconfig.tsbuildinfo
+scratch/
