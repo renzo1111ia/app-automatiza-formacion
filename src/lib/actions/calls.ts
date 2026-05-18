@@ -6,9 +6,7 @@ import type {
     IntentoLlamada, 
     LlamadaResumen, 
     LeadCualificacion, 
-    Agendamiento, 
     ConversacionWhatsapp, 
-    Notificacion,
     Lead
 } from "@/types/database";
 
@@ -19,9 +17,12 @@ interface JoinedLead extends Lead {
     intentos?: { count: number }[];
     llamadas?: LlamadaResumen[];
     lead_cualificacion?: LeadCualificacion[];
-    agendamientos?: Agendamiento[];
+    appointments?: {
+        scheduled_at: string;
+        status: string;
+        created_at: string;
+    }[];
     conversaciones_whatsapp?: ConversacionWhatsapp[];
-    notificaciones?: Notificacion[];
 }
 
 // ─── FETCH PARAMS ─────────────────────────────────────────────────────────────
@@ -72,7 +73,6 @@ export async function fetchCalls({
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
 
-        // Query LEAD as the main entry point to ensure no duplicates.
         let query = supabase
             .from("lead")
             .select(`
@@ -93,21 +93,6 @@ export async function fetchCalls({
                     anios_experiencia,
                     nivel_estudios,
                     fecha_creacion
-                ),
-                agendamientos (
-                    fecha_agendada_cliente,
-                    confirmado,
-                    fecha_creacion
-                ),
-                intentos:intentos_llamadas ( id ),
-                conversaciones_whatsapp (
-                    opt_in_whatsapp,
-                    estado,
-                    fecha_ultimo_mensaje
-                ),
-                notificaciones (
-                    tipo,
-                    fecha_envio
                 )
             `, { count: "exact" })
             .order("fecha_ingreso_crm", { ascending: false })
@@ -147,6 +132,28 @@ export async function fetchCalls({
             return emptyResult;
         }
 
+        // Enrich with appointments via a separate query
+        const leadIds = ((data ?? []) as JoinedLead[]).map((l) => l.id);
+        const appointmentsMap = new Map<string, { scheduled_at: string; status: string; created_at: string }[]>();
+        if (leadIds.length > 0) {
+            const { data: appts } = await supabase
+                .from("appointments")
+                .select("lead_id, scheduled_at, status, created_at")
+                .in("lead_id", leadIds);
+            
+            if (appts) {
+                (appts as { lead_id: string; scheduled_at: string; status: string; created_at: string }[]).forEach((apt) => {
+                    const list = appointmentsMap.get(apt.lead_id) || [];
+                    list.push({
+                        scheduled_at: apt.scheduled_at,
+                        status: apt.status,
+                        created_at: apt.created_at
+                    });
+                    appointmentsMap.set(apt.lead_id, list);
+                });
+            }
+        }
+
         // ── Map results to lead-centric HistorialRow ──────────────────────────
         const rows: HistorialRow[] = ((data as unknown as JoinedLead[]) ?? []).map((lead) => {
             const sortedLlamadas = (lead.llamadas ?? []).sort((a, b) =>
@@ -160,17 +167,15 @@ export async function fetchCalls({
                 new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime()
             )[0] || ({} as LeadCualificacion);
 
-            const latestAgenda = (lead.agendamientos ?? []).sort((a, b) =>
-                new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime()
-            )[0] || ({} as Agendamiento);
+            const leadAppointments = appointmentsMap.get(lead.id) || [];
+            const sortedAppointments = leadAppointments.sort((a, b) =>
+                new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+            );
+            const latestAppt = sortedAppointments[0] || {};
 
             const latestWA = (lead.conversaciones_whatsapp ?? []).sort((a, b) =>
                 new Date(b.fecha_ultimo_mensaje || 0).getTime() - new Date(a.fecha_ultimo_mensaje || 0).getTime()
             )[0] || ({} as ConversacionWhatsapp);
-
-            const latestNotif = (lead.notificaciones ?? []).sort((a, b) =>
-                new Date(b.fecha_envio || 0).getTime() - new Date(a.fecha_envio || 0).getTime()
-            )[0] || ({} as Notificacion);
 
             const programaNombre = lead.last_program?.[0]?.programa?.nombre || null;
 
@@ -202,13 +207,13 @@ export async function fetchCalls({
                 motivo_anulacion: latestCual.motivo_anulacion,
                 anios_experiencia: latestCual.anios_experiencia,
                 nivel_estudios: latestCual.nivel_estudios,
-                fecha_agendada_cliente: latestAgenda.fecha_agendada_cliente,
-                confirmado: latestAgenda.confirmado,
+                fecha_agendada_cliente: latestAppt.scheduled_at,
+                confirmado: latestAppt.status === "CONFIRMED",
                 programa_nombre: programaNombre,
-                intentos_count: (lead.intentos || []).length,
+                intentos_count: 0,
                 whatsapp_status: latestWA.estado,
                 opt_in_whatsapp: latestWA.opt_in_whatsapp,
-                notificaciones_status: latestNotif.tipo,
+                notificaciones_status: undefined,
                 tiempo_respuesta_minutos,
                 fecha_primer_contacto: firstCall.fecha_inicio,
                 llamadas: sortedLlamadas,
@@ -244,25 +249,34 @@ export async function getCallsByPhone(phone: string): Promise<HistorialRow[]> {
                 ),
                 lead_cualificacion (
                     cualificacion, motivo_anulacion, anios_experiencia, nivel_estudios, fecha_creacion
-                ),
-                agendamientos (
-                    fecha_agendada_cliente, confirmado, fecha_creacion
-                ),
-                intentos:intentos_llamadas ( id ),
-                conversaciones_whatsapp (
-                    opt_in_whatsapp,
-                    estado,
-                    fecha_ultimo_mensaje
-                ),
-                notificaciones (
-                    tipo,
-                    fecha_envio
                 )
             `)
             .eq("telefono", phone)
             .order("fecha_ingreso_crm", { ascending: false });
 
         if (error) throw new Error(error.message);
+
+        // Enrich with appointments via a separate query
+        const leadIds = ((data ?? []) as JoinedLead[]).map((l) => l.id);
+        const appointmentsMap = new Map<string, { scheduled_at: string; status: string; created_at: string }[]>();
+        if (leadIds.length > 0) {
+            const { data: appts } = await supabase
+                .from("appointments")
+                .select("lead_id, scheduled_at, status, created_at")
+                .in("lead_id", leadIds);
+            
+            if (appts) {
+                (appts as { lead_id: string; scheduled_at: string; status: string; created_at: string }[]).forEach((apt) => {
+                    const list = appointmentsMap.get(apt.lead_id) || [];
+                    list.push({
+                        scheduled_at: apt.scheduled_at,
+                        status: apt.status,
+                        created_at: apt.created_at
+                    });
+                    appointmentsMap.set(apt.lead_id, list);
+                });
+            }
+        }
 
         return ((data as unknown as JoinedLead[]) ?? []).map((lead) => {
             const sortedLlamadas = (lead.llamadas ?? []).sort((a, b) =>
@@ -275,17 +289,15 @@ export async function getCallsByPhone(phone: string): Promise<HistorialRow[]> {
                 new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime()
             )[0] || ({} as LeadCualificacion);
 
-            const latestAgenda = (lead.agendamientos ?? []).sort((a, b) =>
-                new Date(b.fecha_creacion || 0).getTime() - new Date(a.fecha_creacion || 0).getTime()
-            )[0] || ({} as Agendamiento);
+            const leadAppointments = appointmentsMap.get(lead.id) || [];
+            const sortedAppointments = leadAppointments.sort((a, b) =>
+                new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+            );
+            const latestAppt = sortedAppointments[0] || {};
 
             const latestWA = (lead.conversaciones_whatsapp ?? []).sort((a, b) =>
                 new Date(b.fecha_ultimo_mensaje || 0).getTime() - new Date(a.fecha_ultimo_mensaje || 0).getTime()
             )[0] || ({} as ConversacionWhatsapp);
-
-            const latestNotif = (lead.notificaciones ?? []).sort((a, b) =>
-                new Date(b.fecha_envio || 0).getTime() - new Date(a.fecha_envio || 0).getTime()
-            )[0] || ({} as Notificacion);
 
             const programaNombre = lead.last_program?.[0]?.programa?.nombre || null;
 
@@ -311,13 +323,13 @@ export async function getCallsByPhone(phone: string): Promise<HistorialRow[]> {
                 motivo_anulacion: latestCual.motivo_anulacion,
                 anios_experiencia: latestCual.anios_experiencia,
                 nivel_estudios: latestCual.nivel_estudios,
-                fecha_agendada_cliente: latestAgenda.fecha_agendada_cliente,
-                confirmado: latestAgenda.confirmado,
+                fecha_agendada_cliente: latestAppt.scheduled_at,
+                confirmado: latestAppt.status === "CONFIRMED",
                 programa_nombre: programaNombre,
-                intentos_count: (lead.intentos || []).length,
+                intentos_count: 0,
                 whatsapp_status: latestWA.estado,
                 opt_in_whatsapp: latestWA.opt_in_whatsapp,
-                notificaciones_status: latestNotif.tipo,
+                notificaciones_status: undefined,
                 tiempo_respuesta_minutos: null,
                 fecha_primer_contacto: firstCall.fecha_inicio,
                 llamadas: sortedLlamadas,
@@ -349,7 +361,7 @@ export async function fetchIntentosByPhone(phone: string): Promise<IntentoLlamad
             console.error("fetchIntentosByPhone ERROR:", error.message);
             return [];
         }
-        return (data ?? []) as any[];
+        return (data ?? []) as unknown as IntentoLlamada[];
     } catch (e) {
         console.error("fetchIntentosByPhone EXCEPTION:", e);
         return [];
@@ -376,13 +388,23 @@ export async function fetchWhatsappByPhone(phone: string) {
     }
 }
 
-export async function createLead(data: any) {
+export async function createLead(data: {
+    nombre: string;
+    apellido?: string | null;
+    telefono: string;
+    email?: string | null;
+    pais?: string | null;
+    tipo_lead?: string | null;
+    origen?: string | null;
+    campana?: string | null;
+    id_programa?: string | null;
+}) {
     try {
         const client = await getAdminSupabaseClient();
         const tenantId = await getActiveTenantId();
         if (!tenantId) return { success: false, error: "No active tenant" };
 
-        const { data: newLead, error: leadError } = await (client.from("lead" as any) as any)
+        const { data: newLead, error: leadError } = await client.from("lead" as never)
             .insert({
                 tenant_id: tenantId,
                 nombre: data.nombre,
@@ -394,22 +416,23 @@ export async function createLead(data: any) {
                 origen: data.origen,
                 campana: data.campana,
                 fecha_ingreso_crm: new Date().toISOString(),
-            })
+            } as never)
             .select()
             .single();
 
         if (leadError) throw leadError;
 
         if (data.id_programa && newLead) {
-            await (client.from("lead_programas" as any) as any).insert({
-                id_lead: (newLead as any).id,
+            await client.from("lead_programas" as never).insert({
+                id_lead: (newLead as { id: string }).id,
                 id_programa: data.id_programa
-            });
+            } as never);
         }
-        return { success: true, data: newLead };
-    } catch (e: any) {
-        console.error("createLead Error:", e.message);
-        return { success: false, error: e.message };
+        return { success: true, data: newLead as never };
+    } catch (e) {
+        const error = e as Error;
+        console.error("createLead Error:", error.message);
+        return { success: false, error: error.message };
     }
 }
 

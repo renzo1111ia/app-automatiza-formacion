@@ -436,3 +436,25 @@ export async function getABMetrics(agentId?: string) {
         }
     };
 }
+
+export async function deleteAppointment(appointmentId: string) {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await supabase
+        .from("appointments" as never)
+        .delete()
+        .eq("id", appointmentId);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}
+
+export async function deleteAppointmentsBulk(appointmentIds: string[]) {
+    const supabase = await getAdminSupabaseClient();
+    const { error } = await supabase
+        .from("appointments" as never)
+        .delete()
+        .in("id", appointmentIds);
+
+    if (error) return { error: error.message };
+    return { success: true };
+}

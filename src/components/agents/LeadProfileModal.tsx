@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { 
     X, User, Mail, Phone, Globe, 
     Calendar, Save, Loader2, Trash2,
-    Plus, AlertCircle, MapPin, Target, Zap
+    Plus, AlertCircle, MapPin, Target
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -25,13 +25,25 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
     const [metadata, setMetadata] = useState<Record<string, unknown>>(() => {
         const normalizedMeta: Record<string, unknown> = {};
         Object.entries(lead.metadata || {}).forEach(([k, v]) => {
+            let unifiedKey = k;
+            const norm = k.toUpperCase().replace(/\s+/g, "").replace(/_/g, "");
+            if (norm === "YEARSEXPERIENCIE" || norm === "YEARSEXPERIENCE") {
+                unifiedKey = "YEARS_EXPERIENCE";
+            } else if (norm === "FECHAAGENDA") {
+                unifiedKey = "FECHA_AGENDA";
+            } else if (norm === "USERESTUDIES") {
+                unifiedKey = "USER_ESTUDIES";
+            } else if (norm === "USERSTUDIES") {
+                unifiedKey = "USER_STUDIES";
+            }
+
             const existingKey = Object.keys(normalizedMeta).find(
-                mk => mk.toLowerCase() === k.toLowerCase()
+                mk => mk.toLowerCase().replace(/\s+/g, "").replace(/_/g, "") === unifiedKey.toLowerCase().replace(/\s+/g, "").replace(/_/g, "")
             );
             if (existingKey) {
                 if (!normalizedMeta[existingKey] && v) normalizedMeta[existingKey] = v;
             } else {
-                normalizedMeta[k] = v;
+                normalizedMeta[unifiedKey] = v;
             }
         });
         return normalizedMeta;
@@ -40,17 +52,28 @@ export function LeadProfileModal({ lead, onClose, onUpdate }: LeadProfileModalPr
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            // Normalize metadata before saving: merge case-insensitive duplicates
+            // Normalize metadata before saving: merge duplicates and legacy keys
             const normalizedMeta: Record<string, unknown> = {};
             Object.entries(metadata).forEach(([k, v]) => {
+                let unifiedKey = k;
+                const norm = k.toUpperCase().replace(/\s+/g, "").replace(/_/g, "");
+                if (norm === "YEARSEXPERIENCIE" || norm === "YEARSEXPERIENCE") {
+                    unifiedKey = "YEARS_EXPERIENCE";
+                } else if (norm === "FECHAAGENDA") {
+                    unifiedKey = "FECHA_AGENDA";
+                } else if (norm === "USERESTUDIES") {
+                    unifiedKey = "USER_ESTUDIES";
+                } else if (norm === "USERSTUDIES") {
+                    unifiedKey = "USER_STUDIES";
+                }
+
                 const existingKey = Object.keys(normalizedMeta).find(
-                    mk => mk.toLowerCase() === k.toLowerCase()
+                    mk => mk.toLowerCase().replace(/\s+/g, "").replace(/_/g, "") === unifiedKey.toLowerCase().replace(/\s+/g, "").replace(/_/g, "")
                 );
                 if (existingKey) {
-                    // If we have "nombre" and "Nombre", keep the one that actually has content
                     if (!normalizedMeta[existingKey] && v) normalizedMeta[existingKey] = v;
                 } else {
-                    normalizedMeta[k] = v;
+                    normalizedMeta[unifiedKey] = v;
                 }
             });
 

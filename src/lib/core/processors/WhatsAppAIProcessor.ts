@@ -90,7 +90,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 
         // 3-5. Fetch all context data in parallel to reduce latency
         console.log(`[AI PROCESSOR] ⚡ Fetching context data and credentials in parallel...`);
-        const [recentHistory, chatSummary, localKnowledge, tenantData, leadAppointments, leadProgramsData] = await Promise.all([
+        const [recentHistory, chatSummary, localKnowledge, tenantData, leadAppointments, leadProgramsData, allProgramsData] = await Promise.all([
             // 3. Get Recent Context from DB (last 10 messages)
             ChatMemoryService.getRecentContext(leadId).catch(err => {
                 console.warn("[AI PROCESSOR] Memory fetch skipped:", err);
@@ -125,17 +125,25 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
                 console.warn("[AI PROCESSOR] Appointments fetch skipped:", err);
                 return [];
             }),
-            // 8. Get Lead Programs Requirements
+            // 8. Get Lead Programs Requirements (and all programs to prevent hallucination)
             (supabase.from("lead_programas") as any)
                 .select("programas(nombre, requisitos_cualificacion)")
-                .eq("id_lead", leadId)
+                .eq("id_lead", leadId),
+            (supabase.from("programas") as any).select("nombre").eq("tenant_id", tenantId)
         ]);
 
         const leadPrograms = (leadProgramsData?.data as any[]) || [];
-        const programRequirements = leadPrograms
+        const allPrograms = (allProgramsData?.data as any[]) || [];
+        const allProgramNames = allPrograms.map(p => p.nombre).filter(Boolean).join(", ");
+        
+        let programRequirements = leadPrograms
             .filter(p => p.programas?.requisitos_cualificacion)
             .map(p => `### ${p.programas.nombre}:\n${p.programas.requisitos_cualificacion}`)
             .join("\n\n");
+            
+        if (allProgramNames) {
+            programRequirements += `\n\nCURSOS DISPONIBLES EN LA INSTITUCIÓN: ${allProgramNames}. Si el usuario menciona un curso, DEBE ser uno de estos, de lo contrario asume que se equivocó o no lo extraigas.`;
+        }
 
         const waConfig = (tenantData?.data as any)?.config?.whatsapp;
 
@@ -157,7 +165,7 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             ? (lead as any).pais 
             : (resolveCountryFromPhone((lead as any).telefono) || 'Desconocido');
         const leadTZ = getTimezoneByCountry(leadPais);
-        const variableMap = {
+        const variableMap: Record<string, string> = {
             nombre: (lead as any).nombre || 'estudiante',
             email: (lead as any).email || '',
             telefono: ensurePlusPrefix((lead as any).telefono || ''),
@@ -171,10 +179,27 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
             "$timezone": leadTZ,
             "$timezone_lead": leadTZ,
             "$time_madrid": now.toLocaleTimeString('es-ES', { timeZone: TZ }),
-            "$date_madrid": now.toLocaleDateString('es-ES', { timeZone: TZ }),
-            ...((lead as any).metadata || {}), // CAPTURED MEMORY
-            ...((activeVariant.dynamic_variables as Record<string, string>) || {}) // STATIC CONTEXT
+            "$date_madrid": now.toLocaleDateString('es-ES', { timeZone: TZ })
         };
+
+        // 1. Pre-populate all tracked variables from the active variant as "Pendiente..."
+        const trackedVars = (activeVariant.tracked_variables as string[]) || [];
+        trackedVars.forEach(v => {
+            const clean = v.replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "").trim();
+            variableMap[clean] = "Pendiente...";
+        });
+
+        // 2. Overlay captured metadata
+        Object.entries((lead as any).metadata || {}).forEach(([k, val]) => {
+            const clean = k.replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "").trim();
+            variableMap[clean] = String(val);
+        });
+
+        // 3. Overlay static dynamic variables context
+        Object.entries((activeVariant.dynamic_variables as Record<string, string>) || {}).forEach(([k, val]) => {
+            const clean = k.replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "").trim();
+            variableMap[clean] = String(val);
+        });
 
         // Add implicit context about timezones (MASTER RULES)
         const timezoneContext = `
@@ -183,16 +208,25 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
 2. El prospecto está en: ${leadPais} (zona horaria: ${leadTZ}).
 3. Los huecos de disponibilidad que recibes de 'check_availability' YA ESTÁN CONVERTIDOS a la hora local del prospecto (${leadTZ}). DEBES mostrarlos TAL CUAL al usuario, sin alterar las horas.
 4. IMPORTANTE: Nunca muestres horas de madrugada (00:00–07:00) al prospecto. Si la lista de slots empieza antes de las 07:00 hora local del prospecto, significa que hay un problema de zona horaria — en ese caso avisa: "Déjame verificar los horarios disponibles", y llama a check_availability pasando la fecha nuevamente.
-5. Si el prospecto pide una hora que NO aparece en la lista, explícale que nuestras oficinas en España estarían cerradas a esa hora.
+5. Si el prospecto pide una hora que NO aparece en la lista, explécale que nuestras oficinas en España estarían cerradas a esa hora.
 6. DOBLE CONFIRMACIÓN: Al agendar, confirma siempre así: "Agendado para las [HORA_LOCAL] hora de ${leadPais} (que son las [HORA_MADRID] en España)".
 7. NO PREGUNTES POR DATOS QUE YA TIENES: Si en la sección 'DATOS DEL PROSPECTO' ya aparece el Nombre, País o Teléfono, NO se los preguntes al usuario. Actúa como si ya lo supieras.
+8. CRÍTICO: Para agendar una cita real en el sistema, **SIEMPRE DEBES EJECUTAR LA FUNCIÓN 'book_appointment'**. NUNCA afirmes que has agendado la cita si no has llamado exitosamente a la herramienta.
 `;
         let finalPrompt = timezoneContext + "\n" + activeVariant.prompt_text;
 
-        // Replace patterns like {{nombre}}
+        // Replace patterns like {{nombre}} case-insensitively and space-insensitively
         Object.keys(variableMap).forEach(key => {
-            const regex = new RegExp(`{{${key}}}`, "g");
-            finalPrompt = finalPrompt.replace(regex, variableMap[key]);
+            const cleanKey = key.replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "").trim();
+            
+            // Safe escape function for characters inside regex
+            const regexStr = cleanKey.split("").map(char => {
+                if (char === "_" || char === "-") return char + "\\s*";
+                return char;
+            }).join("\\s*");
+            
+            const regex = new RegExp(`{{\\s*${regexStr}\\s*}}`, "gi");
+            finalPrompt = finalPrompt.replace(regex, String(variableMap[key] ?? ""));
         });
 
         // 7. Define Tools
@@ -470,8 +504,8 @@ ${(leadAppointments as any[]).length > 0
                     if (msg.includes("column") || insertError.code === "PGRST204" || msg.includes("not found")) {
                         const fieldToRemove = stripOrder[i];
                         if (fieldToRemove) {
-                            console.warn(`[AI PROCESSOR] 🛠️ Stripping '${fieldToRemove}' and retrying...`);
-                            const { [fieldToRemove]: _, ...rest } = currentPayload;
+                            const rest = { ...currentPayload };
+                            delete (rest as any)[fieldToRemove];
                             currentPayload = rest as any;
                         } else {
                             break;
@@ -495,8 +529,7 @@ ${(leadAppointments as any[]).length > 0
                         await (supabase.from("conversaciones_whatsapp") as any).upsert({
                             tenant_id: tenantId,
                             id_lead: leadId,
-                            fecha_ultimo_mensaje: new Date().toISOString(),
-                            estado: "ACTIVA"
+                            fecha_ultimo_mensaje: new Date().toISOString()
                         }, { onConflict: "tenant_id,id_lead" });
                         console.log(`[AI PROCESSOR] 🔄 Dashboard refreshed for lead ${leadId}`);
                     } catch (refreshErr) {

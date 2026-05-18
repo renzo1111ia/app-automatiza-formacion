@@ -158,7 +158,7 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
             applyLeadFilters((supabase.from("llamadas" as any) as any).select(`id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to), filters),
             applyLeadFilters((supabase.from("lead_cualificacion" as any) as any).select(`cualificacion, motivo_anulacion, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
             applyLeadFilters((supabase.from("agendamientos" as any) as any).select(`id, fecha_agendada_cliente, confirmado, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).eq("confirmado", true).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, opt_in_whatsapp, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
+            applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_ultimo_mensaje", from).lte("fecha_ultimo_mensaje", to), filters),
         ]);
 
         const leadsData = (lRes.data || []) as any[];
@@ -248,10 +248,10 @@ export async function getKpiWhatsapp(from: string, to: string, filters: Analytic
         // 1. Fetch WhatsApp conversations for the tenant in range
         // We fetch id_lead and handle filtering/joining manually to avoid schema cache issues
         const q = (supabase.from("conversaciones_whatsapp" as any) as any)
-            .select(`id, id_lead, estado, fecha_creacion`)
+            .select(`id, id_lead, fecha_ultimo_mensaje`)
             .eq("tenant_id", tenantId)
-            .gte("fecha_creacion", from)
-            .lte("fecha_creacion", to);
+            .gte("fecha_ultimo_mensaje", from)
+            .lte("fecha_ultimo_mensaje", to);
         
         const { data: wpRowsRaw, error: wpError } = await q;
         if (wpError || !wpRowsRaw) {
@@ -303,7 +303,7 @@ export async function getKpiWhatsapp(from: string, to: string, filters: Analytic
         // Grouping for charts
         const byDay: Record<string, number> = {};
         filteredWpRows.forEach((r: any) => {
-            const d = r.fecha_creacion?.slice(0, 10);
+            const d = r.fecha_ultimo_mensaje?.slice(0, 10);
             if (d) byDay[d] = (byDay[d] || 0) + 1;
         });
 
@@ -360,7 +360,7 @@ export async function getKpiCampanas(from: string, to: string, filters: Analytic
             (supabase.from("llamadas" as any) as any).select("id, id_lead, estado_llamada, duracion_segundos").eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to),
             (supabase.from("agendamientos" as any) as any).select("id, id_lead").eq("tenant_id", tenantId).eq("confirmado", true).gte("fecha_creacion", from).lte("fecha_creacion", to),
             (supabase.from("lead_cualificacion" as any) as any).select("id, id_lead, cualificacion").eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to),
-            (supabase.from("conversaciones_whatsapp" as any) as any).select("id_lead").eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to),
+            (supabase.from("conversaciones_whatsapp" as any) as any).select("id_lead").eq("tenant_id", tenantId).gte("fecha_ultimo_mensaje", from).lte("fecha_ultimo_mensaje", to),
         ]);
 
         const campMap: Record<string, any> = {};
@@ -529,7 +529,7 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
         agendamientos: 'fecha_agendada_cliente',
         lead_cualificacion: 'fecha_creacion',
         intentos_llamadas: 'fecha_reintento',
-        conversaciones_whatsapp: 'fecha_creacion',
+        conversaciones_whatsapp: 'fecha_ultimo_mensaje',
     };
     const timeCol = TIME_COL_MAP[table] || 'fecha_creacion';
 
@@ -690,7 +690,7 @@ export async function getDynamicChartSeries(
         agendamientos: 'fecha_agendada_cliente',
         lead_cualificacion: 'fecha_creacion',
         intentos_llamadas: 'fecha_reintento',
-        conversaciones_whatsapp: 'fecha_creacion',
+        conversaciones_whatsapp: 'fecha_ultimo_mensaje',
     };
 
     // 1. Pre-fetch all leads for this tenant to use for manual joining (with pagination)

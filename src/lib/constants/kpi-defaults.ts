@@ -258,8 +258,8 @@ export const DEFAULT_CHARTS_LLAMADAS: ChartConfig[] = [
 ];
 
 export const DEFAULT_CHARTS_WHATSAPP: ChartConfig[] = [
-    { id: 'ws-ch-1', type: 'area', title: 'Conversaciones por Fecha', dataKey: 'dynamic', xKey: 'conversaciones_whatsapp.fecha_creacion', size: '6', isVisible: true },
-    { id: 'ws-ch-2', type: 'donut', title: 'Estado de Conversación', dataKey: 'dynamic', xKey: 'conversaciones_whatsapp.estado', size: '6', isVisible: true },
+    { id: 'ws-ch-1', type: 'area', title: 'Conversaciones por Fecha', dataKey: 'dynamic', xKey: 'conversaciones_whatsapp.fecha_ultimo_mensaje', size: '6', isVisible: true },
+    { id: 'ws-ch-2', type: 'donut', title: 'Cualificación de Leads', dataKey: 'dynamic', xKey: 'lead_cualificacion.cualificacion', size: '6', isVisible: true },
     { id: 'ws-ch-3', type: 'vertical-bar', title: 'Leads por Origen', dataKey: 'dynamic', xKey: 'lead.origen', size: '6', isVisible: true },
     { id: 'ws-ch-4', type: 'vertical-bar', title: 'Leads por Tipo', dataKey: 'dynamic', xKey: 'lead.tipo_lead', size: '6', isVisible: true },
 ];

@@ -11,7 +11,7 @@ import {
     LayoutDashboard, Megaphone, MessageCircle, 
     Clock, History, Settings, X, ChevronDown, PlusCircle,
     Workflow, Bot, ShieldCheck, Terminal,
-    Calendar, MessageSquare, FlaskConical, Mic, Globe, BookOpen, DollarSign
+    Calendar, MessageSquare, FlaskConical, Mic, Globe, BookOpen, DollarSign, Users
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -24,38 +24,6 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    {
-        label: "Métricas",
-        href: "/dashboard",
-        icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
-        subItems: [
-            {
-                label: "Llamadas",
-                href: "/dashboard/minutos",
-                icon: <Clock className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
-                label: "WhatsApp",
-                href: "/dashboard/whatsapp",
-                icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
-                label: "Campañas",
-                href: "/dashboard/campanas",
-                icon: <Megaphone className="h-4 w-4" strokeWidth={1.8} />,
-            },
-            {
-                label: "Historial",
-                href: "/dashboard/historial",
-                icon: <History className="h-4 w-4" strokeWidth={1.8} />
-            },
-        ]
-    },
-    {
-        label: "Calendario",
-        href: "/dashboard/calendar",
-        icon: <Calendar className="h-5 w-5" strokeWidth={1.8} />
-    },
     {
         label: "Constructor & IA",
         href: "/dashboard/onboarding",
@@ -83,15 +51,79 @@ const NAV_ITEMS: NavItem[] = [
                 icon: <Mic className="h-4 w-4" strokeWidth={1.8} />
             },
             {
-                label: "Conversaciones",
-                href: "/dashboard/conversaciones",
-                icon: <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
-            },
-            {
                 label: "Chatbot Web",
                 href: "/dashboard/web-chatbot",
                 icon: <Globe className="h-4 w-4" strokeWidth={1.8} />
+            }
+        ]
+    },
+    {
+        label: "Leads",
+        href: "/dashboard/historial",
+        icon: <Users className="h-5 w-5" strokeWidth={1.8} />,
+        subItems: [
+            {
+                label: "Resumen Leads",
+                href: "/dashboard/historial",
+                icon: <LayoutDashboard className="h-4 w-4" strokeWidth={1.8} />
             },
+            {
+                label: "Conversaciones whatsapp",
+                href: "/dashboard/conversaciones",
+                icon: <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
+            }
+        ]
+    },
+    {
+        label: "Calendario",
+        href: "/dashboard/calendar",
+        icon: <Calendar className="h-5 w-5" strokeWidth={1.8} />
+    },
+    {
+        label: "Campañas",
+        href: "/dashboard/campanas",
+        icon: <Megaphone className="h-5 w-5" strokeWidth={1.8} />,
+        subItems: [
+            {
+                label: "Métricas y Estado",
+                href: "/dashboard/campanas",
+                icon: <LayoutDashboard className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Constructor",
+                href: "/dashboard/campanas/nuevo",
+                icon: <PlusCircle className="h-4 w-4" strokeWidth={1.8} />
+            }
+        ]
+    },
+    {
+        label: "Métricas",
+        href: "/dashboard",
+        icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
+        subItems: [
+            {
+                label: "Llamadas",
+                href: "/dashboard/minutos",
+                icon: <Clock className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Whatsapp",
+                href: "/dashboard/whatsapp",
+                icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />
+            },
+            {
+                label: "Historial",
+                href: "/dashboard/historial",
+                icon: <History className="h-4 w-4" strokeWidth={1.8} />
+            }
+        ]
+    },
+    {
+        label: "Pruebas y Logs",
+        href: "/dashboard/simulator",
+        icon: <FlaskConical className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true,
+        subItems: [
             {
                 label: "Simulador",
                 href: "/dashboard/simulator",
@@ -106,7 +138,15 @@ const NAV_ITEMS: NavItem[] = [
                 label: "Auditoría Logs",
                 href: "/dashboard/logs",
                 icon: <Terminal className="h-4 w-4" strokeWidth={1.8} />
-            },
+            }
+        ]
+    },
+    {
+        label: "Negocio",
+        href: "/dashboard/costs",
+        icon: <DollarSign className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true,
+        subItems: [
             {
                 label: "Análisis de Costes",
                 href: "/dashboard/costs",
@@ -116,14 +156,8 @@ const NAV_ITEMS: NavItem[] = [
                 label: "Admin Panel",
                 href: "/dashboard/admin",
                 icon: <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
-            },
+            }
         ]
-    },
-    {
-        label: "Docs",
-        href: "/dashboard/docs",
-        icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />,
-        adminOnly: true
     },
     {
         label: "Ajustes",
@@ -131,6 +165,12 @@ const NAV_ITEMS: NavItem[] = [
         icon: <Settings className="h-5 w-5" strokeWidth={1.8} />,
         adminOnly: true
     },
+    {
+        label: "Docs",
+        href: "/dashboard/docs",
+        icon: <BookOpen className="h-5 w-5" strokeWidth={1.8} />,
+        adminOnly: true
+    }
 ];
 
 export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
@@ -292,11 +332,11 @@ export function Sidebar({ isAdmin, mobileOpen, onMobileClose }: {
 
             {/* ── MOBILE: Bottom Navigation Bar ─────────────────────────── */}
             <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md px-1 pb-safe">
-                {[
-                    NAV_ITEMS[0], // Informes
-                    ...(NAV_ITEMS[0].subItems?.slice(0, 3) || []), // Minutos, WhatsApp, Campañas
-                    NAV_ITEMS[1] // Config
-                ].filter(Boolean).map((item) => {
+                {([
+                    NAV_ITEMS.find(n => n.label === "Métricas"),
+                    ...(NAV_ITEMS.find(n => n.label === "Métricas")?.subItems?.slice(0, 3) || []),
+                    NAV_ITEMS.find(n => n.label === "Ajustes")
+                ].filter(Boolean) as NavItem[]).map((item) => {
                     const safePathname = pathname || "";
                     const active = safePathname === item.href || (item.href !== "/dashboard" && safePathname.startsWith(item.href + "/"));
                     return (

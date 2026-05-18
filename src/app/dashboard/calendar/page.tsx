@@ -4,14 +4,14 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
     Calendar, Users, Clock, Check, X, Plus,
     ChevronLeft, ChevronRight,
-    Pencil, Trash2, Phone, Mail, RotateCcw, Save
+    Pencil, Trash2, Phone, Mail, RotateCcw, Save, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     getAdvisors, saveAdvisor, deleteAdvisor,
     getAdvisorSlots, saveAdvisorSlots,
-    getAppointments, updateAppointmentStatus,
+    getAppointments, updateAppointmentStatus, deleteAppointment, deleteAppointmentsBulk,
     createAppointment, cancelAppointment, rescheduleAppointment, checkAvailability,
     type Advisor, type Appointment
 } from "@/lib/actions/scheduling";
@@ -25,11 +25,11 @@ const DAYS_FULL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábad
 const DAYS_DB_MAP = [1, 2, 3, 4, 5, 6, 0]; // Monday=1, Sunday=0 for DB
 
 const STATUS_CONFIG = {
-    PENDING:   { label: "Pendiente",  color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+    PENDING: { label: "Pendiente", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
     CONFIRMED: { label: "Confirmada", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-    CANCELLED: { label: "Cancelada",  color: "text-red-400 bg-red-500/10 border-red-500/20" },
+    CANCELLED: { label: "Cancelada", color: "text-red-400 bg-red-500/10 border-red-500/20" },
     COMPLETED: { label: "Completada", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-    NO_SHOW:   { label: "No apareció",color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
+    NO_SHOW: { label: "No apareció", color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
 };
 
 type Tab = "agenda" | "advisors" | "slots" | "tools" | "reminders";
@@ -59,13 +59,14 @@ export default function CalendarPage() {
     const [weekOffset, setWeekOffset] = useState(0);
     const [leads, setLeads] = useState<InboxLead[]>([]);
     const [toolLog, setToolLog] = useState<{ action: string; result: unknown; time: string }[]>([]);
-    
+
     // Tool states
     const [toolLeadId, setToolLeadId] = useState("");
     const [toolAdvisorId, setToolAdvisorId] = useState("");
     const [toolDate, setToolDate] = useState(new Date().toISOString().split('T')[0]);
     const [toolTime, setToolTime] = useState("10:00");
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [selectedAptIds, setSelectedAptIds] = useState<string[]>([]);
     const [reminderConfig, setReminderConfig] = useState({
         enabled: true,
         lead_time_minutes: 60,
@@ -93,13 +94,13 @@ export default function CalendarPage() {
             const map: Record<number, { active: boolean, start: string, end: string }> = {};
             // Initialize with default empty state to ensure we don't keep old data
             [0, 1, 2, 3, 4, 5, 6].forEach(d => map[d] = { active: false, start: "09:00", end: "20:00" });
-            
-            res.data.forEach(s => { 
-                map[s.day_of_week] = { 
-                    active: true, 
-                    start: s.start_time || "09:00", 
-                    end: s.end_time || "20:00" 
-                }; 
+
+            res.data.forEach(s => {
+                map[s.day_of_week] = {
+                    active: true,
+                    start: s.start_time || "09:00",
+                    end: s.end_time || "20:00"
+                };
             });
             setSlots(map);
         } else {
@@ -110,7 +111,7 @@ export default function CalendarPage() {
         }
     }, []);
 
-    useEffect(() => { 
+    useEffect(() => {
         let isMounted = true;
         const init = async () => {
             const [advisorsRes, aptsRes, leadsRes] = await Promise.all([
@@ -172,7 +173,7 @@ export default function CalendarPage() {
         }
     }, [advisors, selectedAdvisor, tab]);
 
-    useEffect(() => { 
+    useEffect(() => {
         let isMounted = true;
         // In slots tab, we might have selectedAdvisor = null for "General"
         if (tab === "slots") {
@@ -180,14 +181,14 @@ export default function CalendarPage() {
                 if (!isMounted) return;
                 const map: Record<number, { active: boolean, start: string, end: string }> = {};
                 [0, 1, 2, 3, 4, 5, 6].forEach(d => map[d] = { active: false, start: "09:00", end: "20:00" });
-                
+
                 if (res.success && res.data) {
-                    res.data.forEach(s => { 
-                        map[s.day_of_week] = { 
-                            active: true, 
-                            start: s.start_time || "09:00", 
-                            end: s.end_time || "20:00" 
-                        }; 
+                    res.data.forEach(s => {
+                        map[s.day_of_week] = {
+                            active: true,
+                            start: s.start_time || "09:00",
+                            end: s.end_time || "20:00"
+                        };
                     });
                 }
                 setSlots(map);
@@ -210,8 +211,8 @@ export default function CalendarPage() {
         const aptDate = new Date(apt.scheduled_at);
         // Compare year, month, date to be precise
         return aptDate.getFullYear() === date.getFullYear() &&
-               aptDate.getMonth() === date.getMonth() &&
-               aptDate.getDate() === date.getDate();
+            aptDate.getMonth() === date.getMonth() &&
+            aptDate.getDate() === date.getDate();
     });
 
     async function handleSaveAdvisor() {
@@ -239,7 +240,7 @@ export default function CalendarPage() {
                 end_time: config.end,
                 slot_duration_minutes: slotDuration,
             }));
-        
+
         // 2. Save duration in tenant config
         const tenant = await getActiveTenantConfig();
         if (tenant) {
@@ -263,6 +264,62 @@ export default function CalendarPage() {
     async function handleStatusChange(aptId: string, status: string) {
         await updateAppointmentStatus(aptId, status);
         await loadData();
+    }
+
+    async function handleDeleteAppointment(aptId: string) {
+        if (!confirm("⚠️ ¿Estás seguro de que deseas eliminar permanentemente esta cita de la base de datos? Esta acción no se puede deshacer.")) return;
+        const res = await deleteAppointment(aptId);
+        if (res.success) {
+            setSelectedAppointment(null);
+            setSelectedAptIds(prev => prev.filter(id => id !== aptId));
+            await loadData();
+        } else {
+            alert("❌ Error al eliminar cita: " + res.error);
+        }
+    }
+
+    async function handleDeleteSelected() {
+        if (selectedAptIds.length === 0) return;
+        if (!confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente las ${selectedAptIds.length} citas seleccionadas de la base de datos? Esta acción no se puede deshacer.`)) return;
+
+        setSaving(true);
+        const res = await deleteAppointmentsBulk(selectedAptIds);
+        if (res.success) {
+            setSelectedAptIds([]);
+            await loadData();
+        } else {
+            alert("❌ Error al eliminar las citas seleccionadas: " + res.error);
+        }
+        setSaving(false);
+    }
+
+    function exportAppointmentsToCSV() {
+        if (appointments.length === 0) {
+            alert("No hay citas registradas para exportar.");
+            return;
+        }
+
+        const headers = ["ID", "Fecha Programada", "Estado", "Lead Nombre", "Lead Telefono", "Asesor", "Notas"];
+        const rows = appointments.map(apt => [
+            apt.id,
+            new Date(apt.scheduled_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" }),
+            apt.status,
+            `${apt.lead?.nombre || ""} ${apt.lead?.apellido || ""}`.trim(),
+            apt.lead?.telefono || "",
+            apt.advisors?.name || "Sin asignar",
+            (apt.notes || "").replace(/\n/g, " ").replace(/"/g, '""')
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF"
+            + [headers.join(","), ...rows.map(e => e.map(val => `"${val}"`).join(","))].join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `citas_esden_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     const addLog = (action: string, result: unknown) => {
@@ -350,14 +407,14 @@ export default function CalendarPage() {
                             {weekDays.map((day, i) => {
                                 const dayApts = getAppointmentsForDay(day);
                                 const isToday = day.toDateString() === new Date().toDateString();
-                                
+
                                 // Group by time to detect overlaps visually (Using Spain Time as primary)
                                 const timeGroups: Record<string, Appointment[]> = {};
                                 dayApts.forEach(apt => {
-                                    const spainTime = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
-                                        hour: "2-digit", 
-                                        minute: "2-digit", 
-                                        timeZone: "Europe/Madrid" 
+                                    const spainTime = new Date(apt.scheduled_at).toLocaleTimeString("es-ES", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        timeZone: "Europe/Madrid"
                                     });
                                     if (!timeGroups[spainTime]) timeGroups[spainTime] = [];
                                     timeGroups[spainTime].push(apt);
@@ -384,11 +441,11 @@ export default function CalendarPage() {
                                             return apts.map((apt, idx) => {
                                                 const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
                                                 return (
-                                                    <div 
-                                                        key={apt.id} 
+                                                    <div
+                                                        key={apt.id}
                                                         onClick={() => setSelectedAppointment(apt)}
                                                         className={cn(
-                                                            "p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all relative", 
+                                                            "p-2 rounded-lg border text-[9px] font-bold cursor-pointer hover:scale-[1.02] transition-all relative",
                                                             sc.color,
                                                             hasOverlap && "border-red-500/50 shadow-[0_0_5px_rgba(239,68,68,0.3)]"
                                                         )}>
@@ -401,9 +458,9 @@ export default function CalendarPage() {
                                                             <div className="font-black">{time} <span className="opacity-40 font-bold ml-1 text-[7px]">ES</span></div>
                                                             <div className="text-[7px] opacity-70 flex items-center gap-0.5">
                                                                 <Globe className="h-2 w-2" />
-                                                                {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
-                                                                    hour: "2-digit", 
-                                                                    minute: "2-digit", 
+                                                                {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", {
+                                                                    hour: "2-digit",
+                                                                    minute: "2-digit",
                                                                     timeZone: resolveTimezoneFromPhone(apt.lead?.telefono)
                                                                 })}
                                                             </div>
@@ -421,10 +478,46 @@ export default function CalendarPage() {
 
                         {/* Appointment List */}
                         <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-2">
+                            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-4">
+                                {appointments.length > 0 && (
+                                    <input
+                                        type="checkbox"
+                                        checked={appointments.slice(0, 20).length > 0 && selectedAptIds.length === appointments.slice(0, 20).length}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedAptIds(appointments.slice(0, 20).map(apt => apt.id));
+                                            } else {
+                                                setSelectedAptIds([]);
+                                            }
+                                        }}
+                                        className="rounded border-slate-300 dark:border-white/10 text-primary focus:ring-primary h-4 w-4 bg-transparent cursor-pointer"
+                                        title="Seleccionar todas"
+                                    />
+                                )}
                                 <Clock className="h-4 w-4 text-slate-400 dark:text-white/30" />
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">Todas las Citas</span>
-                                <span className="ml-auto text-[9px] text-slate-300 dark:text-white/20 font-bold">{appointments.length} registros</span>
+
+                                {selectedAptIds.length > 0 && (
+                                    <button
+                                        onClick={handleDeleteSelected}
+                                        className="ml-auto flex items-center gap-2 h-7 px-3 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all animate-pulse"
+                                        title="Eliminar citas seleccionadas"
+                                    >
+                                        <Trash2 className="h-3 w-3" /> Eliminar Seleccionadas ({selectedAptIds.length})
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={exportAppointmentsToCSV}
+                                    className={cn(
+                                        "flex items-center gap-2 h-7 px-3 bg-primary/10 border border-primary/20 hover:bg-primary/20 text-primary rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                        selectedAptIds.length === 0 && "ml-auto"
+                                    )}
+                                    title="Exportar citas a CSV"
+                                >
+                                    <Download className="h-3 w-3" /> Exportar CSV
+                                </button>
+                                <span className="text-[9px] text-slate-300 dark:text-white/20 font-bold border-l border-slate-100 dark:border-white/10 pl-4">{appointments.length} registros</span>
                             </div>
                             {appointments.length === 0 ? (
                                 <div className="py-16 text-center text-slate-400 dark:text-white/20">
@@ -436,34 +529,54 @@ export default function CalendarPage() {
                                 <div className="divide-y divide-white/5">
                                     {appointments.slice(0, 20).map(apt => {
                                         const sc = STATUS_CONFIG[apt.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
+                                        const isSelected = selectedAptIds.includes(apt.id);
                                         return (
-                                            <div 
-                                                key={apt.id} 
+                                            <div
+                                                key={apt.id}
                                                 onClick={() => setSelectedAppointment(apt)}
-                                                className="px-6 py-4 flex items-center gap-6 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-all"
+                                                className={cn(
+                                                    "px-6 py-4 flex items-center gap-6 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-all",
+                                                    isSelected && "bg-primary/5 dark:bg-primary/10 border-l-2 border-primary"
+                                                )}
                                             >
+                                                <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedAptIds(prev => [...prev, apt.id]);
+                                                            } else {
+                                                                setSelectedAptIds(prev => prev.filter(id => id !== apt.id));
+                                                            }
+                                                        }}
+                                                        className="rounded border-slate-300 dark:border-white/10 text-primary focus:ring-primary h-4 w-4 bg-transparent cursor-pointer"
+                                                        title="Seleccionar cita"
+                                                        aria-label={`Seleccionar cita de ${apt.lead?.nombre || 'prospecto'}`}
+                                                    />
+                                                </div>
                                                 <div className="w-48 flex-shrink-0">
                                                     <p className="text-xs font-bold text-slate-900 dark:text-white">
-                                                        {new Date(apt.scheduled_at).toLocaleDateString("es-ES", { 
-                                                            day: "numeric", 
+                                                        {new Date(apt.scheduled_at).toLocaleDateString("es-ES", {
+                                                            day: "numeric",
                                                             month: "short",
                                                             timeZone: "Europe/Madrid"
                                                         })}
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-0.5">
                                                         <p className="text-[10px] font-black text-primary">
-                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
-                                                                hour: "2-digit", 
-                                                                minute: "2-digit", 
-                                                                timeZone: "Europe/Madrid" 
+                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
+                                                                timeZone: "Europe/Madrid"
                                                             })} ES
                                                         </p>
                                                         <div className="h-3 w-[1px] bg-slate-200 dark:bg-white/10" />
                                                         <p className="text-[10px] text-slate-500 dark:text-white/40 flex items-center gap-1">
                                                             <Globe className="h-2.5 w-2.5" />
-                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", { 
-                                                                hour: "2-digit", 
-                                                                minute: "2-digit", 
+                                                            {new Date(apt.scheduled_at).toLocaleTimeString("es-ES", {
+                                                                hour: "2-digit",
+                                                                minute: "2-digit",
                                                                 timeZone: resolveTimezoneFromPhone(apt.lead?.telefono)
                                                             })} Local
                                                         </p>
@@ -482,7 +595,7 @@ export default function CalendarPage() {
                                                 <span className={cn("text-[9px] px-2 py-1 rounded-lg border font-black flex-shrink-0", sc.color)}>
                                                     {sc.label}
                                                 </span>
-                                                <div className="flex gap-1">
+                                                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                                     {apt.status === "PENDING" && (
                                                         <>
                                                             <button onClick={() => handleStatusChange(apt.id, "CONFIRMED")} title="Confirmar" className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center hover:bg-emerald-500/20 transition-all">
@@ -493,6 +606,9 @@ export default function CalendarPage() {
                                                             </button>
                                                         </>
                                                     )}
+                                                    <button onClick={() => handleDeleteAppointment(apt.id)} title="Eliminar definitivamente" className="h-7 w-7 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center hover:bg-rose-500/20 transition-all ml-1">
+                                                        <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         );
@@ -739,7 +855,7 @@ export default function CalendarPage() {
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Duración de cada cita</p>
                                     <p className="text-[9px] text-slate-500 dark:text-white/40 font-bold">Define cuánto tiempo dura cada hueco en la agenda</p>
                                 </div>
-                                <select 
+                                <select
                                     value={slotDuration}
                                     onChange={(e) => setSlotDuration(Number(e.target.value))}
                                     className="h-9 px-3 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-primary"
@@ -754,98 +870,98 @@ export default function CalendarPage() {
                                 </select>
                             </div>
 
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-7 gap-3">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-7 gap-3">
+                                    {DAYS_FULL.map((dayLabel, i) => {
+                                        const dbDay = DAYS_DB_MAP[i];
+                                        const slotConfig = slots[dbDay] || { active: false, start: "09:00", end: "20:00" };
+                                        const isActive = slotConfig.active;
+                                        return (
+                                            <button
+                                                key={i}
+                                                onClick={() => setSlots(s => ({
+                                                    ...s,
+                                                    [dbDay]: {
+                                                        ...slotConfig,
+                                                        active: !isActive
+                                                    }
+                                                }))}
+                                                title={`Toggle ${dayLabel}`}
+                                                className={cn(
+                                                    "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
+                                                    isActive ? "bg-primary/10 border-primary/30 text-primary" : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 text-slate-400 dark:text-white/20 hover:text-slate-500 dark:hover:text-white/40"
+                                                )}
+                                            >
+                                                <span className="text-[9px] font-black uppercase tracking-widest">{DAYS[i]}</span>
+                                                <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", isActive ? "bg-primary border-primary" : "border-slate-200 dark:border-white/10")}>
+                                                    {isActive && <Check className="h-3 w-3 text-primary-foreground" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Time configuration for active days */}
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">Horarios por Día</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {DAYS_FULL.map((dayLabel, i) => {
                                             const dbDay = DAYS_DB_MAP[i];
-                                            const slotConfig = slots[dbDay] || { active: false, start: "09:00", end: "20:00" };
-                                            const isActive = slotConfig.active;
+                                            const slotConfig = slots[dbDay];
+                                            if (!slotConfig?.active) return null;
+
                                             return (
-                                                <button
-                                                    key={i}
-                                                    onClick={() => setSlots(s => ({ 
-                                                        ...s, 
-                                                        [dbDay]: { 
-                                                            ...slotConfig, 
-                                                            active: !isActive 
-                                                        } 
-                                                    }))}
-                                                    title={`Toggle ${dayLabel}`}
-                                                    className={cn(
-                                                        "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
-                                                        isActive ? "bg-primary/10 border-primary/30 text-primary" : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 text-slate-400 dark:text-white/20 hover:text-slate-500 dark:hover:text-white/40"
-                                                    )}
-                                                >
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">{DAYS[i]}</span>
-                                                    <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all", isActive ? "bg-primary border-primary" : "border-slate-200 dark:border-white/10")}>
-                                                        {isActive && <Check className="h-3 w-3 text-primary-foreground" />}
+                                                <div key={dbDay} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-left duration-300">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-primary w-12">{DAYS[i]}</span>
+                                                    <div className="flex items-center gap-2 flex-1">
+                                                        <input
+                                                            type="time"
+                                                            value={slotConfig.start}
+                                                            onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, start: e.target.value } }))}
+                                                            className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
+                                                            title="Hora de inicio"
+                                                        />
+                                                        <span className="text-slate-400 dark:text-white/20 text-[10px] font-bold">A</span>
+                                                        <input
+                                                            type="time"
+                                                            value={slotConfig.end}
+                                                            onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, end: e.target.value } }))}
+                                                            className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
+                                                            title="Hora de fin"
+                                                        />
                                                     </div>
-                                                </button>
+                                                </div>
                                             );
                                         })}
                                     </div>
-
-                                    {/* Time configuration for active days */}
-                                    <div className="space-y-3">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">Horarios por Día</p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            {DAYS_FULL.map((dayLabel, i) => {
-                                                const dbDay = DAYS_DB_MAP[i];
-                                                const slotConfig = slots[dbDay];
-                                                if (!slotConfig?.active) return null;
-
-                                                return (
-                                                    <div key={dbDay} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-100 dark:border-white/5 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-left duration-300">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-primary w-12">{DAYS[i]}</span>
-                                                        <div className="flex items-center gap-2 flex-1">
-                                                            <input 
-                                                                type="time" 
-                                                                value={slotConfig.start} 
-                                                                onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, start: e.target.value } }))}
-                                                                className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
-                                                                title="Hora de inicio"
-                                                            />
-                                                            <span className="text-slate-400 dark:text-white/20 text-[10px] font-bold">A</span>
-                                                            <input 
-                                                                type="time" 
-                                                                value={slotConfig.end} 
-                                                                onChange={(e) => setSlots(s => ({ ...s, [dbDay]: { ...slotConfig, end: e.target.value } }))}
-                                                                className="flex-1 bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:ring-1 focus:ring-primary outline-none"
-                                                                title="Hora de fin"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
-                                    <button 
-                                        onClick={() => loadSlots(selectedAdvisor?.id || null)} 
-                                        title="Deshacer cambios" 
-                                        className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40"
-                                    >
-                                        <RotateCcw className="h-3.5 w-3.5" /> Deshacer
-                                    </button>
-                                    <button 
-                                        onClick={handleSaveSlots} 
-                                        disabled={saving} 
-                                        title="Guardar horarios"
-                                        className="flex items-center gap-2 h-9 px-6 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
-                                    >
-                                        <Save className="h-3.5 w-3.5" /> {saving ? "Guardando..." : "Guardar Horarios"}
-                                    </button>
                                 </div>
                             </div>
+
+                            <div className="flex items-center justify-between pt-6 border-t border-slate-100 dark:border-white/5">
+                                <button
+                                    onClick={() => loadSlots(selectedAdvisor?.id || null)}
+                                    title="Deshacer cambios"
+                                    className="flex items-center gap-2 h-9 px-4 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-white/40"
+                                >
+                                    <RotateCcw className="h-3.5 w-3.5" /> Deshacer
+                                </button>
+                                <button
+                                    onClick={handleSaveSlots}
+                                    disabled={saving}
+                                    title="Guardar horarios"
+                                    className="flex items-center gap-2 h-9 px-6 bg-primary text-primary-foreground rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
+                                >
+                                    <Save className="h-3.5 w-3.5" /> {saving ? "Guardando..." : "Guardar Horarios"}
+                                </button>
+                            </div>
                         </div>
+                    </div>
                 )}
 
                 {/* ── TOOLS TAB ─────────────────────────────────────────── */}
                 {tab === "tools" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        
+
                         {/* LEFT: Configuration & Simulator */}
                         <div className="lg:col-span-2 space-y-6">
                             <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-8">
@@ -857,7 +973,7 @@ export default function CalendarPage() {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">1. Seleccionar Lead</label>
-                                        <select 
+                                        <select
                                             value={toolLeadId}
                                             onChange={e => setToolLeadId(e.target.value)}
                                             title="Seleccionar Lead para la herramienta"
@@ -872,7 +988,7 @@ export default function CalendarPage() {
 
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">2. Seleccionar Asesor</label>
-                                        <select 
+                                        <select
                                             value={toolAdvisorId}
                                             onChange={e => setToolAdvisorId(e.target.value)}
                                             title="Seleccionar Asesor para la herramienta"
@@ -887,7 +1003,7 @@ export default function CalendarPage() {
 
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">3. Fecha</label>
-                                        <input 
+                                        <input
                                             type="date"
                                             value={toolDate}
                                             onChange={e => setToolDate(e.target.value)}
@@ -898,7 +1014,7 @@ export default function CalendarPage() {
 
                                     <div className="space-y-2">
                                         <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40">4. Hora</label>
-                                        <input 
+                                        <input
                                             type="time"
                                             value={toolTime}
                                             onChange={e => setToolTime(e.target.value)}
@@ -909,14 +1025,14 @@ export default function CalendarPage() {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 pt-4">
-                                    <button 
+                                    <button
                                         onClick={testCheckAvailability}
                                         className="flex items-center justify-center gap-3 h-12 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-white/10 transition-all group"
                                     >
                                         <Search className="h-4 w-4 text-slate-400 dark:text-white/40 group-hover:text-primary transition-colors" />
                                         Disponibilidad
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={testBook}
                                         className="flex items-center justify-center gap-3 h-12 bg-primary text-primary-foreground rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-primary/20"
                                     >
@@ -940,7 +1056,7 @@ export default function CalendarPage() {
                                                             <p className="text-[9px] text-slate-500 dark:text-white/40 font-black uppercase tracking-widest mt-0.5">{apt.advisors?.name}</p>
                                                         </div>
                                                         <div className="flex gap-2">
-                                                            <button 
+                                                            <button
                                                                 onClick={async () => {
                                                                     const res = await rescheduleAppointment(apt.id, new Date(`${toolDate}T${toolTime}`).toISOString());
                                                                     addLog("rescheduleAppointment", res);
@@ -950,7 +1066,7 @@ export default function CalendarPage() {
                                                             >
                                                                 Reagendar
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 title="Cancelar Cita"
                                                                 onClick={async () => {
                                                                     const res = await cancelAppointment(apt.id);
@@ -1021,7 +1137,7 @@ export default function CalendarPage() {
 
                 {/* REMINDERS TAB */}
                 {tab === "reminders" && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                         className="max-w-4xl mx-auto space-y-8 pb-20"
                     >
@@ -1030,7 +1146,7 @@ export default function CalendarPage() {
                                 <h2 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">Recordatorios Automáticos</h2>
                                 <p className="text-xs font-bold text-slate-500 dark:text-white/40 uppercase tracking-[0.3em] mt-1">Configuración de avisos vía WhatsApp</p>
                             </div>
-                            <button 
+                            <button
                                 onClick={saveReminderConfig}
                                 disabled={saving}
                                 className="h-12 px-8 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:scale-[1.02] transition-all flex items-center gap-3 disabled:opacity-50"
@@ -1049,7 +1165,7 @@ export default function CalendarPage() {
                                             <BellRing className="h-5 w-5 text-primary" />
                                             <span className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Estado</span>
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => setReminderConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
                                             title={reminderConfig.enabled ? "Desactivar recordatorios" : "Activar recordatorios"}
                                             className={cn(
@@ -1064,7 +1180,7 @@ export default function CalendarPage() {
                                     <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anticipación</label>
-                                            <select 
+                                            <select
                                                 value={reminderConfig.lead_time_minutes}
                                                 title="Tiempo de anticipación"
                                                 onChange={(e) => setReminderConfig(prev => ({ ...prev, lead_time_minutes: parseInt(e.target.value) }))}
@@ -1079,7 +1195,7 @@ export default function CalendarPage() {
 
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Repeticiones</label>
-                                            <select 
+                                            <select
                                                 value={reminderConfig.repetitions}
                                                 title="Número de repeticiones"
                                                 onChange={(e) => setReminderConfig(prev => ({ ...prev, repetitions: parseInt(e.target.value) }))}
@@ -1103,13 +1219,13 @@ export default function CalendarPage() {
                                             Contenido del Mensaje
                                         </h3>
                                         <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-white/5">
-                                            <button 
+                                            <button
                                                 onClick={() => setReminderConfig(prev => ({ ...prev, mode: "manual" }))}
                                                 className={cn("px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", reminderConfig.mode === "manual" ? "bg-white dark:bg-white/10 text-primary shadow-sm" : "text-slate-400")}
                                             >
                                                 Manual
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => setReminderConfig(prev => ({ ...prev, mode: "ai" }))}
                                                 className={cn("px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2", reminderConfig.mode === "ai" ? "bg-white dark:bg-white/10 text-primary shadow-sm" : "text-slate-400")}
                                             >
@@ -1121,11 +1237,13 @@ export default function CalendarPage() {
                                     {reminderConfig.mode === "manual" ? (
                                         <div className="space-y-4">
                                             <div className="relative">
-                                                <textarea 
+                                                <textarea
                                                     value={reminderConfig.template}
                                                     onChange={(e) => setReminderConfig(prev => ({ ...prev, template: e.target.value }))}
                                                     className="w-full h-40 p-6 rounded-3xl bg-slate-50 dark:bg-black/20 border-none text-sm font-medium leading-relaxed focus:ring-2 ring-primary/20 custom-scrollbar resize-none"
                                                     placeholder="Escribe el mensaje aquí..."
+                                                    title="Plantilla de recordatorio"
+                                                    aria-label="Plantilla de recordatorio"
                                                 />
                                                 <div className="absolute bottom-4 right-4 flex items-center gap-2">
                                                     <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold text-primary uppercase tracking-widest">
@@ -1136,7 +1254,7 @@ export default function CalendarPage() {
                                             <div className="flex flex-wrap gap-2">
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mr-2 self-center">Variables:</span>
                                                 {["{nombre}", "{apellido}", "{hora}", "{asesor}", "{fecha}"].map(v => (
-                                                    <button 
+                                                    <button
                                                         key={v}
                                                         onClick={() => setReminderConfig(prev => ({ ...prev, template: prev.template + " " + v }))}
                                                         className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-[9px] font-bold text-slate-600 dark:text-white/40 hover:text-primary transition-all"
@@ -1182,15 +1300,15 @@ export default function CalendarPage() {
             <AnimatePresence>
                 {selectedAppointment && (
                     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-6">
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/90 backdrop-blur-xl"
                             onClick={() => setSelectedAppointment(null)}
                         />
-                        
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative w-full max-w-2xl bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-white/10 rounded-[40px] shadow-2xl overflow-hidden flex flex-col"
                         >
@@ -1208,8 +1326,8 @@ export default function CalendarPage() {
                                         <p className="text-[10px] font-bold text-slate-500 dark:text-white/40 uppercase tracking-widest mt-1">ID: {selectedAppointment.id.split('-')[0]}</p>
                                     </div>
                                 </div>
-                                <button 
-                                    onClick={() => setSelectedAppointment(null)} 
+                                <button
+                                    onClick={() => setSelectedAppointment(null)}
                                     title="Cerrar detalle"
                                     className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all"
                                 >
@@ -1248,13 +1366,13 @@ export default function CalendarPage() {
                                         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
                                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30 mb-1">Hora España (ES)</p>
                                             <p className="text-lg font-black text-primary">
-                                                {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", { 
-                                                    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" 
+                                                {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", {
+                                                    hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid"
                                                 })}
                                             </p>
                                             <p className="text-[10px] font-medium text-slate-400 mt-1">
-                                                {new Date(selectedAppointment.scheduled_at).toLocaleDateString("es-ES", { 
-                                                    weekday: 'long', day: 'numeric', month: 'long' 
+                                                {new Date(selectedAppointment.scheduled_at).toLocaleDateString("es-ES", {
+                                                    weekday: 'long', day: 'numeric', month: 'long'
                                                 })}
                                             </p>
                                         </div>
@@ -1263,8 +1381,8 @@ export default function CalendarPage() {
                                             <div className="flex items-center gap-2">
                                                 <Globe className="h-4 w-4 text-emerald-500" />
                                                 <p className="text-lg font-black text-slate-900 dark:text-white">
-                                                    {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", { 
-                                                        hour: "2-digit", minute: "2-digit", 
+                                                    {new Date(selectedAppointment.scheduled_at).toLocaleTimeString("es-ES", {
+                                                        hour: "2-digit", minute: "2-digit",
                                                         timeZone: resolveTimezoneFromPhone(selectedAppointment.lead?.telefono)
                                                     })}
                                                 </p>
@@ -1312,24 +1430,32 @@ export default function CalendarPage() {
                             </div>
 
                             {/* Footer Actions */}
-                            <div className="p-8 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-end gap-3">
-                                <button 
-                                    onClick={() => setSelectedAppointment(null)}
-                                    className="h-11 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
+                            <div className="p-8 bg-slate-50 dark:bg-black/20 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
+                                <button
+                                    onClick={() => handleDeleteAppointment(selectedAppointment.id)}
+                                    className="h-11 px-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 transition-all flex items-center gap-2"
                                 >
-                                    Cerrar Detalle
+                                    <Trash2 className="h-3.5 w-3.5" /> Eliminar Cita
                                 </button>
-                                {selectedAppointment.status === "PENDING" && (
-                                    <button 
-                                        onClick={() => {
-                                            handleStatusChange(selectedAppointment.id, "CONFIRMED");
-                                            setSelectedAppointment(null);
-                                        }}
-                                        className="h-11 px-6 rounded-2xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/20"
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setSelectedAppointment(null)}
+                                        className="h-11 px-6 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-white/40 hover:bg-slate-200 dark:hover:bg-white/5 transition-all"
                                     >
-                                        Confirmar Cita
+                                        Cerrar Detalle
                                     </button>
-                                )}
+                                    {selectedAppointment.status === "PENDING" && (
+                                        <button
+                                            onClick={() => {
+                                                handleStatusChange(selectedAppointment.id, "CONFIRMED");
+                                                setSelectedAppointment(null);
+                                            }}
+                                            className="h-11 px-6 rounded-2xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-emerald-500/20"
+                                        >
+                                            Confirmar Cita
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </motion.div>
                     </div>

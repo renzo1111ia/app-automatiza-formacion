@@ -1,5 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { analyzeConversation } from "./ai-analysis";
+import { FactExtractionService } from "./fact-extractor";
 import { CRMFactory } from "../integrations/crm/factory";
 import { getOrchestratorConfigForTenant } from "@/lib/actions/orchestrator-config";
 import { SchedulerService } from "./scheduler";
@@ -72,7 +73,7 @@ export class PostAnalysisService {
                 id_lead: leadId,
                 cualificacion: analysis.qualified,
                 motivo_anulacion: analysis.extracted_data.MOTIVO_DESCARTE || analysis.extracted_data.motivo_anulacion,
-                anios_experiencia: analysis.extracted_data["YEARS_ EXPERIENCIE"] || analysis.extracted_data.años_experiencia,
+                anios_experiencia: analysis.extracted_data["YEARS_EXPERIENCE"] || analysis.extracted_data["YEARS_ EXPERIENCIE"] || analysis.extracted_data["YEARS_EXPERIENCIE"] || analysis.extracted_data.años_experiencia,
                 nivel_estudios: analysis.extracted_data.USER_ESTUDIES || analysis.extracted_data.nivel_estudios,
                 calificacion_score: analysis.lead_score,
                 analisis_profundo: {
@@ -84,11 +85,47 @@ export class PostAnalysisService {
                 }
             });
 
-            // 4b. PERSIST METADATA IN LEAD TABLE
+            // 4b. PASS 2 — Fact extraction for ALL tracked variables
+            // This extracts REGLA_APLICADA, QA_HANDLED, QA_TOPIC, ESTADO, MOTIVO_DESCARTE etc.
+            let factData: Record<string, string> = {};
+            if (transcript.length > 50 && !isUnproductive) {
+                try {
+                    const { data: agentVariant } = await supabase
+                        .from("ai_agent_variants" as unknown as string)
+                        .select("api_key, tracked_variables")
+                        .eq("tenant_id", tenantId)
+                        .eq("is_active", true)
+                        .not("api_key", "is", null)
+                        .order("updated_at", { ascending: false })
+                        .limit(1)
+                        .maybeSingle() as unknown as { data: { api_key: string; tracked_variables: string[] } | null };
+
+                    const apiKey = (agentVariant as { api_key?: string } | null)?.api_key;
+                    const trackedVars = (agentVariant as { tracked_variables?: string[] } | null)?.tracked_variables || [];
+
+                    if (apiKey && trackedVars.length > 0) {
+                        console.log(`[POST-ANALYSIS] Running fact extraction for ${trackedVars.length} tracked vars`);
+                        const facts = await FactExtractionService.extractFromDialogue(
+                            leadId,
+                            transcript,
+                            trackedVars,
+                            apiKey,
+                            tenantId
+                        );
+                        if (facts) factData = facts;
+                        console.log(`[POST-ANALYSIS] Fact extraction captured: ${Object.keys(factData).join(', ')}`);
+                    }
+                } catch (factErr) {
+                    console.warn(`[POST-ANALYSIS] Fact extraction failed (non-blocking):`, factErr);
+                }
+            }
+
+            // 4c. PERSIST METADATA IN LEAD TABLE (merge basic + fact extraction)
             const currentMetadata = (leadRaw as Record<string, unknown>).metadata || {};
             const updatedMetadata = {
                 ...(currentMetadata as Record<string, unknown>),
                 ...analysis.extracted_data,
+                ...factData,
                 QUALIFIED: analysis.qualified === "si" ? "SI" : "NO",
                 last_fact_update: new Date().toISOString()
             };

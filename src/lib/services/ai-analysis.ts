@@ -58,7 +58,9 @@ export interface ConversationAnalysis {
         USER_AGE?: string;
         USER_PROFESION?: string;
         USER_ESTUDIES?: string;
+        "YEARS_EXPERIENCE"?: string;
         "YEARS_ EXPERIENCIE"?: string;
+        "YEARS_EXPERIENCIE"?: string;
         USER_MOTIVATIONS?: string;
         USER_COUNTRY?: string;
         CURSE_NAME?: string;
@@ -108,7 +110,7 @@ Reglas de cualificación:
     * USER_AGE: Edad.
     * USER_PROFESION: Trabajo o cargo actual.
     * USER_ESTUDIES: Estudios universitarios o técnicos realizados.
-    * "YEARS_ EXPERIENCIE": Años de experiencia profesional (incluye el espacio).
+    * YEARS_EXPERIENCE: Años de experiencia profesional.
     * USER_MOTIVATIONS: Por qué quiere hacer el curso.
     * USER_COUNTRY: País.
     * CURSE_NAME: Nombre del master por el que pregunta.

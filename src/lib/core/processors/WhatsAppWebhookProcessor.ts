@@ -116,7 +116,8 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     ai_agent_id: (defaultAgent as any)?.id || null,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    pais: (location as any).countryName
+                    pais: (location as any).countryName,
+                    fecha_ingreso_crm: new Date().toISOString()
                 })
                 .select()
                 .single();
@@ -233,8 +234,7 @@ export async function processIncomingWhatsApp(fromNumber: string, message: Webho
                 .upsert({
                     tenant_id: tenantId,
                     id_lead: (lead as unknown as { id: string }).id,
-                    fecha_ultimo_mensaje: new Date().toISOString(),
-                    estado: "ACTIVA"
+                    fecha_ultimo_mensaje: new Date().toISOString()
                 }, { onConflict: "tenant_id,id_lead" });
 
             // activity log for debugging

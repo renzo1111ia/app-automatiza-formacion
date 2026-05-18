@@ -59,9 +59,8 @@ export class FactExtractionService {
         preFilledData?: Record<string, string>,
         programRequirements?: string
     ) {
-        if (!varsToTrack || varsToTrack.length === 0) return null;
-
-        const normalizedKeys = varsToTrack.map(v => FactExtractionService.normalizeKey(v));
+        const actualVars = varsToTrack || [];
+        const normalizedKeys = actualVars.map(v => FactExtractionService.normalizeKey(v));
 
         console.log(`[FACT EXTRACTOR] 🧠 Extracting for lead ${leadId}: [${normalizedKeys.join(', ')}]`);
 
@@ -98,29 +97,33 @@ export class FactExtractionService {
                 finalizationRules = variant.automation_rules.finalization_criteria;
             }
 
-            const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación (Esden Business School).
+            const systemPrompt = `Eres un extractor de datos ultra-preciso especializado en leads para educación.
 Analiza el diálogo y extrae la información relevante del perfil del lead.
 
 CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS POR PROGRAMA:
-${programRequirements || "No hay criterios específicos definidos. Usa criterios generales de admisión (Estudios Universitarios o >= 5 años de experiencia)."}
+${programRequirements || "No hay criterios específicos definidos."}
 
-CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.join(', ')}.
+CLAVES PRIORITARIAS OBLIGATORIAS: ${normalizedKeys.length > 0 ? normalizedKeys.join(', ') : 'Ninguna en particular (extrae datos generales como nombre, email, etc. si los encuentras)'}.
 
 REGLAS CRÍTICAS:
 1. Devuelve ÚNICAMENTE un JSON plano.
-2. "RESUMEN_EJECUTIVO": Genera un resumen BREVE (máximo 2 líneas) de la situación actual del lead. NO transcribas la conversación, resume lo más importante (ej: "Interesado en MBA, enfermera titulada, busca cambio de carrera").
-3. DISCOVERY: Además de las CLAVES PRIORITARIAS, si encuentras otros datos útiles (ej. empresa, cargo, experiencia, disponibilidad, interes_especifico), inclúyelos también en el JSON con nombres de clave descriptivos en español (Grit Case).
-4. NO INVENTES: Si el usuario no ha mencionado algo, usa null para las prioritarias y omite para las extra.
-5. "qualified": Evalúa si el lead está "SI", "NO" o "PENDIENTE" basándote en los CRITERIOS DE CUALIFICACIÓN ESPECÍFICOS.
+2. "RESUMEN_EJECUTIVO": Genera un resumen BREVE de la situación actual del lead.
+3. DISCOVERY: Si encuentras otros datos útiles, inclúyelos también en el JSON.
+4. NO INVENTES NADA: Si el usuario no ha mencionado algo (ej. CURSE_NAME), devuelve null. NUNCA inventes nombres de cursos.
+5. "qualified": Evalúa si el lead está "SI", "NO" o "PENDIENTE".
 6. "user_name": Si el usuario dice su nombre, extráelo SIEMPRE.
-7. "segmentacion": Determina en qué segmento se encuentra el lead. DEBES elegir SOLO UNA de las siguientes opciones válidas: [${validSegments.map(s => `"${s}"`).join(', ')}].
+7. "segmentacion": DEBES elegir SOLO UNA: [${validSegments.map(s => `"${s}"`).join(', ')}].
 8. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA".
     CRITERIOS PARA "FINALIZADA": ${finalizationRules}
-
-¡EXTRAE EL MÁXIMO DE INFORMACIÓN POSIBLE PARA EL CRM!
+9. REGLAS PARA VARIABLES DE QA, ESTADO Y REGLAS:
+   - "ESTADO": Estado general del lead según el diálogo (ej. "Interesado", "Dudoso", "No califica", "Cita agendada").
+   - "REGLA_APLICADA": La regla de cualificación que se aplicó (ej. "Experiencia laboral mínima", "Nivel de estudios", "Edad mínima", o "Sin requisitos").
+   - "QA_HANDLED": "SI" si el usuario hizo preguntas y fueron respondidas, de lo contrario "NO".
+   - "QA_TOPIC": El tema principal de las preguntas del usuario (ej. "Precios", "Horarios", "Becas", "Metodología"). Si no hubo preguntas, null.
+10. "CURSE_NAME": NUNCA INVENTES UN CURSO. Solo extrae el curso si el usuario lo menciona explícitamente o el asistente se lo ofrece y el usuario asiente.
 
 EJEMPLO DE SALIDA:
-{"user_name": "Carlos Ruiz", "RESUMEN_EJECUTIVO": "Profesional de salud interesado en Fashion Management con 5 años de experiencia.", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA"}`;
+{"user_name": "Carlos", "RESUMEN_EJECUTIVO": "Interesado en MBA", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA", "ESTADO": "Interesado", "REGLA_APLICADA": "Sin requisitos", "QA_HANDLED": "SI", "QA_TOPIC": "Precios", "CURSE_NAME": null}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -139,17 +142,18 @@ EJEMPLO DE SALIDA:
             const extractedData = JSON.parse(rawResult) as ExtractedData;
             const result: Record<string, string> = { ...(preFilledData || {}) };
             
-            // Map AI extracted data to result, respecting tracked variables names EXACTLY
+            // Map AI extracted data to result, using normalized key names (no {{}} wrappers)
             Object.entries(extractedData).forEach(([key, val]) => {
                 if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).toLowerCase() !== "unknown") {
-                    // Look for a case-insensitive match in tracked variables
+                    // Look for a case-insensitive match in tracked variables, ignoring internal spaces
                     const trackedMatch = varsToTrack.find(v => {
-                        const normalizedV = FactExtractionService.normalizeKey(v).toLowerCase();
-                        return normalizedV === key.toLowerCase() || v.toLowerCase() === key.toLowerCase();
+                        const normalizedV = FactExtractionService.normalizeKey(v).toLowerCase().replace(/\s+/g, "");
+                        return normalizedV === key.toLowerCase().replace(/\s+/g, "") || v.toLowerCase().replace(/\s+/g, "") === key.toLowerCase().replace(/\s+/g, "");
                     });
 
-                    // If it's a tracked variable, use the EXACT original name (e.g. {{ESTUDIOS}})
-                    const finalKey = trackedMatch ? trackedMatch : key;
+                    // Always normalize the key — strip {{}} if present (avoids storing "{{REGLA_APLICADA}}" in metadata)
+                    const rawKey = trackedMatch ? trackedMatch : key;
+                    const finalKey = FactExtractionService.normalizeKey(rawKey);
                     result[finalKey] = String(val);
                 }
             });
@@ -177,7 +181,14 @@ EJEMPLO DE SALIDA:
                         console.warn("[FACT_EXTRACTOR] Google Sheets sync failed:", sheetErr);
                     }
 
-                    if (result.estado_conversacion?.toUpperCase() === 'FINALIZADA') {
+                    // Check both possible key names for conversation status (normalized and original)
+                    const convStatus = (
+                        result.estado_conversacion ||
+                        result.CONVERSATION_STATUS ||
+                        result.conversation_status ||
+                        ""
+                    ).toUpperCase();
+                    if (convStatus === 'FINALIZADA' || convStatus === 'FINALIZADO' || convStatus === 'CLOSED') {
                         const { enqueueQualificationAnalysis } = await import("@/lib/core/queue/lead-sequence-queue");
                         await enqueueQualificationAnalysis({ leadId, tenantId, transcript: dialogue, callId: "whatsapp" });
                     }
@@ -221,10 +232,10 @@ EJEMPLO DE SALIDA:
         const updatedMetadata = { ...currentMetadata };
         
         Object.entries(newData).forEach(([newKey, newVal]) => {
-            // Find existing key by comparing lowercase and also checking with/without curly braces
+            // Find existing key by comparing lowercase and checking with/without curly braces, ignoring internal spaces
             const existingKey = Object.keys(updatedMetadata).find(k => {
-                const k1 = k.toLowerCase().replace(/^\{\{|\}\}$/g, "");
-                const k2 = newKey.toLowerCase().replace(/^\{\{|\}\}$/g, "");
+                const k1 = k.toLowerCase().replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "");
+                const k2 = newKey.toLowerCase().replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "");
                 return k1 === k2;
             });
 
@@ -307,8 +318,8 @@ EJEMPLO DE SALIDA:
             console.log(`[FACT EXTRACTOR] 💾 Metadata saved for lead ${leadId}`);
             
             const meta = updatedMetadata as Record<string, unknown>;
-            const studies = meta.estudios || meta.nivel_estudios;
-            const exp = meta.experiencia || meta.years_experience;
+            const studies = meta.estudios || meta.nivel_estudios || meta.USER_ESTUDIES;
+            const exp = meta.experiencia || meta.years_experience || meta.YEARS_EXPERIENCE || meta.YEARS_EXPERIENCIE || meta["YEARS_ EXPERIENCIE"];
 
             if (studies && exp) {
                 const result = evaluateLeadQualification({

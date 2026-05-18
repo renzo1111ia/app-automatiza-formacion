@@ -102,19 +102,27 @@ export default function MermaidDiagram({ chart }: MermaidDiagramProps) {
             </div>
 
             {/* Diagram Area */}
-            <div className="bg-white dark:bg-slate-950 p-8 overflow-auto" style={{ minHeight: '400px' }}>
+            <div className="bg-white dark:bg-slate-950 p-8 overflow-auto min-h-[400px]">
                 {error ? (
                     <div className="flex flex-col items-center justify-center h-64 gap-4 text-slate-400">
                         <GitBranch className="h-10 w-10 opacity-20" />
                         <p className="text-sm font-medium">{error}</p>
                     </div>
                 ) : svg ? (
-                    <div
-                        ref={ref}
-                        style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.2s ease' }}
-                        dangerouslySetInnerHTML={{ __html: svg }}
-                        className="flex justify-center"
-                    />
+                    <>
+                        <style>{`
+                            .mermaid-zoom-container {
+                                transform: scale(${zoom});
+                                transform-origin: top center;
+                                transition: transform 0.2s ease;
+                            }
+                        `}</style>
+                        <div
+                            ref={ref}
+                            dangerouslySetInnerHTML={{ __html: svg }}
+                            className="flex justify-center mermaid-zoom-container"
+                        />
+                    </>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />

@@ -38,7 +38,6 @@ export default function AIAgentInbox() {
     // --- Tenant Context ---
     const tenantName = useTenantStore((s) => s.tenantName) || "ESDEN";
     const tenantId = useTenantStore((s) => s.tenantId);
-    const router = useRouter();
 
     // --- State ---
 
@@ -64,7 +63,6 @@ export default function AIAgentInbox() {
     // Config
     const [segmentations, setSegmentations] = useState<string[]>(['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS']);
     const [isEditingSegments, setIsEditingSegments] = useState(false);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     
     // Filters
     const [segmentFilter, setSegmentFilter] = useState<string | null>(null);
@@ -76,6 +74,7 @@ export default function AIAgentInbox() {
     const [availableAgents, setAvailableAgents] = useState<AIAgent[]>([]);
     const [isAssigningAgent, setIsAssigningAgent] = useState(false);
     const [trackedVariables, setTrackedVariables] = useState<string[]>([]);
+    const [isSyncingVars, setIsSyncingVars] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{
         isOpen: boolean;
         type: 'LEAD' | 'CHAT';
@@ -235,6 +234,33 @@ export default function AIAgentInbox() {
 
 
     // --- Actions ---
+    const handleSyncVariables = async () => {
+        if (!selectedLead || !tenantId) return;
+        setIsSyncingVars(true);
+        try {
+            const { runManualAnalysis } = await import("@/lib/actions/analysis");
+            const res = await runManualAnalysis(selectedLead.id, tenantId);
+            if (res.success && res.data) {
+                // Update selectedLead locally with the new metadata
+                const updatedMetadata = res.data.extracted_data || {};
+                const updatedLead = {
+                    ...selectedLead,
+                    metadata: {
+                        ...(selectedLead.metadata || {}),
+                        ...updatedMetadata
+                    }
+                };
+                setSelectedLead(updatedLead);
+                // Also update the lead in the main leads list
+                setLeads(prev => prev.map(l => l.id === selectedLead.id ? updatedLead : l));
+            }
+        } catch (e) {
+            console.error("Failed to sync variables manually:", e);
+        } finally {
+            setIsSyncingVars(false);
+        }
+    };
+
     const handleSendMessage = async () => {
         if (!selectedLead || !messageText.trim()) return;
         setSending(true);
@@ -438,7 +464,6 @@ export default function AIAgentInbox() {
             supabase.removeChannel(newLeadChannel);
             supabase.removeChannel(leadUpdateChannel);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tenantId]); // Re-subscribe when tenantId changes or becomes available
 
 
@@ -1037,7 +1062,7 @@ export default function AIAgentInbox() {
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-10">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                             {/* Profile Header */}
                             <div className="flex flex-col items-center text-center space-y-4">
                                 <div className="h-24 w-24 rounded-[32px] bg-card border-2 border-primary/20 p-1 shadow-2xl">
@@ -1139,7 +1164,7 @@ export default function AIAgentInbox() {
                                                         }
                                                     }}
                                                     className={cn(
-                                                        "px-3 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all",
+                                                        "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all",
                                                         selectedLead.segmentacion === seg 
                                                             ? "bg-primary border-primary/20 text-primary-foreground shadow-lg shadow-primary/20" 
                                                             : "bg-card/40 border-border text-muted-foreground hover:bg-card/60"
@@ -1244,6 +1269,14 @@ export default function AIAgentInbox() {
                                             return !value || String(value).trim() === '' || String(value).toLowerCase() === 'pendiente...';
                                         });
 
+                                    console.log("[DEBUG SIDEBAR DETAILED] Selected Lead:", selectedLead.nombre, {
+                                        metaKeys: Object.keys(meta),
+                                        metaValues: Object.values(meta),
+                                        trackedVariables,
+                                        capturedKeys,
+                                        pendingVars
+                                    });
+
                                     const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;
 
                                     if (!hasAnything) {
@@ -1292,6 +1325,24 @@ export default function AIAgentInbox() {
                                                     </div>
                                                 </div>
                                             ))}
+
+                                            <button 
+                                                onClick={handleSyncVariables}
+                                                disabled={isSyncingVars}
+                                                className="w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500/10 text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                                            >
+                                                {isSyncingVars ? (
+                                                    <>
+                                                        <Loader2 className="h-3 w-3 animate-spin text-emerald-500" />
+                                                        Sincronizando con IA...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Zap className="h-3 w-3 text-emerald-500 fill-emerald-500/20 animate-pulse" />
+                                                        Actualizar Variables con IA
+                                                    </>
+                                                )}
+                                            </button>
 
                                             <button 
                                                 onClick={() => setIsProfileModalOpen(true)}
@@ -1502,12 +1553,12 @@ export default function AIAgentInbox() {
             </AnimatePresence>
 
             <style jsx global>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
-                .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); }
-                .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35); }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+                .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
             `}</style>
         </div>
     );

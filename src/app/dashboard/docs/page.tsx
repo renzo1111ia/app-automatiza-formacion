@@ -416,10 +416,13 @@ export default function DocsPage() {
                                                     {children}
                                                 </ol>
                                             ),
-                                            li: ({children}) => (
-                                                <li className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.8] flex flex-col items-center">
-                                                    {children}
-                                                </li>
+                                            li: ({children, ...props}) => React.createElement(
+                                                'li',
+                                                {
+                                                    className: "text-base md:text-lg text-slate-600 dark:text-slate-400 leading-[1.8] flex flex-col items-center",
+                                                    ...props
+                                                },
+                                                children
                                             ),
                                             blockquote: ({children}) => (
                                                 <blockquote className="my-10 border-t-2 border-b-2 border-indigo-500/20 bg-indigo-500/5 dark:bg-indigo-500/10 py-8 px-6 text-center italic">
