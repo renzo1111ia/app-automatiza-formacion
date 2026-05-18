@@ -219,9 +219,10 @@ export async function generateAIWhatsAppResponse(tenantId: string, leadId: strin
         Object.keys(variableMap).forEach(key => {
             const cleanKey = key.replace(/^\{\{|\}\}$/g, "").replace(/\s+/g, "").trim();
             
-            // Safe escape function for characters inside regex
+            // Safe escape function for characters inside regex (like $ in $now, $date)
             const regexStr = cleanKey.split("").map(char => {
                 if (char === "_" || char === "-") return char + "\\s*";
+                if ("-$^*+?.()|[]{}".includes(char)) return "\\" + char;
                 return char;
             }).join("\\s*");
             
