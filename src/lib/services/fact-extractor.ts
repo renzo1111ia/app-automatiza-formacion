@@ -116,14 +116,22 @@ REGLAS CRÍTICAS:
 8. "estado_conversacion": Evalúa si la conversación está "EN_CURSO" o "FINALIZADA".
     CRITERIOS PARA "FINALIZADA": ${finalizationRules}
 9. REGLAS PARA VARIABLES DE QA, ESTADO Y REGLAS:
-   - "ESTADO": Estado general del lead según el diálogo (ej. "Interesado", "Dudoso", "No califica", "Cita agendada").
+   - "ESTADO": Estado de cualificación del lead. Debe ser EXCLUSIVAMENTE uno de los siguientes valores permitidos exactos (no uses ningún otro):
+     * "cualificado" (lead ya cualificado como "apto", en proceso de agenda)
+     * "agendado" (lead ya cualificado como "apto" y agendado)
+     * "informado" (se han respondido dudas al lead)
+     * "prematriculado" (se ha dado información completa y el lead confirma interés, habiéndose enviado el link de matrícula por whatsapp)
+     * "matriculado" (link de matrícula enviado y confirmado en CRM)
+     * "descartado" (lead descartado, que no continúa el proceso)
+     * "ilocalizable" (cuando se ha completado todo el protocolo de contacto y el lead no se ha podido contactar)
+     * "" (cadena vacía, si el lead está en proceso de cualificación)
    - "REGLA_APLICADA": La regla de cualificación que se aplicó (ej. "Experiencia laboral mínima", "Nivel de estudios", "Edad mínima", o "Sin requisitos").
    - "QA_HANDLED": "SI" si el usuario hizo preguntas y fueron respondidas, de lo contrario "NO".
    - "QA_TOPIC": El tema principal de las preguntas del usuario (ej. "Precios", "Horarios", "Becas", "Metodología"). Si no hubo preguntas, null.
 10. "CURSE_NAME": NUNCA INVENTES UN CURSO. Solo extrae el curso si el usuario lo menciona explícitamente o el asistente se lo ofrece y el usuario asiente.
 
 EJEMPLO DE SALIDA:
-{"user_name": "Carlos", "RESUMEN_EJECUTIVO": "Interesado en MBA", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA", "ESTADO": "Interesado", "REGLA_APLICADA": "Sin requisitos", "QA_HANDLED": "SI", "QA_TOPIC": "Precios", "CURSE_NAME": null}`;
+{"user_name": "Carlos", "RESUMEN_EJECUTIVO": "Interesado en MBA", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA", "ESTADO": "cualificado", "REGLA_APLICADA": "Sin requisitos", "QA_HANDLED": "SI", "QA_TOPIC": "Precios", "CURSE_NAME": null}`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
