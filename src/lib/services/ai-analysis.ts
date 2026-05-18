@@ -99,8 +99,10 @@ export async function analyzeConversation(transcript: string, tenantId?: string)
             messages: [
                 {
                     role: "system",
-                    content: `Analiza la siguiente conversación entre un agente de ventas (VirginIA) y un posible estudiante de Esden Business School.
+                     content: `Analiza la siguiente conversación entre un agente de ventas (VirginIA) y un posible estudiante de Esden Business School.
 Extrae la información clave en formato JSON.
+
+La fecha y hora de referencia para este análisis es: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })} (Hora de Madrid). Usa este año, mes y día para calcular con precisión cualquier fecha relativa o absoluta mencionada en la conversación.
 
 Reglas de cualificación:
 - qualified: "si" si el estudiante muestra interés genuino y cumple con el perfil mínimo. "no" si rechaza la oferta o no cumple. "anulado" si hay algún motivo específico de exclusión.
