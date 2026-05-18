@@ -1266,7 +1266,16 @@ export default function AIAgentInbox() {
                                          meta.QA_TOPIC = "null";
                                      }
 
-                                     const SKIP_KEYS = new Set(['LAST_FACT_UPDATE', 'META_ID', 'RAW', 'MEDIA_URL']);
+                                     // Exclude system keys and redundant original keys to avoid duplicate green boxes
+                                     const SKIP_KEYS = new Set([
+                                         'LAST_FACT_UPDATE', 
+                                         'META_ID', 
+                                         'RAW', 
+                                         'MEDIA_URL', 
+                                         'ESTADO_CONVERSACION', 
+                                         'MOTIVOS_DESCARTE', 
+                                         'FECHA_DE_AGENDA'
+                                     ]);
                                      
                                      // 4. All captured keys from normalized metadata (excluding system keys)
                                      const rawKeys = Object.keys(meta).filter(k => 
