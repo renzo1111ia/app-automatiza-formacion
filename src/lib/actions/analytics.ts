@@ -154,40 +154,70 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
     if (!tenantId) return empty;
 
     try {
-        const [lRes, llRes, cRes, wRes, totalLeadsSystRes] = await Promise.all([
-            applyLeadFilters((supabase.from("lead" as any) as any).select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm").eq("tenant_id", tenantId).gte("fecha_ingreso_crm", from).lte("fecha_ingreso_crm", to), filters),
-            applyLeadFilters((supabase.from("llamadas" as any) as any).select(`id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to), filters),
-            applyLeadFilters((supabase.from("lead_cualificacion" as any) as any).select(`cualificacion, motivo_anulacion, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_ultimo_mensaje", from).lte("fecha_ultimo_mensaje", to), filters),
-            applyLeadFilters((supabase.from("lead" as any) as any).select("id", { count: "exact", head: true }).eq("tenant_id", tenantId), filters),
-        ]);
+        // ── Step 1: Fetch ALL leads for this tenant (with date + filters) ──
+        const allLeadsRes = await applyLeadFilters(
+            (supabase.from("lead" as any) as any)
+                .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
+                .eq("tenant_id", tenantId)
+                .gte("fecha_ingreso_crm", from)
+                .lte("fecha_ingreso_crm", to),
+            filters
+        );
+        const leadsData = (allLeadsRes.data || []) as any[];
+        if (allLeadsRes.error) console.error('[KPI-DEBUG] leads error:', allLeadsRes.error.message);
 
-        // ── Manual join for appointments (no FK in schema cache) ──
-        const leadsForJoin = (lRes.data || []) as any[];
-        const leadsById = new Map(leadsForJoin.map((l: any) => [l.id, l]));
-        const apptRaw = await (supabase.from("appointments" as any) as any)
+        // Build a set of valid lead IDs to filter fact tables
+        const leadIdSet = new Set(leadsData.map((l: any) => l.id));
+
+        // ── Step 2: Total leads in system (no date filter) ──
+        const sysCountRes = await applyLeadFilters(
+            (supabase.from("lead" as any) as any).select("id", { count: "exact", head: true }).eq("tenant_id", tenantId),
+            filters
+        );
+        const total_leads_sistema = sysCountRes.count || 0;
+
+        // ── Step 3: Fetch llamadas WITHOUT join ──
+        const llamadasRes = await (supabase.from("llamadas" as any) as any)
+            .select("id, id_lead, estado_llamada, razon_termino, fecha_inicio, duracion_segundos")
+            .eq("tenant_id", tenantId)
+            .gte("fecha_inicio", from)
+            .lte("fecha_inicio", to);
+        if (llamadasRes.error) console.error('[KPI-DEBUG] llamadas error:', llamadasRes.error.message);
+        const llamadasData = ((llamadasRes.data || []) as any[]).filter((r: any) => leadIdSet.has(r.id_lead));
+
+        // ── Step 4: Fetch lead_cualificacion WITHOUT join ──
+        const cualRes = await (supabase.from("lead_cualificacion" as any) as any)
+            .select("id_lead, cualificacion, motivo_anulacion")
+            .eq("tenant_id", tenantId)
+            .gte("fecha_creacion", from)
+            .lte("fecha_creacion", to);
+        if (cualRes.error) console.error('[KPI-DEBUG] cualificacion error:', cualRes.error.message);
+        const cualData = ((cualRes.data || []) as any[]).filter((r: any) => leadIdSet.has(r.id_lead));
+
+        // ── Step 5: Fetch appointments WITHOUT join ──
+        const apptRes = await (supabase.from("appointments" as any) as any)
             .select("id, scheduled_at, status, lead_id")
             .eq("tenant_id", tenantId)
             .gte("scheduled_at", from)
             .lte("scheduled_at", to);
-        if (apptRaw.error) console.error('[KPI-DEBUG] appointments error:', apptRaw.error.message);
-        const agendaData = ((apptRaw.data || []) as any[]).filter((a: any) => leadsById.has(a.lead_id));
+        if (apptRes.error) console.error('[KPI-DEBUG] appointments error:', apptRes.error.message);
+        const agendaData = ((apptRes.data || []) as any[]).filter((a: any) => leadIdSet.has(a.lead_id));
 
-        const leadsData = (lRes.data || []) as any[];
-        const llamadasData = (llRes.data || []) as any[];
-        const cualData = (cRes.data || []) as any[];
-        const wpData = (wRes.data || []) as any[];
-        const total_leads_sistema = totalLeadsSystRes.count || 0;
+        // ── Step 6: Fetch conversaciones_whatsapp WITHOUT join ──
+        const wpRes = await (supabase.from("conversaciones_whatsapp" as any) as any)
+            .select("id_lead")
+            .eq("tenant_id", tenantId)
+            .gte("fecha_ultimo_mensaje", from)
+            .lte("fecha_ultimo_mensaje", to);
+        if (wpRes.error) console.error('[KPI-DEBUG] whatsapp error:', wpRes.error.message);
+        const wpData = ((wpRes.data || []) as any[]).filter((r: any) => leadIdSet.has(r.id_lead));
 
-        // ── DIAGNOSTIC LOG ──
         console.log(`[KPI-DEBUG] tenantId=${tenantId} from=${from} to=${to}`);
         console.log(`[KPI-DEBUG] leads=${leadsData.length}, llamadas=${llamadasData.length}, cualificacion=${cualData.length}, appointments=${agendaData.length}, whatsapp=${wpData.length}`);
-        if (lRes.error) console.error('[KPI-DEBUG] leads error:', lRes.error.message);
-        if (llRes.error) console.error('[KPI-DEBUG] llamadas error:', llRes.error.message);
 
         const contactados = llamadasData.filter((l: any) => l.estado_llamada === "CONTACTED");
         const totalSecs = llamadasData.reduce((s: number, l: any) => s + (l.duracion_segundos || 0), 0);
-        const reachedSet = new Set([...llamadasData.map((l: any) => l.lead?.id), ...wpData.map((w: any) => w.id_lead)].filter(Boolean));
+        const reachedSet = new Set([...llamadasData.map((l: any) => l.id_lead), ...wpData.map((w: any) => w.id_lead)].filter(Boolean));
 
         const total_cualificados = cualData.filter((c: any) => c.cualificacion && c.cualificacion !== "NO").length;
         const total_leads = leadsData.length;
