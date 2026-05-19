@@ -50,7 +50,8 @@ async function WhatsappKpis({
         por_origen: [], por_tipo_lead: [], por_cualificacion: [],
         por_motivo_anulacion: [], agendados_por_fecha: [], primer_contacto_por_fecha: [],
         total_segundos: 0, total_leads_alcanzados: 0, minutos_ahorrados: 0, 
-        horas_ahorradas: 0, tiempo_ahorrado_formateado: "0h 0m"
+        horas_ahorradas: 0, tiempo_ahorrado_formateado: "0h 0m",
+        total_leads_sistema: 0
     } as KpiGenerales;
 
     return (

@@ -425,12 +425,12 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                         }}
                                                         className="bg-muted border border-border rounded-xl px-3 py-2 text-xs font-bold text-foreground outline-none focus:border-indigo-500 transition-all cursor-pointer"
                                                     >
-                                                        <option value="lead">Leads (Contactos)</option>
-                                                        <option value="llamadas">Llamadas Telefónicas</option>
-                                                        <option value="appointments">Agendamientos (Citas)</option>
-                                                        <option value="lead_cualificacion">Cualificación (Aptos)</option>
-                                                        <option value="intentos_llamadas">Intentos de Llamadas</option>
-                                                        <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
+                                                        <option value="lead">lead</option>
+                                                        <option value="llamadas">llamadas</option>
+                                                        <option value="appointments">appointments</option>
+                                                        <option value="lead_cualificacion">lead_cualificacion</option>
+                                                        <option value="intentos_llamadas">intentos_llamadas</option>
+                                                        <option value="conversaciones_whatsapp">conversaciones_whatsapp</option>
                                                     </select>
                                                     <select
                                                         title="Columna"
@@ -635,12 +635,12 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                                     }}
                                                                     className="bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs font-bold outline-none"
                                                                 >
-                                                                    <option value="lead">Leads (Contactos)</option>
-                                                                    <option value="llamadas">Llamadas Telefónicas</option>
-                                                                    <option value="appointments">Agendamientos (Citas)</option>
-                                                                    <option value="lead_cualificacion">Cualificación (Aptos)</option>
-                                                                    <option value="intentos_llamadas">Intentos de Llamadas</option>
-                                                                    <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
+                                                                    <option value="lead">lead</option>
+                                                                    <option value="llamadas">llamadas</option>
+                                                                    <option value="appointments">appointments</option>
+                                                                    <option value="lead_cualificacion">lead_cualificacion</option>
+                                                                    <option value="intentos_llamadas">intentos_llamadas</option>
+                                                                    <option value="conversaciones_whatsapp">conversaciones_whatsapp</option>
                                                                 </select>
                                                                 <select
                                                                     title="Método"
