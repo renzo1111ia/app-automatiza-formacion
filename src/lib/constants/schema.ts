@@ -14,6 +14,7 @@ export const SCHEMA_COLUMNS: Record<string, string[]> = {
     lead: ["id", "id_lead_externo", "nombre", "apellido", "telefono", "email", "pais", "tipo_lead", "origen", "campana", "fecha_ingreso_crm", "fecha_actualizacion"],
     llamadas: ["id", "id_lead", "id_llamada_retell", "tipo_agente", "nombre_agente", "estado_llamada", "razon_termino", "fecha_inicio", "duracion_segundos", "url_grabacion", "transcripcion", "resumen", "fecha_creacion"],
     agendamientos: ["id", "id_lead", "fecha_agendada_cliente", "fecha_agendada_lead", "confirmado", "fecha_creacion"],
+    appointments: ["id", "tenant_id", "advisor_id", "lead_id", "scheduled_at", "duration_minutes", "status", "notes", "agent_used", "created_at", "updated_at"],
     lead_cualificacion: ["id", "id_lead", "id_llamada", "motivo_anulacion", "cualificacion", "anios_experiencia", "nivel_estudios", "fecha_creacion"],
     intentos_llamadas: ["id", "id_lead", "id_llamada", "tipo_intento", "numero_intento", "fecha_reintento", "estado", "fecha_ejecucion", "fecha_creacion"],
     conversaciones_whatsapp: ["id", "id_lead", "id_conversacion_chatwoot", "opt_in_whatsapp", "estado", "fecha_ultimo_mensaje", "fecha_creacion"],

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { PromptTemplate } from "@langchain/core/prompts";
 // @ts-expect-error - External library import path resolution
@@ -50,7 +51,6 @@ export class QualificationProcessor {
             cualificacion: analysis.summary,
             calificacion_score: analysis.interest_score,
             objeciones: analysis.objections.join(", "),
-            id_variante: variant?.id,
             analisis_profundo: analysis as any,
             fecha_creacion: new Date().toISOString()
         });

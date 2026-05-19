@@ -1018,12 +1018,12 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                                         onChange={(e) => updateKpi(editingKpi.id, { targetCol: `${e.target.value}.${editingKpi.targetCol?.split('.')[1] || "id"}` })}
                                                         className="bg-muted border border-border rounded-xl px-3 py-2 text-xs font-bold text-foreground outline-none focus:border-indigo-500 transition-all cursor-pointer"
                                                     >
-                                                        <option value="lead">lead</option>
-                                                        <option value="llamadas">llamadas</option>
-                                                        <option value="agendamientos">agendamientos</option>
-                                                        <option value="lead_cualificacion">lead_cualificacion</option>
-                                                        <option value="intentos_llamadas">intentos_llamadas</option>
-                                                        <option value="conversaciones_whatsapp">conversaciones_whatsapp</option>
+                                                        <option value="lead">Leads (Contactos)</option>
+                                                        <option value="llamadas">Llamadas Telefónicas</option>
+                                                        <option value="appointments">Agendamientos (Citas)</option>
+                                                        <option value="lead_cualificacion">Cualificación (Aptos)</option>
+                                                        <option value="intentos_llamadas">Intentos de Llamadas</option>
+                                                        <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
                                                     </select>
                                                     <select
                                                         value={editingKpi.targetCol?.split('.')[1] || "id"}
@@ -1126,7 +1126,7 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                                                     <option value="lead">Leads</option>
                                                                     <option value="llamadas">Llamadas</option>
                                                                     <option value="intentos_llamadas">Intentos</option>
-                                                                    <option value="agendamientos">Agendados</option>
+                                                                    <option value="appointments">Agendados</option>
                                                                     <option value="lead_cualificacion">Cualificación</option>
                                                                     <option value="conversaciones_whatsapp">WhatsApp</option>
                                                                 </select>
@@ -1238,12 +1238,12 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                                                         }}
                                                                         className="w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs font-bold text-foreground outline-none cursor-pointer"
                                                                     >
-                                                                        <option value="lead">lead</option>
-                                                                        <option value="llamadas">llamadas</option>
-                                                                        <option value="agendamientos">agendamientos</option>
-                                                                        <option value="lead_cualificacion">lead_cualificacion</option>
-                                                                        <option value="intentos_llamadas">intentos</option>
-                                                                        <option value="conversaciones_whatsapp">whatsapp</option>
+                                                                        <option value="lead">Leads (Contactos)</option>
+                                                                        <option value="llamadas">Llamadas Telefónicas</option>
+                                                                        <option value="appointments">Agendamientos (Citas)</option>
+                                                                        <option value="lead_cualificacion">Cualificación (Aptos)</option>
+                                                                        <option value="intentos_llamadas">Intentos de Llamadas</option>
+                                                                        <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
                                                                     </select>
                                                                 </div>
                                                                 <div className="space-y-1.5">

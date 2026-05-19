@@ -68,22 +68,21 @@ export class PostAnalysisService {
             const lead = leadRaw as unknown as Lead;
 
             // 4. Update qualification in DB
-            await (supabase.from("lead_cualificacion" as unknown as string) as unknown as { upsert: (d: unknown) => Promise<unknown> }).upsert({
+            const qualPayload = {
                 tenant_id: tenantId,
                 id_lead: leadId,
                 cualificacion: analysis.qualified,
                 motivo_anulacion: analysis.extracted_data.MOTIVO_DESCARTE || analysis.extracted_data.motivo_anulacion,
                 anios_experiencia: analysis.extracted_data["YEARS_EXPERIENCE"] || analysis.extracted_data["YEARS_ EXPERIENCIE"] || analysis.extracted_data["YEARS_EXPERIENCIE"] || analysis.extracted_data.años_experiencia,
                 nivel_estudios: analysis.extracted_data.USER_ESTUDIES || analysis.extracted_data.nivel_estudios,
-                calificacion_score: analysis.lead_score,
-                analisis_profundo: {
-                    reasons: analysis.reasons,
-                    interest_level: analysis.student_interest_level,
-                    titulacion: analysis.extracted_data.USER_PROFESION || analysis.extracted_data.titulacion_lead,
-                    disponibilidad: analysis.extracted_data.disponibilidad,
-                    external_id: externalId
-                }
-            });
+            };
+
+            const { data: existingQual } = await supabase.from("lead_cualificacion").select("id").eq("id_lead", leadId).single();
+            if (existingQual) {
+                await supabase.from("lead_cualificacion").update(qualPayload).eq("id", existingQual.id);
+            } else {
+                await supabase.from("lead_cualificacion").insert(qualPayload);
+            }
 
             // 4b. PASS 2 — Fact extraction for ALL tracked variables
             // This extracts REGLA_APLICADA, QA_HANDLED, QA_TOPIC, ESTADO, MOTIVO_DESCARTE etc.

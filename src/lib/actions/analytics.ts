@@ -158,7 +158,7 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
             applyLeadFilters((supabase.from("lead" as any) as any).select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm").eq("tenant_id", tenantId).gte("fecha_ingreso_crm", from).lte("fecha_ingreso_crm", to), filters),
             applyLeadFilters((supabase.from("llamadas" as any) as any).select(`id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to), filters),
             applyLeadFilters((supabase.from("lead_cualificacion" as any) as any).select(`cualificacion, motivo_anulacion, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("agendamientos" as any) as any).select(`id, fecha_agendada_cliente, confirmado, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).eq("confirmado", true).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
+            applyLeadFilters((supabase.from("appointments" as any) as any).select(`id, scheduled_at, status, lead:lead_id!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).eq("status", "CONFIRMED").gte("scheduled_at", from).lte("scheduled_at", to), filters),
             applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_ultimo_mensaje", from).lte("fecha_ultimo_mensaje", to), filters),
             applyLeadFilters((supabase.from("lead" as any) as any).select("id", { count: "exact", head: true }).eq("tenant_id", tenantId), filters),
         ]);
@@ -182,7 +182,7 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
         llamadasData.forEach((l: any) => { if (l.estado_llamada !== "CONTACTED" && l.razon_termino) allReasons.push({ m: l.razon_termino }); });
 
         const agendaMap: Record<string, number> = {};
-        agendaData.forEach((a: any) => { if (a.fecha_agendada_cliente) { const d = a.fecha_agendada_cliente.slice(0,10); agendaMap[d] = (agendaMap[d] || 0) + 1; } });
+        agendaData.forEach((a: any) => { if (a.scheduled_at) { const d = a.scheduled_at.slice(0,10); agendaMap[d] = (agendaMap[d] || 0) + 1; } });
 
         return {
             ...empty,
@@ -531,6 +531,7 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
         lead: 'fecha_ingreso_crm',
         llamadas: 'fecha_inicio',
         agendamientos: 'fecha_agendada_cliente',
+        appointments: 'scheduled_at',
         lead_cualificacion: 'fecha_creacion',
         intentos_llamadas: 'fecha_reintento',
         conversaciones_whatsapp: 'fecha_ultimo_mensaje',
@@ -546,8 +547,9 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
     const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
 
     // 2. Fetch fact rows
+    const joinCol = table === 'lead' ? 'id' : (table === 'appointments' ? 'lead_id' : 'id_lead');
     let q = (supabase.from(table as any) as any)
-        .select(isGrouped ? `${timeCol}, ${col}, id_lead` : `${col}, id_lead`)
+        .select(isGrouped ? `${timeCol}, ${col}, ${joinCol}` : `${col}, ${joinCol}`)
         .eq("tenant_id", tenantId)
         .gte(timeCol, from)
         .lte(timeCol, to);
@@ -575,7 +577,7 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
     const rows = (rowsRaw || []) as any[];
     let filteredRows = table === 'lead'
         ? rows.filter(r => leadsMap.has(r.id))
-        : rows.filter(r => leadsMap.has(r.id_lead)).map(r => ({ ...r, lead: leadsMap.get(r.id_lead) }));
+        : rows.filter(r => leadsMap.has(r[joinCol])).map(r => ({ ...r, lead: leadsMap.get(r[joinCol]) }));
 
     // Apply lead-side conditions
     if (part.condCol && part.condVal) {
@@ -719,15 +721,20 @@ export async function getDynamicChartSeries(
     }
     const leadsMap = new Map(allLeads.map((l: any) => [l.id, l]));
 
-    const results = await Promise.allSettled(dynamicCharts.map(async c => {
+    const out: Record<string, any[]> = {};
+    for (const c of dynamicCharts) {
         try {
             const [xTable, xCol] = (c.xKey || '').split('.');
-            if (!xTable || !xCol) return { id: c.id, data: [] as ChartRow[] };
+            if (!xTable || !xCol) {
+                out[c.id] = [];
+                continue;
+            }
 
             if (c.type === 'heatmap') {
                 const data = await getHeatmapData(from, to, filters, xTable, xCol);
                 console.log(`[getDynamicChartSeries] Success for Heatmap "${c.title}": ${data.length} data points.`);
-                return { id: c.id, data };
+                out[c.id] = data;
+                continue;
             }
 
             const [yTable, yCol] = (c.yKey || '').split('.');
@@ -742,9 +749,10 @@ export async function getDynamicChartSeries(
 
             // 2. Fetch base table data (WITHOUT JOINS)
             const selectFields = new Set<string>();
+            const joinCol = baseTable === 'lead' ? 'id' : (baseTable === 'appointments' ? 'lead_id' : 'id_lead');
             if (xTable === baseTable) selectFields.add(xCol);
             if (useYCol && yTable === baseTable) selectFields.add(yCol);
-            if (baseTable !== 'lead') selectFields.add('id_lead');
+            if (baseTable !== 'lead') selectFields.add(joinCol);
             selectFields.add(timeCol);
 
             let q = (supabase.from(baseTable as any) as any)
@@ -759,14 +767,15 @@ export async function getDynamicChartSeries(
             const { data: rowsRaw, error } = await q;
             if (error) {
                 console.error(`[getDynamicChartSeries] Error for "${c.title}":`, error.message);
-                return { id: c.id, data: [] };
+                out[c.id] = [];
+                continue;
             }
 
             // 3. Manual Join and Filter
             const rows = (rowsRaw || []) as any[];
             const filteredRows = baseTable === 'lead' 
                 ? rows.filter(r => leadsMap.has(r.id))
-                : rows.filter(r => leadsMap.has(r.id_lead)).map(r => ({ ...r, lead: leadsMap.get(r.id_lead) }));
+                : rows.filter(r => leadsMap.has(r[joinCol])).map(r => ({ ...r, lead: leadsMap.get(r[joinCol]) }));
 
             const map: Record<string, { sum: number; count: number }> = {};
             
@@ -811,17 +820,13 @@ export async function getDynamicChartSeries(
                 console.log(`[getDynamicChartSeries] Success for "${c.title}": ${rows.length} rows, base=${baseTable}, x=${xTable}.${xCol}`);
             }
 
-            return { id: c.id, data: series };
+            out[c.id] = series;
 
         } catch (err) {
             console.error(`[getDynamicChartSeries] Exception for "${c.title}":`, err);
-            return { id: c.id, data: [] };
+            out[c.id] = [];
         }
-    }));
-
-    const out: Record<string, any[]> = {};
-    for (const r of results) {
-        if (r.status === 'fulfilled') out[r.value.id] = r.value.data;
     }
+
     return out;
 }

@@ -425,12 +425,12 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                         }}
                                                         className="bg-muted border border-border rounded-xl px-3 py-2 text-xs font-bold text-foreground outline-none focus:border-indigo-500 transition-all cursor-pointer"
                                                     >
-                                                        <option value="lead">lead</option>
-                                                        <option value="llamadas">llamadas</option>
-                                                        <option value="agendamientos">agendamientos</option>
-                                                        <option value="lead_cualificacion">lead_cualificacion</option>
-                                                        <option value="intentos_llamadas">intentos_llamadas</option>
-                                                        <option value="conversaciones_whatsapp">conversaciones_whatsapp</option>
+                                                        <option value="lead">Leads (Contactos)</option>
+                                                        <option value="llamadas">Llamadas Telefónicas</option>
+                                                        <option value="appointments">Agendamientos (Citas)</option>
+                                                        <option value="lead_cualificacion">Cualificación (Aptos)</option>
+                                                        <option value="intentos_llamadas">Intentos de Llamadas</option>
+                                                        <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
                                                     </select>
                                                     <select
                                                         title="Columna"
@@ -462,7 +462,7 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                     <optgroup label="⏱ Tiempo">
                                                         <option value="lead.fecha_ingreso_crm">📅 Día de ingreso de lead</option>
                                                         <option value="llamadas.fecha_inicio">📅 Día de llamada</option>
-                                                        <option value="agendamientos.fecha_agendada_cliente">📅 Día de agendamiento</option>
+                                                        <option value="appointments.scheduled_at">📅 Día de agendamiento</option>
                                                         <option value="lead_cualificacion.fecha_creacion">📅 Día de cualificación</option>
                                                         <option value="conversaciones_whatsapp.fecha_creacion">📅 Día de conversación WA</option>
                                                     </optgroup>
@@ -497,7 +497,7 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                         <option value="__count__">🔢 Número de registros (COUNT)</option>
                                                         <option value="lead.id">👥 Número de leads</option>
                                                         <option value="llamadas.id">📞 Número de llamadas</option>
-                                                        <option value="agendamientos.id">📅 Número de agendamientos</option>
+                                                        <option value="appointments.id">📅 Número de agendamientos</option>
                                                         <option value="lead_cualificacion.id">⭐ Número de cualificaciones</option>
                                                         <option value="conversaciones_whatsapp.id">💬 Número de conversaciones</option>
                                                     </optgroup>
@@ -635,10 +635,12 @@ export function ChartManager({ tenant, initialCharts, data, isAdmin, configKey =
                                                                     }}
                                                                     className="bg-muted/50 border border-border rounded-xl px-3 py-2 text-xs font-bold outline-none"
                                                                 >
-                                                                    <option value="lead">lead</option>
-                                                                    <option value="llamadas">llamadas</option>
-                                                                    <option value="agendamientos">agendamientos</option>
-                                                                    <option value="lead_cualificacion">cualificacion</option>
+                                                                    <option value="lead">Leads (Contactos)</option>
+                                                                    <option value="llamadas">Llamadas Telefónicas</option>
+                                                                    <option value="appointments">Agendamientos (Citas)</option>
+                                                                    <option value="lead_cualificacion">Cualificación (Aptos)</option>
+                                                                    <option value="intentos_llamadas">Intentos de Llamadas</option>
+                                                                    <option value="conversaciones_whatsapp">Chats de WhatsApp</option>
                                                                 </select>
                                                                 <select
                                                                     title="Método"
