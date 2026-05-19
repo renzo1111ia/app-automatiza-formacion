@@ -229,6 +229,29 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
         const agendaMap: Record<string, number> = {};
         agendaData.forEach((a: any) => { if (a.scheduled_at) { const d = a.scheduled_at.slice(0,10); agendaMap[d] = (agendaMap[d] || 0) + 1; } });
 
+        // Calculate average response time in minutes
+        let responseTimesSum = 0;
+        let responseTimesCount = 0;
+        leadsData.forEach((lead: any) => {
+            const leadCalls = llamadasData.filter((call: any) => call.id_lead === lead.id);
+            if (leadCalls.length > 0 && lead.fecha_ingreso_crm) {
+                const sortedCalls = [...leadCalls].sort((a: any, b: any) => 
+                    new Date(a.fecha_inicio).getTime() - new Date(b.fecha_inicio).getTime()
+                );
+                const earliestCall = sortedCalls[0];
+                if (earliestCall && earliestCall.fecha_inicio) {
+                    const diffMs = new Date(earliestCall.fecha_inicio).getTime() - new Date(lead.fecha_ingreso_crm).getTime();
+                    if (diffMs > 0) {
+                        responseTimesSum += diffMs;
+                        responseTimesCount++;
+                    }
+                }
+            }
+        });
+        const tiempo_respuesta_promedio_minutos = responseTimesCount > 0 
+            ? Math.round((responseTimesSum / responseTimesCount) / 1000 / 60) 
+            : null;
+
         return {
             ...empty,
             total_llamadas: llamadasData.length,
@@ -244,6 +267,7 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
             total_agendados: agendaData.length,
             total_cualificados,
             total_no_cualificados: cualData.length - total_cualificados,
+            tiempo_respuesta_promedio_minutos,
             tasa_agendamiento: total_leads ? Math.round((agendaData.length / total_leads) * 100) : 0,
             tasa_conversion: total_leads ? Math.round((total_cualificados / total_leads) * 100) : 0,
             tasa_ilocalizables: total_leads ? Math.round((leadsData.filter(l => l.tipo_lead === "ilocalizable").length / total_leads) * 100) : 0,
@@ -572,6 +596,7 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
     const tenantId = await getActiveTenantId();
     if (!tenantId) return isGrouped ? {} : 0;
 
+    const joinCol = table === 'lead' ? 'id' : (table === 'appointments' ? 'lead_id' : 'id_lead');
     const TIME_COL_MAP: Record<string, string> = {
         lead: 'fecha_ingreso_crm',
         llamadas: 'fecha_inicio',
@@ -583,16 +608,23 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
     };
     const timeCol = TIME_COL_MAP[table] || 'fecha_creacion';
 
+    console.log(`[getGenericPartData-DEBUG] === STARTING QUERY FOR ${table} ===`);
+    console.log(`[getGenericPartData-DEBUG] tenantId=${tenantId} col=${col} joinCol=${joinCol} timeCol=${timeCol}`);
+    console.log(`[getGenericPartData-DEBUG] from=${from} to=${to} filters=${JSON.stringify(filters)} part=${JSON.stringify(part)}`);
+
     // 1. Fetch leads for filtering
     let lq = (supabase.from("lead" as any) as any)
         .select("id, pais, origen, campana, tipo_lead")
         .eq("tenant_id", tenantId);
     lq = applyLeadFilters(lq, filters);
-    const { data: leadsRaw } = await lq;
+    const { data: leadsRaw, error: leadsErr } = await lq;
+    if (leadsErr) {
+        console.error(`[getGenericPartData-DEBUG] Error fetching leads:`, leadsErr.message);
+    }
     const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
+    console.log(`[getGenericPartData-DEBUG] Leads fetched: ${leadsRaw?.length || 0}`);
 
     // 2. Fetch fact rows
-    const joinCol = table === 'lead' ? 'id' : (table === 'appointments' ? 'lead_id' : 'id_lead');
     let q = (supabase.from(table as any) as any)
         .select(isGrouped ? `${timeCol}, ${col}, ${joinCol}` : `${col}, ${joinCol}`)
         .eq("tenant_id", tenantId)
@@ -607,31 +639,39 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
             let val: any = part.condVal;
             if (val === 'true') val = true;
             if (val === 'false') val = false;
-            if (part.condOp === 'ILIKE') q = q.ilike(cc, `%${part.condVal}%`);
-            else q = q.eq(cc, val);
+            if (part.condOp === 'ILIKE') {
+                q = q.ilike(cc, `%${part.condVal}%`);
+            } else if (part.condOp === '!=' || part.condOp === '<>') {
+                q = q.neq(cc, val);
+            } else {
+                q = q.eq(cc, val);
+            }
         }
     }
 
     const { data: rowsRaw, error } = await q;
     if (error) {
-        console.error(`[getGenericPartData] Error for ${table}:`, error.message);
+        console.error(`[getGenericPartData-DEBUG] Error for ${table}:`, error.message);
         return isGrouped ? {} : 0;
     }
+    console.log(`[getGenericPartData-DEBUG] Raw rows fetched: ${rowsRaw?.length || 0}`);
 
     // 3. Manual join and count/group
     const rows = (rowsRaw || []) as any[];
     let filteredRows = table === 'lead'
         ? rows.filter(r => leadsMap.has(r.id))
         : rows.filter(r => leadsMap.has(r[joinCol])).map(r => ({ ...r, lead: leadsMap.get(r[joinCol]) }));
+    console.log(`[getGenericPartData-DEBUG] Rows after primary leadsMap join: ${filteredRows.length}`);
 
     // Apply lead-side conditions
     if (part.condCol && part.condVal) {
         const LEAD_COLS = ['pais', 'origen', 'campana', 'tipo_lead'];
         if (LEAD_COLS.includes(part.condCol)) {
             filteredRows = filteredRows.filter(r => {
-                const val = table === 'lead' ? r[part.condCol] : r.lead?.[part.condCol];
+                const val = table === 'lead' ? (leadsMap.get(r.id) as any)?.[part.condCol] : (r.lead as any)?.[part.condCol];
                 return part.condOp === '!=' ? val != part.condVal : val == part.condVal;
             });
+            console.log(`[getGenericPartData-DEBUG] Rows after lead-side conditions filter: ${filteredRows.length}`);
         }
     }
 
@@ -644,25 +684,29 @@ async function getGenericPartData(supabase: any, part: any, from: string, to: st
             const val = part.calcType === 'sum' ? (Number(r[col]) || 0) : 1;
             grouped[day] = (grouped[day] || 0) + val;
         });
+        console.log(`[getGenericPartData-DEBUG] Grouped result keys count: ${Object.keys(grouped).length}`);
         return grouped;
     }
 
-    if (part.calcType === 'count') return filteredRows.length;
-    if (part.calcType === 'sum') return filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0);
-    if (part.calcType === 'avg') return filteredRows.length ? filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0) / filteredRows.length : 0;
+    let finalVal = 0;
+    if (part.calcType === 'count') finalVal = filteredRows.length;
+    else if (part.calcType === 'sum') finalVal = filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0);
+    else if (part.calcType === 'avg') finalVal = filteredRows.length ? filteredRows.reduce((s, r) => s + (Number(r[col]) || 0), 0) / filteredRows.length : 0;
     
-    return 0;
+    console.log(`[getGenericPartData-DEBUG] Final calculated value: ${finalVal}`);
+    return finalVal;
 }
 
 export async function getSingleDynamicKpi(kpi: KpiConfig, from: string, to: string, filters: AnalyticsFilters) {
     const supabase = await getSupabaseServerClient();
     const tenantId = await getActiveTenantId();
     if (!tenantId) return 0;
+    console.log(`[getSingleDynamicKpi-DEBUG] Evaluating KPI ${kpi.id} ("${kpi.label}")`);
     try {
         let num: number;
         if (kpi.isAdvanced && kpi.parts) {
             const partKeys = Object.keys(kpi.parts);
-            const results = await Promise.all(partKeys.map(k => getGenericPartData(supabase, kpi.parts![k], from, to, filters)));
+            const results = await Promise.all(partKeys.map(k => getGenericPartData(supabase, kpi.parts![k], from, to, filters) as Promise<number>));
             const values: any = {};
             partKeys.forEach((k, i) => values[k] = results[i]);
             try {
@@ -670,9 +714,9 @@ export async function getSingleDynamicKpi(kpi: KpiConfig, from: string, to: stri
                 num = fn(...partKeys.map(k => values[k]));
             } catch { num = 0; }
         } else {
-            num = await getGenericPartData(supabase, { targetCol: kpi.targetCol || "lead.id", calcType: kpi.calcType || "count", condCol: kpi.condCol, condOp: kpi.condOp, condVal: kpi.condVal }, from, to, filters);
+            num = await getGenericPartData(supabase, { targetCol: kpi.targetCol || "lead.id", calcType: kpi.calcType || "count", condCol: kpi.condCol, condOp: kpi.condOp, condVal: kpi.condVal }, from, to, filters) as number;
             if (kpi.isPercentage) {
-                const den = await getGenericPartData(supabase, { targetCol: kpi.denomTargetCol || "lead.id", calcType: kpi.denomCalcType || "count", condCol: kpi.denomCondCol, condOp: kpi.denomCondOp, condVal: kpi.denomCondVal }, from, to, filters);
+                const den = await getGenericPartData(supabase, { targetCol: kpi.denomTargetCol || "lead.id", calcType: kpi.denomCalcType || "count", condCol: kpi.denomCondCol, condOp: kpi.denomCondOp, condVal: kpi.denomCondVal }, from, to, filters) as number;
                 num = den ? (num / den) * 100 : 0;
             }
         }

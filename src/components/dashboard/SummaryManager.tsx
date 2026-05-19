@@ -588,49 +588,47 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                     let val: number | string = k.staticKey
                                         ? (values[k.staticKey as keyof KpiGenerales] as number)
                                         : (previewValues[k.id] ?? dynamicValues[k.id] ?? 0);
+                                    let suffix = k.suffix;
                                     if (typeof val === 'number') {
+                                        const isMinutes = k.label?.toLowerCase().includes("minutos") || false;
+                                        if (isMinutes) {
+                                            val = Math.round(val / 60); if (!suffix) suffix = " min";
+                                        }
                                         const isDuration = k.valType === "duration" || 
                                                            k.staticKey?.includes("segundos") || 
+                                                           (k.targetCol?.includes("segundos") && !isMinutes) ||
                                                            k.suffix === " seg";
                                         if (isDuration) {
-                                            const m = Math.floor(val / 60);
-                                            const s = Math.round(val % 60);
-                                            val = s > 0 ? `${m}m ${s}s` : `${m}m`;
+                                            val = formatDuration(val);
+                                            suffix = "";
                                         } else {
                                             val = k.isPercentage ? val.toFixed(1) : val.toLocaleString('es-ES');
                                         }
                                     }
-                                    const dval = k.isPercentage ? `${val}%` : (k.suffix ? `${val}${k.suffix}` : val);
+                                    const dval = k.isPercentage ? `${val}%` : (suffix ? `${val}${suffix}` : val);
                                     const yCtr = yTop + rowH / 2;
 
                                     const intensity = 0.35 + 0.65 * (rawVals[idx] / maxVal);
-                                    // Text opacity: brighter when more data
                                     const textAlpha = 0.55 + 0.45 * (rawVals[idx] / maxVal);
 
                                     return (
                                         <g key={k.id}>
-                                            {/* Gradient body */}
                                             <path d={bodyPath} fill={`url(#grad${k.id})`} />
-                                            {/* Top rim */}
                                             <ellipse cx={cx} cy={yTop} rx={rTop} ry={ellipseRY} fill={c1} fillOpacity={intensity} />
                                             <ellipse cx={cx} cy={yTop} rx={rTop * 0.85} ry={ellipseRY * 0.55} fill="white" fillOpacity={intensity * 0.18} />
-                                            {/* Bottom shadow rim */}
                                             <ellipse cx={cx} cy={yBot} rx={rBot} ry={ellipseRY * 0.7} fill={c2} fillOpacity={intensity * 0.7} />
 
-                                            {/* Label */}
                                             <text x={cx} y={yCtr - 5} textAnchor="middle" dominantBaseline="middle"
                                                 fill={`rgba(255,255,255,${textAlpha})`} fontSize="12" fontWeight="600"
                                                 className="font-outfit tracking-[0.08em] uppercase">
                                                 {k.label}
                                             </text>
-                                            {/* Value */}
                                             <text x={cx} y={yCtr + 13} textAnchor="middle" dominantBaseline="middle"
                                                 fill={`rgba(255,255,255,${Math.min(textAlpha + 0.15, 1)})`} fontSize="17" fontWeight="800"
                                                 className="font-outfit">
                                                 {dval}
                                             </text>
 
-                                            {/* ── Edit buttons (visible only in editing mode) ── */}
                                             {isEditing && (
                                                 <foreignObject
                                                     x={cx + rTop + 6}
@@ -640,7 +638,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                                     className="overflow-visible"
                                                 >
                                                     <div className="flex flex-col gap-1">
-                                                        {/* Configure data */}
                                                         <button
                                                             onClick={() => setEditingKpiId(k.id)}
                                                             title="Configurar datos del paso"
@@ -648,7 +645,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                                         >
                                                             <Settings className="w-3.5 h-3.5" />
                                                         </button>
-                                                        {/* Toggle visibility */}
                                                         <button
                                                             onClick={() => updateKpi(k.id, { isVisible: k.isVisible === false ? true : false })}
                                                             title={k.isVisible === false ? 'Mostrar paso' : 'Ocultar paso'}
@@ -671,7 +667,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                     );
                                 })}
 
-                                {/* Bottom rim of last step */}
                                 {steps.length > 0 && (() => {
                                     const last = steps[steps.length - 1];
                                     const [, c2] = COLORS[last.color || 'bg-blue-600'] || ['#3b82f6', '#1d4ed8'];
@@ -683,7 +678,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                             </svg>
                         </div>
 
-                        {/* ── Inline Color Picker (edit mode only) ───────────────── */}
                         {isEditing && (
                             <div className="mt-6 w-full max-w-[520px] space-y-2">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 text-center mb-3">
@@ -713,16 +707,13 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                             </div>
                         )}
 
-                        {/* Effectiveness footer */}
                         <div className="mt-10 pt-6 border-t border-slate-200 dark:border-blue-900/30 w-full max-w-[520px] flex flex-col items-center gap-1">
                             {isEditing ? (
-                                /* ── Edit mode: configure which steps to compare ── */
                                 <div className="w-full space-y-3">
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 text-center">
                                         Configurar Efectividad
                                     </p>
 
-                                    {/* From step */}
                                     <div className="flex items-center gap-3 bg-white dark:bg-slate-800/60 rounded-2xl px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700/50">
                                         <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0">Desde</span>
                                         <select
@@ -738,7 +729,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                         </select>
                                     </div>
 
-                                    {/* To step */}
                                     <div className="flex items-center gap-3 bg-white dark:bg-slate-800/60 rounded-2xl px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700/50">
                                         <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0">Hasta</span>
                                         <select
@@ -754,7 +744,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                         </select>
                                     </div>
 
-                                    {/* Description */}
                                     <div className="flex items-center gap-3 bg-white dark:bg-slate-800/60 rounded-2xl px-4 py-3 shadow-sm border border-slate-100 dark:border-slate-700/50">
                                         <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 w-16 shrink-0">Texto</span>
                                         <input
@@ -767,7 +756,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                         />
                                     </div>
 
-                                    {/* Live preview */}
                                     <div className="flex flex-col items-center pt-2">
                                         <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] font-black text-[10px]">
                                             <Target className="h-4 w-4" /> Efectividad del Embudo
@@ -781,7 +769,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                     </div>
                                 </div>
                             ) : (
-                                /* ── View mode ── */
                                 <>
                                     <div className="flex items-center gap-2 text-blue-500 dark:text-blue-400 uppercase tracking-[0.2em] font-black text-[10px]">
                                         <Target className="h-4 w-4" /> Efectividad del Embudo
@@ -814,7 +801,6 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                 let lastGroup = title ? "" : "Informes";
 
                                 return filtered.map((k) => {
-                                    // Determine value
                                     let val: number | string = 0;
                                     if (k.staticKey) {
                                         val = (values as unknown as Record<string, number>)[k.staticKey] ?? 0;
@@ -822,25 +808,30 @@ export function SummaryManager({ tenant, initialKpis, values, dynamicValues, isA
                                         val = previewValues[k.id] ?? dynamicValues[k.id] ?? 0;
                                     }
 
-                                    // Format numeric values
+                                    let suffix = k.suffix;
                                     if (typeof val === 'number') {
+                                        const isMinutes = k.label?.toLowerCase().includes("minutos") || false;
+                                        if (isMinutes) {
+                                            val = Math.round(val / 60); if (!suffix) suffix = " min";
+                                        }
                                         const isDuration = k.valType === "duration" || 
                                                            (k.staticKey && k.staticKey.endsWith("_segundos")) || 
+                                                           (k.targetCol && k.targetCol.endsWith("_segundos") && !isMinutes) ||
                                                            k.label.toLowerCase().includes("duración media");
                                         
                                         if (isDuration) {
                                             val = formatDuration(val);
+                                            suffix = "";
                                         } else if (k.calcType === "avg" || k.isPercentage) {
                                             val = Number(val).toFixed(1);
                                         } else {
                                             val = Number(val).toLocaleString('es-ES');
                                         }
                                     }
-                                    // Append suffix (e.g. ' min', ' seg', '%')
-                                    if (k.suffix && val !== null && val !== undefined) {
-                                        val = `${val}${k.suffix}`;
+                                    if (suffix && val !== null && val !== undefined) {
+                                        val = `${val}${suffix}`;
                                     }
-                                    if (k.isPercentage && !k.suffix) val = `${val}%`;
+                                    if (k.isPercentage && !suffix) val = `${val}%`;
 
                                     const showHeader = k.group && k.group !== lastGroup;
                                     if (k.group) lastGroup = k.group;

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import { fromZonedTime, toZonedTime, format } from "date-fns-tz";
+import { resolveCountryFromPhone } from "@/lib/utils/location-client";
+import { getTimezoneByCountry } from "@/lib/utils/timezones";
 
 export class AppointmentService {
     private static DEFAULT_TIMEZONE = "Europe/Madrid";
@@ -51,13 +53,30 @@ export class AppointmentService {
         console.log(`[BOOK APPOINTMENT] 🚀 Starting! Tenant: ${tenantId}, Lead: ${leadId}, Date: ${cleanDate}, Time: ${time}`);
         const supabase = this.getSupabase();
 
+        // 1. Verify lead exists and get timezone
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: leadError, data: leadData } = await (supabase.from("lead") as any)
+            .select("id, pais, telefono")
+            .eq("id", leadId)
+            .single();
+
+        if (leadError) {
+            throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
+        }
+
+        const leadPais = (leadData.pais && leadData.pais !== 'Desconocido' && leadData.pais !== 'Identificando...') 
+            ? leadData.pais 
+            : (resolveCountryFromPhone(leadData.telefono) || 'Desconocido');
+        const leadTZ = getTimezoneByCountry(leadPais) || this.DEFAULT_TIMEZONE;
+
         let scheduledAt: string;
 
         if (time) {
             const timeStr = time.includes(':') ? (time.split(':').length === 2 ? `${time}:00` : time) : `${time}:00:00`;
             const fullLocalString = `${cleanDate} ${timeStr}`;
             try {
-                const utcDate = fromZonedTime(fullLocalString, this.DEFAULT_TIMEZONE);
+                // Parse requested time in lead's local timezone
+                const utcDate = fromZonedTime(fullLocalString, leadTZ);
                 scheduledAt = utcDate.toISOString();
             } catch (e) {
                 console.warn(`[BOOK APPOINTMENT] Timezone conversion failed for ${fullLocalString}, falling back to UTC`, e);
@@ -80,16 +99,7 @@ export class AppointmentService {
                 console.warn("[BOOK APPOINTMENT] Auto-cancel skipped (non-fatal):", e);
             }
 
-            // 1. Verify lead exists
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error: leadError } = await (supabase.from("lead") as any)
-                .select("id")
-                .eq("id", leadId)
-                .single();
-
-            if (leadError) {
-                throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
-            }
+            // (Lead was verified at the top of the function)
 
             // 2. Try to fetch program name (optional, never crash)
             let programName: string | null = null;
@@ -240,25 +250,41 @@ export class AppointmentService {
 
     static async rescheduleAppointment(appointmentId: string, newDate: string, newTime?: string) {
         const supabase = this.getSupabase();
+
+        // 0. Fetch appointment to get tenant_id, lead_id and validate availability
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: existingApp, error: fetchErr } = await (supabase.from("appointments") as any)
+            .select("tenant_id, lead_id")
+            .eq("id", appointmentId)
+            .single();
+
+        if (fetchErr || !existingApp) throw new Error("Cita no encontrada para reprogramar.");
+
+        // Fetch lead timezone
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: leadData } = await (supabase.from("lead") as any)
+            .select("pais, telefono")
+            .eq("id", existingApp.lead_id)
+            .single();
+
+        let leadTZ = this.DEFAULT_TIMEZONE;
+        if (leadData) {
+            const leadPais = (leadData.pais && leadData.pais !== 'Desconocido' && leadData.pais !== 'Identificando...') 
+                ? leadData.pais 
+                : (resolveCountryFromPhone(leadData.telefono) || 'Desconocido');
+            leadTZ = getTimezoneByCountry(leadPais) || this.DEFAULT_TIMEZONE;
+        }
+
         let scheduledAt = newDate;
         if (newTime) {
             const timeStr = newTime.includes(':') ? (newTime.split(':').length === 2 ? `${newTime}:00` : newTime) : `${newTime}:00:00`;
             try {
-                const utcDate = fromZonedTime(`${newDate} ${timeStr}`, this.DEFAULT_TIMEZONE);
+                const utcDate = fromZonedTime(`${newDate} ${timeStr}`, leadTZ);
                 scheduledAt = utcDate.toISOString();
             } catch {
                 scheduledAt = `${newDate}T${timeStr}Z`;
             }
         }
-
-        // 0. Fetch appointment to get tenant_id and validate availability
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: existingApp, error: fetchErr } = await (supabase.from("appointments") as any)
-            .select("tenant_id")
-            .eq("id", appointmentId)
-            .single();
-
-        if (fetchErr || !existingApp) throw new Error("Cita no encontrada para reprogramar.");
 
         const scheduledDate = new Date(scheduledAt);
         const dateForValidation = format(scheduledDate, 'yyyy-MM-dd');

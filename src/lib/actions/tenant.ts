@@ -22,17 +22,29 @@ export async function setTenantCookies(tenantId: string, name: string = "") {
 }
 
 
+import { createClient } from "@supabase/supabase-js";
+
 async function getAdminSupabase() {
     if (!AUTH_SUPABASE_URL || !AUTH_SUPABASE_ANON_KEY) {
         throw new Error("Configuración de administración (AUTH) incompleta. Verifique las variables de entorno.");
     }
-    const cookieStore = await cookies();
+    let cookieStore: Awaited<ReturnType<typeof cookies>> | undefined;
+    try {
+        cookieStore = await cookies();
+    } catch {
+        // Fallback for offline/script environment
+    }
+
+    if (!cookieStore) {
+        return createClient(AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY);
+    }
+
     return createServerClient(AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY, {
         cookies: {
-            getAll() { return cookieStore.getAll(); },
+            getAll() { return cookieStore!.getAll(); },
             setAll(cookiesToSet) {
                 cookiesToSet.forEach(({ name, value, options }) => {
-                    cookieStore.set(name, value, options);
+                    cookieStore!.set(name, value, options);
                 });
             },
         },
@@ -56,10 +68,20 @@ async function getServiceSupabase() {
         throw new Error("Error crítico: No se pudo determinar la URL o la Llave Maestra de Supabase.");
     }
 
-    const cookieStore = await cookies();
+    let cookieStore: Awaited<ReturnType<typeof cookies>> | undefined;
+    try {
+        cookieStore = await cookies();
+    } catch {
+        // Fallback for offline/script environment
+    }
+
+    if (!cookieStore) {
+        return createClient(url, serviceKey);
+    }
+
     return createServerClient(url, serviceKey, {
         cookies: {
-            getAll() { return cookieStore.getAll(); },
+            getAll() { return cookieStore!.getAll(); },
             setAll() { },
         },
     });
@@ -108,8 +130,13 @@ export async function getTenants(): Promise<Tenant[]> {
 }
 
 export async function getActiveTenantConfig(): Promise<Tenant | null> {
-    const cookieStore = await cookies();
-    const tenantId = cookieStore.get("esden-tenant-id")?.value;
+    let tenantId: string | undefined;
+    try {
+        const cookieStore = await cookies();
+        tenantId = cookieStore.get("esden-tenant-id")?.value || process.env.ACTIVE_TENANT_ID;
+    } catch {
+        tenantId = process.env.ACTIVE_TENANT_ID;
+    }
     if (!tenantId) return null;
 
     const supabase = await getAdminSupabase();

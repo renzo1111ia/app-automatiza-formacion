@@ -237,6 +237,22 @@ export function HistorialTable({ initialData, fromDate, toDate, columns }: Props
                         <option value="ALL">Todo</option>
                         {Object.keys(STATUS_COLORS).map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+
+                    <select title="Tipo Lead" value={draftTipoLead} onChange={(e) => setDraftTipoLead(e.target.value)}
+                        className="rounded-xl border border-border bg-muted/30 px-4 py-2.5 text-sm font-bold outline-none focus:border-primary">
+                        <option value="">Tipo Lead: Todos</option>
+                        <option value="nuevo">Nuevo</option>
+                        <option value="ilocalizable">Ilocalizable</option>
+                        <option value="descartado">Descartado</option>
+                        <option value="CUALIFICADO">Cualificado</option>
+                    </select>
+
+                    <select title="Cualificación" value={draftCual} onChange={(e) => setDraftCual(e.target.value)}
+                        className="rounded-xl border border-border bg-muted/30 px-4 py-2.5 text-sm font-bold outline-none focus:border-primary">
+                        <option value="">Cualificación: Todas</option>
+                        <option value="SI">Apto (SI)</option>
+                        <option value="NO">No Apto (NO)</option>
+                    </select>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-border">

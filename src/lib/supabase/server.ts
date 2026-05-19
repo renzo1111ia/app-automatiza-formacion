@@ -11,8 +11,12 @@ const FALLBACK_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3Nzgz
  * Returns the currently active tenant_id from the cookie.
  */
 export async function getActiveTenantId(): Promise<string | null> {
-    const cookieStore = await cookies();
-    return cookieStore.get("esden-tenant-id")?.value || null;
+    try {
+        const cookieStore = await cookies();
+        return cookieStore.get("esden-tenant-id")?.value || process.env.ACTIVE_TENANT_ID || null;
+    } catch {
+        return process.env.ACTIVE_TENANT_ID || null;
+    }
 }
 
 /**

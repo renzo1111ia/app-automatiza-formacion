@@ -5,14 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Format seconds into "X min Y seg" */
+/** Format seconds into "m:ss" format */
 export function formatDuration(seconds: number | null): string {
   if (seconds === null) return "—";
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
-  if (m > 0 && s > 0) return `${m} min ${s} seg`;
-  if (m > 0) return `${m} min`;
-  return `${s} seg`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 /** Format a date string to locale display */
