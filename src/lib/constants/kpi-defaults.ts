@@ -179,7 +179,7 @@ export const DEFAULT_SUMMARY_KPIS: KpiConfig[] = [
 
 export const DEFAULT_CHARTS: ChartConfig[] = [
     { id: 'ch-1', type: 'donut', title: 'Motivo de Anulación', dataKey: 'dynamic', xKey: 'lead_cualificacion.motivo_anulacion', size: '6', isVisible: true, isDonut: true },
-    { id: 'ch-2', type: 'area', title: 'Citas Agendadas por Fecha', dataKey: 'dynamic', xKey: 'agendamientos.fecha_agendada_cliente', size: '6', isVisible: true },
+    { id: 'ch-2', type: 'area', title: 'Citas Agendadas por Fecha', dataKey: 'dynamic', xKey: 'appointments.scheduled_at', size: '6', isVisible: true },
     { id: 'ch-3', type: 'vertical-bar', title: 'Estado de Llamadas', dataKey: 'dynamic', xKey: 'llamadas.estado_llamada', size: '6', isVisible: true },
     { id: 'ch-4', type: 'vertical-bar', title: 'Razón de Término', dataKey: 'dynamic', xKey: 'llamadas.razon_termino', size: '6', isVisible: true },
     { id: 'ch-5', type: 'donut', title: 'Tipo de Lead', dataKey: 'dynamic', xKey: 'lead.tipo_lead', size: '6', isVisible: true },

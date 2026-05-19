@@ -154,21 +154,36 @@ export async function getKpiGenerales(from: string, to: string, filters: Analyti
     if (!tenantId) return empty;
 
     try {
-        const [lRes, llRes, cRes, aRes, wRes, totalLeadsSystRes] = await Promise.all([
+        const [lRes, llRes, cRes, wRes, totalLeadsSystRes] = await Promise.all([
             applyLeadFilters((supabase.from("lead" as any) as any).select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm").eq("tenant_id", tenantId).gte("fecha_ingreso_crm", from).lte("fecha_ingreso_crm", to), filters),
             applyLeadFilters((supabase.from("llamadas" as any) as any).select(`id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_inicio", from).lte("fecha_inicio", to), filters),
             applyLeadFilters((supabase.from("lead_cualificacion" as any) as any).select(`cualificacion, motivo_anulacion, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_creacion", from).lte("fecha_creacion", to), filters),
-            applyLeadFilters((supabase.from("appointments" as any) as any).select(`id, scheduled_at, status, lead:lead_id!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).eq("status", "CONFIRMED").gte("scheduled_at", from).lte("scheduled_at", to), filters),
             applyLeadFilters((supabase.from("conversaciones_whatsapp" as any) as any).select(`id_lead, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`).eq("tenant_id", tenantId).gte("fecha_ultimo_mensaje", from).lte("fecha_ultimo_mensaje", to), filters),
             applyLeadFilters((supabase.from("lead" as any) as any).select("id", { count: "exact", head: true }).eq("tenant_id", tenantId), filters),
         ]);
 
+        // ── Manual join for appointments (no FK in schema cache) ──
+        const leadsForJoin = (lRes.data || []) as any[];
+        const leadsById = new Map(leadsForJoin.map((l: any) => [l.id, l]));
+        const apptRaw = await (supabase.from("appointments" as any) as any)
+            .select("id, scheduled_at, status, lead_id")
+            .eq("tenant_id", tenantId)
+            .gte("scheduled_at", from)
+            .lte("scheduled_at", to);
+        if (apptRaw.error) console.error('[KPI-DEBUG] appointments error:', apptRaw.error.message);
+        const agendaData = ((apptRaw.data || []) as any[]).filter((a: any) => leadsById.has(a.lead_id));
+
         const leadsData = (lRes.data || []) as any[];
         const llamadasData = (llRes.data || []) as any[];
         const cualData = (cRes.data || []) as any[];
-        const agendaData = (aRes.data || []) as any[];
         const wpData = (wRes.data || []) as any[];
         const total_leads_sistema = totalLeadsSystRes.count || 0;
+
+        // ── DIAGNOSTIC LOG ──
+        console.log(`[KPI-DEBUG] tenantId=${tenantId} from=${from} to=${to}`);
+        console.log(`[KPI-DEBUG] leads=${leadsData.length}, llamadas=${llamadasData.length}, cualificacion=${cualData.length}, appointments=${agendaData.length}, whatsapp=${wpData.length}`);
+        if (lRes.error) console.error('[KPI-DEBUG] leads error:', lRes.error.message);
+        if (llRes.error) console.error('[KPI-DEBUG] llamadas error:', llRes.error.message);
 
         const contactados = llamadasData.filter((l: any) => l.estado_llamada === "CONTACTED");
         const totalSecs = llamadasData.reduce((s: number, l: any) => s + (l.duracion_segundos || 0), 0);
@@ -697,6 +712,7 @@ export async function getDynamicChartSeries(
         lead: 'fecha_ingreso_crm',
         llamadas: 'fecha_inicio',
         agendamientos: 'fecha_agendada_cliente',
+        appointments: 'scheduled_at',
         lead_cualificacion: 'fecha_creacion',
         intentos_llamadas: 'fecha_reintento',
         conversaciones_whatsapp: 'fecha_ultimo_mensaje',
