@@ -77,11 +77,11 @@ export class PostAnalysisService {
                 nivel_estudios: analysis.extracted_data.USER_ESTUDIES || analysis.extracted_data.nivel_estudios,
             };
 
-            const { data: existingQual } = await supabase.from("lead_cualificacion").select("id").eq("id_lead", leadId).single();
+            const { data: existingQual } = await (supabase.from("lead_cualificacion") as any).select("id").eq("id_lead", leadId).single();
             if (existingQual) {
-                await supabase.from("lead_cualificacion").update(qualPayload).eq("id", existingQual.id);
+                await (supabase.from("lead_cualificacion") as any).update(qualPayload).eq("id", existingQual.id);
             } else {
-                await supabase.from("lead_cualificacion").insert(qualPayload);
+                await (supabase.from("lead_cualificacion") as any).insert(qualPayload);
             }
 
             // 4b. PASS 2 — Fact extraction for ALL tracked variables
