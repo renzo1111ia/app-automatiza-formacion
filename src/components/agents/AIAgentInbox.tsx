@@ -631,6 +631,18 @@ export default function AIAgentInbox() {
         return new Date(ts).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
     };
 
+    const getRelativeTime = (ts?: string | null) => {
+        if (!ts) return "";
+        const diff = Date.now() - new Date(ts).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return "Justo ahora";
+        if (mins < 60) return `Hace ${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `Hace ${hrs}h`;
+        const days = Math.floor(hrs / 24);
+        return `Hace ${days}d`;
+    };
+
     if (activeView === 'LOGIC') {
         return (
             <div className="h-screen bg-background flex flex-col">
@@ -1451,35 +1463,45 @@ export default function AIAgentInbox() {
                             <div className="space-y-6 pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-white/20 px-1">Progreso de Automatización</p>
                                 <div className="space-y-4">
-                                    <TimelineItem 
-                                        label="Entrada CRM" 
-                                        time={selectedLead.created_at || 'Hace 2h'} 
-                                        status="COMPLETO" 
-                                        icon={Bot} 
-                                        active 
-                                    />
-                                    <TimelineItem 
-                                        label="Llamada de Cualificación" 
-                                        time="Hace 1h" 
-                                        status={messages.some(m => m.message_type === 'SYSTEM_LOG' && m.content.includes('Llamada')) ? 'COMPLETO' : 'PENDIENTE'} 
-                                        icon={Phone} 
-                                        active={messages.some(m => m.message_type === 'SYSTEM_LOG' && m.content.includes('Llamada'))}
-                                    />
-                                    <TimelineItem 
-                                        label="Mensaje de Bienvenida" 
-                                        time="Hace 30m" 
-                                        status="COMPLETO" 
-                                        icon={Send} 
-                                        active 
-                                    />
-                                    <TimelineItem 
-                                        label="Cualificación WhatsApp" 
-                                        time="En curso" 
-                                        status="PROCESANDO" 
-                                        icon={Zap} 
-                                        active 
-                                        isLast
-                                    />
+                                    {(() => {
+                                        const firstOutbound = messages.find(m => m.direction === 'OUTBOUND');
+                                        const callLog = messages.find(m => m.message_type === 'SYSTEM_LOG' && m.content.toLowerCase().includes('llamada'));
+                                        const isQualified = selectedLead.segmentacion === 'CUALIFICADO' || selectedLead.segmentacion === 'REVISADO';
+                                        
+                                        return (
+                                            <>
+                                                <TimelineItem 
+                                                    label="Entrada CRM" 
+                                                    time={selectedLead.created_at ? getRelativeTime(selectedLead.created_at) : '-'} 
+                                                    status="COMPLETO" 
+                                                    icon={Bot} 
+                                                    active 
+                                                />
+                                                <TimelineItem 
+                                                    label="Llamada de Cualificación" 
+                                                    time={callLog ? getRelativeTime(callLog.created_at) : (selectedLeadAppointment ? `Agendada: ${formatTime(selectedLeadAppointment.scheduled_at)}` : '-')} 
+                                                    status={callLog ? 'COMPLETO' : (selectedLeadAppointment ? 'AGENDADA' : 'PENDIENTE')} 
+                                                    icon={Phone} 
+                                                    active={!!callLog || !!selectedLeadAppointment}
+                                                />
+                                                <TimelineItem 
+                                                    label="Mensaje de Bienvenida" 
+                                                    time={firstOutbound ? getRelativeTime(firstOutbound.created_at) : '-'} 
+                                                    status={firstOutbound ? "COMPLETO" : "PENDIENTE"} 
+                                                    icon={Send} 
+                                                    active={!!firstOutbound} 
+                                                />
+                                                <TimelineItem 
+                                                    label="Cualificación WhatsApp" 
+                                                    time={isQualified ? (selectedLead.last_message_time ? getRelativeTime(selectedLead.last_message_time) : "COMPLETO") : (selectedLead.is_ai_enabled ? "En curso" : "-")} 
+                                                    status={isQualified ? "COMPLETO" : (selectedLead.is_ai_enabled ? "PROCESANDO" : "PAUSADO")} 
+                                                    icon={Zap} 
+                                                    active={isQualified || selectedLead.is_ai_enabled} 
+                                                    isLast
+                                                />
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
