@@ -62,7 +62,7 @@ Nueva estimación: 2h (+1h)
 Razón: Más complejo de lo esperado
 
 Impacto:
-- Fase 3: 32h → 33h (+3%)
+- Fase 2: 32h → 33h (+3%)
 - Proyecto: 504h → 505h (+0.2%)
 
 ✅ PRODUCTIVITY.md actualizado

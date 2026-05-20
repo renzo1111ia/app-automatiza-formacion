@@ -77,7 +77,7 @@ status: DONE
 | `POST /api/leads/ingest` | API Key via `x-api-key` header | ✅ Parcial | No — validación manual | `metadata: { ...payload.extra, raw_payload: payload }` — spread de payload completo sin sanitizar |
 | `POST /api/webhooks/crm` | `x-tenant-id` header | ✅ Zod `LeadWebhookSchema` | Sí | Buena validación; sin firma |
 | `POST /api/calls/manual` | `getSupabaseServerClient()` session | ✅ Zod `callSchema` | Sí | Bien protegido |
-| `POST /api/tenant/migrate` | Cookie `esden-tenant-url` + `esden-tenant-key` | ❌ Sin schema | No | Cookie controlable → SSRF; `exec_sql` con SQL estático (MIGRATION_SQL constante, no user input) |
+| `POST /api/tenant/migrate` | Cookie `af-tenant-url` + `af-tenant-key` | ❌ Sin schema | No | Cookie controlable → SSRF; `exec_sql` con SQL estático (MIGRATION_SQL constante, no user input) |
 | `GET /api/tenant/migrate` | ❌ Sin auth | ❌ Sin schema | No | **Devuelve MIGRATION_SQL completo sin autenticación** |
 | `POST /api/orchestration/deploy` | `getSupabaseServerClient()` | Parcial | No | Confía en `tenantId`/`workflowId` del body |
 | `POST /api/orchestration/publish` | `getAdminSupabaseClient()` | ✅ Zod `publishSchema` | Sí | Bien estructurado |
@@ -107,8 +107,8 @@ status: DONE
 **Código vulnerable:**
 ```typescript
 // route.ts:247-263
-const tenantUrl = cookieStore.get("esden-tenant-url")?.value;
-const tenantKey = cookieStore.get("esden-tenant-key")?.value;
+const tenantUrl = cookieStore.get("af-tenant-url")?.value;
+const tenantKey = cookieStore.get("af-tenant-key")?.value;
 // ...
 const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
     method: "POST",
@@ -123,11 +123,11 @@ const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
 
 **Vector de explotación reproducible:**
 
-La cookie `esden-tenant-url` se establece en el cliente cuando un admin selecciona un tenant. Si un atacante puede modificar la cookie (JavaScript accesible, XSS previo, o con acceso a cookies del browser del admin), puede redirigir el fetch a cualquier servidor interno:
+La cookie `af-tenant-url` se establece en el cliente cuando un admin selecciona un tenant. Si un atacante puede modificar la cookie (JavaScript accesible, XSS previo, o con acceso a cookies del browser del admin), puede redirigir el fetch a cualquier servidor interno:
 
 ```
 POST /api/tenant/migrate HTTP/1.1
-Cookie: esden-tenant-url=http://169.254.169.254/latest/meta-data; esden-tenant-key=fake
+Cookie: af-tenant-url=http://169.254.169.254/latest/meta-data; af-tenant-key=fake
 
 → Server ejecuta fetch("http://169.254.169.254/latest/meta-data/rest/v1/rpc/exec_sql", POST)
 → AWS/GCP metadata service responde
@@ -409,7 +409,7 @@ La única operación con archivos es en `src/app/api/admin/tenants/[id]/client-s
 **DA-3-009 — Secrets en `docker history` (nuevo finding)**:
 Los `ARG` de build-time (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) quedan visibles en el historial de la imagen Docker:
 ```
-docker history esden-dashboard --no-trunc
+docker history af-dashboard --no-trunc
 ```
 Cualquiera con acceso a la imagen (registry, `docker save`) puede recuperar estos valores. Aunque `NEXT_PUBLIC_*` son públicos por diseño, esto confirma que la URL y anon key de Supabase son accesibles a nivel de imagen.
 
@@ -838,7 +838,7 @@ Ver sección Crypto Audit. Comparación con `===` en lugar de `timingSafeEqual`.
 | ID | Título | Archivo:línea | Severidad | Esfuerzo | Categoría |
 |---|---|---|---|---|---|
 | DA-3-001 | Cron/sweep endpoints públicos sin autenticación | `api/orchestration/sweep/route.ts`, `api/cron/appointments/reminders/route.ts` | **Critical** | Bajo (1-2h) | Auth |
-| DA-3-002 | SSRF via cookie `esden-tenant-url` sin allowlist en `/api/tenant/migrate` | `api/tenant/migrate/route.ts:247-263` | **Critical** | Medio (3-4h) | SSRF |
+| DA-3-002 | SSRF via cookie `af-tenant-url` sin allowlist en `/api/tenant/migrate` | `api/tenant/migrate/route.ts:247-263` | **Critical** | Medio (3-4h) | SSRF |
 | DA-3-003 | Test endpoint de orquestador abierto en producción | `api/test/orchestrator/route.ts` | **Critical** | Mínimo (30min) | Auth |
 | DA-3-004 | XSS en widget embed via `id` sin sanitizar | `api/widget/embed.js/route.ts:16` | **High** | Bajo (1h) | XSS |
 | DA-3-005 | Retell tools webhook sin firma: agendar/cancelar citas sin auth | `api/webhooks/retell/tools/route.ts` | **High** | Medio (2-3h) | Webhook |

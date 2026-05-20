@@ -71,7 +71,7 @@ Severidad: CRÍTICO
 Fecha: 2026-02-19 14:30
 
 Impacto:
-- Fase 2 bloqueada
+- Fase 1 bloqueada
 - Tareas afectadas: 12
 - Tiempo potencial perdido: 8h
 

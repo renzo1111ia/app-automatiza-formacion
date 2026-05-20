@@ -140,7 +140,7 @@ Fundamental para consistencia. Si el RoadMap avanza sin los READMEs, el CI de de
 
 3. **¿`README.staging.md` y `README.main.md` deben añadirse al `.gitignore` de staging y main?** No aplica — `.gitignore` es por repo, no por rama. La purity check del CI es el mecanismo correcto. Sin acción necesaria.
 
-4. **¿El RoadMap incluirá la tarea de "crear sistema README" en el propio roadmap?** Sería la tarea de documentación/scaffold de sprint 0. Si el usuario quiere trackearla como tarea B-30 (ya existe como "hook de productivity") o una tarea nueva de scaffold, el roadmap-keeper la añadiría. Pendiente decidir.
+4. **¿El RoadMap incluirá la tarea de "crear sistema README" en el propio roadmap?** Sería la tarea de documentación/scaffold de sprint 0. Si el usuario quiere trackearla como tarea 1-30 (ya existe como "hook de productivity") o una tarea nueva de scaffold, el roadmap-keeper la añadiría. Pendiente decidir.
 
 5. **¿Las plantillas en `plans/templates/` deben moverse a `scripts/readme-templates/` como parte de phase-06, o en implementación?** Este plan las crea en `plans/` (artefactos de diseño). En la implementación (phase-06) el implementador las copia a `scripts/readme-templates/`. Confirmar si el usuario quiere que el planner las cree directamente en `scripts/` para evitar duplicación.
 

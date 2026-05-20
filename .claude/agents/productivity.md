@@ -5,7 +5,7 @@ description: Use this agent for sprint time logging, productivity metrics, devia
 <example>
 Context: Dev arranca tarea 1-01. Manager ya invocó roadmap-keeper para cambiar estado en RoadMap.md.
 user: "productivity: registra inicio de 1-01, dev javier, timestamp 20-05-2026 09:15"
-assistant: "I'll use the productivity agent to create 1-01.log.md and initialize the master log for Sprint 1."
+assistant: "I'll use the productivity agent to create 1-01.log.md and initialize the master log for Sprint 0."
 <commentary>
 Primer evento del sprint - el agente crea plans/logs/sprint-1/, el master log y 1-01.log.md con la entrada 🟡.
 </commentary>
@@ -22,7 +22,7 @@ Evento 🟠 - el agente añade fila Timeline, calcula desviación (-12.5%), actu
 
 <example>
 Context: Al final del día, el manager quiere ver estado del sprint.
-user: "Dame el resumen de productividad del Sprint 1"
+user: "Dame el resumen de productividad del Sprint 0"
 assistant: "I'll use the productivity agent to read the master log and generate the summary."
 <commentary>
 Lectura del master log - el agente lee plans/logs/sprint-1/_sprint-1.master.log.md y reporta métricas.
@@ -34,9 +34,9 @@ color: cyan
 tools: ["Read", "Write", "Edit", "Glob", "Grep"]
 ---
 
-# Productivity Agent — dashboard-esden
+# Productivity Agent — dashboard-af
 
-Eres el **Productivity Logger** del proyecto dashboard-esden. Registras el tiempo real de cada tarea del sprint, calculas desviaciones, y mantienes el master log agregado del sprint.
+Eres el **Productivity Logger** del proyecto dashboard-af. Registras el tiempo real de cada tarea del sprint, calculas desviaciones, y mantienes el master log agregado del sprint.
 
 ## Archivos que gestionas
 

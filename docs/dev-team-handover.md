@@ -1,5 +1,5 @@
 ---
-title: "Dev Team Handover — dashboard-esden"
+title: "Dev Team Handover — dashboard-af"
 audience: equipo de desarrollo interno (Esden + Auditor)
 status: LIVING_DOCUMENT
 maintained_by: agente `team-knowledge-keeper` (proactivo) + manager (orquestador)
@@ -7,7 +7,7 @@ date: 20-05-2026
 excluded_from: [staging, main]
 ---
 
-# Dev Team Handover — dashboard-esden
+# Dev Team Handover — dashboard-af
 
 > ⚠️ **Documento vivo**. Lo mantiene el agente `team-knowledge-keeper` proactivamente cada vez que el equipo necesita saber algo nuevo. NO editar directamente sin orden del lead — pide al agente que lo haga.
 >
@@ -42,12 +42,12 @@ Todo lo que el equipo de desarrollo necesita saber para trabajar en este proyect
 
 ## 1. Identidad del proyecto
 
-**dashboard-esden** — AI CRM + Workflow Orchestrator multi-tenant para academias formativas (ES + Latam).
+**dashboard-af** — AI CRM + Workflow Orchestrator multi-tenant para academias formativas (ES + Latam).
 
 - Versión actual: **v0.0.0**.
-- Repositorio: `<configurar remote propio del equipo>` (NUNCA conectar a `renzo1111ia/dashboard-esden`).
+- Repositorio: `<configurar remote propio del equipo>` (NUNCA conectar a `renzo1111ia/dashboard-af`).
 - Rama de trabajo activa: `developer`.
-- Audiencia interna: equipo Esden + Auditor (Javier HP).
+- Audiencia interna: equipo AF + Auditor (Javier HP).
 
 ---
 
@@ -56,8 +56,8 @@ Todo lo que el equipo de desarrollo necesita saber para trabajar en este proyect
 Ver [docs/dev-onboarding.md](dev-onboarding.md) para el setup completo paso a paso. Resumen mínimo:
 
 ```powershell
-git clone <repo-url> dashboard-esden
-cd dashboard-esden
+git clone <repo-url> dashboard-af
+cd dashboard-af
 git checkout developer
 cp .env.example .env.local                # rellena con secretos del vault
 npm install
@@ -91,7 +91,7 @@ feature/* → PR → developer → /staging X.Y.Z → staging → /staging-main 
 Versionado SemVer:
 - `v0.0.x` patches dentro de sprint.
 - `v0.x.0` cierre de sprint.
-- `v1.0.0` MVP completo (post Fase D, pre Fase E).
+- `v1.0.0` MVP completo (post Fase 3, pre Fase 4).
 
 ---
 
@@ -106,8 +106,8 @@ Documento autoritativo: [docs/audit/STACK-TECNOLOGICO.md](audit/STACK-TECNOLOGIC
 | **BD** | PostgreSQL via **Supabase self-hosted** en **Easypanel** (R-023). `@supabase/ssr` + **Zod** + **Repository pattern** + RLS multi-tenant. **SIN ORM nuevo** (decisión confirmada — ver `project_stack_data_layer.md` + `plans/20260519-1200-rls-multitenant-hardening/research/stack-decision-no-orm.md`). |
 | **LLM** | LangChain + Anthropic + OpenAI + Google Genai + AWS Bedrock |
 | **Voz** | Retell + Ultravox (abstracción `VoiceProvider` — R-016) |
-| **CRM MVP (Fase C)** | HubSpot + Zoho |
-| **CRM Fase E** | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign |
+| **CRM MVP (Fase 2)** | HubSpot + Zoho |
+| **CRM Fase 4** | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign |
 | **Tests** | Vitest (unit) + Playwright (E2E) |
 | **Deploy** | Easypanel self-hosted |
 
@@ -121,11 +121,11 @@ Decisión vigente: [R-020-refinement-v2](audit/DECISIONES-AUDITOR-JAVIER-HP.md#r
 
 | Fase | Contenido | Semanas | Status |
 | --- | --- | --- | --- |
-| **A — Sprint 0** | Hotfixes seguridad (4 vulnerabilidades RLS + tokens OAuth + Kong EOL) | 1-2 sem | Pendiente |
-| **B — Capa de datos** | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | 3-4 sem | Pendiente |
-| **C — Adapter layer + 2 CRMs (MVP)** | HubSpot + Zoho adapters + UI admin de conexión | 2-3 sem | Pendiente |
-| **D — Hardening** | Tests E2E, observabilidad, dashboards costes | 2-3 sem | Pendiente |
-| **E — Post-release** | Sheets bidireccional + Salesforce + GHL + ActiveCampaign | 4-7 sem | Futuro |
+| **0 — Sprint 0** | Hotfixes seguridad (4 vulnerabilidades RLS + tokens OAuth + Kong EOL) | 1-2 sem | Pendiente |
+| **1 — Capa de datos** | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | 3-4 sem | Pendiente |
+| **2 — Adapter layer + 2 CRMs (MVP)** | HubSpot + Zoho adapters + UI admin de conexión | 2-3 sem | Pendiente |
+| **3 — Hardening** | Tests E2E, observabilidad, dashboards costes | 2-3 sem | Pendiente |
+| **4 — Post-release** | Sheets bidireccional + Salesforce + GHL + ActiveCampaign | 4-7 sem | Futuro |
 
 ---
 
@@ -140,7 +140,7 @@ Resumen de las más críticas:
 | R-013 | Cadencia 09-21h hora lead + 3 días + festivos país lead | Timezone-aware scheduler obligatorio |
 | R-014 | **Sync CRM = append-only por defecto**, sobrescritura sólo con `crm_write_audit` | Tabla `crm_field_mapping.write_policy` |
 | R-016 | Ultravox equiparado a Retell (análisis transcripción post-llamada) | Interfaz común `VoiceProvider` |
-| R-020 + v2 | Top 5 CRMs identificados. **MVP Fase C = HubSpot + Zoho. Sheets a Fase E.** | Adapter pattern desde Fase C |
+| R-020 + v2 | Top 5 CRMs identificados. **MVP Fase 2 = HubSpot + Zoho. Sheets a Fase 4.** | Adapter pattern desde Fase 2 |
 | R-021 | Migrar Airtable → Supabase | Sub-proyecto en Sprint 2-3 |
 | R-022 | Equipo dev mantiene KB | Panel admin + carga operativa |
 | R-023 | **Supabase self-hosted en Easypanel** (NO Coolify) | Plan deploy + Kong EOL |
@@ -153,12 +153,12 @@ Resumen de las más críticas:
 
 ```
 <repo>/
-├── CLAUDE.md                          ← instrucciones específicas Esden (additive al global del dev)
+├── CLAUDE.md                          ← instrucciones específicas AF (additive al global del dev)
 ├── .env.example                       ← placeholders (.env real va por canal seguro)
 ├── .gitignore                         ← excluye .env real + docs/Docs-entrega-clienta/ + dist/ + .playwright-mcp/
 ├── .gitattributes                     ← (opcional, sin uso por ahora)
 ├── .claude-plugin/
-│   └── plugin.json                    ← manifest del plugin esden-agents v0.0.0
+│   └── plugin.json                    ← manifest del plugin af-agents v0.0.0
 ├── .claude/
 │   ├── settings.json                  ← permissions + enabledPlugins (context7 + playwright)
 │   ├── rules/                         ← 5 normas (development, documentation, orchestration, primary-workflow, team-coordination)
@@ -190,7 +190,7 @@ Resumen de las más críticas:
 
 ```
                                 ┌────────────────────────────┐
-                                │   esden-agents:manager     │  ← Opus
+                                │   af-agents:manager     │  ← Opus
                                 │   (Orquestador único)      │
                                 └────────────┬───────────────┘
                                              │ delegates via Task tool
@@ -220,50 +220,50 @@ Resumen de las más críticas:
 
 ## 9. Catálogo de subagentes
 
-Todos viven en [.claude/agents/](../.claude/agents/). Namespace `esden-agents:*` para los del plugin del proyecto; los demás se invocan por nombre directo.
+Todos viven en [.claude/agents/](../.claude/agents/). Namespace `af-agents:*` para los del plugin del proyecto; los demás se invocan por nombre directo.
 
 ### Orquestador
 
 | Subagente | Modelo | Función |
 | --- | --- | --- |
-| `esden-agents:manager` | Opus | Único orquestador. Delega todo el trabajo, valida resultados, coordina sprints. |
+| `af-agents:manager` | Opus | Único orquestador. Delega todo el trabajo, valida resultados, coordina sprints. |
 
 ### Especialistas de desarrollo
 
 | Subagente | Modelo | Función |
 | --- | --- | --- |
-| `esden-agents:planning` | Sonnet | Desglose de fases en tareas + arquitectura + estimaciones |
-| `esden-agents:adr` | Sonnet | ADRs + Dependency Guard (bloqueo install sin autorización) |
-| `esden-agents:database` | Sonnet | SQL migrations Supabase, schemas Zod, Repository pattern, RLS multi-tenant (sin ORM) |
-| `esden-agents:api` | Sonnet | Endpoints REST, middleware, validación Zod |
-| `esden-agents:code` | Sonnet | Implementación de features y fixes |
-| `esden-agents:uxui` | Sonnet | Componentes React, accesibilidad, responsive |
+| `af-agents:planning` | Sonnet | Desglose de fases en tareas + arquitectura + estimaciones |
+| `af-agents:adr` | Sonnet | ADRs + Dependency Guard (bloqueo install sin autorización) |
+| `af-agents:database` | Sonnet | SQL migrations Supabase, schemas Zod, Repository pattern, RLS multi-tenant (sin ORM) |
+| `af-agents:api` | Sonnet | Endpoints REST, middleware, validación Zod |
+| `af-agents:code` | Sonnet | Implementación de features y fixes |
+| `af-agents:uxui` | Sonnet | Componentes React, accesibilidad, responsive |
 
 ### Especialistas de calidad
 
 | Subagente | Modelo | Función |
 | --- | --- | --- |
-| `esden-agents:testing` | Sonnet | Vitest unit + integration, Playwright E2E, coverage |
-| `esden-agents:review` | Sonnet | Code review pre-merge, pattern adherence |
-| `esden-agents:security` | Sonnet | RLS verify, OWASP, auth review, secrets scan |
-| `esden-agents:performance` | Sonnet | Lighthouse, bundle size, query optimization |
+| `af-agents:testing` | Sonnet | Vitest unit + integration, Playwright E2E, coverage |
+| `af-agents:review` | Sonnet | Code review pre-merge, pattern adherence |
+| `af-agents:security` | Sonnet | RLS verify, OWASP, auth review, secrets scan |
+| `af-agents:performance` | Sonnet | Lighthouse, bundle size, query optimization |
 
 ### Especialistas de operaciones
 
 | Subagente | Modelo | Función |
 | --- | --- | --- |
-| `esden-agents:git` | Sonnet | Branches, commits, PRs, tags. **Obliga a changelog completo por commit/PR** |
-| `esden-agents:deployment` | Sonnet | Easypanel deploys, CI/CD, env vars. **No autoriza release sin documentación profesional completa** |
-| `esden-agents:productivity` | Sonnet | Time tracking, sprint reports, deviation analysis |
+| `af-agents:git` | Sonnet | Branches, commits, PRs, tags. **Obliga a changelog completo por commit/PR** |
+| `af-agents:deployment` | Sonnet | Easypanel deploys, CI/CD, env vars. **No autoriza release sin documentación profesional completa** |
+| `af-agents:productivity` | Sonnet | Time tracking, sprint reports, deviation analysis |
 
 ### Especialistas de documentación
 
 | Subagente | Modelo | Función |
 | --- | --- | --- |
-| `esden-agents:documentation` | Sonnet | README, API docs, CONTRIBUTING, release notes |
-| `esden-agents:team-knowledge-keeper` | Sonnet | **PROACTIVO**. Mantiene este `dev-team-handover.md` cada vez que hay info nueva relevante para el equipo |
-| `esden-agents:help-docs-keeper` | Sonnet | **PROACTIVO**. Crea y mantiene la página "Ayuda al admin" del producto. Auto-trigger al cierre de sprint y tras bug fix |
-| `esden-agents:roadmap-keeper` | Sonnet | **PROACTIVO**. Mantiene `plans/RoadMap.md`. Enforza la máquina de estados 🔘→🟡→🟠→🔵→🟢 de cada tarea. Recalcula estimaciones y reporta desviaciones |
+| `af-agents:documentation` | Sonnet | README, API docs, CONTRIBUTING, release notes |
+| `af-agents:team-knowledge-keeper` | Sonnet | **PROACTIVO**. Mantiene este `dev-team-handover.md` cada vez que hay info nueva relevante para el equipo |
+| `af-agents:help-docs-keeper` | Sonnet | **PROACTIVO**. Crea y mantiene la página "Ayuda al admin" del producto. Auto-trigger al cierre de sprint y tras bug fix |
+| `af-agents:roadmap-keeper` | Sonnet | **PROACTIVO**. Mantiene `plans/RoadMap.md`. Enforza la máquina de estados 🔘→🟡→🟠→🔵→🟢 de cada tarea. Recalcula estimaciones y reporta desviaciones |
 
 ### Meta / soporte (heredados de la config global)
 
@@ -367,14 +367,14 @@ Total: **19 hooks `.cjs`** + helpers en [.claude/hooks/lib/](../.claude/hooks/li
 | `session-state.cjs` | Stop | Persiste session state |
 | `plan-format-kanban.cjs` | (manual) | Render plans estilo kanban |
 
-### Específicos Esden (4)
+### Específicos AF (4)
 
 | Hook | Evento | Función |
 | --- | --- | --- |
-| `esden-roadmap-check.cjs` | SessionStart | Inyecta resumen audit + decisiones + plan vigente |
-| `esden-stop-checkpoint.cjs` | Stop | Avisa de uncommitted + bloquea sugerencias en staging/main |
-| `esden-task-tracker.cjs` | PostToolUse (Edit/Write) | Sugiere actualizar plans + RLS/voice/deps reminders |
-| `esden-deps-guard.cjs` | PreToolUse (Bash) | **Bloquea `npm install <pkg>` sin pasar por @adr** |
+| `af-roadmap-check.cjs` | SessionStart | Inyecta resumen audit + decisiones + plan vigente |
+| `af-stop-checkpoint.cjs` | Stop | Avisa de uncommitted + bloquea sugerencias en staging/main |
+| `af-task-tracker.cjs` | PostToolUse (Edit/Write) | Sugiere actualizar plans + RLS/voice/deps reminders |
+| `af-deps-guard.cjs` | PreToolUse (Bash) | **Bloquea `npm install <pkg>` sin pasar por @adr** |
 
 ### Soporte (1)
 
@@ -396,7 +396,7 @@ Total: **19 hooks `.cjs`** + helpers en [.claude/hooks/lib/](../.claude/hooks/li
 | `primary-workflow.md` | planner → research paralelo → code → simplify → test → review → docs |
 | `team-coordination-rules.md` | File ownership en teams, worktrees, SendMessage protocols |
 
-Adicionalmente, [CLAUDE.md](../CLAUDE.md) del repo raíz tiene las reglas top-level específicas Esden (co-authorship, branch protection, no Prisma/Dokploy/Airtable, RLS obligatorio, append-only CRM, tests con BD real, etc).
+Adicionalmente, [CLAUDE.md](../CLAUDE.md) del repo raíz tiene las reglas top-level específicas AF (co-authorship, branch protection, no Prisma/Dokploy/Airtable, RLS obligatorio, append-only CRM, tests con BD real, etc).
 
 ---
 
@@ -416,11 +416,11 @@ Definidos en [.claude/commands/](../.claude/commands/). Sólo disponibles en est
 | MCP | Origen | Uso |
 | --- | --- | --- |
 | `plugin:context7:context7` | Plugin oficial `context7@claude-plugins-official` | Docs de Next/React/Supabase/Zod/HubSpot/Zoho — vía skill `docs-seeker` |
-| `plugin:playwright:playwright` | Plugin oficial `playwright@claude-plugins-official` | Browser tests Fase D, screenshots para `help-docs-keeper` |
+| `plugin:playwright:playwright` | Plugin oficial `playwright@claude-plugins-official` | Browser tests Fase 3, screenshots para `help-docs-keeper` |
 
 **MCPs NO incluidos** (decisión del Auditor): Gmail, Calendar, Drive, Gamma, pencil — son MCPs personales del Auditor, no del proyecto.
 
-**Para Fase E**: añadir MCP/skill custom de Google Sheets cuando se llegue a esa fase.
+**Para Fase 4**: añadir MCP/skill custom de Google Sheets cuando se llegue a esa fase.
 
 ---
 
@@ -445,7 +445,7 @@ Definidos en [.claude/commands/](../.claude/commands/). Sólo disponibles en est
 
 ## 16. Páginas de ayuda al admin
 
-Gestionadas por el agente `esden-agents:help-docs-keeper`. La página "Ayuda al admin" se renderiza en el producto en **la última posición del menú lateral del admin**.
+Gestionadas por el agente `af-agents:help-docs-keeper`. La página "Ayuda al admin" se renderiza en el producto en **la última posición del menú lateral del admin**.
 
 Cada subsección de la ayuda tiene un **estado**:
 
@@ -462,7 +462,7 @@ Para más detalle ver [.claude/agents/help-docs-keeper.md](../.claude/agents/hel
 
 ## 16.bis. RoadMap y máquina de estados de tareas
 
-Documento autoritativo: [`plans/RoadMap.md`](../plans/RoadMap.md). Mantenido proactivamente por el agente `esden-agents:roadmap-keeper`.
+Documento autoritativo: [`plans/RoadMap.md`](../plans/RoadMap.md). Mantenido proactivamente por el agente `af-agents:roadmap-keeper`.
 
 ### Máquina de estados (ley)
 
@@ -492,11 +492,11 @@ Todo sprint termina con estas 5 tareas en orden (no se pueden saltar):
 
 | # | Tarea | Quién |
 | --- | --- | --- |
-| 1 | **Auto test** — typecheck + lint + build + tests (unit + integration). Coverage report. | `esden-agents:testing` |
-| 2 | **Test E2C Local** — Playwright en browser: recorrer flujos implementados + visual + diseño + **WCAG 2.2 AA**. Reporte con screenshots de pasos clave + findings accesibilidad. | `esden-agents:testing` + `esden-agents:uxui` |
-| 3 | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales si necesario. Guía paso-a-paso clara: qué probar, cómo, qué esperar. Esperar feedback. | `esden-agents:manager` (interactúa con humano) |
-| 4 | **Corrección de Bugs detectados** — Por cada bug que reporte el dev, crear subtarea con su propio estado. La tarea padre queda 🟡 hasta que TODAS las subtareas estén 🟢. | `esden-agents:code` + `esden-agents:debugger` |
-| 5 | **Cierre de Sprint** — PR `feature/sp-X-*` → `developer`. Tras merge: bump SemVer + invitar al dev a tomar siguiente sprint + crear rama del siguiente sprint. | `esden-agents:git` (verifica estados) + `esden-agents:deployment` (gatekeeper changelog) + `esden-agents:productivity` (cierre tracking) |
+| 1 | **Auto test** — typecheck + lint + build + tests (unit + integration). Coverage report. | `af-agents:testing` |
+| 2 | **Test E2C Local** — Playwright en browser: recorrer flujos implementados + visual + diseño + **WCAG 2.2 AA**. Reporte con screenshots de pasos clave + findings accesibilidad. | `af-agents:testing` + `af-agents:uxui` |
+| 3 | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales si necesario. Guía paso-a-paso clara: qué probar, cómo, qué esperar. Esperar feedback. | `af-agents:manager` (interactúa con humano) |
+| 4 | **Corrección de Bugs detectados** — Por cada bug que reporte el dev, crear subtarea con su propio estado. La tarea padre queda 🟡 hasta que TODAS las subtareas estén 🟢. | `af-agents:code` + `af-agents:debugger` |
+| 5 | **Cierre de Sprint** — PR `feature/sp-X-*` → `developer`. Tras merge: bump SemVer + invitar al dev a tomar siguiente sprint + crear rama del siguiente sprint. | `af-agents:git` (verifica estados) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
 
 Pre-requisitos del cierre — gates obligatorios:
 
@@ -529,7 +529,7 @@ El manager te resume el estado actual sin necesidad de leer el doc entero.
 | Auditor | Javier HP — responsable del audit técnico inicial y mantenimiento del scaffold |
 | Cliente | La empresa contratante del SaaS (Esden) |
 | Cliente final / Tenant | Cada academia formativa que usa el SaaS |
-| MVP | Producto en estado mínimo viable: Fase A + B + C + D completadas, antes de E |
+| MVP | Producto en estado mínimo viable: Fase 0 + 1 + 2 + 3 completadas, antes de 4 |
 | RLS | Row Level Security en PostgreSQL/Supabase para isolation multi-tenant |
 | ADR | Architecture Decision Record |
 | Phase Completion Protocol | typecheck + lint + build + tests + browser tests + informe — automático al cerrar fase |
@@ -540,5 +540,5 @@ El manager te resume el estado actual sin necesidad de leer el doc entero.
 ---
 
 **Última actualización**: 20-05-2026 por agente `team-knowledge-keeper` (inicial — creación).
-**Mantenedor proactivo**: `esden-agents:team-knowledge-keeper`.
+**Mantenedor proactivo**: `af-agents:team-knowledge-keeper`.
 **Lead**: Javier HP (admin@2you.ai).

@@ -15,7 +15,7 @@ import re, shutil, zipfile, datetime
 from pathlib import Path
 import markdown
 
-ROOT = Path(__file__).resolve().parents[3]  # automatiza-formacion-dashboard/ (renombrado desde dashboard-esden-main el 2026-05-20)
+ROOT = Path(__file__).resolve().parents[3]  # automatiza-formacion-dashboard/ (renombrado desde dashboard-af-main el 2026-05-20)
 DOCS = ROOT / "docs"
 BUILD_DIR = DOCS / "audit" / "_build"
 OUT = ROOT / "dist" / "audit-bundle"

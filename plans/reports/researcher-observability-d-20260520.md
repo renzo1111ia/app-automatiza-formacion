@@ -1,5 +1,5 @@
 ---
-title: "Researcher Report — Observabilidad y Dashboard Costes LLM — Sprint 4"
+title: "Researcher Report — Observabilidad y Dashboard Costes LLM — Sprint 3"
 date: 2026-05-20
 agent: researcher-observability (Sonnet)
 sprint: 4
@@ -33,7 +33,7 @@ export const logger = pino({
   formatters: {
     level: (label) => ({ level: label }),
   },
-  base: { service: 'dashboard-esden' },
+  base: { service: 'dashboard-af' },
 });
 ```
 
@@ -42,7 +42,7 @@ Campos estructurados recomendados por log entry:
 {
   "level": "info",
   "time": 1716239040000,
-  "service": "dashboard-esden",
+  "service": "dashboard-af",
   "tenant_id": "uuid",
   "user_id": "uuid",
   "trace_id": "uuid",
@@ -62,7 +62,7 @@ Pino escribe a **stdout** — Easypanel captura automáticamente. No se necesita
 
 Next.js 16 declara `@opentelemetry/api ^1.1.0` como peer dep opcional. Instalado implícitamente vía `@vercel/otel` pero no configurado en el proyecto actual.
 
-### Paquetes mínimos (Sprint 4)
+### Paquetes mínimos (Sprint 3)
 
 ```
 devDependencies:
@@ -94,7 +94,7 @@ Genera spans por cada job processed, waiting time, etc.
 | Trazas distribuidas (request → worker → LLM → webhook) | OpenTelemetry |
 | Correlación entre múltiples servicios | OpenTelemetry |
 
-**DECISIÓN Sprint 4:** Pino para logging + OpenTelemetry básico para métricas BullMQ. Trazas distribuidas completas = futuro Sprint 5.
+**DECISIÓN Sprint 3:** Pino para logging + OpenTelemetry básico para métricas BullMQ. Trazas distribuidas completas = futuro Sprint 4.
 
 ---
 
@@ -183,7 +183,7 @@ CREATE INDEX ON llm_usage_logs(tenant_id, provider, created_at);
 | Google | Gemini 1.5 Flash | $0.075 | $0.30 |
 | AWS Bedrock | Claude 3.5 Sonnet | $3.00 | $15.00 |
 
-**NOTA:** Los precios hardcodeados en el código actual (DA-4-005) están obsoletos (GPT-4 de 2023). Corregir en Sprint 4.
+**NOTA:** Los precios hardcodeados en el código actual (DA-4-005) están obsoletos (GPT-4 de 2023). Corregir en Sprint 3.
 
 ### LangSmith vs custom PostgreSQL
 
@@ -215,7 +215,7 @@ Vista admin global (superadmin) + vista por tenant.
 | Easypanel monitoring | ✅ CPU/RAM/logs Docker | Incluido | ✅ USAR como base |
 | Grafana Cloud | ✅ Free 14 días retención, 50GB | Free | ✅ OPCIONAL (futuro) |
 
-**DECISIÓN MVP:** Pino → stdout → Easypanel + Sentry para errores críticos. Grafana Cloud = Sprint 5.
+**DECISIÓN MVP:** Pino → stdout → Easypanel + Sentry para errores críticos. Grafana Cloud = Sprint 4.
 
 ---
 
@@ -228,10 +228,10 @@ Vista admin global (superadmin) + vista por tenant.
 | Tabla llm_usage_logs + RLS + callback LangChain | 6-8h |
 | Dashboard Recharts costes LLM (UI admin) | 8-12h |
 | Sentry setup básico (errores) | 2h |
-| **Total D-03 observabilidad** | **10-14h** |
-| **Total D-04 dashboard LLM** | **14-20h** |
+| **Total 3-03 observabilidad** | **10-14h** |
+| **Total 3-04 dashboard LLM** | **14-20h** |
 
 ---
 
 **Status:** DONE
-**Summary:** Stack recomendado para Sprint 4: Pino v9 para logging estructurado, BullMQ getJobCounts para métricas de colas, bull-board para UI de monitoring, tabla PostgreSQL custom para costes LLM con LangChain CallbackHandler, Recharts para dashboard UI. Sentry para error tracking. Sin OpenTelemetry completo en MVP (aplazar trazas distribuidas a Sprint 5).
+**Summary:** Stack recomendado para Sprint 3: Pino v9 para logging estructurado, BullMQ getJobCounts para métricas de colas, bull-board para UI de monitoring, tabla PostgreSQL custom para costes LLM con LangChain CallbackHandler, Recharts para dashboard UI. Sentry para error tracking. Sin OpenTelemetry completo en MVP (aplazar trazas distribuidas a Sprint 4).

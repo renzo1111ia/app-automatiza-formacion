@@ -18,7 +18,7 @@ methodology: Análisis estático superficial (grep + lectura de código clave)
 
 **Evidencias:**
 
-1. **Multi-tenancy sin tenant_id garantizado** — El middleware (`src/middleware.ts`) valida autenticación vía Supabase auth, pero no verifica que el `tenant_id` de la cookie pertenezca al usuario autenticado. La cookie `esden-tenant-id` se lee directamente sin validación server-side del ownership.
+1. **Multi-tenancy sin tenant_id garantizado** — El middleware (`src/middleware.ts`) valida autenticación vía Supabase auth, pero no verifica que el `tenant_id` de la cookie pertenezca al usuario autenticado. La cookie `af-tenant-id` se lee directamente sin validación server-side del ownership.
 
 2. **Middleware solo protege `/dashboard` y `/login`** — Rutas bajo `/api/*` NO pasan por el middleware de autenticación según la config del matcher (`/((?!_next/static|...).*)`). Los API routes son responsables de su propia auth — verificar que todos lo implementan.
 
@@ -167,14 +167,14 @@ async headers() {
 
 2. **Admin check con 4 variantes** — (`src/middleware.ts:62-68`) — Ver A01. El check de admin busca en `user_metadata.is_admin`, `user_metadata.admin`, `app_metadata.is_admin`, `app_metadata.admin`. Esto sugiere que el campo se ha renombrado varias veces sin migración de datos. Un usuario con `admin: true` en metadata antigua aún tendría acceso admin, y un usuario nuevo con `is_admin: true` también. Posibles inconsistencias.
 
-3. **Cookie `esden-tenant-id`** — Sin `httpOnly` ni `secure` explícito verificado en el código de `setTenantCookies` (`src/lib/actions/tenant.ts:16`). La cookie tiene `path: "/"` y `maxAge: 30 días` pero no se especifican flags de seguridad. Si no tiene `httpOnly`, es accesible desde JavaScript del cliente.
+3. **Cookie `af-tenant-id`** — Sin `httpOnly` ni `secure` explícito verificado en el código de `setTenantCookies` (`src/lib/actions/tenant.ts:16`). La cookie tiene `path: "/"` y `maxAge: 30 días` pero no se especifican flags de seguridad. Si no tiene `httpOnly`, es accesible desde JavaScript del cliente.
 
 **Finding:** F-05-OWASP-009 — Cookie tenant-id sin flags de seguridad explícitos
 - Archivo: `src/lib/actions/tenant.ts:16`
 - Severidad: Medium
 - Fix:
 ```typescript
-cookieStore.set("esden-tenant-id", tenantId, {
+cookieStore.set("af-tenant-id", tenantId, {
     path: "/",
     maxAge: 30 * 24 * 60 * 60,
     httpOnly: true,  // No accesible desde JS

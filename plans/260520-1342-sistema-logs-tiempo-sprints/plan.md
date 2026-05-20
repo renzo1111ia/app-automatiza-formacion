@@ -41,14 +41,14 @@ Orden recomendado: 01 → 04 → 03 → 02
 | Archivo | Acción |
 |---------|--------|
 | `.claude/agents/productivity.md` | Editar (model haiku→sonnet + nuevas secciones) |
-| `plans/logs/` | Crear estructura (dirs + plantillas) — solo en Sprint 1 real |
+| `plans/logs/` | Crear estructura (dirs + plantillas) — solo en Sprint 0 real |
 | `plans/260520-1342-sistema-logs-tiempo-sprints/templates/` | Crear plantillas ahora |
 
 ## Archivos que NO toca este plan
 
 - `plans/RoadMap.md` — exclusivo del roadmap-keeper
 - `.claude/agents/roadmap-keeper.md` — solo lectura
-- `.claude/hooks/esden-task-tracker.cjs` — solo documentado, no modificado
+- `.claude/hooks/af-task-tracker.cjs` — solo documentado, no modificado
 - `src/`, `worker.js`, `supabase/` — código de la app intocable
 
 ## Decisión de modelo

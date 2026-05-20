@@ -1,4 +1,4 @@
-# Research — GoHighLevel + ActiveCampaign (Sprint 5)
+# Research — GoHighLevel + ActiveCampaign (Sprint 4)
 
 **Agente:** researcher (Sonnet)
 **Fecha:** 20-05-2026
@@ -225,7 +225,7 @@ Lead updated → BullMQ → GHLAdapter(tenant)
   → OAuth2 access token (refresh si expirado)
   → Search contact by email → create/update
   → Create/update opportunity si es matrícula
-  → Set _last_sync_source = 'esden'
+  → Set _last_sync_source = 'af'
 
 GHL webhook → POST /api/webhooks/ghl
   → Verify HMAC-SHA256 signature

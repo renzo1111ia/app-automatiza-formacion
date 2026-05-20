@@ -1,4 +1,4 @@
-# Research — Generalización Adapter Pattern (Sprint 5-05)
+# Research — Generalización Adapter Pattern (Sprint 4-05)
 
 **Agente:** researcher (Sonnet)
 **Fecha:** 20-05-2026
@@ -32,14 +32,14 @@ export interface IntegrationAdapter {
   testConnection(tenantId: string): Promise<ConnectionStatus>
 
   // Core operations
-  upsertContact(tenantId: string, lead: EsdenLead): Promise<AdapterResult>
+  upsertContact(tenantId: string, lead: AFLead): Promise<AdapterResult>
   getContact(tenantId: string, externalId: string): Promise<AdapterContact | null>
-  syncLead(tenantId: string, lead: EsdenLead): Promise<SyncResult>
+  syncLead(tenantId: string, lead: AFLead): Promise<SyncResult>
 
   // Webhooks (optional — solo adapters con soporte)
   registerWebhook?(tenantId: string, webhookUrl: string): Promise<void>
   validateWebhookSignature?(payload: unknown, signature: string): boolean
-  parseWebhookPayload?(payload: unknown): Partial<EsdenLead>
+  parseWebhookPayload?(payload: unknown): Partial<AFLead>
 }
 ```
 
@@ -82,22 +82,22 @@ export type FieldMapping = Record<string, string>  // esden_field → crm_field
 export class FieldMapper {
   constructor(private mapping: FieldMapping) {}
 
-  toExternal(lead: EsdenLead): Record<string, unknown> {
-    return Object.entries(this.mapping).reduce((acc, [esdenKey, crmKey]) => {
-      acc[crmKey] = lead[esdenKey as keyof EsdenLead]
+  toExternal(lead: AFLead): Record<string, unknown> {
+    return Object.entries(this.mapping).reduce((acc, [afKey, crmKey]) => {
+      acc[crmKey] = lead[afKey as keyof AFLead]
       return acc
     }, {} as Record<string, unknown>)
   }
 
-  fromExternal(crmRecord: Record<string, unknown>): Partial<EsdenLead> {
+  fromExternal(crmRecord: Record<string, unknown>): Partial<AFLead> {
     const reverse = Object.fromEntries(
       Object.entries(this.mapping).map(([k, v]) => [v, k])
     )
     return Object.entries(crmRecord).reduce((acc, [crmKey, val]) => {
-      const esdenKey = reverse[crmKey]
-      if (esdenKey) acc[esdenKey as keyof EsdenLead] = val as any
+      const afKey = reverse[crmKey]
+      if (afKey) acc[afKey as keyof AFLead] = val as any
       return acc
-    }, {} as Partial<EsdenLead>)
+    }, {} as Partial<AFLead>)
   }
 }
 ```
@@ -124,7 +124,7 @@ export type WritePolicy = 'append_only' | 'overwrite_with_audit'
 export async function applyWritePolicy(
   adapter: IntegrationAdapter,
   tenantId: string,
-  lead: EsdenLead,
+  lead: AFLead,
   policy: WritePolicy
 ): Promise<SyncResult> {
   if (policy === 'append_only') {
@@ -162,7 +162,7 @@ for (const adapterId of TEST_ADAPTERS) {
       expect(typeof adapter.testConnection).toBe('function')
     })
 
-    it('maps EsdenLead to external format correctly', () => {
+    it('maps AFLead to external format correctly', () => {
       const mapper = new FieldMapper(DEFAULT_FIELD_MAPPINGS[adapterId])
       const external = mapper.toExternal(MOCK_LEAD)
       expect(external).toHaveProperty(DEFAULT_FIELD_MAPPINGS[adapterId]['email'])
@@ -234,7 +234,7 @@ Señales de que es el momento correcto:
 
 ## 9. Preguntas abiertas
 
-1. ¿La interfaz `IntegrationAdapter` ya existe en Sprint 3 o se crea desde cero en 5-05?
+1. ¿La interfaz `IntegrationAdapter` ya existe en Sprint 2 o se crea desde cero en 5-05?
 2. ¿Se incluye `Sheets` en el test suite de contrato o queda separado (no es un CRM)?
 3. ¿Write policy R-014 se configura por tenant-CRM o hay un default global?
 

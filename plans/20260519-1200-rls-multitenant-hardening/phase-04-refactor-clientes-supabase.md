@@ -1,4 +1,4 @@
-# Fase 4 — Refactor capa cliente Supabase
+# Fase 3 — Refactor capa cliente Supabase
 
 **Prioridad:** 🟠 Alta (hace que las políticas de F3 sean efectivas)
 **Tiempo estimado:** 6h 0min
@@ -6,7 +6,7 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 3 — Políticas RLS](phase-03-politicas-rls-tablas-datos.md) (prerequisito)
+- [Fase 2 — Políticas RLS](phase-03-politicas-rls-tablas-datos.md) (prerequisito)
 - [src/lib/supabase/server.ts](../../src/lib/supabase/server.ts)
 - [src/lib/supabase/client.ts](../../src/lib/supabase/client.ts)
 
@@ -42,7 +42,7 @@ src/lib/supabase/
 ├── user-client.ts      ← Server: request-scoped con cookies (auth.uid)
 ├── system-client.ts    ← Webhooks/workers: service_role + SET LOCAL app.tenant_id
 ├── provisioning.ts     ← Solo para crear tenants / gestionar membresías
-└── tenant-router.ts    ← Validar cookie esden-tenant-id vs tenant_members
+└── tenant-router.ts    ← Validar cookie af-tenant-id vs tenant_members
 ```
 
 ## Related Code Files
@@ -221,7 +221,7 @@ export async function getActiveTenantId(): Promise<string | null> {
 
     if (!members || members.length === 0) return null;
 
-    const requested = (await cookies()).get('esden-tenant-id')?.value;
+    const requested = (await cookies()).get('af-tenant-id')?.value;
     const valid = requested && members.some(m => m.tenant_id === requested);
 
     // Si la cookie no apunta a un tenant permitido, caer al primero
@@ -232,7 +232,7 @@ export async function getActiveTenantId(): Promise<string | null> {
 ### Paso 6 — Smoke tests manual (15 min)
 
 - Login como usuario X → ver dashboard → solo aparecen leads/calls del tenant X.
-- Cambiar cookie `esden-tenant-id` a tenant ajeno → al refresh, vuelve al tenant original.
+- Cambiar cookie `af-tenant-id` a tenant ajeno → al refresh, vuelve al tenant original.
 - Llamar a server action → succeed con datos del tenant.
 
 ## Todo List
@@ -271,4 +271,4 @@ export async function getActiveTenantId(): Promise<string | null> {
 
 ## Next Steps
 
-→ [Fase 5 — Repository pattern + Zod en boundaries](phase-05-repository-pattern-zod.md)
+→ [Fase 4 — Repository pattern + Zod en boundaries](phase-05-repository-pattern-zod.md)

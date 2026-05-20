@@ -9,7 +9,7 @@
 
 ## Objetivo
 
-Garantizar aislamiento estricto entre tenants en el dashboard-esden mediante PostgreSQL Row-Level Security, eliminando la dependencia actual del backend en `service_role` y cerrando vulnerabilidades activas detectadas en la auditoría inicial.
+Garantizar aislamiento estricto entre tenants en el dashboard-af mediante PostgreSQL Row-Level Security, eliminando la dependencia actual del backend en `service_role` y cerrando vulnerabilidades activas detectadas en la auditoría inicial.
 
 ## 🚨 Hallazgos críticos de la auditoría (2026-05-19)
 
@@ -20,7 +20,7 @@ Cuatro vulnerabilidades **activas en producción** detectadas durante la revisi�
 | **H1** | Tabla `tenants` con política `USING (true)` para `authenticated` → cualquier user logueado lee/modifica TODOS los tenants | 🔴 Crítica | [supabase/tenants.sql](../../supabase/tenants.sql) políticas `Allow authenticated read/insert/update/delete` | **F1 paso 1** (provisional) + **F2 paso 4** (final con `tenant_members`) |
 | **H2** | Backend usa `service_role` global → todas las políticas RLS son bypassed; query sin `WHERE tenant_id` devuelve datos cross-tenant | 🔴 Crítica | [src/lib/supabase/server.ts](../../src/lib/supabase/server.ts) `getSupabaseServerClient()` usa `SERVICE_ROLE_KEY` | **F1 paso 5** (mitigación inmediata: audit logging + flag) + **F3-F4** (fix estructural) |
 | **H3** | Credenciales JWT hardcoded en código fuente (service_role y anon key como fallback) → commiteadas a git history público | 🔴 Crítica | [src/lib/supabase/server.ts:6-8](../../src/lib/supabase/server.ts#L6-L8) `FALLBACK_SERVICE_KEY`, `FALLBACK_ANON_KEY` | **F1 paso 2** (eliminar) + **F1 paso 3** (rotar en Supabase) |
-| **H4** | Cookie `esden-tenant-id` cliente-controlada, sin validación contra membresía real → un user puede cambiar la cookie y "ser" otro tenant | 🟠 Alta | [src/lib/supabase/server.ts:13-16](../../src/lib/supabase/server.ts#L13-L16) `getActiveTenantId()` solo lee cookie | **F1 paso 4** (validar contra `auth_user_id`) + **F2 paso 4** + **F4 paso 5** (validación final con `tenant_members`) |
+| **H4** | Cookie `af-tenant-id` cliente-controlada, sin validación contra membresía real → un user puede cambiar la cookie y "ser" otro tenant | 🟠 Alta | [src/lib/supabase/server.ts:13-16](../../src/lib/supabase/server.ts#L13-L16) `getActiveTenantId()` solo lee cookie | **F1 paso 4** (validar contra `auth_user_id`) + **F2 paso 4** + **F4 paso 5** (validación final con `tenant_members`) |
 
 **Hallazgos adicionales** (no activos pero estructurales):
 - **H5**: Sin tests anti-fuga en CI → ningún gate impide que el próximo PR reintroduzca el problema. Mitigación: **F7** completa.

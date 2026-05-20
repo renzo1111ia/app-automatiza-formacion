@@ -3,7 +3,7 @@ title: "Inventario de tokens, claves y secretos expuestos en el repositorio"
 date: 2026-05-18
 classification: SENSITIVE — uso interno del audit / cliente
 agent: Manual extraction (grep + decode) + Claude Code
-target: e:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard (repo cliente, renombrado desde `dashboard-esden-main` el 2026-05-20)
+target: e:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard (repo cliente, renombrado desde `dashboard-af-main` el 2026-05-20)
 related_findings: [F-01-001, F-01-002, F-04-002, F-04-003, F-05-SEC-001, F-05-SEC-002, F-05-SEC-003, F-05-SEC-004]
 status: READY_FOR_ROTATION
 ---
@@ -279,7 +279,7 @@ Mismo patrón en `src/lib/supabase/server.ts`, `src/lib/supabase/client.ts`, `sr
 - Revisar logs de Supabase de los últimos 30 días buscando IPs/User-Agents anómalos que hubieran usado las claves antiguas.
 
 ### Paso 8 — Higiene del repositorio
-- Las claves antiguas **siguen en el historial git** del repo `renzo1111ia/dashboard-esden` (422 commits). Aunque ya estén invalidadas, considerar:
+- Las claves antiguas **siguen en el historial git** del repo `renzo1111ia/dashboard-af` (422 commits). Aunque ya estén invalidadas, considerar:
   - Si el repo fue público en algún momento: las claves están públicas en cachés de GitHub, Shodan, etc. Tras la rotación están **inútiles** pero conviene saberlo.
   - Reescribir historia con `git filter-repo` para eliminar las strings concretas — solo necesario si por alguna razón las claves antiguas siguieran teniendo valor (no es el caso tras Paso 1).
 

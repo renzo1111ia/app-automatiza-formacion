@@ -8,7 +8,7 @@ sources: package.json v0.1.0 + DECISIONES-AUDITOR-JAVIER-HP.md (9 R-### tomadas)
 type: stack-overview
 ---
 
-# Stack tecnológico — `dashboard-esden`
+# Stack tecnológico — `dashboard-af`
 
 > **Documento de doble lectura.** Las tablas marcadas como **ACTUAL** reflejan lo que existe hoy en el repositorio (extraído de `package.json` y código). Las marcadas como **OBJETIVO** reflejan decisiones cerradas del Auditor que el equipo de desarrollo debe implementar en Sprint 0 → Sprint 3.
 >
@@ -74,7 +74,7 @@ type: stack-overview
 
 ### 1.5 — Despliegue actual
 
-- **Repositorio:** GitHub `renzo1111ia/dashboard-esden` · branch `auditoria`
+- **Repositorio:** GitHub `renzo1111ia/dashboard-af` · branch `auditoria`
 - **Hosting Supabase:** managed cloud · pila detrás con **Kong 2.8.1 EOL** + GoTrue/Postgres con 2-3 años de retraso (ver [R-023.c](DECISIONES-AUDITOR-JAVIER-HP.md#r-023c-versiones-de-supabase-postgres-gotrue-respondida-investigacion-del-auditor))
 - **Frontend hosting:** Vercel-ready (Dockerfile + docker-compose presentes)
 
@@ -95,7 +95,7 @@ type: stack-overview
 | Capa | Propósito | Origen |
 |---|---|---|
 | Router de variables `crm-mapper` | Mapping nomenclatura interna fija ↔ nomenclatura de cada CRM externo. Tabla `crm_field_mapping`. | P-008/9/10/11 + R-020 |
-| 5 conectores CRM + Sheets (post-release) — MVP: 2 CRMs | **HubSpot** (OAuth2), **Zoho CRM**, **Salesforce** (OAuth2), **GoHighLevel** (OAuth2 v2), **ActiveCampaign**. **MVP Fase C**: HubSpot + Zoho. **Fase E (post-release)**: Google Sheets bidireccional + resto del top 5 | ✅ R-020 + R-020-refinement-v2 |
+| 5 conectores CRM + Sheets (post-release) — MVP: 2 CRMs | **HubSpot** (OAuth2), **Zoho CRM**, **Salesforce** (OAuth2), **GoHighLevel** (OAuth2 v2), **ActiveCampaign**. **MVP Fase 2**: HubSpot + Zoho. **Fase 4 (post-release)**: Google Sheets bidireccional + resto del top 5 | ✅ R-020 + R-020-refinement-v2 |
 | CRM write-policy engine | Política por campo: `append_only` / `overwrite` / `overwrite_with_audit` + tabla `crm_write_audit` | ✅ R-014 |
 | Voice provider abstraction | Interfaz común `VoiceProvider` (Retell + **Ultravox equiparado**) + flag por tenant | ✅ R-016 |
 | Timezone-aware scheduler | Detección huso por país/teléfono (E.164) + reglas 09-21h hora lead + cadencia 24h+3h × 3 días | ✅ R-013 |

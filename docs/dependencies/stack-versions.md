@@ -31,11 +31,11 @@ source: package.json + npm outdated --json + npm ls --depth=0
 |---------|-----------|-----------|---------------|-----|-------|
 | `@supabase/supabase-js` | `^2.97.0` | `2.97.0` | `2.106.0` | m | 9 minor versions atrás; actualizar para bugfixes auth |
 | `@supabase/ssr` | `^0.8.0` | `0.8.0` | `0.10.3` | M | v0 a v0.10 — revisar breaking changes SSR |
-| `pg` | `^8.20.0` | `8.20.0` | `8.21.0` | p | Librería pg usada además de Supabase — D-003 |
+| `pg` | `^8.20.0` | `8.20.0` | `8.21.0` | p | Librería pg usada además de Supabase — 3-003 |
 | `postgres` | `^3.4.9` | `3.4.9` | `3.4.9` | = | Al día |
 | `@types/pg` | `^8.20.0` | `8.20.0` | `8.20.0` | = | Al día |
 
-> **NOTA**: la presencia de `pg` y `postgres` en producción además de `@supabase/supabase-js` confirma D-003 (SQL directo sin ORM).
+> **NOTA**: la presencia de `pg` y `postgres` en producción además de `@supabase/supabase-js` confirma 3-003 (SQL directo sin ORM).
 
 ---
 

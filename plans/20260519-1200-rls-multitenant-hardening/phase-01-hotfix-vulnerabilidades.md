@@ -1,4 +1,4 @@
-# Fase 1 — Hotfix de los 4 hallazgos críticos
+# Fase 0 — Hotfix de los 4 hallazgos críticos
 
 **Prioridad:** 🔴 CRÍTICA (puede aplicarse independiente del resto del plan)
 **Tiempo estimado:** 2h 30min
@@ -20,21 +20,21 @@ Aplicar **todas las mitigaciones inmediatas posibles** a los 4 hallazgos crític
 | **H1** — `tenants` con `USING(true)` | ✅ Política provisional restrictiva | Paso 1 | F2 paso 4 (versión con `tenant_members`) |
 | **H2** — service_role global bypassa RLS | 🟡 Audit logging + feature flag | Paso 5 | F3 (policies) + F4 (refactor clientes) |
 | **H3** — credenciales JWT hardcoded en código | ✅ Eliminar + rotar keys | Pasos 2-3 | — |
-| **H4** — cookie `esden-tenant-id` cliente-controlada | 🟡 Validar contra `auth_user_id` | Paso 4 | F2 + F4 (validar contra `tenant_members`) |
+| **H4** — cookie `af-tenant-id` cliente-controlada | 🟡 Validar contra `auth_user_id` | Paso 4 | F2 + F4 (validar contra `tenant_members`) |
 
 ## Key Insights
 
 - La política RLS de `tenants` con `USING (true)` para `authenticated` es equivalente a no tener RLS — cualquier usuario logueado ve y modifica TODOS los tenants. **Fix inmediato posible** porque `tenants.auth_user_id` ya existe como columna.
 - Las claves JWT hardcoded en `server.ts` (líneas 7-8) están commiteadas a git history público: rotar es obligatorio aunque se quiten del código.
 - H2 (service_role global) no puede cerrarse del todo en F1 porque requiere F3 (policies tenant-scoped) + F4 (clientes segregados). Lo que SÍ podemos hacer ya: **audit logging** de cada uso de service_role + flag de configuración que registra quién/dónde para visibilizar el blast radius antes del refactor.
-- La cookie `esden-tenant-id` es modificable por el cliente; cualquier usuario puede pretender pertenecer a otro tenant cambiando su valor. Mitigación parcial aquí (validar contra `auth_user_id`), completa en F2 (validar contra `tenant_members`).
+- La cookie `af-tenant-id` es modificable por el cliente; cualquier usuario puede pretender pertenecer a otro tenant cambiando su valor. Mitigación parcial aquí (validar contra `auth_user_id`), completa en F2 (validar contra `tenant_members`).
 
 ## Requirements
 
 ### Funcionales
 - **H1**: Bloquear acceso a `tenants` para usuarios que no son `auth_user_id` propietarios.
 - **H3**: Eliminar credenciales hardcoded del código fuente + rotar service_role y anon keys en Supabase.
-- **H4**: Verificar la cookie `esden-tenant-id` contra `tenants.auth_user_id` (validación mínima provisional).
+- **H4**: Verificar la cookie `af-tenant-id` contra `tenants.auth_user_id` (validación mínima provisional).
 - **H2**: Instrumentar cada llamada a `getAdminSupabaseClient()` con audit log estructurado (caller, tenant_id intencionado si lo hay, timestamp). Esto NO cierra la vulnerabilidad pero genera la telemetría para validar el refactor de F3-F4.
 
 ### No funcionales
@@ -141,14 +141,14 @@ if (!key) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY env var");
 - Reiniciar servicios.
 - Verificar que las keys viejas dan 401 al intentar usarlas (curl test).
 
-### Paso 4 — Validar cookie esden-tenant-id [H4] (30 min — provisional)
+### Paso 4 — Validar cookie af-tenant-id [H4] (30 min — provisional)
 
 En [src/lib/supabase/server.ts](../../src/lib/supabase/server.ts) (función `getActiveTenantId`) o el módulo donde se lea la cookie:
 
 ```ts
 export async function getActiveTenantId(): Promise<string | null> {
     const cookieStore = await cookies();
-    const requested = cookieStore.get("esden-tenant-id")?.value;
+    const requested = cookieStore.get("af-tenant-id")?.value;
     if (!requested) return null;
 
     // Validación provisional: la cookie debe apuntar a un tenant cuyo
@@ -209,7 +209,7 @@ Después del deploy:
 ### Paso 6 — Smoke test manual post-deploy (10 min)
 
 - Login con usuario X → ver dashboard → datos del tenant X visibles.
-- Abrir DevTools → cambiar cookie `esden-tenant-id` a un UUID ajeno → recargar → `getActiveTenantId()` debe devolver null o caer al tenant propio.
+- Abrir DevTools → cambiar cookie `af-tenant-id` a un UUID ajeno → recargar → `getActiveTenantId()` debe devolver null o caer al tenant propio.
 - Intentar `SELECT * FROM tenants` desde SQL editor con un JWT de usuario normal → solo debe devolver 1 fila.
 - Buscar `grep -rn "FALLBACK_\|eyJhbGci" src/` → 0 resultados.
 
@@ -238,7 +238,7 @@ Después del deploy:
 - ✅ **H1**: Usuario A con `auth.uid() = X` solo ve `tenants` donde `auth_user_id = X`. Verificado vía SQL editor con JWT de prueba.
 - ✅ **H3**: `grep -rE "(eyJhbGci|FALLBACK_)" src/` no devuelve resultados.
 - ✅ **H3**: Keys JWT antiguas dejan de funcionar tras rotación (curl con key vieja → 401).
-- ✅ **H4**: Modificar la cookie `esden-tenant-id` a un UUID ajeno NO da acceso al tenant ajeno.
+- ✅ **H4**: Modificar la cookie `af-tenant-id` a un UUID ajeno NO da acceso al tenant ajeno.
 - 🟡 **H2**: Cada llamada a `getAdminSupabaseClient` genera log estructurado. (Cierre completo en F3-F4.)
 - ✅ Login y navegación dashboard funcionan sin regresión.
 
@@ -260,4 +260,4 @@ Después del deploy:
 
 ## Next Steps
 
-→ [Fase 2 — Esquema tenant_members + helper functions RLS](phase-02-esquema-tenant-members.md) (cierre estructural de H1 y H4)
+→ [Fase 1 — Esquema tenant_members + helper functions RLS](phase-02-esquema-tenant-members.md) (cierre estructural de H1 y H4)

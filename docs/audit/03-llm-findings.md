@@ -90,7 +90,7 @@ export function createLLM(provider: string, modelName: string, temperature: numb
 - **Código `FactExtractionService`**: Ejemplo en prompt pide `qualified: "SI"/"NO"/"PENDIENTE"` (línea 113)
 - **Código `saveToLeadMetadata`**: Lógica en línea 270–272 mapea `q === 'SI'` → `CUALIFICADO`, `q === 'NO'` → `DESCARTADO`
 - **Impacto**: Hay tres schemas distintos de `qualified` en circulación simultánea. La variable que el prompt de Virginia real escribe (`"apto"/"no apto"`) nunca coincide con lo que el código espera leer (`"SI"/"NO"`). Nunca se actualiza `tipo_lead` de `CUALIFICADO` correctamente vía fact extractor para conversaciones de WhatsApp.
-- **Divergencia con spec**: Confirma D-004/D-005 de `00-known-divergences.md` — las variables de cualificación están desincronizadas.
+- **Divergencia con spec**: Confirma 3-004/3-005 de `00-known-divergences.md` — las variables de cualificación están desincronizadas.
 - **Severidad**: **Critical**
 - **Esfuerzo fix**: Medio — unificar schema. El prompt de Virginia es autoridad; adaptar `ai-analysis.ts` y `fact-extractor.ts` para aceptar `"apto"/"no apto"` y mapear al enum interno.
 
@@ -129,7 +129,7 @@ export function createLLM(provider: string, modelName: string, temperature: numb
 - **Prompt Virginia**: `user_profesion` (sin 's')
 - **Estado**: El código sigue la nomenclatura del prompt Virginia (`profesion`), pero la spec oficial dice `profession`. El campo está en tres estados distintos entre documentos.
 - **Severidad**: **High**
-- **Esfuerzo fix**: Bajo — decisión de nomenclatura canónica pendiente de cliente (ver D-004 en `00-known-divergences.md`). Mientras tanto, documentar cuál se usa en código para sincronizar BD.
+- **Esfuerzo fix**: Bajo — decisión de nomenclatura canónica pendiente de cliente (ver 3-004 en `00-known-divergences.md`). Mientras tanto, documentar cuál se usa en código para sincronizar BD.
 
 ---
 
@@ -180,7 +180,7 @@ export function createLLM(provider: string, modelName: string, temperature: numb
 - **Archivo**: `src/lib/services/ai-analysis.ts`, `src/lib/services/fact-extractor.ts`
 - **Observado**: El prompt Virginia define `estado = "prematriculado"` (línea 73 de `Promt-Virginia.md`). Ningún código de extracción/análisis maneja o valida este valor. `ai-analysis.ts` no lo menciona. `fact-extractor.ts` lo guardará como texto libre en metadata sin validación de enum.
 - **Impacto**: Si el LLM escribe `prematriculado` como estado, llega a metadata pero no hay ninguna lógica de negocio que reaccione (no dispara notificación, no actualiza `tipo_lead`).
-- **Severidad**: **Medium** (confirma D-007 de divergences)
+- **Severidad**: **Medium** (confirma 3-007 de divergences)
 - **Esfuerzo fix**: Bajo — añadir al enum de estados reconocidos en código y definir qué acción dispara.
 
 ---

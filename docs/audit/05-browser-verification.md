@@ -62,7 +62,7 @@ Extraídos de `src/` con `grep -E "eyJ[A-Za-z0-9_-]{20,}"`:
 
 | Almacén | Contenido |
 |---|---|
-| `document.cookie` (lectura JS) | `esden-tenant-id=…`, `esden-tenant-name=…` (plain, legibles desde JS) |
+| `document.cookie` (lectura JS) | `af-tenant-id=…`, `af-tenant-name=…` (plain, legibles desde JS) |
 | Cookie httpOnly (no legible) | `sb-api-db-auth-token` (presente — el navegador la envía, pero JS no la lee) |
 | `localStorage` | vacío |
 | `sessionStorage` | vacío |
@@ -89,7 +89,7 @@ Extraídos de `src/` con `grep -E "eyJ[A-Za-z0-9_-]{20,}"`:
 
 El secreto está expuesto, pero por **otros vectores** distintos al bundle:
 
-1. **Vector "código fuente"** — El JWT está en texto plano en el repositorio GitHub `renzo1111ia/dashboard-esden` (422 commits, accesible a todos los collaborators y reflejado en el ZIP del cliente). Un simple `git log -p` o `grep` recupera el token. Vector verificado por Fase 5 (Audit-Deps+Security).
+1. **Vector "código fuente"** — El JWT está en texto plano en el repositorio GitHub `renzo1111ia/dashboard-af` (422 commits, accesible a todos los collaborators y reflejado en el ZIP del cliente). Un simple `git log -p` o `grep` recupera el token. Vector verificado por Fase 5 (Audit-Deps+Security).
 2. **Vector "fallback silencioso"** — En `supabase/server.ts:7`, `auth-config.ts:19`, `actions/tenant.ts:52,76` el patrón es `process.env.X || "eyJ..."`. Si la env var no está seteada (deploy nuevo, dev local, script ad-hoc), **el fallback comprometido se activa sin error visible** y la app sigue funcionando contra producción con privilegios de admin.
 3. **Vector "scripts de migración"** — `src/scripts/migrate-*.ts` y `purge-demo.ts` se ejecutan **fuera del runtime Next.js**, vía `tsx` directo. Contienen `postgresql://postgres:postgres@46.62.193.169:5432/...` y el JWT SVC-B literales. Cualquiera que clone el repo y ejecute esos scripts tiene admin total a la BD productiva.
 4. **Vector "rotación pendiente"** — Los tres JWTs analizados llevan `exp: 1893456000` (2030-01-01). Aunque hoy no se vean en el bundle, **siguen siendo válidos**. Si en algún momento el repo estuvo expuesto (collaborator dado de baja, fork, logs CI con dump, copia del ZIP filtrada), el token sigue funcionando.
@@ -97,7 +97,7 @@ El secreto está expuesto, pero por **otros vectores** distintos al bundle:
 ### Información secundaria confirmada en navegador
 
 - Subdominio interno `api-db.automatizaformacion.com` revelado vía el **nombre** de la cookie `sb-api-db-auth-token`. Esto es comportamiento estándar de `@supabase/ssr` (deriva el nombre del project ref) — no es un fallo de la app, pero sí confirma a un atacante el host real de Supabase. El valor de la cookie **no es legible** desde JS.
-- El `tenant_id` viaja en cookie plain (`esden-tenant-id`) y NO en el JWT del usuario. Esto **confirma F-04-005/006**: las políticas RLS que esperan `auth.jwt() ->> 'tenant_id'` son inefectivas porque el claim no existe. El aislamiento multi-tenant depende 100% de filtros manuales `.eq("tenant_id", ...)` en código — y por eso `fetchCalls` (F-04-001) sin ese filtro provoca data leak cross-tenant.
+- El `tenant_id` viaja en cookie plain (`af-tenant-id`) y NO en el JWT del usuario. Esto **confirma F-04-005/006**: las políticas RLS que esperan `auth.jwt() ->> 'tenant_id'` son inefectivas porque el claim no existe. El aislamiento multi-tenant depende 100% de filtros manuales `.eq("tenant_id", ...)` en código — y por eso `fetchCalls` (F-04-001) sin ese filtro provoca data leak cross-tenant.
 
 ## Reclasificación de severidad
 

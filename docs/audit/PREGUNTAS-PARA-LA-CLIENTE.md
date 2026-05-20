@@ -6,7 +6,7 @@ type: open-questions
 status: LIVING_DOCUMENT
 sources:
   - audit/00-client-spec-extraction.md (sección 10)
-  - audit/00-known-divergences.md (D-004 a D-009)
+  - audit/00-known-divergences.md (3-004 a 3-009)
   - audit/gap-analysis-spec-vs-code.md (sección final)
   - audit/COMPARATIVA-INFORME-PROGRAMADOR-V3.5.md
   - audit/STACK-DECISION-DRIZZLE-MIGRATION.md
@@ -57,7 +57,7 @@ Necesitamos hacer una lista de personas:
 **Por qué insisto:** rotar las contraseñas (lo haremos en Sprint 0) invalida las antiguas. Pero **si alguien las copió fuera del repositorio** mientras eran válidas, puede que haya hecho copias de datos sin que nos enteremos. Saber a quién hay que confiar (y a quién no) cambia la urgencia.
 
 **Necesitamos saber:**
-- Lista de personas con acceso al repositorio `renzo1111ia/dashboard-esden` en GitHub.
+- Lista de personas con acceso al repositorio `renzo1111ia/dashboard-af` en GitHub.
 - Lista de personas que han recibido el código por otro medio (ZIP, etc.).
 - Si alguna de esas personas ya no debería tener acceso.
 
@@ -93,7 +93,7 @@ El sistema decide si un lead es "apto" para entrar al curso/máster aplicando un
 
 **Pregunta:** ¿el umbral correcto es **2 años o 3 años**?
 
-**Cuándo:** antes del Sprint 1 (próximas 2 semanas).
+**Cuándo:** antes del Sprint 0 (próximas 2 semanas).
 
 ---
 
@@ -109,7 +109,7 @@ El sistema decide si un lead es "apto" para entrar al curso/máster aplicando un
 
 **Por qué importa:** si Regla C no es legítima, el sistema está aceptando leads que tú no consideras aptos para el curso.
 
-**Cuándo:** antes del Sprint 1.
+**Cuándo:** antes del Sprint 0.
 
 ---
 
@@ -124,7 +124,7 @@ El sistema decide si un lead es "apto" para entrar al curso/máster aplicando un
 
 **Sugerencia:** mejor pasar de "lista de exclusión" a "lista de inclusión" — más fácil de mantener y más justo. Pero es tu decisión.
 
-**Cuándo:** antes del Sprint 1.
+**Cuándo:** antes del Sprint 0.
 
 ---
 
@@ -138,7 +138,7 @@ El sistema decide si un lead es "apto" para entrar al curso/máster aplicando un
 - ¿Es un estado válido que sí debería existir y disparar algo (por ejemplo, recordatorio de pago)?
 - ¿O era un borrador del prompt que se quedó por descuido?
 
-**Cuándo:** Sprint 1 o 2.
+**Cuándo:** Sprint 0 o 2.
 
 ---
 
@@ -158,7 +158,7 @@ El código usa `USER_PROFESION` (sin doble s).
 
 **Importancia:** afecta a la sincronización con cualquier CRM externo.
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 ---
 
@@ -170,7 +170,7 @@ El código usa `USER_PROFESION` (sin doble s).
 
 **Recomendación técnica:** `years_experience` (plural). Es la convención en inglés y es la que más usa el código.
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 ---
 
@@ -182,7 +182,7 @@ El código usa `USER_PROFESION` (sin doble s).
 - ¿Mantener `curse_name` porque ya está así en tu CRM y cambiarlo rompería integraciones?
 - ¿O corregir a `course_name` (más correcto) y actualizar también el CRM?
 
-**Cuándo:** Sprint 2 o 3. No es urgente, pero conviene cerrarlo antes de la sincronización con CRM externo.
+**Cuándo:** Sprint 1 o 3. No es urgente, pero conviene cerrarlo antes de la sincronización con CRM externo.
 
 ---
 
@@ -202,7 +202,7 @@ El código usa `USER_PROFESION` (sin doble s).
 
 **Importancia: CRÍTICA.** Esto está afectando ahora mismo a cómo se clasifican los leads en tu base de datos. El día que conectemos al CRM externo, ningún valor de los tres del código coincidirá con lo que el CRM espera.
 
-**Cuándo:** lo antes posible. Idealmente en Sprint 1.
+**Cuándo:** lo antes posible. Idealmente en Sprint 0.
 
 ---
 
@@ -214,7 +214,7 @@ El código usa `USER_PROFESION` (sin doble s).
 - ¿Esa columna debe existir y la IA debe rellenarla?
 - ¿O era un experimento antiguo y se puede eliminar?
 
-**Cuándo:** Sprint 2 (decisión de limpieza de base de datos).
+**Cuándo:** Sprint 1 (decisión de limpieza de base de datos).
 
 ---
 
@@ -235,7 +235,7 @@ Aquí preguntamos sobre el flujo operativo. Cómo el sistema contacta a los lead
 
 **Importancia:** la respuesta define cómo configuramos el orquestador cuando arreglemos el bug.
 
-**Cuándo:** Sprint 1.
+**Cuándo:** Sprint 0.
 
 ---
 
@@ -251,7 +251,7 @@ Aquí preguntamos sobre el flujo operativo. Cómo el sistema contacta a los lead
   - **Opción B:** los datos nuevos reemplazan a los antiguos.
   - **Opción C:** depende del campo (algunos sí, otros no).
 
-**Cuándo:** Sprint 2.
+**Cuándo:** Sprint 1.
 
 ---
 
@@ -265,7 +265,7 @@ Aquí preguntamos sobre el flujo operativo. Cómo el sistema contacta a los lead
 - ¿Esos estados los rellena un asesor humano desde el panel?
 - ¿O queremos que el sistema los detecte automáticamente (por ejemplo, "matriculado" cuando se confirme el pago)?
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 ---
 
@@ -281,7 +281,7 @@ Aquí preguntamos sobre el flujo operativo. Cómo el sistema contacta a los lead
 - ¿Queremos que Ultravox haga lo mismo que Retell (analizar al final)?
 - ¿O Ultravox tiene un propósito diferente?
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 ---
 
@@ -310,7 +310,7 @@ El código tiene `book_appointment` (correcto). Pero si en algún momento alguie
 - ¿Has iterado y este es el resultado final, o todavía hay margen para acortar?
 - ¿Quieres que hagamos una propuesta de optimización (versión más corta, mismo comportamiento) para revisar?
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 ---
 
@@ -334,7 +334,7 @@ El código tiene `book_appointment` (correcto). Pero si en algún momento alguie
 - ¿Cuál es el CRM destino actual? ¿Zoho, HubSpot, Salesforce, otro?
 - ¿Cómo nos conectamos? ¿API REST, webhook, exportación manual?
 
-**Cuándo:** Sprint 2 o 3.
+**Cuándo:** Sprint 1 o 3.
 
 > ✅ **Respondida 2026-05-19 por Javier HP (Auditor)** — Ver [R-020 en el Registro de decisiones](DECISIONES-AUDITOR-JAVIER-HP.md#r-020).
 
@@ -347,7 +347,7 @@ El código tiene `book_appointment` (correcto). Pero si en algún momento alguie
 - ¿Siguen archivados solo en Airtable como histórico?
 - ¿Es información que queremos integrar en un futuro?
 
-**Cuándo:** Sprint 3 o más adelante.
+**Cuándo:** Sprint 2 o más adelante.
 
 > ✅ **Respondida 2026-05-19 por Javier HP (Auditor)** — Ver [R-021 en el Registro de decisiones](DECISIONES-AUDITOR-JAVIER-HP.md#r-021).
 
@@ -367,7 +367,7 @@ Tu propio documento marca estas variables como "pendientes de definición":
 - ¿Tenemos esos datos ya definidos para los cursos actuales?
 - ¿Quién va a mantenerlos actualizados a futuro? ¿Lo subes tú al sistema o lo hace el equipo técnico?
 
-**Cuándo:** Sprint 3.
+**Cuándo:** Sprint 2.
 
 > ✅ **Respondida 2026-05-19 por Javier HP (Auditor)** — Ver [R-022 en el Registro de decisiones](DECISIONES-AUDITOR-JAVIER-HP.md#r-022).
 
@@ -398,7 +398,7 @@ El programador actual ha entregado un informe técnico (v3.5) que afirma que el 
 Esto no significa necesariamente que actuara con mala fe — puede ser falta de método (afirmar "ya está hecho" sin verificarlo). Pero el patrón es preocupante: las cosas que el informe declara como "corregidas" siguen estando rotas en producción ahora mismo.
 
 **Pregunta:**
-- ¿El mismo equipo va a ejecutar las correcciones del Sprint 0 y la consolidación de la capa de datos (Fase B, sin ORM nuevo — la propuesta original de Drizzle fue anulada el 20-05-2026)?
+- ¿El mismo equipo va a ejecutar las correcciones del Sprint 0 y la consolidación de la capa de datos (Fase 1, sin ORM nuevo — la propuesta original de Drizzle fue anulada el 20-05-2026)?
 - ¿O quieres contratar refuerzo externo / cambiar de equipo?
 
 **Si la respuesta es "el mismo equipo continúa":** recomendamos imponer **3 condiciones de método** para evitar que pase lo mismo:
@@ -415,7 +415,7 @@ Esto no significa necesariamente que actuara con mala fe — puede ser falta de 
 ### P-025 — Pausa en ventas durante las 6-8 semanas de correcciones
 
 **Pregunta:**
-- ¿Aceptas pausar la captación de nuevos clientes durante las 6-8 semanas que durará el plan de correcciones (Sprint 0 + Sprint 1 + Sprint 2)?
+- ¿Aceptas pausar la captación de nuevos clientes durante las 6-8 semanas que durará el plan de correcciones (Sprint 0 + Sprint 0 + Sprint 1)?
 
 **Por qué importa:** mientras el problema de aislamiento entre clientes esté abierto, cada cliente nuevo expone al resto. Cerrar la pausa demasiado pronto significa volver a tener el problema con más datos comprometidos.
 
@@ -434,21 +434,21 @@ Esto no significa necesariamente que actuara con mala fe — puede ser falta de 
 | P-001 | ¿Hay clientes reales usando el sistema? | Estado | 🔴 Urgente | Sprint 0 |
 | P-002 | ¿Quién tiene/tuvo acceso al repo de código? | Seguridad | 🔴 Urgente | Sprint 0 |
 | P-003 | ¿Ventana de mantenimiento de 30 min? | Operativa | 🔴 Urgente | Sprint 0 |
-| P-004 | Regla B: ¿2 o 3 años? | Negocio | 🟠 Alta | Sprint 1 |
-| P-005 | ¿Regla C (sin estudios + 5 años) es legítima? | Negocio | 🟠 Alta | Sprint 1 |
-| P-006 | ¿Exclusiones de profesiones manuales? | Negocio | 🟠 Alta | Sprint 1 |
-| P-007 | Estado "prematriculado": ¿válido o vestigio? | Negocio | 🟡 Media | Sprint 2 |
-| P-008 | `user_profession` o `user_profesion`? | Nomenclatura | 🟡 Media | Sprint 2-3 |
-| P-009 | `year_experience` o `years_experience`? | Nomenclatura | 🟡 Media | Sprint 2-3 |
-| P-010 | `curse_name` o `course_name`? | Nomenclatura | 🟡 Media | Sprint 2-3 |
-| P-011 | Valores de `qualified`: ¿`apto`/`no apto`? | Nomenclatura | 🟠 Alta | Sprint 1 |
-| P-012 | Columna `nivel_estudios`: ¿se usa? | Nomenclatura | 🟡 Media | Sprint 2 |
-| P-013 | Protocolo multi-día: ¿cuántos contactos? | Operativa | 🟠 Alta | Sprint 1 |
-| P-014 | Sync CRM: ¿añadir o sobrescribir? | Integración | 🟡 Media | Sprint 2 |
-| P-015 | Estados "informado"/"matriculado": ¿auto o manual? | Operativa | 🟡 Media | Sprint 2-3 |
-| P-016 | Ultravox: ¿analizar transcripción al final? | Operativa | 🟡 Media | Sprint 2-3 |
+| P-004 | Regla B: ¿2 o 3 años? | Negocio | 🟠 Alta | Sprint 0 |
+| P-005 | ¿Regla C (sin estudios + 5 años) es legítima? | Negocio | 🟠 Alta | Sprint 0 |
+| P-006 | ¿Exclusiones de profesiones manuales? | Negocio | 🟠 Alta | Sprint 0 |
+| P-007 | Estado "prematriculado": ¿válido o vestigio? | Negocio | 🟡 Media | Sprint 1 |
+| P-008 | `user_profession` o `user_profesion`? | Nomenclatura | 🟡 Media | Sprint 1-3 |
+| P-009 | `year_experience` o `years_experience`? | Nomenclatura | 🟡 Media | Sprint 1-3 |
+| P-010 | `curse_name` o `course_name`? | Nomenclatura | 🟡 Media | Sprint 1-3 |
+| P-011 | Valores de `qualified`: ¿`apto`/`no apto`? | Nomenclatura | 🟠 Alta | Sprint 0 |
+| P-012 | Columna `nivel_estudios`: ¿se usa? | Nomenclatura | 🟡 Media | Sprint 1 |
+| P-013 | Protocolo multi-día: ¿cuántos contactos? | Operativa | 🟠 Alta | Sprint 0 |
+| P-014 | Sync CRM: ¿añadir o sobrescribir? | Integración | 🟡 Media | Sprint 1 |
+| P-015 | Estados "informado"/"matriculado": ¿auto o manual? | Operativa | 🟡 Media | Sprint 1-3 |
+| P-016 | Ultravox: ¿analizar transcripción al final? | Operativa | 🟡 Media | Sprint 1-3 |
 | P-017 | Typo `book_appointmen`: ¿corregir en doc fuente? | IA | 🟢 Baja | Cualquier momento |
-| P-018 | ¿Prompt Virginia es la versión definitiva? | IA | 🟢 Baja | Sprint 2-3 |
+| P-018 | ¿Prompt Virginia es la versión definitiva? | IA | 🟢 Baja | Sprint 1-3 |
 | P-019 | ¿Fase de pruebas controlada antes de escalar? | Operativa | 🟡 Media | Post-Sprint 0 |
 | P-020 ✅ | ¿Qué CRM externo es el destino actual? | Integración | — | Multi-CRM (5 conectores) — [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020) |
 | P-021 ✅ | Datos antiguos en Airtable: ¿migrar o archivar? | Integración | — | Migrar a Supabase — [R-021](DECISIONES-AUDITOR-JAVIER-HP.md#r-021) |
@@ -467,8 +467,8 @@ Las respuestas detalladas se mantienen en un documento separado: [**`DECISIONES-
 
 | Pregunta | Decisión | Impacto |
 |---|---|---|
-| [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020) + [v2](DECISIONES-AUDITOR-JAVIER-HP.md#r-020-refinement-v2) | Multi-CRM top 5 (HubSpot, Zoho, Salesforce, GHL, ActiveCampaign). **MVP Fase C = HubSpot + Zoho** (Google Sheets bidireccional aplazado a Fase E post-release) | Fase C reducida a 2-3 sem; Sheets y resto del top 5 en Fase E |
-| [R-021](DECISIONES-AUDITOR-JAVIER-HP.md#r-021) | Migrar leads de Airtable a Supabase | Sub-proyecto en Sprint 2-3 |
+| [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020) + [v2](DECISIONES-AUDITOR-JAVIER-HP.md#r-020-refinement-v2) | Multi-CRM top 5 (HubSpot, Zoho, Salesforce, GHL, ActiveCampaign). **MVP Fase 2 = HubSpot + Zoho** (Google Sheets bidireccional aplazado a Fase 4 post-release) | Fase 2 reducida a 2-3 sem; Sheets y resto del top 5 en Fase 4 |
+| [R-021](DECISIONES-AUDITOR-JAVIER-HP.md#r-021) | Migrar leads de Airtable a Supabase | Sub-proyecto en Sprint 1-3 |
 | [R-022](DECISIONES-AUDITOR-JAVIER-HP.md#r-022) | Equipo dev mantiene contenido KB | +5-7 días panel admin + carga operativa continua |
 | [R-023](DECISIONES-AUDITOR-JAVIER-HP.md#r-023) | Supabase self-hosted en Coolify | 3 sub-preguntas derivadas |
 | [R-024](DECISIONES-AUDITOR-JAVIER-HP.md#r-024) | Mismo equipo + 3 condiciones de método | Tests + revisión externa + greps pre-merge |

@@ -1,4 +1,4 @@
-# Research — Salesforce Adapter (jsforce@3.x) — Sprint 5
+# Research — Salesforce Adapter (jsforce@3.x) — Sprint 4
 
 **Agente:** researcher (Sonnet)
 **Fecha:** 20-05-2026
@@ -139,7 +139,7 @@ conn.streaming.topic(topic).subscribe((message) => {
 ```
 **Opción C: Apex Triggers → HTTP callout** — requiere configuración en org del cliente
 
-**Recomendación Sprint 5**: Solo push (Esden → SF). Pull (SF → Esden) como feature adicional bajo pedido — complejidad alta, requiere configuración en cada org.
+**Recomendación Sprint 4**: Solo push (Esden → SF). Pull (SF → Esden) como feature adicional bajo pedido — complejidad alta, requiere configuración en cada org.
 
 ---
 
@@ -172,8 +172,8 @@ Cuota diaria por org, no por usuario. jsforce maneja el límite devolviendo erro
 
 1. ¿Los clientes enterprise tienen orgs Salesforce propias o necesitan ayuda para crearlas?
 2. ¿Se soporta Education Cloud o solo Sales Cloud estándar?
-3. ¿Pull SF → Esden entra en scope de E-02 o queda para E-06?
+3. ¿Pull SF → Esden entra en scope de 4-02 o queda para 4-06?
 4. ¿Se registra nuestra app como Salesforce ISV (una Connected App global) o cada tenant registra la suya?
 
 **Status:** DONE
-**Summary:** jsforce@3.x cubre OAuth2 + CRUD completo (Lead/Contact/Opportunity). Multi-tenant via Connection por tenant con refresh token. Push (Esden→SF) en scope E-02; pull (SF→Esden) via Streaming API como feature adicional.
+**Summary:** jsforce@3.x cubre OAuth2 + CRUD completo (Lead/Contact/Opportunity). Multi-tenant via Connection por tenant con refresh token. Push (Esden→SF) en scope 4-02; pull (SF→Esden) via Streaming API como feature adicional.

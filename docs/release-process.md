@@ -1,11 +1,11 @@
 ---
-title: "Release Process — dashboard-esden"
+title: "Release Process — dashboard-af"
 audience: equipo de desarrollo (lead + Auditor)
 date: 20-05-2026
 status: vigente
 ---
 
-# Release Process — dashboard-esden
+# Release Process — dashboard-af
 
 ## 1. Modelo de ramas
 
@@ -104,7 +104,7 @@ Excepcional. Sólo Javier (Auditor) puede autorizar. Proceso:
 - `v0.0.0` ahora (inicial).
 - **Patch** dentro de un sprint en curso → `v0.0.x`.
 - **Sprint cerrado** → bump a `v0.x.0`.
-- **MVP completo** (tras Fase D, antes de Fase E) → `v1.0.0`.
+- **MVP completo** (tras Fase 3, antes de Fase 4) → `v1.0.0`.
 
 Los tags los crea el script `promote.ps1` automáticamente al hacer promoción a `main`.
 

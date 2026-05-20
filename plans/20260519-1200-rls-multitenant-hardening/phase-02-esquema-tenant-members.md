@@ -1,4 +1,4 @@
-# Fase 2 — Esquema tenant_members + helper functions RLS
+# Fase 1 — Esquema tenant_members + helper functions RLS
 
 **Prioridad:** 🟠 Alta (bloqueante para F3)
 **Tiempo estimado:** 3h 0min
@@ -6,7 +6,7 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 1 — Hotfix](phase-01-hotfix-vulnerabilidades.md) (prerequisito)
+- [Fase 0 — Hotfix](phase-01-hotfix-vulnerabilidades.md) (prerequisito)
 - [supabase/tenants.sql](../../supabase/tenants.sql)
 
 ## Overview
@@ -233,4 +233,4 @@ SELECT count(*) FROM user_tenant_ids();  -- esperado: M tenants de B (distintos)
 
 ## Next Steps
 
-→ [Fase 3 — Políticas RLS en las 11 tablas tenant-scoped](phase-03-politicas-rls-tablas-datos.md)
+→ [Fase 2 — Políticas RLS en las 11 tablas tenant-scoped](phase-03-politicas-rls-tablas-datos.md)

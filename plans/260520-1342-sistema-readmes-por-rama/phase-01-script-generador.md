@@ -184,7 +184,7 @@ const OUTPUT = {
 - [ ] Añadir validaciones de error
 - [ ] Test manual: `node scripts/generate-readmes.cjs --dry-run`
 
-## Scripts en `package.json` (D-1 — Decisión confirmada)
+## Scripts en `package.json` (3-1 — Decisión confirmada)
 
 Añadir al bloque `"scripts"` de `package.json` las siguientes dos entradas:
 

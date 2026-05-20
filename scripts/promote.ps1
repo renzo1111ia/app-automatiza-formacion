@@ -1,5 +1,5 @@
 # ============================================================================
-# promote.ps1 — Promoción de ramas dashboard-esden
+# promote.ps1 — Promoción de ramas dashboard-af
 # ============================================================================
 # Uso:
 #   .\scripts\promote.ps1 -From developer -To staging -Version 0.1.0

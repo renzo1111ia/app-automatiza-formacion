@@ -14,7 +14,7 @@ sources:
 
 ## Stack Tecnologico
 
-Dashboard-esden es un AI CRM + Workflow Orchestrator para Esden Business School. Implementado
+Dashboard-af es un AI CRM + Workflow Orchestrator para Automatiza Formación. Implementado
 como aplicacion Next.js 16 (App Router) con React 19 y TypeScript 5. La base de datos es
 Supabase (PostgreSQL + pgvector). La cola de trabajos usa BullMQ sobre Redis. Los agentes
 conversacionales de texto usan OpenAI GPT-4o via SDK directo; el stack multi-provider
@@ -125,7 +125,7 @@ Varias tablas tienen politicas deficientes: knowledge_base (app.current_tenant n
 ai_agents (politica tautologica), web_widgets (devuelve todos los tenants), chat_messages (USING true
 sin TO service_role, tenant_id es TEXT no UUID).
 
-Cache: Redis (TTL 5min, prefijo esden:tenant:config:) para config de tenant.
+Cache: Redis (TTL 5min, prefijo af:tenant:config:) para config de tenant.
 Map en memoria (TTL 5min) para modo y cliente de cada tenant.
 
 Docs detallados: docs/architecture/data-layer.md

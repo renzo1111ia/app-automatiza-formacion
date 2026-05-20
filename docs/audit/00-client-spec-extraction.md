@@ -11,7 +11,7 @@ agent: Client-Spec-Extractor (Sonnet)
 
 ## 0. Resumen ejecutivo
 
-Esden Business School necesita un AI CRM + Workflow Orchestrator que automatice el contacto, cualificación y agendamiento de leads de másters. El sistema debe ingestar leads desde el CRM existente en tiempo real, iniciar contacto automático via llamada de voz o WhatsApp según zona horaria del lead (9am–9pm), cualificar al lead mediante un agente IA conversacional (Virginia), y si es apto, agendar una llamada con un asesor humano. Todo el estado del lead debe sincronizarse de vuelta al CRM del cliente. El volumen esperado es 3.000–4.000+ leads/mes. La plataforma es multi-tenant (pensada para varios centros educativos). La base de datos es Supabase (NO Airtable).
+Automatiza Formación necesita un AI CRM + Workflow Orchestrator que automatice el contacto, cualificación y agendamiento de leads de másters. El sistema debe ingestar leads desde el CRM existente en tiempo real, iniciar contacto automático via llamada de voz o WhatsApp según zona horaria del lead (9am–9pm), cualificar al lead mediante un agente IA conversacional (Virginia), y si es apto, agendar una llamada con un asesor humano. Todo el estado del lead debe sincronizarse de vuelta al CRM del cliente. El volumen esperado es 3.000–4.000+ leads/mes. La plataforma es multi-tenant (pensada para varios centros educativos). La base de datos es Supabase (NO Airtable).
 
 ---
 
@@ -19,14 +19,14 @@ Esden Business School necesita un AI CRM + Workflow Orchestrator que automatice 
 
 Reconstruido a partir de `reunion-incial-flujo-deseado.docx` (notas de reunión Bea & Javi, May 18, 132 min) — autoridad TOP — que es transposición del PDF de reunión `reunion-inicial-flujo.pdf` (mismo contenido).
 
-### Fase 1: Ingesta de lead
+### Fase 0: Ingesta de lead
 - Un nuevo lead entra al sistema extraído del CRM del cliente en tiempo real.
 - El sistema detecta si el lead es duplicado (matching por teléfono o email). Si es duplicado, NO procesar.
 - Datos nuevos del agente IA se **agregan** al CRM, nunca sobreescriben los existentes.
 
 `[fuente: reunion-incial-flujo-deseado.docx, sección "Gestión de datos"]`
 
-### Fase 2: Lógica de zona horaria y canal de contacto
+### Fase 1: Lógica de zona horaria y canal de contacto
 - El sistema verifica la hora local del lead (`{country_user_time}`).
 - **Si fuera de 9am–9pm** (zona horaria del lead): enviar mensaje de **plantilla oficial de WhatsApp**.
 - **Si dentro de 9am–9pm**: iniciar una **llamada de voz** (agente Virginia via Retell/Ultravox).
@@ -34,7 +34,7 @@ Reconstruido a partir de `reunion-incial-flujo-deseado.docx` (notas de reunión 
 
 `[fuente: reunion-incial-flujo-deseado.docx, sección "Flujo central - Lógica de zona horaria"]`
 
-### Fase 3: Cualificación por agente IA Virginia
+### Fase 2: Cualificación por agente IA Virginia
 El agente Virginia (voz + WhatsApp) conduce la conversación siguiendo este sub-flujo:
 
 #### 3.1 Recogida de datos de identificación
@@ -59,7 +59,7 @@ El agente Virginia (voz + WhatsApp) conduce la conversación siguiendo este sub-
 
 `[fuente: Promt-Virginia.md, secciones "ÁRBOL DE DECISIÓN" y "TABLA DE VERIFICACIÓN RÁPIDA"]`
 
-### Fase 4: Acción según resultado de cualificación
+### Fase 3: Acción según resultado de cualificación
 
 #### Si `qualified = "apto"`:
 - Virginia propone agendar llamada con asesor humano.
@@ -76,7 +76,7 @@ El agente Virginia (voz + WhatsApp) conduce la conversación siguiendo este sub-
 
 `[fuente: Promt-Virginia.md, secciones "PARTE 2: PROCESO DE AGENDA" y "REGLAS DE TRANSICIÓN"]`
 
-### Fase 5: Sincronización de datos al CRM del cliente
+### Fase 4: Sincronización de datos al CRM del cliente
 - Todo el estado del lead (variables de cualificación, resumen de conversación, fecha de agenda) se envía de vuelta al CRM del cliente.
 - El `{resumen_conversacion}` es un párrafo de 2-3 líneas en tercera persona con: estudios, profesión, años experiencia, edad, motivación, resultado (apto/no apto) y si se agendó (con fecha si existe). Solo para uso interno del asesor.
 
@@ -253,7 +253,7 @@ Fuente: `docs/Docs-entrega-clienta/Promt-Virginia.md`
 
 ### Identidad y rol
 - **Nombre**: Virginia
-- **Rol**: Asistente de admisiones en Esden Business School
+- **Rol**: Asistente de admisiones en Automatiza Formación
 - **Canal**: voz + WhatsApp (mismo prompt para ambos canales)
 - **Restricciones absolutas**: no inventa información, no altera lógica de negocio, no omite variables, no improvisa fuera del flujo.
 
@@ -404,41 +404,41 @@ El PNG muestra un diagrama de flujo complejo del agente IA de voz y WhatsApp. La
 
 ## 9. Conflictos detectados entre archivos cliente
 
-### C-001: Nombre de variable `user_profession` vs `user_profesion`
+### 2-001: Nombre de variable `user_profession` vs `user_profesion`
 - **Archivo A/B** (VARIABLES DEFINIDAS): `{user_profession}` (con doble 's')
 - **Archivo C** (Promt-Virginia.md): `{{user_profesion}}` (sin 's', con tilde implícita en nombre)
 - **Impacto**: si el código usa uno y el prompt usa otro, los datos no mapean. Critico.
 
-### C-002: Nombre de variable `year_experience` vs `years_experience`
+### 2-002: Nombre de variable `year_experience` vs `years_experience`
 - **Archivo A/B**: `{year_experience}` (singular)
 - **Archivo C**: `{{years_experience}}` (plural)
-- **Impacto**: misma consecuencia que C-001. Critico.
+- **Impacto**: misma consecuencia que 2-001. Critico.
 
-### C-003: Typo en herramienta del agente
+### 2-003: Typo en herramienta del agente
 - **Archivo A/B**: `book_appointment` (correcto)
 - **Archivo C**: `book_appointmen` (sin 't' final)
 - **Impacto**: si el código implementa el nombre del A/B pero el prompt llama al del C, el tool call falla.
 
-### C-004: Typo en nombre de variable de curso
+### 2-004: Typo en nombre de variable de curso
 - **Archivos A/B/C**: `{curse_name}` — debería ser `{course_name}` en inglés.
 - **Impacto**: si el código normaliza el typo, hay inconsistencia. Los tres archivos coinciden en el typo, por lo que **es la nomenclatura oficial de la cliente**, no un error a corregir sin consultar.
 
-### C-005: Valores de `{qa_topic}` divergen entre A/B y C
+### 2-005: Valores de `{qa_topic}` divergen entre A/B y C
 - **A/B**: `"precio"`, `"modalidad"`, `"temario"`, `"duración"`, `"Fechas inicio/fin"`, `"Validez/homologación"`, `"Oficialidad"`, `"Otras"`
 - **C**: `"precio"`, `"becas"`, `"requisitos"`, `"duracion"`, `"metodologia"`, `"salidas profesionales"`, `"agenda"`, `"otros"`
 - **Impacto**: conjuntos de valores diferentes. El prompt C es el que ejecuta el agente actualmente. No están sincronizados.
 
-### C-006: Formato de fecha en `{fecha_agenda}`
+### 2-006: Formato de fecha en `{fecha_agenda}`
 - **A/B**: `DD/MM/AA, HH:MMh`
 - **C**: `dd/mm/yy, HH:mm`
 - **Impacto**: diferencia menor pero puede afectar parsing en código.
 
-### C-007: Estado `"prematriculado"` en prompt C pero no en A/B
+### 2-007: Estado `"prematriculado"` en prompt C pero no en A/B
 - **Archivo C** (Promt-Virginia.md, línea 73): `"prematriculado"` aparece como valor de `{estado}` con descripción "se ha dado información completa y el lead confirma interés, habiéndose enviado el link de matrícula por whatsapp".
 - **Archivo A/B**: este estado NO aparece en la lista de valores de `{estado}`.
 - **Impacto**: el prompt del agente tiene un estado que no está en la spec de variables oficial. Requiere aclaración.
 
-### C-008: Variable `{nivel_estudios}` en A/B pero no en C
+### 2-008: Variable `{nivel_estudios}` en A/B pero no en C
 - **A/B**: define `{nivel_estudios}` como variable separada con enum de niveles.
 - **C**: no existe `{nivel_estudios}` como variable separada; el nivel va embebido en `{user_studies}`.
 - **Impacto**: BD puede tener columna `nivel_estudios` sin fuente de datos clara.

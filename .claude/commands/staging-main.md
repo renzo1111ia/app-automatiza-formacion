@@ -50,7 +50,7 @@ Vas a promocionar `staging` a `main` (rama de producción) con versión **$1**. 
      git push origin main
      git push origin v$1
      ```
-   - Sugerir al usuario crear release notes en GitHub asociadas al tag `v$1` (puede pedírselo al subagente `esden-agents:documentation` o `esden-agents:deployment`).
+   - Sugerir al usuario crear release notes en GitHub asociadas al tag `v$1` (puede pedírselo al subagente `af-agents:documentation` o `af-agents:deployment`).
 
 ## Si algo falla
 
@@ -61,5 +61,5 @@ Vas a promocionar `staging` a `main` (rama de producción) con versión **$1**. 
 
 - Esta promoción ejecuta [docs/release-process.md](../../docs/release-process.md) sección 3.3.
 - El CI guard `staging-main-purity-check.yml` validará el push a main.
-- El subagente `esden-agents:deployment` es responsable de verificar que el changelog está completo antes de aprobar (ver [agents/deployment.md](../agents/deployment.md)).
-- El subagente `esden-agents:documentation` debe haber actualizado las release notes ANTES de esta promoción.
+- El subagente `af-agents:deployment` es responsable de verificar que el changelog está completo antes de aprobar (ver [agents/deployment.md](../agents/deployment.md)).
+- El subagente `af-agents:documentation` debe haber actualizado las release notes ANTES de esta promoción.

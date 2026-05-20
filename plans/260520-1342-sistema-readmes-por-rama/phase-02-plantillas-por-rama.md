@@ -49,7 +49,7 @@
 
 > Fuente: `plans/RoadMap.md` · Actualizado: 20-05-2026 14:00
 
-### Fase 1 — Sprint 0: Hotfixes de seguridad
+### Fase 0 — Sprint 0: Hotfixes de seguridad
 
 | Campo | Valor |
 |-------|-------|
@@ -115,7 +115,7 @@
 ### developer (README.developer.template.md)
 
 ```
-# dashboard-esden
+# dashboard-af
 
 {{PROJECT_VERSION}} · {{LAST_UPDATED}}
 
@@ -153,7 +153,7 @@ MIT
 ### staging (README.staging.template.md)
 
 ```
-# dashboard-esden · Staging
+# dashboard-af · Staging
 
 {{PROJECT_VERSION}} · {{LAST_UPDATED}}
 
@@ -187,7 +187,7 @@ MIT
 ### main (README.main.template.md)
 
 ```
-# dashboard-esden
+# dashboard-af
 
 {{PROJECT_VERSION}} · {{LAST_UPDATED}}
 
@@ -222,7 +222,7 @@ MIT
 - **Contributing** (solo developer): enlaza a `docs/dev-onboarding.md`, menciona ramas y flujo de PRs.
 - **Descripción breve**: 2-3 oraciones. Developer = técnico, main = orientado al cliente/deploy.
 
-## Ubicación final de templates (D-3 — Decisión confirmada)
+## Ubicación final de templates (3-3 — Decisión confirmada)
 
 **Path definitivo de producción: `scripts/readme-templates/`** — único path que usa el script.
 

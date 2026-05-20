@@ -11,7 +11,7 @@
 
 ## Descripción
 
-Definir y documentar la estructura de directorios que usará el agente `productivity` para persistir logs de tiempo por sprint. Los directorios reales bajo `plans/logs/` NO se crean ahora — se crean cuando arranque Sprint 1 (primera tarea pase a 🟡).
+Definir y documentar la estructura de directorios que usará el agente `productivity` para persistir logs de tiempo por sprint. Los directorios reales bajo `plans/logs/` NO se crean ahora — se crean cuando arranque Sprint 0 (primera tarea pase a 🟡).
 
 ## Estructura objetivo
 

@@ -30,7 +30,7 @@ status: observed (sin ejecutar build/tests)
 ## Árbol de directorios resumido
 
 ```
-automatiza-formacion-dashboard/   # (renombrado desde `dashboard-esden-main` el 2026-05-20)
+automatiza-formacion-dashboard/   # (renombrado desde `dashboard-af-main` el 2026-05-20)
 ├── src/
 │   ├── app/                          # Next.js App Router — rutas y API
 │   │   ├── layout.tsx                # Root layout (ThemeProvider, Inter font)

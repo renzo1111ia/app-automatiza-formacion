@@ -73,7 +73,7 @@ Próxima sesión:
 Commit: abc1234
 Rama: phase/2-auth
 
-Progreso de Fase 2:
+Progreso de Fase 1:
 ├─ ✅ Tabla users (45m)
 ├─ ✅ POST /auth/register (1h 30m)
 ├─ ✅ POST /auth/login (1h 15m)

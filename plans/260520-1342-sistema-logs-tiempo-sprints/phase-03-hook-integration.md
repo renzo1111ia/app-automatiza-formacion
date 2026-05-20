@@ -1,4 +1,4 @@
-# Phase 03 — Integración con hook esden-task-tracker
+# Phase 03 — Integración con hook af-task-tracker
 
 **Prioridad:** P2
 **Estado:** pending
@@ -7,13 +7,13 @@
 ## Contexto
 
 - Plan: [plan.md](plan.md)
-- Hook analizado: `.claude/hooks/esden-task-tracker.cjs`
+- Hook analizado: `.claude/hooks/af-task-tracker.cjs`
 - hooks.json: `.claude/hooks/hooks.json`
 - Agente receptor: `.claude/agents/productivity.md`
 
 ## Estado actual del hook (análisis read-only)
 
-### Qué hace hoy `esden-task-tracker.cjs`
+### Qué hace hoy `af-task-tracker.cjs`
 
 El hook es un **PostToolUse** (Edit|Write|MultiEdit). Funciona así:
 
@@ -31,7 +31,7 @@ El hook es un **PostToolUse** (Edit|Write|MultiEdit). Funciona así:
     "matcher": "Edit|Write|MultiEdit",
     "hooks": [
       { "type": "command", "command": "node .../post-edit-simplify-reminder.cjs" },
-      { "type": "command", "command": "node .../esden-task-tracker.cjs" }
+      { "type": "command", "command": "node .../af-task-tracker.cjs" }
     ]
   }
 ]
@@ -74,9 +74,9 @@ branch?:      "feature/sp-1-fix-worker"  # Solo para evento 🔵
 Para que el sistema sea más automático, el hook debería:
 
 1. **Detectar patrones en additionalContext** generados por roadmap-keeper cuando actualiza RoadMap.md (actualmente el hook no lee el RoadMap — solo reacciona a edits de código).
-2. **Alternativa más simple**: añadir un nuevo hook `esden-productivity-logger.cjs` que se active en `PostToolUse` cuando el archivo editado ES `plans/RoadMap.md`, extraiga el task_id y la transición de estado del diff, y emita un hint para que el assistant invoque productivity.
+2. **Alternativa más simple**: añadir un nuevo hook `af-productivity-logger.cjs` que se active en `PostToolUse` cuando el archivo editado ES `plans/RoadMap.md`, extraiga el task_id y la transición de estado del diff, y emita un hint para que el assistant invoque productivity.
 
-### Diseño del nuevo hook `esden-productivity-logger.cjs` (spec, no implementado)
+### Diseño del nuevo hook `af-productivity-logger.cjs` (spec, no implementado)
 
 ```
 Trigger: PostToolUse → Edit|Write|MultiEdit → path contiene "plans/RoadMap.md"
@@ -96,28 +96,28 @@ Parámetros que el hint debe incluir:
   - sprint_id: inferido del task_id prefix (1→1, 2→2)
 ```
 
-### Alcance para Sprint 1
+### Alcance para Sprint 0
 
-Para Sprint 1, el flujo **manual** (sin nuevo hook) es suficiente:
+Para Sprint 0, el flujo **manual** (sin nuevo hook) es suficiente:
 - El manager invoca `roadmap-keeper` + `productivity` en paralelo en cada transición.
 - No bloquea el arranque del sprint.
-- El nuevo hook `esden-productivity-logger.cjs` puede implementarse en Sprint 2 como mejora.
+- El nuevo hook `af-productivity-logger.cjs` puede implementarse en Sprint 1 como mejora.
 
 ## Decisión de implementación
 
 | Opción | Esfuerzo | Cuando |
 |--------|---------|--------|
-| Flujo manual: manager invoca ambos agentes | 0h extra | Sprint 1 (ahora) |
-| Nuevo hook `esden-productivity-logger.cjs` | ~2h | Sprint 2 (mejora) |
+| Flujo manual: manager invoca ambos agentes | 0h extra | Sprint 0 (ahora) |
+| Nuevo hook `af-productivity-logger.cjs` | ~2h | Sprint 1 (mejora) |
 
-**Decisión: flujo manual para Sprint 1. Hook automático en Sprint 2.**
+**Decisión: flujo manual para Sprint 0. Hook automático en Sprint 1.**
 
 ## Success criteria de esta fase
 
 - [ ] Gap analysis del hook documentado
 - [ ] Contrato de parámetros definido (qué pasa el manager a productivity)
-- [ ] Spec del futuro hook `esden-productivity-logger.cjs` documentada
-- [ ] Decisión de implementación registrada (manual Sprint 1 / hook Sprint 2)
+- [ ] Spec del futuro hook `af-productivity-logger.cjs` documentada
+- [ ] Decisión de implementación registrada (manual Sprint 0 / hook Sprint 1)
 
 ## Risk assessment
 

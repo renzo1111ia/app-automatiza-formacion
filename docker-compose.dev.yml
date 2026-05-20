@@ -14,7 +14,7 @@ version: '3.8'
 services:
   redis:
     image: redis:7-alpine
-    container_name: esden-redis-dev
+    container_name: af-redis-dev
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -32,8 +32,8 @@ services:
       timeout: 3s
       retries: 5
     labels:
-      - "com.esden.service=redis-dev"
-      - "com.esden.environment=development"
+      - "com.af.service=redis-dev"
+      - "com.af.environment=development"
 
 volumes:
   redis_dev_data:

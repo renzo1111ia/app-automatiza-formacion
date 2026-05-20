@@ -3,7 +3,7 @@ title: "Sprints históricos reconstruidos desde git log"
 date: 2026-05-18
 agent: Timeline (Haiku)
 phase: 7
-source_repo: renzo1111ia/dashboard-esden (clonado local en dashboard-esden-git)
+source_repo: renzo1111ia/dashboard-af (clonado local en dashboard-af-git)
 total_commits: 421
 commit_range: "2026-03-02 a 2026-05-18"
 ---

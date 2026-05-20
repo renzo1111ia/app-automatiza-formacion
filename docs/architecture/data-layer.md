@@ -1,7 +1,7 @@
 # Data Layer Architecture
 
 **Versión:** 1.0.0 — 2026-05-18 (Audit-Data, análisis estático)
-**Proyecto:** dashboard-esden (Next.js 16 + Supabase + BullMQ)
+**Proyecto:** dashboard-af (Next.js 16 + Supabase + BullMQ)
 
 ---
 
@@ -45,7 +45,7 @@ Expone tres funciones:
 
 | Función | Key usada | Uso |
 |---------|-----------|-----|
-| `getActiveTenantId()` | — | Lee cookie `esden-tenant-id` |
+| `getActiveTenantId()` | — | Lee cookie `af-tenant-id` |
 | `getSupabaseServerClient()` | `service_role` (o anon fallback) | Server actions generales |
 | `getAdminSupabaseClient()` | `service_role` explícito | Operaciones administrativas |
 
@@ -56,7 +56,7 @@ Ambos clientes crean instancias con `persistSession: false, autoRefreshToken: fa
 Para tenants con su propio Supabase (mode "external"):
 - Cache en Map en memoria con TTL 5min por `tenantId`
 - Crea cliente con service_role del Supabase del cliente
-- Header custom `x-esden-tenant` para trazabilidad
+- Header custom `x-af-tenant` para trazabilidad
 
 ### 2.4 `src/lib/supabase/tenant-router.ts` — Router de datos
 
@@ -76,7 +76,7 @@ Usa `@supabase/ssr` (`createServerClient`) con anon key para validar sesión en 
 - Verifica `supabase.auth.getUser()` en cada request
 - Redirige `/login` si no hay sesión en rutas `/dashboard`
 - Restricción admin en `/dashboard/settings` via `user_metadata.is_admin`
-- No propaga `tenant_id` como claim JWT — el tenant se lee de cookie `esden-tenant-id`
+- No propaga `tenant_id` como claim JWT — el tenant se lee de cookie `af-tenant-id`
 
 ---
 
@@ -279,8 +279,8 @@ Función: match_knowledge_base(query_embedding, match_threshold, match_count, te
 ### 4.1 Redis (src/lib/cache/tenant-cache.ts)
 
 - **TTL:** 5 minutos
-- **Prefijo:** `esden:tenant:config:`
-- **Patrón de clave:** `esden:tenant:config:{tenantId}:{key}`
+- **Prefijo:** `af:tenant:config:`
+- **Patrón de clave:** `af:tenant:config:{tenantId}:{key}`
 - **Librería:** `redis` npm (con soporte TLS para Upstash)
 - **Fallback:** Si Redis no está disponible, se va a BD sin cache (silencioso)
 - **Invalidación:** `invalidateTenantConfigCache(tenantId)` usa `redis.keys(pattern)` + `redis.del`

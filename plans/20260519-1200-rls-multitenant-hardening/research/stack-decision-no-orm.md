@@ -6,7 +6,7 @@
 
 ## Contexto
 
-El proyecto dashboard-esden ya tiene:
+El proyecto dashboard-af ya tiene:
 - `@supabase/supabase-js` ^2.97.0 (query builder tipado)
 - `@supabase/ssr` ^0.8.0 (cliente request-scoped)
 - `zod` ^4.3.6 (validación)
@@ -41,7 +41,7 @@ La pregunta inicial era: ¿añadir Drizzle para reforzar seguridad multi-tenant?
 
 ## Conclusión
 
-**El cliente de Supabase YA es un ORM-lite suficiente** para CRUD + reports del dashboard-esden. Añadir Drizzle/Prisma sería duplicar la capa de acceso a datos sin ganancia de seguridad.
+**El cliente de Supabase YA es un ORM-lite suficiente** para CRUD + reports del dashboard-af. Añadir Drizzle/Prisma sería duplicar la capa de acceso a datos sin ganancia de seguridad.
 
 La seguridad multi-tenant requiere:
 1. **RLS en PostgreSQL** (cubierto en F1-F3 del plan)

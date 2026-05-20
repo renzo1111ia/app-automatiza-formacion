@@ -32,10 +32,10 @@ Sirve como **audit trail**: si en el futuro alguien pregunta "¿quién decidió 
 | Bloque temático | Total | Respondidas | Pendientes | Bloquea Sprint |
 |---|---|---|---|---|
 | 🔴 Urgentes (P-001 a P-003) | 3 | 0 | 3 | Sprint 0 |
-| 🟠 Reglas de negocio (P-004 a P-007) | 4 | 0 | 4 | Sprint 1 |
-| 🟡 Nomenclatura (P-008 a P-012) | 5 | 0 | 5 | Sprint 1-3 |
-| 🔵 Operativa de seguimiento (P-013 a P-016) | 4 | 0 | 4 | Sprint 1-3 |
-| 🟢 Agente Virginia IA (P-017 a P-019) | 3 | 0 | 3 | Sprint 2-3 |
+| 🟠 Reglas de negocio (P-004 a P-007) | 4 | 0 | 4 | Sprint 0 |
+| 🟡 Nomenclatura (P-008 a P-012) | 5 | 0 | 5 | Sprint 0-3 |
+| 🔵 Operativa de seguimiento (P-013 a P-016) | 4 | 0 | 4 | Sprint 0-3 |
+| 🟢 Agente Virginia IA (P-017 a P-019) | 3 | 0 | 3 | Sprint 1-3 |
 | 🟣 **Integraciones (P-020 a P-022)** | 3 | **3** ✅ | 0 | — |
 | ⚙️ **Infraestructura y equipo (P-023 a P-025)** | 3 | **3** ✅ | 0 | — |
 | 🧩 **Derivadas (P-020.a a P-023.c)** | 7 | **7** ✅ | 0 | — |
@@ -55,7 +55,7 @@ Sirve como **audit trail**: si en el futuro alguien pregunta "¿quién decidió 
 - ✅ R-023.a (Auditor administra, control total)
 - ✅ R-023.b (backups multi-nivel + 2 modalidades de cliente)
 - ✅ R-023.c (Kong 2.8.1 EOL detectado — toda la pila Supabase con 2-3 años de retraso, plan de actualización requerido)
-- ✅ **P-020.b** (sesión 3): MVP Fase C = **HubSpot + Zoho** (Google Sheets bidireccional aplazado a post-release)
+- ✅ **P-020.b** (sesión 3): MVP Fase 2 = **HubSpot + Zoho** (Google Sheets bidireccional aplazado a post-release)
 
 **Pendientes derivadas:**
 
@@ -65,7 +65,7 @@ Sirve como **audit trail**: si en el futuro alguien pregunta "¿quién decidió 
 **🆕 Refinamiento del alcance (sesión 3, 2026-05-19) — vigente:**
 
 - El MVP de integraciones queda en **2 CRMs (HubSpot + Zoho)**. El conector de Google Sheets bidireccional —que se había propuesto en sesión 2— **se aplaza a post-release**.
-- Plan rearmado en 5 fases (A: Sprint 0 hotfix · B: Capa de datos sin ORM · C: Adapter+2CRMs · D: Hardening · E: Resto del top 5 + Sheets bidireccional).
+- Plan rearmado en 5 fases (0: Sprint 0 hotfix · 1: Capa de datos sin ORM · 2: Adapter+2CRMs · 3: Hardening · 4: Resto del top 5 + Sheets bidireccional).
 - Ver [R-020-refinement-v2](#r-020-refinement-v2) para detalle completo. La sesión 2 (que incluía Sheets en MVP) queda en [R-020-refinement](#r-020-refinement) como histórico.
 
 ---
@@ -85,7 +85,7 @@ Sirve como **audit trail**: si en el futuro alguien pregunta "¿quién decidió 
 
 #### Lo que significa
 
-El protocolo multi-día está hoy **roto en producción** por el bug F-02-001 del worker — solo se ejecuta el contacto del día 1. La presente decisión documenta el comportamiento esperado (que coincide con la spec original de la clienta) para que el equipo lo implemente en Sprint 1.
+El protocolo multi-día está hoy **roto en producción** por el bug F-02-001 del worker — solo se ejecuta el contacto del día 1. La presente decisión documenta el comportamiento esperado (que coincide con la spec original de la clienta) para que el equipo lo implemente en Sprint 0.
 
 #### 1) Cadencia — regla 24h+3h (= 27h) durante 3 días
 
@@ -120,7 +120,7 @@ Si el lead responde en día 2 o día 3 (a llamada o a WhatsApp), la cadencia se 
 - **24 h** antes · **4 h** antes · **1 h** antes.
 - Cada recordatorio incluye **opción de cancelar o reagendar**.
 
-#### Implicación técnica (Sprint 1, post-fix de F-02-001)
+#### Implicación técnica (Sprint 0, post-fix de F-02-001)
 
 1. Corregir firma del worker (`worker.js:58`) — obligatorio antes de cualquier otro trabajo de cadencia.
 2. Implementar **timezone-aware scheduling**: detección automática del huso por país/teléfono (E.164 + tabla `country_timezones`).
@@ -242,7 +242,7 @@ El research realizado por el agente Opus ([`RESEARCH-CRM-SECTOR-FORMACION-ES-LAT
 - ✅ **Quitar Pipedrive de tier 1**: fit pobre con flujo lead → nurturing → matrícula propio de formación. Su nicho real es ventas B2B mid-market con pipeline visual, no academias. Pasa a tier 2 por cobertura genérica.
 - ✅ **Añadir GoHighLevel (GHL)**: crecimiento real en Latam (~10k usuarios 2025, lidera México/Colombia/Brasil), API v2 con OAuth2, casos documentados en educación online. Avisos: documentación de calidad media, sigue arrastrando el estigma de "tool de agencia".
 
-#### Decisión final — Top 5 definitivo (Sprint 2)
+#### Decisión final — Top 5 definitivo (Sprint 1)
 
 | Prioridad | CRM | Auth | Justificación principal |
 |---|---|---|---|
@@ -261,7 +261,7 @@ El research realizado por el agente Opus ([`RESEARCH-CRM-SECTOR-FORMACION-ES-LAT
 
 #### Implicaciones derivadas (cambio de alcance)
 
-1. **Sprint 2 se amplía con un sub-sprint dedicado a la capa Multi-CRM.** Estimación adicional: **+2-3 semanas** sobre el plan original.
+1. **Sprint 1 se amplía con un sub-sprint dedicado a la capa Multi-CRM.** Estimación adicional: **+2-3 semanas** sobre el plan original.
 
 2. **Plan de implementación por fases** (sugerido por el research):
 
@@ -301,10 +301,10 @@ El Auditor reduce el alcance del MVP de **5 conectores → 2 conectores + Google
 | **1** | **HubSpot** | OAuth2 | Líder global del top 5, API más madura, máxima cobertura ES+Latam en academias online y escuelas de negocio. Free tier amplio → menor fricción para clientes pequeños. |
 | **2** | **Zoho CRM** | OAuth2 / API Key | Vertical Education propio con casos reales (Conpas, BiMind). Fuerte penetración Latam por pricing accesible. Complemento natural de HubSpot para cubrir pyme formativa. |
 
-Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C** como tercer conector del MVP (no es un CRM, pero cumple el rol de plantilla operativa para coger/actualizar/volcar leads en clientes que no usan CRM aún o que viven en Sheets).
+Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase 2** como tercer conector del MVP (no es un CRM, pero cumple el rol de plantilla operativa para coger/actualizar/volcar leads en clientes que no usan CRM aún o que viven en Sheets).
 
-> Combinación final MVP Fase C: **HubSpot + Zoho + Google Sheets**.
-> Salesforce, GoHighLevel y ActiveCampaign quedan en Fase E (post-MVP) reutilizando el adapter pattern construido en Fase C.
+> Combinación final MVP Fase 2: **HubSpot + Zoho + Google Sheets**.
+> Salesforce, GoHighLevel y ActiveCampaign quedan en Fase 4 (post-MVP) reutilizando el adapter pattern construido en Fase 2.
 
 **Justificación del Auditor**: HubSpot y Zoho son los dos CRMs con mayor solapamiento real con el target (academias formativas ES + Latam) según el [research Opus](RESEARCH-CRM-SECTOR-FORMACION-ES-LATAM.md). Empezar con ellos maximiza la cobertura de cuenta-cliente con el menor coste de implementación (ambos OAuth2 estándar, ambos con vertical educación documentada). Google Sheets añade un fallback operativo barato para tenants sin CRM.
 
@@ -367,11 +367,11 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 
    | Fase | Contenido | Semanas |
    |---|---|---|
-   | **Fase A — Sprint 0** | Hotfixes de seguridad (sin cambios) | 1-2 sem |
-   | **Fase B — Capa de datos** | Consolidación `@supabase/ssr` + Zod + Repository pattern + RLS hardening (SIN ORM nuevo — propuesta Drizzle anulada el 20-05-2026) | 3-4 sem |
-   | **Fase C — Adapter layer + 2 CRMs + Sheets** | Patrón Adapter + 2 CRMs concretos + integración Sheets bidireccional | 4-5 sem |
-   | **Fase D — Hardening (opcional)** | Tests E2E, observabilidad, dashboards de costes | 2-3 sem |
-   | **Fase E — Tier 1 completo (futuro)** | Resto del top 5 (los 3 que faltan) bajo demanda | 4-6 sem |
+   | **Fase 0 — Sprint 0** | Hotfixes de seguridad (sin cambios) | 1-2 sem |
+   | **Fase 1 — Capa de datos** | Consolidación `@supabase/ssr` + Zod + Repository pattern + RLS hardening (SIN ORM nuevo — propuesta Drizzle anulada el 20-05-2026) | 3-4 sem |
+   | **Fase 2 — Adapter layer + 2 CRMs + Sheets** | Patrón Adapter + 2 CRMs concretos + integración Sheets bidireccional | 4-5 sem |
+   | **Fase 3 — Hardening (opcional)** | Tests E2E, observabilidad, dashboards de costes | 2-3 sem |
+   | **Fase 4 — Tier 1 completo (futuro)** | Resto del top 5 (los 3 que faltan) bajo demanda | 4-6 sem |
 
 #### Severidad de la implicación
 
@@ -379,14 +379,14 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 
 #### Pregunta abierta nueva derivada
 
-##### <a id="p-020b-nueva"></a>P-020.b — ¿Qué 2 CRMs concretos del top 5 vamos a implementar en la Fase C? ✅ CERRADA
+##### <a id="p-020b-nueva"></a>P-020.b — ¿Qué 2 CRMs concretos del top 5 vamos a implementar en la Fase 2? ✅ CERRADA
 
 | Campo | Valor |
 |---|---|
 | **Pregunta** | El Auditor indicó "otra combinación" distinta a HubSpot+Zoho / HubSpot+GHL / Zoho+GHL. ¿Qué 2 CRMs concretos? |
 | **Estado** | ✅ **CERRADA (2026-05-19, sesión 3)** |
-| **Respuesta** | **HubSpot + Zoho**. Adicionalmente, el Auditor decide aplazar Google Sheets bidireccional a post-release (Fase E). Ver [R-020-refinement-v2](#r-020-refinement-v2). |
-| **Combinación final MVP Fase C** | HubSpot + Zoho (sin Sheets) |
+| **Respuesta** | **HubSpot + Zoho**. Adicionalmente, el Auditor decide aplazar Google Sheets bidireccional a post-release (Fase 4). Ver [R-020-refinement-v2](#r-020-refinement-v2). |
+| **Combinación final MVP Fase 2** | HubSpot + Zoho (sin Sheets) |
 
 3. **Arquitectura técnica propuesta:**
 
@@ -427,7 +427,7 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 
 #### Severidad de la implicación
 
-🟠 **ALTA** — amplía el alcance del proyecto en 2-3 semanas y obliga a un rediseño parcial del módulo CRM. NO bloquea Sprint 0 ni Sprint 1, pero hay que iniciarlo en paralelo a Sprint 2 para llegar a tiempo.
+🟠 **ALTA** — amplía el alcance del proyecto en 2-3 semanas y obliga a un rediseño parcial del módulo CRM. NO bloquea Sprint 0 ni Sprint 0, pero hay que iniciarlo en paralelo a Sprint 1 para llegar a tiempo.
 
 #### Pregunta abierta derivada
 
@@ -445,22 +445,22 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 | Aspecto | Valor |
 |---|---|
 | **MVP de integraciones** | **2 CRMs: HubSpot + Zoho** |
-| **Google Sheets bidireccional** | **Aplazado a post-release** (Fase E) |
-| **Resto del top 5** (Salesforce, GHL, ActiveCampaign) | Post-release (Fase E) |
+| **Google Sheets bidireccional** | **Aplazado a post-release** (Fase 4) |
+| **Resto del top 5** (Salesforce, GHL, ActiveCampaign) | Post-release (Fase 4) |
 | **Tier 2** (Clientify, Bitrix24, Pipedrive, Monday CRM, Holded) | Bajo demanda, sin compromiso de fecha |
 
 #### Qué cambia respecto a sesión 2
 
-1. **Sheets sale de la Fase C** → toda la sección "Google Sheets como integración bidireccional" de sesión 2 sigue siendo válida **como diseño**, pero su implementación se ejecuta en Fase E (post-release), no en MVP.
-2. **Fase C queda enfocada en 2 CRMs puros**: Adapter pattern + HubSpot adapter + Zoho adapter + UI admin para conectar el CRM del tenant. Sin Sheets en el alcance.
-3. **Se acorta el time-to-market del MVP**: estimación Fase C baja de **4-5 semanas → 2-3 semanas** (no hay que diseñar plantilla Sheets, OAuth Google, watcher/polling, ni mapeo de columnas en MVP).
+1. **Sheets sale de la Fase 2** → toda la sección "Google Sheets como integración bidireccional" de sesión 2 sigue siendo válida **como diseño**, pero su implementación se ejecuta en Fase 4 (post-release), no en MVP.
+2. **Fase 2 queda enfocada en 2 CRMs puros**: Adapter pattern + HubSpot adapter + Zoho adapter + UI admin para conectar el CRM del tenant. Sin Sheets en el alcance.
+3. **Se acorta el time-to-market del MVP**: estimación Fase 2 baja de **4-5 semanas → 2-3 semanas** (no hay que diseñar plantilla Sheets, OAuth Google, watcher/polling, ni mapeo de columnas en MVP).
 
 #### Justificación
 
-1. **Sheets es una integración con superficie técnica grande** (OAuth2 Google, Drive API push notifications, rate limits 60/min/usuario, plantilla estandarizada, field mapping por tenant). Meterla en MVP duplica el tamaño de la Fase C sin necesidad.
+1. **Sheets es una integración con superficie técnica grande** (OAuth2 Google, Drive API push notifications, rate limits 60/min/usuario, plantilla estandarizada, field mapping por tenant). Meterla en MVP duplica el tamaño de la Fase 2 sin necesidad.
 2. **Los 2 CRMs ya cubren la mayoría del segmento target**: el research Opus estima ~60-70% del mercado objetivo cubierto solo con HubSpot + Zoho en ES+Latam.
-3. **El diseño del adapter no se desperdicia**: el patrón `IntegrationAdapter` se construye en Fase C con 2 implementaciones (HubSpot, Zoho); Sheets se añadirá como tercera implementación en Fase E reutilizando exactamente la misma interfaz.
-4. **Quitar Sheets del MVP no cierra puertas**: ya hay código OAuth Google previo en el proyecto (commit `63e1e6e`, sprint S-04). Ese código permanece sin tocar, congelado, hasta Fase E.
+3. **El diseño del adapter no se desperdicia**: el patrón `IntegrationAdapter` se construye en Fase 2 con 2 implementaciones (HubSpot, Zoho); Sheets se añadirá como tercera implementación en Fase 4 reutilizando exactamente la misma interfaz.
+4. **Quitar Sheets del MVP no cierra puertas**: ya hay código OAuth Google previo en el proyecto (commit `63e1e6e`, sprint S-04). Ese código permanece sin tocar, congelado, hasta Fase 4.
 
 #### Los 2 CRMs concretos (cerrando P-020.b)
 
@@ -469,18 +469,18 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 | **1** | **HubSpot** | OAuth2 | Líder global del top 5, API más madura, máxima cobertura ES+Latam en academias online y escuelas de negocio. Free tier amplio → menor fricción para clientes pequeños. |
 | **2** | **Zoho CRM** | OAuth2 / API Key | Vertical Education propio con casos reales (Conpas, BiMind). Fuerte penetración Latam por pricing accesible. Complemento natural de HubSpot para cubrir pyme formativa. |
 
-> Combinación final MVP Fase C: **HubSpot + Zoho** (sin Sheets).
-> Salesforce, GoHighLevel, ActiveCampaign y Google Sheets bidireccional quedan en **Fase E** (post-MVP), reutilizando el adapter pattern construido en Fase C.
+> Combinación final MVP Fase 2: **HubSpot + Zoho** (sin Sheets).
+> Salesforce, GoHighLevel, ActiveCampaign y Google Sheets bidireccional quedan en **Fase 4** (post-MVP), reutilizando el adapter pattern construido en Fase 2.
 
 #### Plan rearmado por fases — VIGENTE
 
 | Fase | Contenido | Semanas |
 |---|---|---|
-| **Fase A — Sprint 0** | Hotfixes de seguridad (sin cambios respecto a sesión 2) | 1-2 sem |
-| **Fase B — Capa de datos** | Consolidación `@supabase/ssr` + Zod + Repository pattern + RLS hardening (SIN ORM nuevo) | 3-4 sem |
-| **Fase C — Adapter layer + 2 CRMs** | Patrón Adapter + HubSpot adapter + Zoho adapter + UI admin de conexión | **2-3 sem** ⬇️ |
-| **Fase D — Hardening (opcional)** | Tests E2E, observabilidad, dashboards de costes | 2-3 sem |
-| **Fase E — Post-release** | Google Sheets bidireccional + resto del top 5 (Salesforce, GHL, ActiveCampaign), bajo demanda | 4-7 sem |
+| **Fase 0 — Sprint 0** | Hotfixes de seguridad (sin cambios respecto a sesión 2) | 1-2 sem |
+| **Fase 1 — Capa de datos** | Consolidación `@supabase/ssr` + Zod + Repository pattern + RLS hardening (SIN ORM nuevo) | 3-4 sem |
+| **Fase 2 — Adapter layer + 2 CRMs** | Patrón Adapter + HubSpot adapter + Zoho adapter + UI admin de conexión | **2-3 sem** ⬇️ |
+| **Fase 3 — Hardening (opcional)** | Tests E2E, observabilidad, dashboards de costes | 2-3 sem |
+| **Fase 4 — Post-release** | Google Sheets bidireccional + resto del top 5 (Salesforce, GHL, ActiveCampaign), bajo demanda | 4-7 sem |
 
 #### Severidad de la implicación
 
@@ -489,7 +489,7 @@ Adicionalmente, **Google Sheets bidireccional** se incluye en la **misma Fase C*
 #### Validación con cliente requerida
 
 1. Confirmar que el cliente acepta arrancar el SaaS sólo con HubSpot + Zoho conectables (sin Sheets) durante el MVP.
-2. Estimar cuántos prospects/clientes se pierden por no tener Sheets en MVP (probablemente bajo: los que viven 100% en Sheets son segmento pyme muy pequeño; pueden esperar a Fase E o usar HubSpot Free Tier como puente).
+2. Estimar cuántos prospects/clientes se pierden por no tener Sheets en MVP (probablemente bajo: los que viven 100% en Sheets son segmento pyme muy pequeño; pueden esperar a Fase 4 o usar HubSpot Free Tier como puente).
 
 ---
 
@@ -508,7 +508,7 @@ Los datos históricos de leads que vivían en Airtable **deben importarse a Supa
 
 #### Implicaciones derivadas
 
-1. **Sub-proyecto de migración a planificar** en Sprint 2 o 3.
+1. **Sub-proyecto de migración a planificar** en Sprint 1 o 3.
 
 2. **Información que necesitamos antes de planificar la migración:**
    - ¿Cuántas bases de Airtable hay? (1, o varias por cliente)
@@ -521,7 +521,7 @@ Los datos históricos de leads que vivían en Airtable **deben importarse a Supa
 3. **Plan técnico de la migración** (estimación: **3-5 días por base Airtable**):
    - Export desde Airtable (CSV o API).
    - Diseño del mapping de campos Airtable → schema Supabase (especialmente campos JSONB de metadata).
-   - Script de import con validación usando repositorios y schemas Zod (la capa de datos consolidada de Fase B ya estará en su sitio).
+   - Script de import con validación usando repositorios y schemas Zod (la capa de datos consolidada de Fase 1 ya estará en su sitio).
    - Validación de integridad: contar registros, comparar checksums.
    - Plan de rollback si algo va mal.
    - Comunicación al cliente sobre downtime durante la migración (si aplica).
@@ -533,7 +533,7 @@ Los datos históricos de leads que vivían en Airtable **deben importarse a Supa
    - Encoding (acentos, ñ).
 
 5. **Estrategia recomendada:**
-   - Hacer la migración de datos Airtable **después** de cerrar Sprint 0+1+2 (cuando la capa de datos consolidada de Fase B esté en su sitio y la lógica de cualificación esté corregida).
+   - Hacer la migración de datos Airtable **después** de cerrar Sprint 0+1+2 (cuando la capa de datos consolidada de Fase 1 esté en su sitio y la lógica de cualificación esté corregida).
    - Importar a tabla `lead` con `tipo_lead = 'HISTORICO_AIRTABLE'` para distinguirlos y no procesarlos automáticamente con el orquestador.
    - Permitir reactivación manual desde el panel si el cliente quiere retomar contacto.
 
@@ -595,7 +595,7 @@ Esta dualidad operación-gestionada + auto-administración-parcial **cambia el d
    - Tabla de fechas de inicio de cursos.
    - Tabla de cursos activos / inactivos.
    - Vista de "estado de actualización": cuándo se actualizó cada cosa por última vez.
-   - **Estimación del panel: 5-7 días** (entra en Sprint 3).
+   - **Estimación del panel: 5-7 días** (entra en Sprint 2).
 
 3. **Choca con buenas prácticas SaaS** donde el cliente final es autoservicio:
    - Si en el futuro hay 50 clientes, el equipo dev no escala.
@@ -613,7 +613,7 @@ Esta dualidad operación-gestionada + auto-administración-parcial **cambia el d
 
 #### Severidad de la implicación
 
-🟡 **MEDIA** — añade 5-7 días al Sprint 3 + carga operativa continua. No bloquea sprints anteriores.
+🟡 **MEDIA** — añade 5-7 días al Sprint 2 + carga operativa continua. No bloquea sprints anteriores.
 
 #### Pregunta abierta derivada
 
@@ -665,7 +665,7 @@ La instancia de Supabase **no es la versión Cloud comercial**, sino una instanc
    - Cambiar password del usuario `postgres` superuser (que está hardcoded como `postgres:postgres` en código).
    - **Cerrar puerto 5432 a internet** si está expuesto (verificar con `nmap` desde fuera).
 
-5. **Implicación para la capa de datos (Fase B — SIN ORM nuevo):**
+5. **Implicación para la capa de datos (Fase 1 — SIN ORM nuevo):**
    - El cliente `@supabase/ssr` apunta al endpoint REST de Supabase, no al puerto 5432 directo.
    - Para scripts admin / SQL migrations: connection string `postgresql://app_user:***@<host>:6543/postgres` apuntando al pooler.
    - Hay que confirmar que el pooler (Supavisor) está activo en la instancia self-hosted; en Cloud viene por defecto, en self-hosted depende de la versión.
@@ -727,7 +727,7 @@ La instancia de Supabase **no es la versión Cloud comercial**, sino una instanc
    - **Storage de backups:** S3-compatible (MinIO ya en stack) con cifrado at-rest.
    - **Restore:** UI con preview de qué se va a restaurar antes de ejecutar.
 
-5. **Estimación: 1-2 semanas para el módulo de backups multi-nivel + UI** en Sprint 3 o Sprint 4.
+5. **Estimación: 1-2 semanas para el módulo de backups multi-nivel + UI** en Sprint 2 o Sprint 3.
 
 6. **Seguridad del proceso:**
    - El cliente NO puede hacer backup de otro tenant (RLS aplicada al script).
@@ -790,7 +790,7 @@ La instancia de Supabase **no es la versión Cloud comercial**, sino una instanc
 
 | Campo | Valor |
 |---|---|
-| **Pregunta** | ¿Quién va a ejecutar el Sprint 0 y la consolidación de la capa de datos (Fase B, originalmente propuesta como migración a Drizzle — anulada el 20-05-2026)? |
+| **Pregunta** | ¿Quién va a ejecutar el Sprint 0 y la consolidación de la capa de datos (Fase 1, originalmente propuesta como migración a Drizzle — anulada el 20-05-2026)? |
 | **Respondedor** | Javier HP (Auditor) |
 | **Fecha** | 2026-05-19 |
 | **Respuesta** | Mismo equipo con método nuevo (Recomendado) |
@@ -834,10 +834,10 @@ Cada PR que cierre un finding debe documentar en su descripción **el comando `g
 **Ejemplos de comandos pre-merge** (del anexo del informe de comparativa):
 
 ```bash
-# Para cerrar D-001 (USER_ESTUDIES)
+# Para cerrar 3-001 (USER_ESTUDIES)
 grep -rn "USER_ESTUDIES" src/      # Debe devolver 0 resultados
 
-# Para cerrar D-002 (YEARS_EXPERIENCE variantes)
+# Para cerrar 3-002 (YEARS_EXPERIENCE variantes)
 grep -rE "YEARS_?\s?EXPERIENCI?E?" src/   # Solo YEARS_EXPERIENCE permitido
 
 # Para cerrar F-05-SEC-001 (JWTs hardcoded)
@@ -950,7 +950,7 @@ Durante las 6-8 semanas que durará el plan de remediación (Sprint 0 + 1 + 2), 
 
 #### Acciones pendientes
 
-- [ ] **Inventario formal de bases Airtable** del cliente Esden antes de planificar la migración (Sprint 2-3).
+- [ ] **Inventario formal de bases Airtable** del cliente Esden antes de planificar la migración (Sprint 1-3).
 - [ ] Exportar metadatos de cada base (CSV o vía API) para contar leads y campos.
 - [ ] Identificar si hay bases de otros clientes (no Esden) que también deban migrarse en el futuro.
 
@@ -1041,7 +1041,7 @@ Las siguientes 19 preguntas están en `PREGUNTAS-PARA-LA-CLIENTE.md` esperando r
 | P-002 | ¿Quién tiene/tuvo acceso al repositorio de código? | ⏳ Pendiente |
 | P-003 | ¿Ventana de mantenimiento de 30 minutos? | ⏳ Pendiente |
 
-### Bloque 2 — Reglas de negocio (4 pendientes — Sprint 1)
+### Bloque 2 — Reglas de negocio (4 pendientes — Sprint 0)
 
 | ID | Pregunta corta | Estado |
 |---|---|---|
@@ -1050,7 +1050,7 @@ Las siguientes 19 preguntas están en `PREGUNTAS-PARA-LA-CLIENTE.md` esperando r
 | P-006 | Exclusiones de profesiones manuales: ¿se aplican? | ⏳ Pendiente |
 | P-007 | Estado "prematriculado": ¿válido o vestigio? | ⏳ Pendiente |
 
-### Bloque 3 — Nomenclatura (5 pendientes — Sprint 1-3)
+### Bloque 3 — Nomenclatura (5 pendientes — Sprint 0-3)
 
 | ID | Pregunta corta | Estado |
 |---|---|---|
@@ -1060,7 +1060,7 @@ Las siguientes 19 preguntas están en `PREGUNTAS-PARA-LA-CLIENTE.md` esperando r
 | P-011 | Valores de `qualified`: ¿`apto`/`no apto` u otro? | ⏳ Pendiente |
 | P-012 | Columna `nivel_estudios` en BD: ¿se usa? | ⏳ Pendiente |
 
-### Bloque 4 — Operativa de seguimiento (4 pendientes — Sprint 1-3)
+### Bloque 4 — Operativa de seguimiento (4 pendientes — Sprint 0-3)
 
 | ID | Pregunta corta | Estado |
 |---|---|---|
@@ -1069,7 +1069,7 @@ Las siguientes 19 preguntas están en `PREGUNTAS-PARA-LA-CLIENTE.md` esperando r
 | P-015 | Estados "informado"/"matriculado": ¿auto o manual? | ⏳ Pendiente |
 | P-016 | Ultravox: ¿analizar transcripción al final? | ⏳ Pendiente |
 
-### Bloque 5 — Agente Virginia IA (3 pendientes — Sprint 2-3)
+### Bloque 5 — Agente Virginia IA (3 pendientes — Sprint 1-3)
 
 | ID | Pregunta corta | Estado |
 |---|---|---|
@@ -1125,4 +1125,4 @@ Cuando llegue una nueva respuesta (vía este chat o el otro), el procedimiento e
 **Refinamientos del alcance documentados:**
 
 - [R-020-refinement](#r-020-refinement) (sesión 2, ⚠️ SUPERSEDED) — propuso "2 CRMs + Google Sheets" en MVP.
-- [R-020-refinement-v2](#r-020-refinement-v2) (sesión 3, ✅ VIGENTE) — MVP Fase C confirmado: **HubSpot + Zoho** (Google Sheets aplazado a Fase E post-release).
+- [R-020-refinement-v2](#r-020-refinement-v2) (sesión 3, ✅ VIGENTE) — MVP Fase 2 confirmado: **HubSpot + Zoho** (Google Sheets aplazado a Fase 4 post-release).

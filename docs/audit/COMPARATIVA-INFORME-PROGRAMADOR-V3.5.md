@@ -25,7 +25,7 @@ La **auditoría externa independiente** del mismo código, ejecutada en 8 fases 
 
 ---
 
-## D-001 — Variable `USER_ESTUDIES` "eliminada del código"
+## 3-001 — Variable `USER_ESTUDIES` "eliminada del código"
 
 **Afirmación v3.5 (sección 1):**
 > *"`{user_studies}` vs `USER_STUDIES`: Se **eliminó el uso histórico** de `USER_ESTUDIES` (híbrido espanglish). Se unificó bajo el estándar internacional `USER_STUDIES`..."*
@@ -53,7 +53,7 @@ grep -rn "USER_ESTUDIES" src/
 
 ---
 
-## D-002 — Variable de experiencia "corregida a YEARS_EXPERIENCE"
+## 3-002 — Variable de experiencia "corregida a YEARS_EXPERIENCE"
 
 **Afirmación v3.5 (sección 1):**
 > *"`{year_experience}` vs `YEARS_EXPERIENCE`: Se **corrigió** el término del singular al plural técnico en inglés (`YEARS_EXPERIENCE`), alineándolo con el diccionario de variables del sistema."*
@@ -83,7 +83,7 @@ grep -rE "YEARS_?\s?EXPERIENCI?E?" src/
 
 ---
 
-## D-003 — `USER_PROFESION` "mantenido a propósito para no romper consultas"
+## 3-003 — `USER_PROFESION` "mantenido a propósito para no romper consultas"
 
 **Afirmación v3.5 (sección 1):**
 > *"`{user_profession}` vs `USER_PROFESION`: La definición externa sugería la doble 's' (`user_profession`). Sin embargo, el entorno de producción y la lógica de los agentes operan de forma correcta sobre `USER_PROFESION` (una sola 's', mapeo en español). **Se mantiene así para evitar la rotura de consultas de inserción existentes**."*
@@ -107,13 +107,13 @@ La **especificación oficial de la cliente** (documento `Promt-Virginia.md` que 
 
 **Veredicto técnico:** No es una "corrección consciente para evitar romper" — es una **inconsistencia interna en los propios documentos entregados por la cliente** que el código ha resuelto unilateralmente alineándose con uno de ellos sin pedir aclaración formal.
 
-**Acción correcta pendiente:** Preguntar a la cliente cuál es la grafía canónica oficial (pregunta D-004 en nuestro `00-known-divergences.md`). El argumento "no romper consultas existentes" oculta el problema: el día que se entregue al CRM externo se descubrirá la divergencia.
+**Acción correcta pendiente:** Preguntar a la cliente cuál es la grafía canónica oficial (pregunta 3-004 en nuestro `00-known-divergences.md`). El argumento "no romper consultas existentes" oculta el problema: el día que se entregue al CRM externo se descubrirá la divergencia.
 
 **Severidad de la divergencia:** **MEDIA** — el riesgo es la sincronización al CRM externo (Zoho).
 
 ---
 
-## D-004 — `book_appointmen` "corregido estrictamente en producción"
+## 3-004 — `book_appointmen` "corregido estrictamente en producción"
 
 **Afirmación v3.5 (sección 1):**
 > *"`{{book_appointmen}}` (Error de Sintaxis Crítico): La definición de la herramienta carecía de la letra 't' final. Invocar la función con dicha omisión habría provocado el fallo inmediato del flujo de automatización (tanto en chat como en llamada) al intentar agendar. **En producción se ha corregido estrictamente a `book_appointment`**, garantizando la ejecución perfecta de agendas automáticas..."*
@@ -140,7 +140,7 @@ grep -n "book_appointmen[^t]" docs/Docs-entrega-clienta/Promt-Virginia.md
 
 ---
 
-## D-005 — Schema de la variable `QUALIFIED` "valores aceptados: apto/no apto/vacío"
+## 3-005 — Schema de la variable `QUALIFIED` "valores aceptados: apto/no apto/vacío"
 
 **Afirmación v3.5 (sección 4, Tabla de Correspondencia Final):**
 
@@ -173,7 +173,7 @@ grep -rE "qualified.*[:=].*(si|no|apto|SI|NO|cualificado)" src/lib
 
 ---
 
-## D-006 — Regla de cualificación "≥ 2 años de experiencia relevante"
+## 3-006 — Regla de cualificación "≥ 2 años de experiencia relevante"
 
 **Afirmación v3.5 (sección Reglas, REGLA 2):**
 > *"REGLA 2: Cualificación Exitosa — Gatillo: Evaluación en milisegundos de los criterios de acceso oficiales (ej. titulación universitaria **o $\ge$ 2 años de experiencia relevante**)."*
@@ -201,22 +201,22 @@ Regla C (sin estudios): years_experience >= 5  ← código (regla inventada, no 
 
 ---
 
-## D-007 — "Conclusión del Estado del Sistema: completamente balanceado y securizado"
+## 3-007 — "Conclusión del Estado del Sistema: completamente balanceado y securizado"
 
 **Afirmación v3.5 (cierre):**
 > *"El ecosistema digital actual se encuentra **completamente balanceado, securizado contra errores ortográficos de llamadas a funciones de terceros y optimizado para producción**. No se requieren modificaciones en los esquemas SQL de Supabase, en la API de Next.js ni en las estructuras de configuración..."*
 
 Esta es la afirmación más amplia del informe v3.5. La auditoría externa la contradice en cuatro frentes simultáneamente. Cada uno de los siguientes hallazgos está documentado con archivo:línea exacta en nuestro informe extenso (`audit/deep/DEEP-FINDINGS-SUMMARY.md`).
 
-### D-007.A — "Securizado": realidad de la capa de seguridad
+### 3-007.A — "Securizado": realidad de la capa de seguridad
 
 | # | Hallazgo | Archivo | Severidad |
 |---|---|---|---|
 | 1 | JWT `service_role` de Supabase (admin total a la BD) hardcodeado en código fuente | `src/lib/auth-config.ts:19`, `src/lib/supabase/server.ts:7`, `src/lib/actions/tenant.ts:52,76`, `src/scripts/purge-demo.ts:9` (9 ubicaciones, **dos service_roles distintos coexistiendo** — rotación previa mal hecha) | **CRITICAL** |
 | 2 | **7 endpoints de orquestación sin autenticación**, accesibles desde internet sin credenciales | `api/orchestration/deploy`, `api/orchestration/sweep`, `api/orchestration/publish`, `api/orchestration/workflows`, `api/calls/manual`, `api/cron/appointments/reminders`, `api/cron/reminders` | **CRITICAL** |
 | 3 | **Privilege escalation a admin reproducible con dos líneas de JavaScript** desde la consola del navegador (`supabase.auth.updateUser({data:{is_admin:true}})`) | `src/middleware.ts:62-68` | **CRITICAL** |
-| 4 | **Destrucción cross-tenant de datos reproducible** modificando una cookie plain (`esden-tenant-id`) + invocando `deleteLead()` que no verifica ownership | `src/lib/actions/inbox.ts:448-501` (9 funciones afectadas) | **CRITICAL** |
-| 5 | **SSRF confirmado** en `/api/tenant/migrate` via cookie `esden-tenant-url` sin allowlist | `src/app/api/tenant/migrate/route.ts:247-263` | **CRITICAL** |
+| 4 | **Destrucción cross-tenant de datos reproducible** modificando una cookie plain (`af-tenant-id`) + invocando `deleteLead()` que no verifica ownership | `src/lib/actions/inbox.ts:448-501` (9 funciones afectadas) | **CRITICAL** |
+| 5 | **SSRF confirmado** en `/api/tenant/migrate` via cookie `af-tenant-url` sin allowlist | `src/app/api/tenant/migrate/route.ts:247-263` | **CRITICAL** |
 | 6 | **XSS en widget embed** — `id` interpolado sin sanitizar en JS servido a sitios de terceros | `src/app/api/widget/embed.js/route.ts:16` | **HIGH** |
 | 7 | Webhook Retell **sin validación de firma** — cualquier POST altera CRM | `src/app/api/webhooks/retell/route.ts` | **CRITICAL** |
 | 8 | Webhook Retell tools **sin firma** — cancela/agenda citas sin auth | `src/app/api/webhooks/retell/tools/route.ts` | **CRITICAL** |
@@ -231,16 +231,16 @@ Esta es la afirmación más amplia del informe v3.5. La auditoría externa la co
 
 **Veredicto:** afirmar "securizado" en presencia de cualquiera de estos 16 hallazgos es indefendible. Afirmarlo en presencia de los 16 simultáneamente es factualmente incorrecto.
 
-### D-007.B — "No se requieren modificaciones en los esquemas SQL"
+### 3-007.B — "No se requieren modificaciones en los esquemas SQL"
 
 | # | Hallazgo | Impacto |
 |---|---|---|
-| 1 | Las RLS multi-tenant son **inefectivas** (D-007.A items 14-16) → requieren reescritura completa | Aislamiento entre clientes roto |
+| 1 | Las RLS multi-tenant son **inefectivas** (3-007.A items 14-16) → requieren reescritura completa | Aislamiento entre clientes roto |
 | 2 | Tabla `appointments` y `agendamientos` **duplicadas** en producción con esquemas diferentes (`scheduled_at` vs `fecha_agendada_cliente`) | Duplicación no resuelta |
 | 3 | `chat_messages.tenant_id` es de tipo `TEXT` cuando debería ser `UUID` con FK → integridad referencial rota | FK rota |
 | 4 | Tabla `tracked_variables` que el informe v3.5 cita en su tabla de correspondencia **no existe como tabla** — son metadatos JSONB en `lead.metadata` | El informe v3.5 inventa un nombre de tabla que no está en migrations |
 
-### D-007.C — "Optimizado para producción"
+### 3-007.C — "Optimizado para producción"
 
 | # | Hallazgo | Impacto |
 |---|---|---|
@@ -250,7 +250,7 @@ Esta es la afirmación más amplia del informe v3.5. La auditoría externa la co
 | 4 | Cero tests automatizados (0% cobertura): sin Vitest, Playwright, Jest, ni ningún framework instalado | Cualquier cambio puede romper la FSM sin detección |
 | 5 | Costes de LLM no persistidos — el dashboard `/minutos` muestra **datos ficticios** (fallback fijo $0.002/mensaje) porque `completion.usage` nunca se guarda en BD | Observabilidad ausente |
 
-### D-007.D — Accesibilidad
+### 3-007.D — Accesibilidad
 
 | # | Hallazgo | Impacto |
 |---|---|---|
@@ -261,7 +261,7 @@ Esta es la afirmación más amplia del informe v3.5. La auditoría externa la co
 
 ---
 
-## D-008 — "Las 9 Reglas FSM se ejecutan autónomamente en tiempo real"
+## 3-008 — "Las 9 Reglas FSM se ejecutan autónomamente en tiempo real"
 
 **Afirmación v3.5 (sección final):**
 > *"El AI CRM & Workflow Orchestrator v5.0 utiliza una arquitectura de **Máquina de Estados Finita (FSM)**, imposibilitando la existencia de estados aleatorios o contradictorios... El sistema computa, evalúa y actualiza de forma autónoma cada uno de estos campos en tiempo de ejecución..."*
@@ -270,16 +270,16 @@ Esta es la afirmación más amplia del informe v3.5. La auditoría externa la co
 
 La FSM descrita en las 9 reglas REGLA 1–9 está **correctamente diseñada en código**, pero **no se ejecuta** debido a:
 
-1. **F-02-001** (ya descrito en D-007.C): el bug de firma en `worker.js:58` impide que cualquier transición posterior al paso 1 se ejecute. La FSM "fallback compliance → WhatsApp", "voz → seguimiento día N+1", "no respuesta → reintento", etc. no llegan a invocarse en producción.
+1. **F-02-001** (ya descrito en 3-007.C): el bug de firma en `worker.js:58` impide que cualquier transición posterior al paso 1 se ejecute. La FSM "fallback compliance → WhatsApp", "voz → seguimiento día N+1", "no respuesta → reintento", etc. no llegan a invocarse en producción.
 2. **F-02-005**: `QualificationProcessor` (responsable de las transiciones de Regla 2/3/4) **crashea en cada invocación** por el módulo `llm-factory.ts` ausente.
 3. **DA-1-005**: incluso si los dos anteriores se arreglan, `enqueueLeadStep` silencia errores de Redis y reporta éxito cuando no encoló nada. Las transiciones se pierden sin trazas.
-4. **F-04 (varios)**: la FSM se persiste vía `service_role` saltándose RLS. Cualquier usuario autenticado puede inyectar transiciones falsas mediante los webhooks sin firma (D-007.A items 7-9).
+4. **F-04 (varios)**: la FSM se persiste vía `service_role` saltándose RLS. Cualquier usuario autenticado puede inyectar transiciones falsas mediante los webhooks sin firma (3-007.A items 7-9).
 
-**Veredicto:** la afirmación "imposibilitando la existencia de estados aleatorios o contradictorios" es lo opuesto a la realidad. En producción, los estados son frecuentemente inconsistentes porque los jobs encolados no se ejecutan, los webhooks no validan origen, y los schemas de `qualified` no coinciden entre componentes (ver D-005).
+**Veredicto:** la afirmación "imposibilitando la existencia de estados aleatorios o contradictorios" es lo opuesto a la realidad. En producción, los estados son frecuentemente inconsistentes porque los jobs encolados no se ejecutan, los webhooks no validan origen, y los schemas de `qualified` no coinciden entre componentes (ver 3-005).
 
 ---
 
-## D-009 — Lo que el informe v3.5 OMITE
+## 3-009 — Lo que el informe v3.5 OMITE
 
 Aparte de las divergencias en lo que el informe afirma, conviene listar **lo que el informe v3.5 no menciona** y que la auditoría externa identificó como **bloqueante**:
 
@@ -305,15 +305,15 @@ Aparte de las divergencias en lo que el informe afirma, conviene listar **lo que
 
 | # | Afirmación v3.5 | Estado real | Severidad | Reproducible |
 |---|---|---|---|---|
-| D-001 | `USER_ESTUDIES` eliminado | 5 ubicaciones activas | ALTA | `grep -r USER_ESTUDIES src/` |
-| D-002 | `YEARS_EXPERIENCE` unificado | 4 variantes coexisten (incluido nombre con espacio) | ALTA | `grep -rE "YEARS_?\s?EXPERIENCI?E?" src/` |
-| D-003 | `USER_PROFESION` mantenido deliberadamente | Inconsistencia interna en docs cliente sin resolver | MEDIA | Comparar `Promt-Virginia.md` vs `VARIABLES DEFINIDAS.docx` |
-| D-004 | `book_appointmen` corregido | Typo aún presente en prompt fuente cliente | ALTA | `grep -n "book_appointmen[^t]" docs/Docs-entrega-clienta/Promt-Virginia.md` |
-| D-005 | `QUALIFIED = apto/no apto` | 3 schemas distintos coexistiendo, ninguno acepta "apto" | **CRÍTICA** | `grep -rE "qualified" src/lib/services/` |
-| D-006 | Regla ≥ 2 años (lo dice el propio v3.5) | Código implementa ≥ 3 años (Regla B) y ≥ 5 años (Regla C, no en spec) | **CRÍTICA** | Abrir `src/lib/core/qualifier.ts` |
-| D-007 | Sistema "completamente balanceado, securizado, optimizado" | 16 Critical + 41 High activos | **CRÍTICA** | Ver `audit/deep/DEEP-FINDINGS-SUMMARY.html` |
-| D-008 | FSM se ejecuta autónomamente | Bug `worker.js:58` impide pasos 2+; QualificationProcessor crashea | **CRÍTICA** | Ver `audit/deep/DA-1-concurrency-orchestrator.html` |
-| D-009 | (omisiones) | 13 áreas críticas no mencionadas | — | Ver tabla D-009 |
+| 3-001 | `USER_ESTUDIES` eliminado | 5 ubicaciones activas | ALTA | `grep -r USER_ESTUDIES src/` |
+| 3-002 | `YEARS_EXPERIENCE` unificado | 4 variantes coexisten (incluido nombre con espacio) | ALTA | `grep -rE "YEARS_?\s?EXPERIENCI?E?" src/` |
+| 3-003 | `USER_PROFESION` mantenido deliberadamente | Inconsistencia interna en docs cliente sin resolver | MEDIA | Comparar `Promt-Virginia.md` vs `VARIABLES DEFINIDAS.docx` |
+| 3-004 | `book_appointmen` corregido | Typo aún presente en prompt fuente cliente | ALTA | `grep -n "book_appointmen[^t]" docs/Docs-entrega-clienta/Promt-Virginia.md` |
+| 3-005 | `QUALIFIED = apto/no apto` | 3 schemas distintos coexistiendo, ninguno acepta "apto" | **CRÍTICA** | `grep -rE "qualified" src/lib/services/` |
+| 3-006 | Regla ≥ 2 años (lo dice el propio v3.5) | Código implementa ≥ 3 años (Regla B) y ≥ 5 años (Regla C, no en spec) | **CRÍTICA** | Abrir `src/lib/core/qualifier.ts` |
+| 3-007 | Sistema "completamente balanceado, securizado, optimizado" | 16 Critical + 41 High activos | **CRÍTICA** | Ver `audit/deep/DEEP-FINDINGS-SUMMARY.html` |
+| 3-008 | FSM se ejecuta autónomamente | Bug `worker.js:58` impide pasos 2+; QualificationProcessor crashea | **CRÍTICA** | Ver `audit/deep/DA-1-concurrency-orchestrator.html` |
+| 3-009 | (omisiones) | 13 áreas críticas no mencionadas | — | Ver tabla 3-009 |
 
 ---
 
@@ -355,29 +355,29 @@ El sistema tiene una base sólida sobre la que reparar los hallazgos. El desacue
 
 ## Anexo — Cómo verificar cada divergencia en 5 minutos
 
-Cualquier persona con acceso al repositorio puede reproducir las divergencias D-001 a D-006 ejecutando los siguientes comandos desde la raíz del proyecto:
+Cualquier persona con acceso al repositorio puede reproducir las divergencias 3-001 a 3-006 ejecutando los siguientes comandos desde la raíz del proyecto:
 
 ```bash
-# D-001: USER_ESTUDIES sigue presente
+# 3-001: USER_ESTUDIES sigue presente
 grep -rn "USER_ESTUDIES" src/
 
-# D-002: 4 variantes de YEARS_EXPERIENCE
+# 3-002: 4 variantes de YEARS_EXPERIENCE
 grep -rE "YEARS_?\s?EXPERIENCI?E?" src/
 
-# D-003: USER_PROFESION sin doble s
+# 3-003: USER_PROFESION sin doble s
 grep -rn "USER_PROFESION\|USER_PROFESSION" src/
 
-# D-004: typo book_appointmen en doc cliente
+# 3-004: typo book_appointmen en doc cliente
 grep -n "book_appointmen[^t]" docs/Docs-entrega-clienta/Promt-Virginia.md
 
-# D-005: 3 schemas de qualified
+# 3-005: 3 schemas de qualified
 grep -rE "qualified.*[:=].*(si|no|apto|SI|NO|cualificado)" src/lib
 
-# D-006: umbral años de experiencia
+# 3-006: umbral años de experiencia
 grep -n ">= 3\|>= 5" src/lib/core/qualifier.ts
 ```
 
-Las divergencias D-007 a D-009 están documentadas con archivo:línea en los reports completos del audit (`audit/deep/`).
+Las divergencias 3-007 a 3-009 están documentadas con archivo:línea en los reports completos del audit (`audit/deep/`).
 
 ---
 

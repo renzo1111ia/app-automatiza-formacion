@@ -113,7 +113,7 @@ Para evitar generar expectativas falsas, lista explícita de findings que **NO**
 | DA-3-001 — Crons públicos sin auth | Capa de routes | Sprint 0 |
 | DA-3-002 — SSRF en `/api/tenant/migrate` | Capa de routes | Sprint 0 |
 | DA-4-001 — Webhook Retell sin firma HMAC | Capa de webhooks | Sprint 0 |
-| 24 findings WCAG accesibilidad | Capa frontend | Sprint A |
+| 24 findings WCAG accesibilidad | Capa frontend | Sprint WCAG |
 | DA-3-CVE-* — CVEs Next/axios | Bump de deps | Sprint 0 |
 | Costes LLM ficticios en dashboard | Falta persistir `completion.usage` | Sprint 3 |
 | 0% cobertura tests | Falta framework | Sprint 4 |
@@ -337,7 +337,7 @@ export function tenantDb(ctx: TenantContext) {
 }
 ```
 
-5. **Helper `getRequestContext()`** que extrae `tenantId` desde la **sesión Supabase** (no la cookie plain `esden-tenant-id`):
+5. **Helper `getRequestContext()`** que extrae `tenantId` desde la **sesión Supabase** (no la cookie plain `af-tenant-id`):
 
 ```typescript
 // src/lib/db/helpers/context.ts
@@ -359,7 +359,7 @@ export async function getRequestContext(): Promise<TenantContext> {
   if (userTenants.length === 0) throw new ForbiddenError('No tenant assigned');
 
   // Si el usuario es member de 1 tenant: ese. Si es member de varios: el header `x-tenant-id` validado contra membership.
-  const requestedTenant = (await cookies()).get('esden-tenant-id')?.value;
+  const requestedTenant = (await cookies()).get('af-tenant-id')?.value;
   const tenant = userTenants.find(t => t.tenant_id === requestedTenant) ?? userTenants[0];
 
   return {
@@ -672,7 +672,7 @@ Una vez completada esta migración, el camino natural es:
    - Migración de prompts hardcodeados (G-04 del gap analysis) a tablas tipadas.
    - Eliminar últimos `as any`.
 
-3. **Sprint A — Accesibilidad WCAG**:
+3. **Sprint WCAG — Accesibilidad WCAG**:
    - Quick wins (shadcn Dialog + sonner toasts).
    - Independiente de la capa de BD.
 
@@ -690,5 +690,5 @@ Antes de empezar la Fase 0, conviene confirmar:
 ---
 
 **Status:** APPROVED — listo para ejecutar tras Sprint 0.
-**Owner:** equipo de desarrollo dashboard-esden.
+**Owner:** equipo de desarrollo dashboard-af.
 **Next step:** completar Sprint 0 (hotfixes seguridad) y luego empezar Fase 0 de esta migración.

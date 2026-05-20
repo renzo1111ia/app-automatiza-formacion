@@ -110,4 +110,4 @@ Si proyección > fin estimado original: emitir DONE_WITH_CONCERNS con nota al ma
 |--------|-------------|---------|------------|
 | productivity no encuentra estimación en RoadMap.md | Baja | Medio | Leer celda Estimación de la fila de la tarea; si vacía → usar "N/D" y marcar DONE_WITH_CONCERNS |
 | Master log con datos incorrectos si productivity falla a mitad | Media | Bajo | Los logs son append-only — el dato anterior es siempre correcto; rerun seguro |
-| Dos sesiones actualizando el master log simultáneamente | Muy baja | Medio | Sprint 1 es trabajo secuencial, no paralelo |
+| Dos sesiones actualizando el master log simultáneamente | Muy baja | Medio | Sprint 0 es trabajo secuencial, no paralelo |

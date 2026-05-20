@@ -1,4 +1,4 @@
-# Research — Google Sheets bidireccional + Drive API (Sprint 5)
+# Research — Google Sheets bidireccional + Drive API (Sprint 4)
 
 **Agente:** researcher (Sonnet)
 **Fecha:** 20-05-2026

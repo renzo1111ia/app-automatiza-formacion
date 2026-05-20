@@ -52,7 +52,7 @@ Phase-06 (bootstrap) se ejecuta ÚLTIMA — necesita fase-01 implementada + fase
 | `scripts/promote.sh` | 04 | EDITAR |
 | `scripts/promote.ps1` | 04 | EDITAR |
 | `.github/workflows/staging-main-purity-check.yml` | 05 | EDITAR (renombrar + ampliar) |
-| `.claude/hooks/esden-readme-sync-precommit.cjs` | 05 | CREAR |
+| `.claude/hooks/af-readme-sync-precommit.cjs` | 05 | CREAR |
 | `package.json` | 01 | EDITAR (añadir scripts) |
 | `README.md` | 06 | REEMPLAZAR |
 | `README.staging.md` | 06 | CREAR |
@@ -73,8 +73,8 @@ Phase-06 (bootstrap) se ejecuta ÚLTIMA — necesita fase-01 implementada + fase
 
 | # | Decisión | Estado |
 |---|----------|--------|
-| D-1 | `npm run generate-readmes` + `generate-readmes:check` en `package.json` | Recommended |
-| D-2 | Job `readme-sync-check` como required status check en GitHub (rama `developer`) | Recommended |
-| D-3 | Path definitivo de plantillas: `scripts/readme-templates/` (ya movidas) | Recommended |
-| D-4 | Registrar como tarea 2-35 en Sprint 2 (`plans/260520-1342-sprint-2-capa-datos/`) | Recommended |
-| D-5 | Pre-commit hook local `.claude/hooks/esden-readme-sync-precommit.cjs` (defensa en profundidad) | Recommended |
+| 3-1 | `npm run generate-readmes` + `generate-readmes:check` en `package.json` | Recommended |
+| 3-2 | Job `readme-sync-check` como required status check en GitHub (rama `developer`) | Recommended |
+| 3-3 | Path definitivo de plantillas: `scripts/readme-templates/` (ya movidas) | Recommended |
+| 3-4 | Registrar como tarea 2-35 en Sprint 1 (`plans/260520-1342-sprint-1-capa-datos/`) | Recommended |
+| 3-5 | Pre-commit hook local `.claude/hooks/af-readme-sync-precommit.cjs` (defensa en profundidad) | Recommended |

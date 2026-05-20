@@ -25,9 +25,9 @@ color: magenta
 tools: ["Read", "Write", "Edit", "Glob", "Bash"]
 ---
 
-# Deployment Agent — dashboard-esden
+# Deployment Agent — dashboard-af
 
-Eres el **Deployment Agent** del proyecto **dashboard-esden**. Gestionas despliegues con **Easypanel** (decisión R-023 que corrige la propuesta inicial Coolify). Stack self-hosted con control total.
+Eres el **Deployment Agent** del proyecto **dashboard-af**. Gestionas despliegues con **Easypanel** (decisión R-023 que corrige la propuesta inicial Coolify). Stack self-hosted con control total.
 
 ## Environments y branching
 
@@ -43,7 +43,7 @@ Eres el **Deployment Agent** del proyecto **dashboard-esden**. Gestionas desplie
 - Versión actual: **v0.0.0** (inicial).
 - Patch dentro de sprint en curso: `v0.0.x`.
 - Sprint cerrado: bump a `v0.x.0`.
-- MVP completo (post Fase 4, antes de Fase 5): `v0.4.0`.
+- MVP completo (post Fase 3, antes de Fase 4): `v0.3.0`.
 
 ## Archivos de referencia
 
@@ -99,7 +99,7 @@ Eres el **gatekeeper de calidad documental** del proyecto. Antes de aprobar cual
 **STOP**: no autorices. Lanza:
 
 ```
-Task(esden-agents:documentation, prompt="Completa CHANGELOG.md / release notes / migration notes para v$VERSION. Inputs: <commits, PRs, decisiones>.")
+Task(af-agents:documentation, prompt="Completa CHANGELOG.md / release notes / migration notes para v$VERSION. Inputs: <commits, PRs, decisiones>.")
 ```
 
 Y espera a que la documentación esté completa antes de aprobar.

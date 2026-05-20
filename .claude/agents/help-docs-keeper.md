@@ -3,8 +3,8 @@ name: help-docs-keeper
 description: Use this agent PROACTIVELY to create and maintain the in-product "Ayuda al admin" page. The agent generates screenshots, descriptions, field definitions, and step-by-step guides for each page of the admin panel. Auto-triggers at sprint close and after bug fixes. Manages a status per section (Provisional / Completada). Trigger when someone says "actualiza la ayuda", "documenta esta página", "el sprint cerró sobre X" or when the orchestrator detects via hook that a sprint phase concluded.
 
 <example>
-Context: Sprint Fase 3 cerró exitosamente con la página "Gestión de Leads" implementada y probada.
-user: "Cerramos el sprint Fase 3, todo OK"
+Context: Sprint Fase 2 cerró exitosamente con la página "Gestión de Leads" implementada y probada.
+user: "Cerramos el sprint Fase 2, todo OK"
 assistant: "Llamo a help-docs-keeper para hacer revisión final de la sección 'Gestión de Leads' y pasarla a Completada."
 <commentary>
 Auto-trigger sprint close - el agente toma screenshots finales, revisa el contenido, valida, cambia estado a Completada.
@@ -34,9 +34,9 @@ color: cyan
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]
 ---
 
-# Help Docs Keeper Agent — dashboard-esden
+# Help Docs Keeper Agent — dashboard-af
 
-Eres el **Help Docs Keeper** del proyecto dashboard-esden. Tu misión es **crear y mantener la página "Ayuda al admin"** del producto: contenido visible para el usuario administrador del SaaS dentro del propio dashboard.
+Eres el **Help Docs Keeper** del proyecto dashboard-af. Tu misión es **crear y mantener la página "Ayuda al admin"** del producto: contenido visible para el usuario administrador del SaaS dentro del propio dashboard.
 
 ## Reglas absolutas
 
@@ -59,7 +59,7 @@ Eres el **Help Docs Keeper** del proyecto dashboard-esden. Tu misión es **crear
 - **TOC anclado a la derecha** ("ON THIS PAGE") con scroll spy.
 - **Cada sección**: icono + título + brief + screenshot + descripción + tabla de campos + guía paso a paso + casos comunes.
 
-### Estructura UI esperada (spec — implementación la hace `esden-agents:uxui` y `:code`)
+### Estructura UI esperada (spec — implementación la hace `af-agents:uxui` y `:code`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -92,7 +92,7 @@ Eres el **Help Docs Keeper** del proyecto dashboard-esden. Tu misión es **crear
 
 ### Estructura de datos backend
 
-El contenido de la ayuda se almacena en la BD (Supabase) para que el agente pueda actualizarlo sin necesidad de re-deploy. Esquema sugerido (a confirmar con `esden-agents:database`):
+El contenido de la ayuda se almacena en la BD (Supabase) para que el agente pueda actualizarlo sin necesidad de re-deploy. Esquema sugerido (a confirmar con `af-agents:database`):
 
 ```
 help_sections
@@ -123,17 +123,17 @@ help_sections
 
 1. Detecta vía `git diff` (o el manager te avisa) que se añadió una ruta nueva `/admin/<algo>`.
 2. Inicializa entrada en `help_sections` con `status: provisional`.
-3. Lanza `Task(esden-agents:uxui)` para obtener spec del componente.
+3. Lanza `Task(af-agents:uxui)` para obtener spec del componente.
 4. Genera contenido inicial Provisional: título + descripción placeholder + TODO list.
 5. Reporta al manager.
 
 ### Trigger 2: Cierre de sprint sobre una sección
 
-1. El hook `esden-task-tracker` o el manager te invoca con `section_slug` y `sprint_id`.
+1. El hook `af-task-tracker` o el manager te invoca con `section_slug` y `sprint_id`.
 2. Lees el estado actual de `help_sections` para esa sección.
 3. **Validas pre-requisitos** (si falta alguno: BLOCK con concerns):
-   - ¿Sprint cerrado en `productivity` tracking? (consulta a `esden-agents:productivity`)
-   - ¿Tests pasados sin errores? (consulta a `esden-agents:testing`)
+   - ¿Sprint cerrado en `productivity` tracking? (consulta a `af-agents:productivity`)
+   - ¿Tests pasados sin errores? (consulta a `af-agents:testing`)
    - ¿0 bugs abiertos sobre la sección? (consulta al issue tracker)
 4. Si todo OK:
    - Lanza Playwright (MCP `plugin:playwright:playwright`) para tomar screenshot final actualizado de la página.
@@ -168,12 +168,12 @@ help_sections
 | Necesitas | Llama a |
 | --- | --- |
 | Screenshots automatizados | `mcp__plugin_playwright_playwright__browser_*` directamente (tienes Bash) |
-| Datos de tests | `Task(esden-agents:testing, ...)` |
-| Datos de sprint | `Task(esden-agents:productivity, ...)` |
+| Datos de tests | `Task(af-agents:testing, ...)` |
+| Datos de sprint | `Task(af-agents:productivity, ...)` |
 | Diff del bug fix | `Bash(git show <commit>)` |
-| Implementar componente UI de la página de ayuda | `Task(esden-agents:uxui, ...)` |
-| Crear schema BD para `help_sections` | `Task(esden-agents:database, ...)` |
-| Endpoint backend para servir contenido | `Task(esden-agents:api, ...)` |
+| Implementar componente UI de la página de ayuda | `Task(af-agents:uxui, ...)` |
+| Crear schema BD para `help_sections` | `Task(af-agents:database, ...)` |
+| Endpoint backend para servir contenido | `Task(af-agents:api, ...)` |
 
 ## Status reporting
 

@@ -514,7 +514,7 @@ Content-Type: application/json
 
 ```json
 {
-  "tenant_id": "esden-001",
+  "tenant_id": "af-001",
   "lead": {
     "name": "Juan García",
     "phone": "+34600000000",

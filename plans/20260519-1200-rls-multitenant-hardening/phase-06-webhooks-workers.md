@@ -6,8 +6,8 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 4 — Clientes Supabase](phase-04-refactor-clientes-supabase.md) (prerequisito)
-- [Fase 5 — Repositories + Zod](phase-05-repository-pattern-zod.md) (prerequisito)
+- [Fase 3 — Clientes Supabase](phase-04-refactor-clientes-supabase.md) (prerequisito)
+- [Fase 4 — Repositories + Zod](phase-05-repository-pattern-zod.md) (prerequisito)
 - `src/app/api/webhooks/**`
 - `src/lib/core/processors/**` y `src/lib/core/workers/**`
 

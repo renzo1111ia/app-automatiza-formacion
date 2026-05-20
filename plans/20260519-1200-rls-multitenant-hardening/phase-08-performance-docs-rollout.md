@@ -228,4 +228,4 @@ Si tras deploy hay incidente crítico (login roto, datos invisibles):
 
 ## Next Steps
 
-→ Plan completado. Continuar con sprint MVP (Fase C: HubSpot + Zoho + Google Sheets bidireccional).
+→ Plan completado. Continuar con sprint MVP (Fase 2: HubSpot + Zoho + Google Sheets bidireccional).

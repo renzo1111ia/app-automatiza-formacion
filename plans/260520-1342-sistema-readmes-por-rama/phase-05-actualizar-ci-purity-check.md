@@ -11,7 +11,7 @@
 - **Estimación:** 1h (CI 30min + pre-commit hook 30min)
 - **Archivos a editar/crear:**
   - `.github/workflows/staging-main-purity-check.yml` (renombrar a `repo-purity-check.yml`)
-  - `.claude/hooks/esden-readme-sync-precommit.cjs` (CREAR)
+  - `.claude/hooks/af-readme-sync-precommit.cjs` (CREAR)
 - **Dependencias:** Ninguna (puede ejecutarse en paralelo con fases 01-04)
 
 ## Key Insights
@@ -144,7 +144,7 @@ El job `purity-check` sólo se ejecuta en staging/main (condición `if`). El job
 | El job `readme-sync-check` añade ~30s a cada push en developer | Alta | Bajo | Aceptable — node + checkout rápido en ubuntu-latest |
 | Renombrar el workflow rompe referencias en CLAUDE.md o docs/ | Baja | Bajo | Actualizar referencias en CLAUDE.md si las hay |
 
-## CI bloqueante — Required Status Check (D-2)
+## CI bloqueante — Required Status Check (3-2)
 
 El job `readme-sync-check` debe configurarse como **required status check** en GitHub Branch Protection Rules para la rama `developer`.
 
@@ -159,11 +159,11 @@ El dev ejecuta `npm run generate-readmes` localmente, commitea los READMEs actua
 
 > **Nota de rodaje:** Si el CI bloqueante genera fricción al inicio (ej. devs olvidando regenerar READMEs con frecuencia), considerar pasarlo a informativo (`continue-on-error: true`) durante 1-2 sprints mientras el equipo adopta el hábito. Activar bloqueante una vez que no haya fallos espurios durante 1 sprint completo.
 
-## Pre-commit hook local (D-5 — Defensa en profundidad)
+## Pre-commit hook local (3-5 — Defensa en profundidad)
 
 Estrategia: **pre-commit local + CI bloqueante** — dos capas de defensa. El hook local atrapa el error antes del push; el CI es el respaldo.
 
-### Archivo a crear: `.claude/hooks/esden-readme-sync-precommit.cjs`
+### Archivo a crear: `.claude/hooks/af-readme-sync-precommit.cjs`
 
 **Comportamiento:**
 - Se activa antes de cada commit en rama `developer`
@@ -173,7 +173,7 @@ Estrategia: **pre-commit local + CI bloqueante** — dos capas de defensa. El ho
 
 **Mensaje de error al desarrollador:**
 ```
-[esden-readme-sync] ERROR: Los README.md no están sincronizados con plans/RoadMap.md.
+[af-readme-sync] ERROR: Los README.md no están sincronizados con plans/RoadMap.md.
 Ejecuta: npm run generate-readmes
 Luego vuelve a commitear.
 ```
@@ -197,7 +197,7 @@ El hook se registra en la configuración de Claude Code hooks:
   "hooks": [
     {
       "event": "PreCommit",
-      "script": ".claude/hooks/esden-readme-sync-precommit.cjs",
+      "script": ".claude/hooks/af-readme-sync-precommit.cjs",
       "description": "Verifica que los README.md están sincronizados con RoadMap.md antes de commitear en developer"
     }
   ]

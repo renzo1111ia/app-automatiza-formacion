@@ -6,8 +6,8 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 3 — Políticas RLS](phase-03-politicas-rls-tablas-datos.md)
-- [Fase 4 — Clientes Supabase](phase-04-refactor-clientes-supabase.md)
+- [Fase 2 — Políticas RLS](phase-03-politicas-rls-tablas-datos.md)
+- [Fase 3 — Clientes Supabase](phase-04-refactor-clientes-supabase.md)
 
 ## Overview
 

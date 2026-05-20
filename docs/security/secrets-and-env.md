@@ -64,7 +64,7 @@ export const AUTH_SUPABASE_SERVICE_ROLE_KEY = (() => {
 
 **Severidad**: High
 **Tipo**: Supabase Anon JWT — acceso a DB con permisos de anon (sujeto a RLS)
-**Impacto**: La anon key es pública por diseño en Supabase (va al browser), pero tenerla hardcodeada en el código de servidor con URL real crea superficie de ataque. Si RLS no está correctamente configurado (ver D-002), permite lectura de datos entre tenants.
+**Impacto**: La anon key es pública por diseño en Supabase (va al browser), pero tenerla hardcodeada en el código de servidor con URL real crea superficie de ataque. Si RLS no está correctamente configurado (ver 3-002), permite lectura de datos entre tenants.
 **Esfuerzo de fix**: Bajo (1h) — eliminar fallbacks, usar env var
 
 **Fix textual:**

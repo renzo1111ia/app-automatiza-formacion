@@ -1,9 +1,9 @@
-# Research — Zoho CRM Integration (Sprint 3)
+# Research — Zoho CRM Integration (Sprint 2)
 
 **Agente:** researcher (Sonnet)  
 **Fecha:** 20-05-2026  
 **Scope:** Zoho CRM API v7/v8, OAuth2 multi-DC, REST pura con axios, webhooks  
-**Audiencia:** planner Sprint 3  
+**Audiencia:** planner Sprint 2  
 
 ---
 
@@ -16,7 +16,7 @@
 - **Rate limits Zoho** son basados en créditos (credit-based), no requests/segundo. Concurrencia limitada a 5-25 llamadas simultáneas según edición. Importante: diseñar el adapter con concurrencia controlada.
 - **Webhooks Zoho:** se llaman "Notifications" y se registran via API. El token de validación es custom (no HMAC). Canal (channel) tiene expiración: máximo 1 hora — requiere **renovación periódica** (diferencia clave vs HubSpot).
 - **Módulo .com.mx:** NO existe como DC separado de Zoho. México usa `.com` (US datacenter) o `.eu` si el tenant eligió EU. Confirmar con cada tenant dónde está su organización al conectar.
-- **Complejidad global C-03:** High (mayor que HubSpot por multi-DC + channel renewal + no SDK).
+- **Complejidad global 2-03:** High (mayor que HubSpot por multi-DC + channel renewal + no SDK).
 
 ---
 
@@ -26,7 +26,7 @@
 |---------|--------|---------------|
 | v2 | Operativa, legacy | NO usar para nueva implementación |
 | v6 | Deprecada/transitional | NO usar |
-| v7 | Estable, recomendada | ✅ Target mínimo para C-03 |
+| v7 | Estable, recomendada | ✅ Target mínimo para 2-03 |
 | v8 | Disponible (2025) | ✅ Preferir si los cambios son non-breaking |
 
 **URL base (patrón):**
@@ -119,7 +119,7 @@ POST https://accounts.zoho.{region}/oauth/v2/token
 ### Self-Client — NO para multi-tenant
 Self-Client genera tokens para el developer account personal. No permite que otro usuario autorice. Solo para desarrollo/testing local.
 
-### Scopes necesarios para C-03
+### Scopes necesarios para 2-03
 ```
 ZohoCRM.modules.ALL          — leer/escribir Leads, Contacts, Deals
 ZohoCRM.notifications.CREATE — crear subscripciones webhook
@@ -343,7 +343,7 @@ const ZohoLeadSchema = z.object({
 
 ---
 
-## Estimación de complejidad por componente C-03
+## Estimación de complejidad por componente 2-03
 
 | Componente | Complejidad | Horas est. |
 |------------|-------------|-----------|
@@ -364,7 +364,7 @@ const ZohoLeadSchema = z.object({
 
 ## Recomendaciones
 
-1. **Multi-DC es el riesgo #1.** Testear con tenant en `.eu` Y en `.com` antes de dar por completado C-03.
+1. **Multi-DC es el riesgo #1.** Testear con tenant en `.eu` Y en `.com` antes de dar por completado 2-03.
 2. Guardar `api_domain` y `accounts_domain` por tenant en BD — son el enrutador de todas las llamadas.
 3. Channel renewal: BullMQ recurring job con periodo 50min (10 min buffer antes de expirar en 60min).
 4. Al recibir webhook con solo IDs: GET inmediato para datos completos antes de procesar (añade latencia ~100-300ms, aceptable).
@@ -377,4 +377,4 @@ const ZohoLeadSchema = z.object({
 - ¿El cliente tiene ya cuentas Zoho Developer Edition para testing?
 
 **Status:** DONE  
-**Summary:** Research completo de Zoho CRM API v7, OAuth2 Multi-DC, webhooks (Notifications API con channel renewal), rate limits credit-based, y patron axios per-tenant. Complejidad C-03 ~53h, mayor que HubSpot por multi-DC y ausencia de SDK oficial.
+**Summary:** Research completo de Zoho CRM API v7, OAuth2 Multi-DC, webhooks (Notifications API con channel renewal), rate limits credit-based, y patron axios per-tenant. Complejidad 2-03 ~53h, mayor que HubSpot por multi-DC y ausencia de SDK oficial.

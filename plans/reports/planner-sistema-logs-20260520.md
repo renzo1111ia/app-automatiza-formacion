@@ -48,14 +48,14 @@ Sistema split de responsabilidades para tracking de tiempo por sprint:
 
 ## Hallazgos del análisis del hook
 
-`esden-task-tracker.cjs` es un PostToolUse hint-only:
+`af-task-tracker.cjs` es un PostToolUse hint-only:
 - **NO invoca agentes directamente** — solo emite `additionalContext` de texto
 - **NO detecta transiciones de estado** — reacciona a edits de código (`src/`, `supabase/`)
 - **NO pasa task_id/timestamp estructurados** — el assistant los infiere del contexto
 
 **Decisión de integración:**
-- Sprint 1: flujo **manual** — el manager invoca roadmap-keeper y productivity en paralelo
-- Sprint 2: implementar `esden-productivity-logger.cjs` (spec en phase-03) para automatizar la detección desde edits a RoadMap.md
+- Sprint 0: flujo **manual** — el manager invoca roadmap-keeper y productivity en paralelo
+- Sprint 1: implementar `af-productivity-logger.cjs` (spec en phase-03) para automatizar la detección desde edits a RoadMap.md
 
 ---
 
@@ -63,7 +63,7 @@ Sistema split de responsabilidades para tracking de tiempo por sprint:
 
 - `plans/RoadMap.md` — intacto
 - `.claude/agents/roadmap-keeper.md` — solo leído
-- `.claude/hooks/esden-task-tracker.cjs` — solo analizado
+- `.claude/hooks/af-task-tracker.cjs` — solo analizado
 - `src/`, `worker.js`, `supabase/` — no tocados
 
 ---
@@ -71,7 +71,7 @@ Sistema split de responsabilidades para tracking de tiempo por sprint:
 ## Preguntas abiertas
 
 1. ¿Quién es el `dev_name` default cuando el manager hace transiciones automáticas (ej. merge de PR)? — sugerencia: `"manager"` como en el ejemplo del roadmap-keeper
-2. ¿El hook futuro `esden-productivity-logger.cjs` entra en Sprint 2 como tarea formal del plan operativo, o es opcional?
+2. ¿El hook futuro `af-productivity-logger.cjs` entra en Sprint 1 como tarea formal del plan operativo, o es opcional?
 3. ¿Los datos en `.claude/productivity/` (no git) son necesarios o basta con `plans/logs/` (git)? Con el nuevo diseño, los logs formateados ya contienen todo — se puede omitir el dir interno si se prefiere.
 
 ---

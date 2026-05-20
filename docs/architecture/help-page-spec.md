@@ -1,7 +1,7 @@
 ---
 title: "Spec funcional — Página Help / Ayuda al admin"
 audience: equipo de desarrollo (uxui + frontend + database + api)
-owner_agent: esden-agents:help-docs-keeper
+owner_agent: af-agents:help-docs-keeper
 date: 20-05-2026
 status: spec inicial, pendiente diseño UI definitivo
 references:
@@ -11,9 +11,9 @@ references:
 
 # Spec funcional — Página Help / Ayuda al admin
 
-Especificación de la página de ayuda interna del dashboard. Mantenida proactivamente por el agente [`esden-agents:help-docs-keeper`](../../.claude/agents/help-docs-keeper.md).
+Especificación de la página de ayuda interna del dashboard. Mantenida proactivamente por el agente [`af-agents:help-docs-keeper`](../../.claude/agents/help-docs-keeper.md).
 
-> **Inspiración visual**: layout tipo "help dev portal" con tabs por scope + secciones en scroll vertical + TOC anclado a la derecha. Estilo coherente con el dashboard actual de dashboard-esden (dark theme actual, accent verde/cyan, sidebar lateral).
+> **Inspiración visual**: layout tipo "help dev portal" con tabs por scope + secciones en scroll vertical + TOC anclado a la derecha. Estilo coherente con el dashboard actual de dashboard-af (dark theme actual, accent verde/cyan, sidebar lateral).
 
 ---
 
@@ -108,7 +108,7 @@ Cada sección renderiza como una **card** vertical con:
 
 ## 3. Secciones a documentar — inventario inicial
 
-> Esta lista es **dinámica**. El agente `help-docs-keeper` añade/quita secciones automáticamente cuando se añaden páginas al admin. Estado inicial al cierre de Sprint A será 🟡 Provisional para todas — pasan a 🟢 Completada una a una al cerrar cada sprint que toca esa sección.
+> Esta lista es **dinámica**. El agente `help-docs-keeper` añade/quita secciones automáticamente cuando se añaden páginas al admin. Estado inicial al cierre de Sprint WCAG será 🟡 Provisional para todas — pasan a 🟢 Completada una a una al cerrar cada sprint que toca esa sección.
 
 ### Tab "SuperAdmin"
 
@@ -139,7 +139,7 @@ Cada sección renderiza como una **card** vertical con:
 | 4 | Llamadas | `org-calls` | 🟡 Provisional | Retell + Ultravox |
 | 5 | Agentes IA | `org-ai-agents` | 🟡 Provisional | Virginia + variants |
 | 6 | Knowledge Base | `org-knowledge-base` | 🟡 Provisional | Contenido para agentes IA |
-| 7 | Integraciones CRM | `org-integrations-crm` | 🟡 Provisional | HubSpot + Zoho (Fase C) |
+| 7 | Integraciones CRM | `org-integrations-crm` | 🟡 Provisional | HubSpot + Zoho (Fase 2) |
 | 8 | Programas | `org-programs` | 🟡 Provisional | Cursos y reglas de cualificación |
 | 9 | Configuración del tenant | `org-settings` | 🟡 Provisional | |
 
@@ -156,7 +156,7 @@ Cada sección renderiza como una **card** vertical con:
 
 ## 4. Modelo de datos (Supabase)
 
-Schema sugerido — a confirmar con `esden-agents:database` al planificar implementación.
+Schema sugerido — a confirmar con `af-agents:database` al planificar implementación.
 
 ### Tabla `help_sections`
 
@@ -260,7 +260,7 @@ CREATE TABLE help_steps (
 
 ## 6. Componentes UI (React + Tailwind)
 
-Componentes a crear, delegados a `esden-agents:uxui`:
+Componentes a crear, delegados a `af-agents:uxui`:
 
 | Componente | Path sugerido | Función |
 | --- | --- | --- |
@@ -342,12 +342,12 @@ Obligatorio antes de cerrar la sección como 🟢:
 
 | Cuándo | Qué | Quién |
 | --- | --- | --- |
-| Sprint C o D (cuando el equipo de UX tenga ciclos) | Diseño UI definitivo de la página + componentes | `uxui` |
-| Sprint C o D | Implementación de schema BD + endpoints API | `database` + `api` |
-| Sprint C o D | Implementación de componentes React | `uxui` + `code` |
-| Cada cierre de sprint (a partir de Sprint A) | `help-docs-keeper` corre y actualiza secciones afectadas | `help-docs-keeper` |
+| Sprint 2 o 3 (cuando el equipo de UX tenga ciclos) | Diseño UI definitivo de la página + componentes | `uxui` |
+| Sprint 2 o 3 | Implementación de schema BD + endpoints API | `database` + `api` |
+| Sprint 2 o 3 | Implementación de componentes React | `uxui` + `code` |
+| Cada cierre de sprint (a partir de Sprint WCAG) | `help-docs-keeper` corre y actualiza secciones afectadas | `help-docs-keeper` |
 
 ---
 
 **Última actualización**: 20-05-2026.
-**Mantenedor**: `esden-agents:help-docs-keeper`.
+**Mantenedor**: `af-agents:help-docs-keeper`.

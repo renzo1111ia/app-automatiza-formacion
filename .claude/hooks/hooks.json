@@ -1,12 +1,12 @@
 {
-  "_doc": "Hooks configuration for dashboard-esden. Combines ClaudeKit Engineer (14 hooks via cjs scripts) + 4 Esden-specific prompt-based hooks adapted from saas-agents pattern.",
+  "_doc": "Hooks configuration for dashboard-af. Combines ClaudeKit Engineer (14 hooks via cjs scripts) + 4 AF-specific prompt-based hooks adapted from saas-agents pattern.",
   "SessionStart": [
     {
       "matcher": ".*",
       "hooks": [
         { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-init.cjs", "timeout": 30 },
         { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/team-context-inject.cjs", "timeout": 15 },
-        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/esden-roadmap-check.cjs", "timeout": 15 }
+        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/af-roadmap-check.cjs", "timeout": 15 }
       ]
     }
   ],
@@ -40,7 +40,7 @@
     {
       "matcher": "Bash",
       "hooks": [
-        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/esden-deps-guard.cjs", "timeout": 10 }
+        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/af-deps-guard.cjs", "timeout": 10 }
       ]
     }
   ],
@@ -49,7 +49,7 @@
       "matcher": "Edit|Write|MultiEdit",
       "hooks": [
         { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/post-edit-simplify-reminder.cjs", "timeout": 10 },
-        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/esden-task-tracker.cjs", "timeout": 15 }
+        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/af-task-tracker.cjs", "timeout": 15 }
       ]
     }
   ],
@@ -74,7 +74,7 @@
       "matcher": ".*",
       "hooks": [
         { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/session-state.cjs", "timeout": 15 },
-        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/esden-stop-checkpoint.cjs", "timeout": 20 }
+        { "type": "command", "command": "node ${CLAUDE_PROJECT_DIR}/.claude/hooks/af-stop-checkpoint.cjs", "timeout": 20 }
       ]
     }
   ]

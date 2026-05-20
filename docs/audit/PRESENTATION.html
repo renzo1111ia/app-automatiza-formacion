@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Auditoría dashboard-esden — Informe Visual</title>
+<title>Auditoría dashboard-af — Informe Visual</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -240,7 +240,7 @@ td.eff[data-e=L]{color:var(--critical)}
 <body>
 
 <aside>
-  <div class="brand">dashboard-esden</div>
+  <div class="brand">dashboard-af</div>
   <div class="brand-sub">Audit Report · 2026-05</div>
   <nav><ul>
     <li><a href="#hero" class="active">📋 Resumen</a></li>
@@ -418,7 +418,7 @@ td.eff[data-e=L]{color:var(--critical)}
         <li>Fallback silencioso: si falta env var, la app usa el JWT del código sin error</li>
         <li>Scripts <code>migrate-*.ts</code> ejecutables con credenciales hardcoded → admin DB directo bypaseando Next.js</li>
         <li>Subdominio interno <code>api-db</code> revelado por el nombre de la cookie</li>
-        <li><code>esden-tenant-id</code> en cookie plain editable desde DevTools (clave del Vector 1)</li>
+        <li><code>af-tenant-id</code> en cookie plain editable desde DevTools (clave del Vector 1)</li>
         <li>RLS basada en JWT claim <code>tenant_id</code> es <strong>dead letter</strong>: el claim no existe</li>
       </ul>
     </div>
@@ -428,7 +428,7 @@ td.eff[data-e=L]{color:var(--critical)}
 <!-- TIMELINE -->
 <section id="timeline">
   <h2>Timeline histórico del proyecto <span class="tag">git log</span></h2>
-  <p class="sub">422 commits reconstruidos del repo <code>renzo1111ia/dashboard-esden</code>. Periodo activo: 2026-03-02 → 2026-05-18 (~11 semanas). Picos de 40+ commits/día en mayo evidencian crisis de stabilización.</p>
+  <p class="sub">422 commits reconstruidos del repo <code>renzo1111ia/dashboard-af</code>. Periodo activo: 2026-03-02 → 2026-05-18 (~11 semanas). Picos de 40+ commits/día en mayo evidencian crisis de stabilización.</p>
 
   <div class="chart-card">
     <h3>Commits por mes</h3>
@@ -594,7 +594,7 @@ td.eff[data-e=L]{color:var(--critical)}
 
 <!-- ROADMAP -->
 <section id="roadmap">
-  <h2>Roadmap propuesto <span class="tag">5 sprints + Sprint A</span></h2>
+  <h2>Roadmap propuesto <span class="tag">5 sprints + Sprint WCAG</span></h2>
   <p class="sub">129 items priorizados en <code>docs/roadmap/deep-improvement-backlog.md</code>. Total estimado: 55-74 días/dev. Sprint 0 es bloqueante antes de cualquier nueva feature.</p>
 
   <div class="sprint-grid">
@@ -698,14 +698,14 @@ td.eff[data-e=L]{color:var(--critical)}
   <div class="table-wrap">
     <table>
       <tbody>
-        <tr><td><a href="../roadmap/deep-improvement-backlog.html" style="color:var(--accent-2)">🛣️ deep-improvement-backlog.md</a></td><td>129 items · Sprint 0–4 + Sprint A · esfuerzos S/M/L</td></tr>
+        <tr><td><a href="../roadmap/deep-improvement-backlog.html" style="color:var(--accent-2)">🛣️ deep-improvement-backlog.md</a></td><td>129 items · Sprint 0–4 + Sprint WCAG · esfuerzos S/M/L</td></tr>
       </tbody>
     </table>
   </div>
 </section>
 
 <div class="foot">
-  Auditoría dashboard-esden · Mayo 2026 · Branch <code>auditoria</code><br>
+  Auditoría dashboard-af · Mayo 2026 · Branch <code>auditoria</code><br>
   Quick scan + Deep audit + Verificación en producción · 27 documentos · 129 findings
 </div>
 
@@ -747,7 +747,7 @@ const VECTORS = [
  steps:[
   'Atacante se registra con cuenta legítima (Tenant-A).',
   'Invoca getTenants() (DA-2-010, policy USING(true)) → obtiene UUIDs de todos los tenants.',
-  'Modifica cookie en DevTools: <code>document.cookie="esden-tenant-id=&lt;UUID-B&gt;;path=/"</code>.',
+  'Modifica cookie en DevTools: <code>document.cookie="af-tenant-id=&lt;UUID-B&gt;;path=/"</code>.',
   'Invoca fetchCalls() (F-04-001) → devuelve todos los leads de Tenant-B sin filtro.',
   'Con esos UUIDs, invoca deleteLead(uuid) repetido — no verifica ownership.'
  ],

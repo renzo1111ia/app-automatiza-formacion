@@ -52,7 +52,7 @@ El deep audit (DA-1 a DA-5) añade **~116 findings nuevos o profundizados** sobr
 | 4 | DA-2-004 | createTenant / deleteTenant / updateTenant sin verificación de rol admin | `src/lib/actions/tenant.ts:140-197` | S | Alta — cualquier usuario autenticado | Auth/Admin |
 | 5 | DA-2-002 | `/api/admin/tenants/[id]/client-sql` descarga SQL de configuración sin ninguna auth | `api/admin/tenants/[id]/client-sql/route.ts` | S | Alta — anónimo | Auth/Exposición |
 | 6 | DA-3-001 | Cron endpoints públicos — `/api/orchestration/sweep` y `/api/cron/appointments/reminders` sin auth | `api/orchestration/sweep/route.ts`, `api/cron/appointments/reminders/route.ts` | S | Alta — accesible sin credenciales | Auth |
-| 7 | DA-3-002 | SSRF confirmado en `/api/tenant/migrate` via cookie `esden-tenant-url` sin allowlist | `api/tenant/migrate/route.ts:247-263` | M | Alta — cookie editable por JS | SSRF |
+| 7 | DA-3-002 | SSRF confirmado en `/api/tenant/migrate` via cookie `af-tenant-url` sin allowlist | `api/tenant/migrate/route.ts:247-263` | M | Alta — cookie editable por JS | SSRF |
 | 8 | DA-3-003 | Test endpoint abierto en producción — crea leads y workflows reales sin autenticación | `api/test/orchestrator/route.ts` | S (30min) | Alta — anónimo | Auth/Test en Prod |
 | 9 | F-04-001 (profundizado DA-2) | fetchCalls sin filtro tenant_id — 4 funciones exponen todos los leads cross-tenant | `src/lib/actions/calls.ts:56-371` | S | Alta — cookie tampering suficiente | Multi-tenancy |
 | 10 | DA-2-005 | user_metadata.is_admin editable por el propio usuario — privilege escalation a admin | `src/middleware.ts:62-68` | S | Alta — dos líneas de código en browser | Escalación de privilegios |
@@ -152,7 +152,7 @@ El deep audit (DA-1 a DA-5) añade **~116 findings nuevos o profundizados** sobr
 
 ### Cruce 1: Cookie tampering + IDOR → Destrucción cross-tenant verificable
 
-DA-2 confirmó que `esden-tenant-id` es una cookie plain (sin HttpOnly, sin firma) modificable desde DevTools. Esta cookie alimenta `getActiveTenantId()` que usan todas las server actions. Al mismo tiempo, 9 funciones de `inbox.ts` aceptan cualquier UUID de lead sin verificar que pertenezca al tenant activo. La combinación es explosiva: un usuario con sesión válida en Tenant A puede:
+DA-2 confirmó que `af-tenant-id` es una cookie plain (sin HttpOnly, sin firma) modificable desde DevTools. Esta cookie alimenta `getActiveTenantId()` que usan todas las server actions. Al mismo tiempo, 9 funciones de `inbox.ts` aceptan cualquier UUID de lead sin verificar que pertenezca al tenant activo. La combinación es explosiva: un usuario con sesión válida en Tenant A puede:
 
 1. Modificar la cookie a UUID del Tenant B (obtenido via `getTenants()` que devuelve todos los tenants — DA-2-010).
 2. Llamar `fetchCalls()` (F-04-001) y obtener todos los leads de B.
@@ -214,7 +214,7 @@ DA-5 encontró 10+ instancias de `alert()` para reportar errores y `window.confi
 1. Atacante se registra o tiene cuenta legítima (Tenant-A).
 2. Abre DevTools → Console → `fetch('/api/action-...', { method: 'POST', body: ... })` o directamente invoca `getTenants()` via server action que devuelve todos los UUIDs de tenants (DA-2-010, policy `USING(true)`).
 3. Obtiene UUID del Tenant-B objetivo.
-4. Modifica cookie: `document.cookie = "esden-tenant-id=<UUID-Tenant-B>; path=/"` (cookie plain, sin protección).
+4. Modifica cookie: `document.cookie = "af-tenant-id=<UUID-Tenant-B>; path=/"` (cookie plain, sin protección).
 5. Invoca `fetchCalls()` — devuelve todos los leads de Tenant-B (F-04-001, sin filtro tenant).
 6. Con los UUIDs de leads de B, invoca `deleteLead(leadId)` repetidamente — la función no verifica que el lead pertenezca al tenant activo.
 7. **Impacto: todos los leads de Tenant-B eliminados con cascade en BD.** Sin log, sin alerta, sin reversión.

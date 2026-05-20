@@ -13,7 +13,7 @@ sources:
   - docs/audit/deep/DA-5-accessibility.md
 ---
 
-# Deep Improvement Backlog — dashboard-esden
+# Deep Improvement Backlog — dashboard-af
 
 Backlog ampliado incorporando los ~67 findings nuevos del deep audit (DA-1 a DA-5).
 El backlog original tenía 75 items (B-001 a B-075). Este documento añade los items DB-XXX
@@ -196,7 +196,7 @@ Dependencias: DB-011 requiere B-034 (JWT claim) para que la política `authentic
 
 ---
 
-## Sprint A — Accesibilidad WCAG 2.1 AA (Sprint nuevo)
+## Sprint WCAG — Accesibilidad 2.1 AA (Sprint nuevo)
 
 **Sprint completamente nuevo basado en DA-5.** La app es NON-COMPLIANT con WCAG 2.1 AA. Este sprint cubre los 24 findings del audit de accesibilidad.
 
@@ -239,7 +239,7 @@ La infraestructura de shadcn/ui ya está instalada. El primer paso (DA-A-001) re
 | DA-A-021 | Implementar layout responsive en AIAgentInbox — mobile: vista single column con transición lista→chat→detalles | L | DA-5-012 | Requiere refactor de layout |
 | DA-A-022 | Reemplazar `focus:ring-primary/10` por `focus:ring-primary/60` en inputs nativos; añadir ring a input del widget | M | DA-5-016 | 187 instancias de outline-none |
 
-### Estimación Sprint A
+### Estimación Sprint WCAG
 
 | Fase | Semana | Effort total | Findings resueltos |
 |------|--------|-------------|-------------------|
@@ -262,7 +262,7 @@ Dependencias: DA-A-001 y DA-A-002 primero (establecen los primitivos accesibles 
 | B-067 | Documentar /dashboardadmin rewrite | S | — |
 | B-068 | Migrar TypeScript a v6.x | L | Breaking changes |
 | B-069 | Actualizar lucide-react a 1.x | L | Renombrado de iconos |
-| B-070 | Cookie esden-tenant-id a httpOnly — cubierto por DB-005 | S | Adelantado |
+| B-070 | Cookie af-tenant-id a httpOnly — cubierto por DB-005 | S | Adelantado |
 | B-071 | Splittear componentes grandes (>1400 líneas) | L | AIAgentInbox es prioritario por DA-5 |
 | B-072 | Eliminar @anthropic-ai/claude-code de devDependencies | S | DB-031 ya lo cubre |
 | B-073 | Eliminar npm crypto@1.0.1 stub deprecated | S | — |
@@ -280,7 +280,7 @@ Dependencias: DA-A-001 y DA-A-002 primero (establecen los primitivos accesibles 
 | Sprint 2 | 13 | 7 (DB-011 a DB-017) | 20 | 12-15 |
 | Sprint 3 | 12 | 7 (DB-018 a DB-024) | 19 | 10-12 |
 | Sprint 4 | 15 | 8 (DB-025 a DB-032) | 23 | 15-20 |
-| Sprint A | 0 | 22 (DA-A-001 a DA-A-022) | 22 | 9-10 |
+| Sprint WCAG | 0 | 22 (DA-A-001 a DA-A-022) | 22 | 9-10 |
 | Sprint 5 | 10 | 0 | 10 | 5-8 |
 | **Total** | **75** | **54** | **129** | **69-90 dev-days** |
 
@@ -296,28 +296,28 @@ Sprint 1 → Sprint 3: B-013 (fix worker) debe estar antes de DB-022 (eliminar d
 
 Sprint 2 → Sprint 3: El aislamiento de datos (Sprint 2) debe estar antes de la observabilidad (Sprint 3).
 
-Sprint A: Puede ejecutarse en paralelo con Sprint 2 y Sprint 3. No tiene dependencias de infraestructura con otros sprints excepto que DA-A-001/DA-A-002 deben completarse antes de las fases A2 y A3.
+Sprint WCAG: Puede ejecutarse en paralelo con Sprint 2 y Sprint 3. No tiene dependencias de infraestructura con otros sprints excepto que DA-A-001/DA-A-002 deben completarse antes de las fases A2 y A3.
 
 Sprint 4 → Sprint 5: Sin dependencias críticas.
 
 ---
 
 **Status:** DONE
-**Summary:** Backlog ampliado de 75 a 129 items incorporando los findings del deep audit. Sprint A (Accesibilidad) es completamente nuevo y puede ejecutarse en paralelo. Los 8 items nuevos del Sprint 0 deben incorporarse a la ejecución urgente junto a los 12 originales.
+**Summary:** Backlog ampliado de 75 a 129 items incorporando los findings del deep audit. Sprint WCAG (Accesibilidad) es completamente nuevo y puede ejecutarse en paralelo. Los 8 items nuevos del Sprint 0 deben incorporarse a la ejecución urgente junto a los 12 originales.
 
 ---
 
-## Fase E — Post-release (futuro, post-MVP)
+## Fase 4 — Post-release (futuro, post-MVP)
 
 Items añadidos tras decisión R-020-refinement-v2 (2026-05-19, sesión 3) — todo lo que se aplaza fuera del MVP.
 
 ### E-001 — Google Sheets bidireccional ⭐
 
-- **Origen**: era parte del MVP en sesión 2 (R-020-refinement); aplazado en sesión 3 a Fase E.
+- **Origen**: era parte del MVP en sesión 2 (R-020-refinement); aplazado en sesión 3 a Fase 4.
 - **Esfuerzo**: M (10-15 días/dev, ~2-3 semanas).
 - **Diseño técnico**: ya documentado en sesión 2 del DECISIONES — sigue siendo válido. Plantilla Sheets estandarizada + OAuth2 Google + Drive API push notifications + rate limit handling + UI admin.
 - **Reutiliza**: código OAuth Google del commit `63e1e6e` (sprint S-04). Mantener congelado hasta esta fase.
-- **Decisión pendiente**: MCP server custom vs skill custom vs librería `googleapis`. Evaluar al arrancar Fase E.
+- **Decisión pendiente**: MCP server custom vs skill custom vs librería `googleapis`. Evaluar al arrancar Fase 4.
 
 ### E-002 — Salesforce adapter
 

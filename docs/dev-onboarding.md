@@ -1,17 +1,17 @@
 ---
-title: "Dev Onboarding — dashboard-esden"
+title: "Dev Onboarding — dashboard-af"
 audience: equipo de desarrollo (interno)
 status: vigente
 date: 2026-05-20
 ---
 
-# Dev Onboarding — dashboard-esden
+# Dev Onboarding — dashboard-af
 
 Guía de arranque para cualquier dev que se incorpore al proyecto. Lee esto antes de tocar nada.
 
 ## 1. Qué es este proyecto
 
-dashboard-esden — AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Stack: Next.js 16 + React 19 + Supabase (sin ORM nuevo) + Zod + BullMQ + LangChain multi-LLM + Retell/Ultravox + Easypanel. Versión actual: **v0.0.0**.
+dashboard-af — AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Stack: Next.js 16 + React 19 + Supabase (sin ORM nuevo) + Zod + BullMQ + LangChain multi-LLM + Retell/Ultravox + Easypanel. Versión actual: **v0.0.0**.
 
 Lee [`CLAUDE.md`](../CLAUDE.md) del repo raíz para la visión completa del proyecto y las reglas top-level.
 
@@ -28,8 +28,8 @@ Lee [`CLAUDE.md`](../CLAUDE.md) del repo raíz para la visión completa del proy
 ### 2.2 Clonar el repo
 
 ```powershell
-git clone <repo-url> dashboard-esden
-cd dashboard-esden
+git clone <repo-url> dashboard-af
+cd dashboard-af
 git checkout developer    # la rama de integración del equipo
 ```
 
@@ -44,7 +44,7 @@ cp .env.example .env.local
 Edita `.env.local` con valores reales. **Las claves reales NO están en git** — pídelas por canal seguro:
 
 - Pide a Javier (Auditor) o al lead del equipo el bundle de secretos (Easypanel env vars, 1Password, o vault interno).
-- Para los CRMs de Fase C (HubSpot + Zoho) necesitas crear apps OAuth2 en sus developer portals con tu cuenta o usar las credenciales sandbox compartidas.
+- Para los CRMs de Fase 2 (HubSpot + Zoho) necesitas crear apps OAuth2 en sus developer portals con tu cuenta o usar las credenciales sandbox compartidas.
 
 `.env.local` está en `.gitignore` — nunca lo commitees por accidente.
 
@@ -54,7 +54,7 @@ Edita `.env.local` con valores reales. **Las claves reales NO están en git** �
 npm install
 ```
 
-> ⚠️ **Dependency Guard activo**: si intentas instalar una NUEVA dependencia de producción (`npm install <pkg>` sin `-D`), el hook [`esden-deps-guard.cjs`](../.claude/hooks/esden-deps-guard.cjs) lo bloqueará. Debes pasar por el subagente `esden-agents:adr` que verifica compatibilidad y documenta en `docs/adr/`. Esto NO aplica a `npm install` plano (lockfile install) ni a `--save-dev`.
+> ⚠️ **Dependency Guard activo**: si intentas instalar una NUEVA dependencia de producción (`npm install <pkg>` sin `-D`), el hook [`af-deps-guard.cjs`](../.claude/hooks/af-deps-guard.cjs) lo bloqueará. Debes pasar por el subagente `af-agents:adr` que verifica compatibilidad y documenta en `docs/adr/`. Esto NO aplica a `npm install` plano (lockfile install) ni a `--save-dev`.
 
 ### 2.5 Levantar dev server
 
@@ -75,12 +75,12 @@ node worker.js
 Al abrir el repo en Claude Code, automáticamente carga:
 
 - **`CLAUDE.md`** del repo raíz (instrucciones específicas Esden, additive a tu `~/.claude/CLAUDE.md` global).
-- **`.claude/agents/`** — 19 subagentes especializados (orquestador `esden-agents:manager` + 18 más).
+- **`.claude/agents/`** — 19 subagentes especializados (orquestador `af-agents:manager` + 18 más).
 - **`.claude/skills/`** — 28 skills filtradas (saas-agents + globales relevantes; sin payment-integration, sin pinokio, sin gepeto).
 - **`.claude/hooks/`** — 14 hooks ClaudeKit Engineer + 4 hooks específicos Esden, registrados en `.claude/hooks/hooks.json`.
 - **`.claude/rules/`** — 5 normas (development, documentation, orchestration, primary-workflow, team-coordination).
 - **`.claude/settings.json`** — permisos del proyecto y plugins habilitados (`context7` + `playwright`).
-- **`.claude-plugin/plugin.json`** — manifest del plugin `esden-agents` v0.0.0.
+- **`.claude-plugin/plugin.json`** — manifest del plugin `af-agents` v0.0.0.
 
 **No necesitas copiar nada de la config global de ningún compañero.** Todo viaja en el repo.
 
@@ -98,8 +98,8 @@ Asegúrate de tener instalados los plugins oficiales referenciados en `.claude/s
 ### 3.3 Cómo trabajar (resumen)
 
 1. **Lee el plan activo**: `plans/YYMMDD-HHmm-slug/` más reciente.
-2. **Lanza el orquestador**: pídele al manager que coordine. Ejemplo: *"@manager arranca Fase B"*.
-3. El manager delega a especialistas (`esden-agents:database`, `:api`, `:code`, `:testing`...) en paralelo cuando puede.
+2. **Lanza el orquestador**: pídele al manager que coordine. Ejemplo: *"@manager arranca Fase 1"*.
+3. El manager delega a especialistas (`af-agents:database`, `:api`, `:code`, `:testing`...) en paralelo cuando puede.
 4. **NUNCA implementes código directamente desde el orquestador** — siempre vía Task tool al especialista.
 5. Al cerrar fase, el Phase Completion Protocol corre automático: typecheck + lint + build + tests + browser tests si UI.
 
@@ -124,7 +124,7 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 - `v0.0.0` ahora.
 - Patch durante sprint en curso → `v0.0.x`.
 - Sprint cerrado → bump a `v0.x.0`.
-- MVP completo (post Fase D, pre Fase E) → `v1.0.0`.
+- MVP completo (post Fase 3, pre Fase 4) → `v1.0.0`.
 
 Tags los crea el script `promote.ps1` automáticamente al promocionar a `main`.
 

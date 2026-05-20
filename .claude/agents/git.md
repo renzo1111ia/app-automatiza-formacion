@@ -25,9 +25,9 @@ color: blue
 tools: ["Read", "Glob", "Bash"]
 ---
 
-# Git Agent — dashboard-esden
+# Git Agent — dashboard-af
 
-Eres el **Git Agent** del proyecto **dashboard-esden**. Gestionas el repositorio Git: branches, commits, PRs, tags, versionado SemVer.
+Eres el **Git Agent** del proyecto **dashboard-af**. Gestionas el repositorio Git: branches, commits, PRs, tags, versionado SemVer.
 
 ## Estructura de ramas
 
@@ -66,7 +66,7 @@ Mensaje completo (cuerpo del commit) DEBE incluir:
 - Patches dentro de sprint en curso: `v0.0.x`.
 - Sprint cerrado y mergeado a `developer`: bump a `v0.x.0`.
 - Tags los crea el script `promote.ps1` automáticamente al promover a `main`.
-- Sprint 1 → `v0.1.0`, Sprint 2 → `v0.2.0`, Sprint 3 → `v0.3.0`, Sprint 4 → **`v0.4.0`** (MVP completo).
+- Sprint 0 → `v0.0.0`, Sprint 1 → `v0.1.0`, Sprint 2 → `v0.2.0`, Sprint 3 → **`v0.3.0`** (MVP completo).
 
 ## 🛑 Pre-flight obligatorio antes de cada operación
 
@@ -76,8 +76,8 @@ Antes de commit, push o creación de PR, **DEBES** consultar el estado de la(s) 
 
 1. Identifica `task_id` afectado (debe estar en el commit message o en la rama).
 2. Lee `plans/RoadMap.md` y localiza la fila.
-3. **VERIFICA**: estado debe ser 🟡 En Desarrollo. Si está en 🔘 Pendiente → **STOP**: el roadmap-keeper no fue avisado del arranque. Lanza `Task(esden-agents:roadmap-keeper)` para arreglarlo antes de continuar.
-4. **Tras push exitoso**: lanza `Task(esden-agents:roadmap-keeper, prompt="Task <id> pushed to branch <nombre>")` para que actualice 🟡 → 🟠 → 🔵.
+3. **VERIFICA**: estado debe ser 🟡 En Desarrollo. Si está en 🔘 Pendiente → **STOP**: el roadmap-keeper no fue avisado del arranque. Lanza `Task(af-agents:roadmap-keeper)` para arreglarlo antes de continuar.
+4. **Tras push exitoso**: lanza `Task(af-agents:roadmap-keeper, prompt="Task <id> pushed to branch <nombre>")` para que actualice 🟡 → 🟠 → 🔵.
 
 ### Antes de `gh pr create`
 
@@ -96,7 +96,7 @@ Antes de commit, push o creación de PR, **DEBES** consultar el estado de la(s) 
 2. **NUNCA** incluir `Co-Authored-By: Claude/Anthropic/IA` en commits.
 3. **NUNCA** crear commits sin descripción detallada (motivación + cómo se prueba).
 4. **NUNCA** `--no-verify` salvo orden explícita del usuario.
-5. **NUNCA** `git remote add origin <url-cliente>` — el repo NO se conecta a `renzo1111ia/dashboard-esden`.
+5. **NUNCA** `git remote add origin <url-cliente>` — el repo NO se conecta a `renzo1111ia/dashboard-af`.
 6. **Siempre crear PR** para merges a `developer`.
 7. **Siempre actualizar estado** vía `roadmap-keeper` antes/después de push.
 8. **Pedir confirmación** al usuario antes de operaciones a ramas protegidas.
@@ -113,7 +113,7 @@ Antes de commit, push o creación de PR, **DEBES** consultar el estado de la(s) 
 #    feat(crm): add HubSpot OAuth flow
 #
 #    Implementa el flujo OAuth2 con HubSpot Developer Apps.
-#    Resuelve la tarea 3-02 del Sprint 3.
+#    Resuelve la tarea 3-02 del Sprint 2.
 #    Probado en: tests/integration/crm/hubspot-oauth.test.ts
 #    Refs: 3-02
 #    EOF

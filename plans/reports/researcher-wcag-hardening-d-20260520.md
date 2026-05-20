@@ -1,5 +1,5 @@
 ---
-title: "Researcher Report — WCAG 2.2 AA + Hardening — Sprint 4"
+title: "Researcher Report — WCAG 2.2 AA + Hardening — Sprint 3"
 date: 2026-05-20
 agent: researcher-wcag-hardening (Sonnet)
 sprint: 4
@@ -132,7 +132,7 @@ const securityHeaders = [
 ];
 ```
 
-**NOTA CRÍTICA:** Next.js 16 tiene `GHSA-ffhc-5mcf-pf4q` — XSS via CSP nonces en App Router. Esto se resuelve upgradeando a `next@16.2.6` (Sprint 1, 1-26). El CSP de Sprint 4 debe implementarse DESPUÉS de 1-26.
+**NOTA CRÍTICA:** Next.js 16 tiene `GHSA-ffhc-5mcf-pf4q` — XSS via CSP nonces en App Router. Esto se resuelve upgradeando a `next@16.2.6` (Sprint 0, 1-26). El CSP de Sprint 3 debe implementarse DESPUÉS de 1-26.
 
 **Problema con `'unsafe-inline'` en styles:** Tailwind v4 genera estilos inline en algunos casos. Se puede usar `style-src 'self' 'unsafe-inline'` como compromiso para MVP, con un audit de la generación de estilos antes de llegar a `strict-dynamic`.
 
@@ -149,7 +149,7 @@ Next.js 16 App Router con Server Actions tiene **protección CSRF built-in** ví
 
 **DECISIÓN:** Para el MVP, la protección CSRF nativa de Next.js 16 Server Actions es SUFICIENTE. No instalar `next-csrf` ni `csurf` (legacy, deprecated).
 
-Para API Routes que aceptan POST desde terceros (webhooks), ya se implementa validación HMAC por firma (Sprint 1). Los webhooks propios no necesitan CSRF (son server-to-server).
+Para API Routes que aceptan POST desde terceros (webhooks), ya se implementa validación HMAC por firma (Sprint 0). Los webhooks propios no necesitan CSRF (son server-to-server).
 
 **Excepción:** Si se añaden API Routes que aceptan requests desde el browser (no Server Actions), verificar `Origin` header manualmente:
 
@@ -241,17 +241,17 @@ export async function middleware(request: NextRequest) {
 | Responsive AIAgentInbox (DA-5-012) | 8-12h |
 | Títulos de página metadata (DA-5-018) | 2h |
 | Resto findings Medium/Low | 4-6h |
-| **Total D-05 WCAG** | **33-47h** |
+| **Total 3-05 WCAG** | **33-47h** |
 | CSP headers next.config.js | 3-4h |
 | Rate limiting Redis en middleware | 4-6h |
 | CSRF — verificación + documentación | 1-2h |
 | npm audit CI + Renovate config | 3h |
-| **Total D-06 Hardening** | **11-15h** |
+| **Total 3-06 Hardening** | **11-15h** |
 
-**NOTA:** DA-5-012 (responsive AIAgentInbox) es L (esfuerzo grande). Si el total de Sprint 4 excede 120h, este finding se puede marcar como tech debt y posponer a Sprint 5. Los otros 23 findings caben en 20-32h.
+**NOTA:** DA-5-012 (responsive AIAgentInbox) es L (esfuerzo grande). Si el total de Sprint 3 excede 120h, este finding se puede marcar como tech debt y posponer a Sprint 4. Los otros 23 findings caben en 20-32h.
 
 ---
 
 **Status:** DONE_WITH_CONCERNS
 **Summary:** WCAG 2.2 AA requiere 33-47h si se incluye DA-5-012 (responsive). Sin DA-5-012, baja a 25-35h. Hardening (CSP + rate limits + CSRF) es 11-15h. Stack recomendado: shadcn Dialog para modales (ya en proyecto), sonner para toasts (ya en shadcn), ioredis para rate limits (ya en proyecto), CSP en next.config.js. Sin nuevas deps excepto @axe-core/playwright para E2E a11y tests.
-**Concerns:** DA-5-012 (AIAgentInbox responsive) tiene esfuerzo L (8-12h solo ese finding) y puede tensionar el presupuesto. Recomiendo incluirlo en el plan pero marcarlo como última prioridad dentro de D-05 para poder cortarlo si el sprint va largo.
+**Concerns:** DA-5-012 (AIAgentInbox responsive) tiene esfuerzo L (8-12h solo ese finding) y puede tensionar el presupuesto. Recomiendo incluirlo en el plan pero marcarlo como última prioridad dentro de 3-05 para poder cortarlo si el sprint va largo.

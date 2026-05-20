@@ -6,7 +6,7 @@ phase: 6-consolidation
 agent: Consolidator+GapAnalyst (Sonnet)
 ---
 
-# Improvement Backlog - dashboard-esden
+# Improvement Backlog - dashboard-af
 
 Backlog agrupado por sprints. Sin fechas - solo orden y dependencias.
 Cada item: B-XXX: titulo - Esfuerzo S/M/L - IDs findings
@@ -77,7 +77,7 @@ Asegurar el aislamiento real de datos entre tenants.
 | B-029 | Corregir RLS web_widgets: cambiar IN(SELECT id FROM tenants) a = auth.jwt() ->> tenant_id | S | F-04-006 |
 | B-030 | Corregir RLS tenant_orchestrator_config: anadir TO service_role | S | F-04-012 |
 | B-031 | Corregir RLS chat_messages: anadir TO service_role; migrar tenant_id de TEXT a UUID FK | M | F-04-013 |
-| B-032 | Validar server-side ownership de cookie esden-tenant-id - verificar que tenant pertenece al usuario | M | F-05-OWASP-001 |
+| B-032 | Validar server-side ownership de cookie af-tenant-id - verificar que tenant pertenece al usuario | M | F-05-OWASP-001 |
 | B-033 | Mover Zoho owner IDs de hardcoded a tenant_orchestrator_config | S | F-02-003 |
 | B-034 | Implementar JWT claim tenant_id en Auth Hook de Supabase para que RLS sea efectivo con JWT | M | docs/security/auth-and-rls.md seccion 5 |
 | B-035 | Sanitizar parametro id en widget embed script - validar UUID/alphanumerico, escapar caracteres | S | F-05-OWASP-003 |

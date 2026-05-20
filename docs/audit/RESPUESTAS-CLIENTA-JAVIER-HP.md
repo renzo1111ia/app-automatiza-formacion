@@ -12,7 +12,7 @@ sources: PREGUNTAS-PARA-LA-CLIENTE.md + DECISIONES-AUDITOR-JAVIER-HP.md
 
 ## Propósito
 
-Este documento recoge, en formato **Pregunta → Respuesta**, las decisiones tomadas por **Javier HP (Auditor)** sobre las 25 preguntas pendientes identificadas durante la auditoría del proyecto `dashboard-esden`.
+Este documento recoge, en formato **Pregunta → Respuesta**, las decisiones tomadas por **Javier HP (Auditor)** sobre las 25 preguntas pendientes identificadas durante la auditoría del proyecto `dashboard-af`.
 
 Su objetivo es que la **clienta (Esden)** pueda **contrastar y validar** cada decisión del auditor con su propia visión de negocio, antes de cerrar definitivamente las respuestas y bajarlas al backlog técnico (Sprint 0 → 3).
 
@@ -34,7 +34,7 @@ Su objetivo es que la **clienta (Esden)** pueda **contrastar y validar** cada de
 
 ### P-002 — ¿Quién tiene o ha tenido acceso al código fuente del proyecto? ✅ Respondida
 
-**Pregunta original:** Lista de personas con acceso al repo `renzo1111ia/dashboard-esden`, terceros con ZIPs y personas que ya no deberían tener acceso.
+**Pregunta original:** Lista de personas con acceso al repo `renzo1111ia/dashboard-af`, terceros con ZIPs y personas que ya no deberían tener acceso.
 
 **Respuesta del Auditor Javier HP:** **Solo personal interno** ha tenido acceso al código fuente. No ha habido entregas externas a terceros no autorizados.
 
@@ -122,7 +122,7 @@ Su objetivo es que la **clienta (Esden)** pueda **contrastar y validar** cada de
 2. Refactor: usar grafía canónica internamente. Eliminar variantes con typo.
 3. Implementar router (`crm-mapper`): tabla `crm_field_mapping` editable desde panel admin.
 4. Vista admin **"Variables & CRM Mapping"** con validación contra catálogo canónico.
-5. Tests de integración por CRM (HubSpot, Zoho — MVP Fase C). Google Sheets bidireccional se prueba en Fase E (post-release).
+5. Tests de integración por CRM (HubSpot, Zoho — MVP Fase 2). Google Sheets bidireccional se prueba en Fase 4 (post-release).
 
 Cruza con [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020).
 
@@ -267,7 +267,7 @@ Las preguntas **P-020 a P-025** fueron **respondidas en sesión previa**. Sus re
 
 | ID | Pregunta corta | Decisión | Ref. |
 |---|---|---|---|
-| P-020 | ¿Qué CRM externo es el destino? | Multi-CRM top 5 · **MVP Fase C = HubSpot + Zoho** (Sheets bidireccional aplazado a Fase E post-release) | [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020) + [v2](DECISIONES-AUDITOR-JAVIER-HP.md#r-020-refinement-v2) |
+| P-020 | ¿Qué CRM externo es el destino? | Multi-CRM top 5 · **MVP Fase 2 = HubSpot + Zoho** (Sheets bidireccional aplazado a Fase 4 post-release) | [R-020](DECISIONES-AUDITOR-JAVIER-HP.md#r-020) + [v2](DECISIONES-AUDITOR-JAVIER-HP.md#r-020-refinement-v2) |
 | P-021 | Datos antiguos en Airtable | Migrar a Supabase | [R-021](DECISIONES-AUDITOR-JAVIER-HP.md#r-021) |
 | P-022 | Mantenedor del Knowledge Base | Equipo dev (con UI admin) | [R-022](DECISIONES-AUDITOR-JAVIER-HP.md#r-022) |
 | P-023 | Acceso superuser BD Postgres | Supabase self-hosted en Easypanel | [R-023](DECISIONES-AUDITOR-JAVIER-HP.md#r-023) |

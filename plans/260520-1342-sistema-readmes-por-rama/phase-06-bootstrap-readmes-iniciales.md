@@ -25,11 +25,11 @@ Verificar ANTES de ejecutar:
 
 - [ ] `plans/RoadMap.md` existe y tiene frontmatter correcto (`project_version: v0.0.0`)
 - [ ] `scripts/generate-readmes.cjs` existe y ejecuta sin errores
-- [ ] `scripts/readme-templates/README.developer.template.md` existe (path definitivo — D-3)
-- [ ] `scripts/readme-templates/README.staging.template.md` existe (path definitivo — D-3)
-- [ ] `scripts/readme-templates/README.main.template.md` existe (path definitivo — D-3)
+- [ ] `scripts/readme-templates/README.developer.template.md` existe (path definitivo — 3-3)
+- [ ] `scripts/readme-templates/README.staging.template.md` existe (path definitivo — 3-3)
+- [ ] `scripts/readme-templates/README.main.template.md` existe (path definitivo — 3-3)
 - [ ] Node.js 22.x disponible en el entorno
-- [ ] `package.json` tiene los scripts `generate-readmes` y `generate-readmes:check` (D-1)
+- [ ] `package.json` tiene los scripts `generate-readmes` y `generate-readmes:check` (3-1)
 
 ## Pasos del bootstrap
 
@@ -37,7 +37,7 @@ Verificar ANTES de ejecutar:
 
 ```bash
 node scripts/generate-readmes.cjs --dry-run
-# Las plantillas se leen desde scripts/readme-templates/ (D-3)
+# Las plantillas se leen desde scripts/readme-templates/ (3-3)
 ```
 
 Revisar el output en consola para los 3 archivos. Verificar:
@@ -55,7 +55,7 @@ Revisar el output en consola para los 3 archivos. Verificar:
 ```bash
 npm run generate-readmes
 # Equivale a: node scripts/generate-readmes.cjs
-# Las plantillas se leen desde scripts/readme-templates/ (D-3)
+# Las plantillas se leen desde scripts/readme-templates/ (3-3)
 ```
 
 Salida esperada:
@@ -96,7 +96,7 @@ npm run generate-readmes:check
 # Equivale a: node scripts/generate-readmes.cjs --check
 ```
 
-Debe salir con exit 0 (recién generados — deben coincidir). Este es el mismo comando que ejecuta el CI (`readme-sync-check`) y el pre-commit hook (D-2, D-5).
+Debe salir con exit 0 (recién generados — deben coincidir). Este es el mismo comando que ejecuta el CI (`readme-sync-check`) y el pre-commit hook (3-2, 3-5).
 
 ### Paso 5: Commit atómico
 
@@ -106,7 +106,7 @@ git add \
   scripts/readme-templates/ \
   package.json \
   .claude/agents/roadmap-keeper.md \
-  .claude/hooks/esden-readme-sync-precommit.cjs \
+  .claude/hooks/af-readme-sync-precommit.cjs \
   scripts/promote.sh \
   scripts/promote.ps1 \
   .github/workflows/repo-purity-check.yml \

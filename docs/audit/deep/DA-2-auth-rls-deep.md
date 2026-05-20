@@ -58,7 +58,7 @@ Browser
   │
   └─ Server Actions ("use server") ─────────────────────────────────┐
                                                                      ↓
-                                         getActiveTenantId() → cookie "esden-tenant-id" (plain, no firmada)
+                                         getActiveTenantId() → cookie "af-tenant-id" (plain, no firmada)
                                          ├── NO verifica sesión Supabase — solo lee cookie
                                          ├── Cookie manipulable desde browser devtools
                                          ├── getSupabaseServerClient() → service_role key (bypasea RLS)
@@ -68,7 +68,7 @@ Browser
 Flujo de tokens en la sesión:
   Login → Supabase Auth emite JWT → @supabase/ssr guarda en cookie httpOnly "sb-api-db-auth-token"
   → JWT NO contiene claim tenant_id
-  → tenant_id viaja en cookie PLAIN "esden-tenant-id" (no firmada, editable por el usuario)
+  → tenant_id viaja en cookie PLAIN "af-tenant-id" (no firmada, editable por el usuario)
   → Las políticas RLS basadas en auth.jwt() ->> 'tenant_id' son INEFECTIVAS en producción
 ```
 
@@ -138,7 +138,7 @@ Flujo de tokens en la sesión:
 | `/api/orchestration/workflows` | GET/POST/DELETE | NINGUNO | tenantId en query/body | SÍ (Zod schema) | **HIGH** |
 | `/api/calls/manual` | POST | NINGUNO | tenantId en body | SÍ (Zod) | **HIGH — inicia llamadas en nombre de cualquier tenant** |
 | `/api/cron/appointments/reminders` | GET | NINGUNO | N/A (service_role) | N/A | **HIGH — cron sin auth** |
-| `/api/tenant/migrate` | POST/GET | Cookie esden-tenant-url/key | Por cookies (sin validar sesión Supabase) | N/A | **HIGH — expone SQL de migración sin auth** |
+| `/api/tenant/migrate` | POST/GET | Cookie af-tenant-url/key | Por cookies (sin validar sesión Supabase) | N/A | **HIGH — expone SQL de migración sin auth** |
 | `/api/admin/tenants/[id]/client-sql` | GET | NINGUNO (solo verifica tenant existe) | SÍ (tenant_id en URL) | N/A | **CRITICAL — archivo SQL descargable SIN auth** |
 | `/api/integrations/google/auth` | GET | Sin revisar | Sin revisar | N/A | Pendiente revisión |
 | `/api/integrations/google/callback` | GET | Sin revisar | Sin revisar | N/A | Pendiente revisión |
@@ -470,7 +470,7 @@ export async function GET() {
 
 El SQL embebido en el endpoint incluye el schema completo de la BD (tablas, columnas, constraints, índices, policies RLS). Esto no expone datos de negocio pero sí la arquitectura interna completa. Un atacante puede usarlo para entender las vulnerabilidades antes de explorarlas.
 
-El handler `POST` usa cookies `esden-tenant-url` y `esden-tenant-key` que pueden ser manipuladas por el cliente.
+El handler `POST` usa cookies `af-tenant-url` y `af-tenant-key` que pueden ser manipuladas por el cliente.
 
 **Fix:** Eliminar el handler GET o añadir auth admin. El handler POST debería obtener las credenciales del tenant desde la BD del servidor (no de cookies del cliente).
 
@@ -696,8 +696,8 @@ CREATE POLICY "authenticated_own_tenant" ON tenants
 Login exitoso → Supabase Auth emite JWT de sesión
     → JWT guardado en cookie httpOnly "sb-api-db-auth-token" (NO legible por JS)
     → La app llama a setTenantCookies(tenantId, tenantName) — src/lib/actions/tenant.ts:16-17:
-        cookieStore.set("esden-tenant-id", tenantId, { path: "/", maxAge: 30 * 24 * 60 * 60 })
-        cookieStore.set("esden-tenant-name", name, { path: "/", maxAge: 30 * 24 * 60 * 60 })
+        cookieStore.set("af-tenant-id", tenantId, { path: "/", maxAge: 30 * 24 * 60 * 60 })
+        cookieStore.set("af-tenant-name", name, { path: "/", maxAge: 30 * 24 * 60 * 60 })
     → Estas cookies NO tienen HttpOnly, NO tienen Secure enforced, SIN SameSite enforced
     → Son legibles y modificables desde JavaScript del browser
 ```
@@ -710,7 +710,7 @@ Login exitoso → Supabase Auth emite JWT de sesión
 
 ```javascript
 // Desde la consola del navegador, con sesión activa en tenant-A:
-document.cookie = "esden-tenant-id=<UUID-de-tenant-B>; path=/";
+document.cookie = "af-tenant-id=<UUID-de-tenant-B>; path=/";
 // Ahora todas las server actions que leen de cookie obtendrán tenant-B
 // Incluidas las que faltan el .eq("tenant_id", ...) — F-04-001, F-04-008
 ```
@@ -732,8 +732,8 @@ Parcialmente. Las acciones que hacen `.eq("tenant_id", await getActiveTenantId()
 
 | Cookie | HttpOnly actual | Secure actual | SameSite actual | Recomendado |
 |---|---|---|---|---|
-| `esden-tenant-id` | NO | NO | NO | No aplica (debe eliminarse o firmarse) |
-| `esden-tenant-name` | NO | NO | NO | No aplica (display only, no crítico) |
+| `af-tenant-id` | NO | NO | NO | No aplica (debe eliminarse o firmarse) |
+| `af-tenant-name` | NO | NO | NO | No aplica (display only, no crítico) |
 | `sb-api-db-auth-token` | SÍ (gestión automática de @supabase/ssr) | SÍ | Lax | CORRECTO |
 
 ### Fix para tenant_id en cookie
@@ -840,11 +840,11 @@ Una vez que el middleware considera al usuario admin:
 
 `src/app/api/tenant/migrate/route.ts:246-251`:
 ```typescript
-const tenantUrl = cookieStore.get("esden-tenant-url")?.value;
-const tenantKey = cookieStore.get("esden-tenant-key")?.value;
+const tenantUrl = cookieStore.get("af-tenant-url")?.value;
+const tenantKey = cookieStore.get("af-tenant-key")?.value;
 ```
 
-El handler acepta cookies `esden-tenant-url` y `esden-tenant-key` que el cliente puede setear libremente. Si un atacante setea estas cookies con las credenciales de su propio Supabase malicioso, el handler se conectará a él y ejecutará el SQL de migración allí — no es un ataque a los datos de la aplicación, pero confirma que el sistema no distingue entre cookies legítimas y fabricadas.
+El handler acepta cookies `af-tenant-url` y `af-tenant-key` que el cliente puede setear libremente. Si un atacante setea estas cookies con las credenciales de su propio Supabase malicioso, el handler se conectará a él y ejecutará el SQL de migración allí — no es un ataque a los datos de la aplicación, pero confirma que el sistema no distingue entre cookies legítimas y fabricadas.
 
 ### Vector 3: updateTenant sin verificación de sesión
 

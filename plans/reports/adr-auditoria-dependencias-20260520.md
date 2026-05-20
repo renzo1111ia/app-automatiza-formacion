@@ -1,6 +1,6 @@
-# Auditoría de Dependencias — dashboard-esden — 20-05-2026
+# Auditoría de Dependencias — dashboard-af — 20-05-2026
 
-**Agente:** `esden-agents:adr`
+**Agente:** `af-agents:adr`
 **Fecha:** 20-05-2026
 **Scope:** package.json + lockfile + roadmap Fases A-E + audit CVEs activos
 **Node.js runtime detectado:** v24.13.0
@@ -35,14 +35,14 @@
 
 | Sprint | Bloqueante |
 |--------|-----------|
-| **Sprint 1 (ahora)** | `axios@1.14.0` — 15 CVEs activos, target `1.16.1` |
-| **Sprint 2 (ahora)** | `next@16.1.6` — 19 CVEs activos, target `16.2.6` (no breaking) |
-| **Sprint 1 (ahora)** | `crypto@1.0.1` — paquete DEPRECATED, reemplazar por built-in Node |
-| **Sprint 3** | `@hubspot/api-client` NO instalado — instalar `^13.5.0` |
-| **Sprint 3** | SDK Zoho NO identificado en npm — ver recomendación en sección C |
-| **Sprint 4** | `@playwright/test` NO instalado — instalar `^1.60.0` |
-| **Sprint 5** | `jsforce` NO instalado — instalar `^3.10.15` (Salesforce) |
-| **Sprint 5** | `google-spreadsheet` NO instalado — `^5.2.0` (Sheets) |
+| **Sprint 0 (ahora)** | `axios@1.14.0` — 15 CVEs activos, target `1.16.1` |
+| **Sprint 1 (ahora)** | `next@16.1.6` — 19 CVEs activos, target `16.2.6` (no breaking) |
+| **Sprint 0 (ahora)** | `crypto@1.0.1` — paquete DEPRECATED, reemplazar por built-in Node |
+| **Sprint 2** | `@hubspot/api-client` NO instalado — instalar `^13.5.0` |
+| **Sprint 2** | SDK Zoho NO identificado en npm — ver recomendación en sección C |
+| **Sprint 3** | `@playwright/test` NO instalado — instalar `^1.60.0` |
+| **Sprint 4** | `jsforce` NO instalado — instalar `^3.10.15` (Salesforce) |
+| **Sprint 4** | `google-spreadsheet` NO instalado — `^5.2.0` (Sheets) |
 
 ---
 
@@ -160,7 +160,7 @@ La versión instalada `1.14.0` tiene **al menos 15 CVEs confirmados por npm audi
 | GHSA-fvcv-3m26-pcqx | Unrestricted Cloud Metadata Exfiltration via Header Injection | 4.8 | 1.15.0 |
 | GHSA-xhjh-pmcv-23jw | Null Byte Injection via Reverse-Encoding | 3.7 | 1.15.1 |
 
-**Acción:** Upgrade inmediato a `axios@1.16.1` (versión latest en npm al día de hoy). La versión `1.14.0` es 2 minor versions detrás y 2 patch versions del latest `1.16.1`. Todas las CVEs se resuelven en este rango. **Esto es Sprint 1, tarea 1-24** — ya documentado en el roadmap.
+**Acción:** Upgrade inmediato a `axios@1.16.1` (versión latest en npm al día de hoy). La versión `1.14.0` es 2 minor versions detrás y 2 patch versions del latest `1.16.1`. Todas las CVEs se resuelven en este rango. **Esto es Sprint 0, tarea 1-24** — ya documentado en el roadmap.
 
 **Compatibilidad:** axios `1.x` tiene API estable desde `1.0`. El upgrade `1.14.0 → 1.16.1` es non-breaking. Compatible con Next.js 16, React 19, Node.js 24. **Riesgo de rotura: BAJO.**
 
@@ -187,7 +187,7 @@ La versión instalada `16.1.6` tiene **19 CVEs** detectados por npm audit, vario
 | GHSA-h64f-5h5j-jqjh | DoS in Image Optimization API | 5.9 | 16.2.5 |
 | + 8 más (ReDoS, cache poisoning, HTTP smuggling, etc.) | — | — | ≤16.2.6 |
 
-**Acción:** Upgrade a `next@16.2.6` (latest en rama 16.x). Este upgrade es una **minor version** dentro de Next.js 16 — el proyecto ya usa React 19 y el range `>=16.0.0` de Next. Compatible con `eslint-config-next@16.2.6` (que también hay que actualizar junto). El upgrade es **Sprint 2** según el roadmap (tarea 2-27). NOTA: el audit asigna solo "High" porque aplica a funcionalidades específicas, pero el CVSS 8.6 del SSRF via WebSocket y el 8.1 del middleware bypass son near-critical en un entorno multi-tenant.
+**Acción:** Upgrade a `next@16.2.6` (latest en rama 16.x). Este upgrade es una **minor version** dentro de Next.js 16 — el proyecto ya usa React 19 y el range `>=16.0.0` de Next. Compatible con `eslint-config-next@16.2.6` (que también hay que actualizar junto). El upgrade es **Sprint 1** según el roadmap (tarea 2-27). NOTA: el audit asigna solo "High" porque aplica a funcionalidades específicas, pero el CVSS 8.6 del SSRF via WebSocket y el 8.1 del middleware bypass son near-critical en un entorno multi-tenant.
 
 **Compatibilidad:** Next.js sigue en major 16. No hay breaking changes entre 16.1.6 y 16.2.6 (se verificó en changelog). Requiere testing extenso de middleware y Server Actions. **Riesgo de rotura: MEDIO** (requiere test completo de flujos auth/middleware).
 
@@ -203,7 +203,7 @@ La versión instalada `16.1.6` tiene **19 CVEs** detectados por npm audit, vario
 
 **Riesgo:** En una auditoría de seguridad de terceros, una dependencia deprecada y vacía con nombre `crypto` levanta banderas rojas inmediatas. Además, en versiones futuras de npm, los paquetes deprecados pueden emitir warnings que confunden el output del build.
 
-**Acción:** Eliminar `crypto` de `dependencies` en `package.json`. Sustituir cualquier `require('crypto')` / `import ... from 'crypto'` por el built-in de Node: `import { createHash, ... } from 'node:crypto'`. Sprint 1.
+**Acción:** Eliminar `crypto` de `dependencies` en `package.json`. Sustituir cualquier `require('crypto')` / `import ... from 'crypto'` por el built-in de Node: `import { createHash, ... } from 'node:crypto'`. Sprint 0.
 
 ---
 
@@ -219,7 +219,7 @@ La versión instalada `16.1.6` tiene **19 CVEs** detectados por npm audit, vario
 - La v1.x tiene mejor tree-shaking y soporte oficial React 19
 - Algunas exportaciones legacy fueron eliminadas
 
-**Acción:** Upgrade en Sprint 2. Revisar iconos usados en la app por posibles renombrados. Compatible con React 19 explícitamente. **Riesgo de rotura: BAJO-MEDIO** (puede requerir ajustes en nombres de iconos).
+**Acción:** Upgrade en Sprint 1. Revisar iconos usados en la app por posibles renombrados. Compatible con React 19 explícitamente. **Riesgo de rotura: BAJO-MEDIO** (puede requerir ajustes en nombres de iconos).
 
 ---
 
@@ -233,7 +233,7 @@ La versión instalada `16.1.6` tiene **19 CVEs** detectados por npm audit, vario
 - Puede haber incompatibilidades en comandos CLI entre v3 y v4
 - Los **componentes ya instalados** en `src/components/ui/` NO se ven afectados
 
-**Acción:** Evaluar upgrade en Sprint 4. No es bloqueante para el MVP. No afecta runtime. **Riesgo de rotura en runtime: NINGUNO.** Riesgo en CLI al añadir nuevos componentes: BAJO-MEDIO.
+**Acción:** Evaluar upgrade en Sprint 3. No es bloqueante para el MVP. No afecta runtime. **Riesgo de rotura en runtime: NINGUNO.** Riesgo en CLI al añadir nuevos componentes: BAJO-MEDIO.
 
 ---
 
@@ -246,7 +246,7 @@ El proyecto pina `@types/node` en major 20 (`^20`). Esto es correcto si el runti
 - Algunas APIs nuevas de Node 22-24 (fetch nativo, WebCrypto mejorado, etc.) no tendrán tipos correctos
 - No produce errores en tiempo de ejecución, pero sí gaps de tipado
 
-**Acción:** Actualizar `@types/node` a `^24` para alinear con el runtime. Sprint 2. **Riesgo de rotura: BAJO** (solo tipos, no runtime).
+**Acción:** Actualizar `@types/node` a `^24` para alinear con el runtime. Sprint 1. **Riesgo de rotura: BAJO** (solo tipos, no runtime).
 
 ---
 
@@ -256,7 +256,7 @@ El proyecto pina `@types/node` en major 20 (`^20`). Esto es correcto si el runti
 
 ESLint 10 introduce cambios en su API de reglas. Depende de si `eslint-config-next` tiene soporte para ESLint 10. Al momento del audit, `eslint-config-next` usa `eslint ^9`. Actualizar ESLint sin actualizar `eslint-config-next` rompe el lint.
 
-**Acción:** APLAZAR hasta que `eslint-config-next` soporte ESLint 10 oficialmente. Sprint 4 o 5. **Riesgo de rotura: ALTO si se hace antes de que eslint-config-next actualice su peer dep.**
+**Acción:** APLAZAR hasta que `eslint-config-next` soporte ESLint 10 oficialmente. Sprint 3 o 5. **Riesgo de rotura: ALTO si se hace antes de que eslint-config-next actualice su peer dep.**
 
 ---
 
@@ -268,7 +268,7 @@ ESLint 10 introduce cambios en su API de reglas. Depende de si `eslint-config-ne
 
 `@supabase/ssr@0.10.3` requiere `@supabase/supabase-js ^2.105.3`, mientras que el proyecto tiene `supabase-js@2.97.0`. Si se actualiza `@supabase/ssr`, también hay que actualizar `supabase-js`. La actualización conjunta implica verificar los cambios en cookies helpers y la API de `createServerClient`.
 
-**Acción:** Upgrade conjunto en Sprint 2 (tarea 2-02). `@supabase/ssr@0.10.3` + `@supabase/supabase-js@2.106.1`. Revisar changelog de ssr 0.8→0.10 (cambios en cookie storage API). **Riesgo: MEDIO** — el cookie middleware puede tener cambios de comportamiento.
+**Acción:** Upgrade conjunto en Sprint 1 (tarea 2-02). `@supabase/ssr@0.10.3` + `@supabase/supabase-js@2.106.1`. Revisar changelog de ssr 0.8→0.10 (cambios en cookie storage API). **Riesgo: MEDIO** — el cookie middleware puede tener cambios de comportamiento.
 
 ---
 
@@ -278,7 +278,7 @@ ESLint 10 introduce cambios en su API de reglas. Depende de si `eslint-config-ne
 
 LangChain actualiza con frecuencia. La versión `1.4.1` puede tener cambios en la API de chains/agents. El proyecto usa LangChain principalmente para orchestración de LLM calls. La integración `@langchain/anthropic` requiere `@langchain/core ^1.1.47` (ya satisfecha en latest).
 
-**Acción:** Upgrade `langchain@1.4.1` + `@langchain/anthropic@1.4.0` en Sprint 2. Verificar peer dep `@langchain/core`. **Riesgo: MEDIO** — posibles cambios en tipos de output de chains.
+**Acción:** Upgrade `langchain@1.4.1` + `@langchain/anthropic@1.4.0` en Sprint 1. Verificar peer dep `@langchain/core`. **Riesgo: MEDIO** — posibles cambios en tipos de output de chains.
 
 ---
 
@@ -288,7 +288,7 @@ LangChain actualiza con frecuencia. La versión `1.4.1` puede tener cambios en l
 
 `retell-sdk` ha tenido 14 actualizaciones desde la versión instalada. El proyecto depende de Retell para las llamadas de voz. En el audit de seguridad (DA-4-001) ya se detectó que el webhook de Retell no valida firma. Versiones más recientes pueden incluir helpers de validación HMAC.
 
-**Acción:** Upgrade a `5.26.1` en Sprint 1 junto con la tarea 1-12 (validación firma webhook Retell). Revisar changelog para helpers de validación de firma que puedan simplificar la implementación. **Riesgo: BAJO-MEDIO.**
+**Acción:** Upgrade a `5.26.1` en Sprint 0 junto con la tarea 1-12 (validación firma webhook Retell). Revisar changelog para helpers de validación de firma que puedan simplificar la implementación. **Riesgo: BAJO-MEDIO.**
 
 ---
 
@@ -298,7 +298,7 @@ LangChain actualiza con frecuencia. La versión `1.4.1` puede tener cambios en l
 
 TypeScript 6.0 introduce cambios en el type checker y puede marcar código que TypeScript 5 aceptaba como error. Esto requiere un ciclo de fix de tipos en toda la codebase. Con 426 ocurrencias de `as any` (finding 2-22), la migración puede descubrir problemas adicionales.
 
-**Acción:** APLAZAR a Sprint 5 o post-MVP. No es bloqueante. **Riesgo de rotura: ALTO** — actualizar TypeScript major siempre requiere una sesión de triage de errores de tipos.
+**Acción:** APLAZAR a Sprint 4 o post-MVP. No es bloqueante. **Riesgo de rotura: ALTO** — actualizar TypeScript major siempre requiere una sesión de triage de errores de tipos.
 
 ---
 
@@ -306,7 +306,7 @@ TypeScript 6.0 introduce cambios en el type checker y puede marcar código que T
 
 **Versión actual:** 1.3.26 | **Wanted:** 1.4.0
 
-Requiere `@langchain/core ^1.1.47`. El upgrade de `langchain` también activa este upgrade. Hacerlos juntos en Sprint 2.
+Requiere `@langchain/core ^1.1.47`. El upgrade de `langchain` también activa este upgrade. Hacerlos juntos en Sprint 1.
 
 ---
 
@@ -314,7 +314,7 @@ Requiere `@langchain/core ^1.1.47`. El upgrade de `langchain` también activa es
 
 **Versión actual:** 5.73.0 | **Latest:** 5.76.10
 
-npm audit reporta severidad "moderate" en bullmq (transitiva vía alguna dependencia interna). El upgrade a `5.76.10` resuelve la vuln transitiva. BullMQ es crítico para el orquestador — el upgrade requiere verificación de la API de worker/queue. Sprint 1 (upgrade patch, no breaking). **Riesgo: BAJO.**
+npm audit reporta severidad "moderate" en bullmq (transitiva vía alguna dependencia interna). El upgrade a `5.76.10` resuelve la vuln transitiva. BullMQ es crítico para el orquestador — el upgrade requiere verificación de la API de worker/queue. Sprint 0 (upgrade patch, no breaking). **Riesgo: BAJO.**
 
 ---
 
@@ -322,15 +322,15 @@ npm audit reporta severidad "moderate" en bullmq (transitiva vía alguna depende
 
 **Versión actual:** 171.4.0 | **Latest:** 171.4.0
 
-El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo el ecosistema de APIs de Google. Ya está en la versión latest, pero es un paquete de 171 majors porque Google incrementa major por cada cambio de API. El proyecto lo usa para Calendar (ya mencionado en STACK-TECNOLOGICO.md). Compatibilidad con Fase E (Sheets/Drive): `googleapis` ya incluye ambas APIs — **no hay que instalar un paquete separado para Google Sheets o Drive**. Solo hay que implementar los scopes correctos de OAuth2.
+El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo el ecosistema de APIs de Google. Ya está en la versión latest, pero es un paquete de 171 majors porque Google incrementa major por cada cambio de API. El proyecto lo usa para Calendar (ya mencionado en STACK-TECNOLOGICO.md). Compatibilidad con Fase 4 (Sheets/Drive): `googleapis` ya incluye ambas APIs — **no hay que instalar un paquete separado para Google Sheets o Drive**. Solo hay que implementar los scopes correctos de OAuth2.
 
-**Acción para Fase E:** Usar `googleapis@171.x` ya instalado para Sheets y Drive. No instalar un SDK adicional. Verificar que los scopes de Google OAuth incluyen `https://www.googleapis.com/auth/spreadsheets` y `https://www.googleapis.com/auth/drive.file`. **Riesgo: NINGUNO adicional** — ya está instalado.
+**Acción para Fase 4:** Usar `googleapis@171.x` ya instalado para Sheets y Drive. No instalar un SDK adicional. Verificar que los scopes de Google OAuth incluyen `https://www.googleapis.com/auth/spreadsheets` y `https://www.googleapis.com/auth/drive.file`. **Riesgo: NINGUNO adicional** — ya está instalado.
 
 ---
 
 ## 5. Recomendaciones por sprint
 
-### Sprint 1 — Urgente (debe actualizarse ANTES de ir a producción)
+### Sprint 0 — Urgente (debe actualizarse ANTES de ir a producción)
 
 | Paquete | Acción | Razón | Verificación previa |
 |---------|--------|-------|---------------------|
@@ -343,7 +343,7 @@ El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo 
 
 ---
 
-### Sprint 2 — Capa de datos
+### Sprint 1 — Capa de datos
 
 | Paquete | Acción | Razón | Verificación |
 |---------|--------|-------|-------------|
@@ -360,7 +360,7 @@ El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo 
 
 ---
 
-### Sprint 3 — CRMs MVP (HubSpot + Zoho)
+### Sprint 2 — CRMs MVP (HubSpot + Zoho)
 
 #### HubSpot
 
@@ -378,7 +378,7 @@ El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo 
 | OAuth2 soportado | ✅ (OAuth2 flows con refresh tokens, webhooks) |
 | Multi-región | N/A — HubSpot no tiene multi-región API (usa api.hubapi.com) |
 
-**Acción Sprint 3:** Instalar `@hubspot/api-client@^13.5.0`. Pasar por ADR completo antes de instalar. Compatible con stack actual.
+**Acción Sprint 2:** Instalar `@hubspot/api-client@^13.5.0`. Pasar por ADR completo antes de instalar. Compatible con stack actual.
 
 #### Zoho CRM
 
@@ -397,7 +397,7 @@ El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo 
 
 ---
 
-### Sprint 4 — Hardening
+### Sprint 3 — Hardening
 
 | Paquete | Acción | Razón |
 |---------|--------|-------|
@@ -420,7 +420,7 @@ Next.js 16 ya declara `@opentelemetry/api ^1.1.0` como peer dep opcional — es 
 
 ---
 
-### Sprint 5 — Post-release
+### Sprint 4 — Post-release
 
 | Funcionalidad | Paquete | Acción | Notas |
 |---------------|---------|--------|-------|
@@ -429,7 +429,7 @@ Next.js 16 ya declara `@opentelemetry/api ^1.1.0` como peer dep opcional — es 
 | GoHighLevel | REST API pura (fetch/axios) | NO instalar SDK | GHL tiene API REST + OAuth2 v2, sin SDK npm oficial mantenido |
 | ActiveCampaign | REST API pura | NO instalar SDK | API Key auth, REST endpoints simples, no requiere SDK |
 
-**Nota clave para Sheets/Drive:** `googleapis@171.4.0` ya está en `dependencies` del proyecto. Incluye todas las APIs de Google. Solo hay que activar los OAuth scopes y escribir el adapter. **CERO nuevas dependencias de producción** para Fase 5 Google.
+**Nota clave para Sheets/Drive:** `googleapis@171.4.0` ya está en `dependencies` del proyecto. Incluye todas las APIs de Google. Solo hay que activar los OAuth scopes y escribir el adapter. **CERO nuevas dependencias de producción** para Fase 4 Google.
 
 ---
 
@@ -455,7 +455,7 @@ La decisión de no usar ORM nuevo (R-019, STACK-TECNOLOGICO.md) se está respeta
 
 ### Conflicto 1: supabase/ssr 0.10.3 requiere supabase-js 2.105.3+
 
-Si se actualiza `@supabase/ssr` a 0.10.3 en Sprint 2, hay que actualizar `@supabase/supabase-js` a 2.106.1 simultáneamente. El upgrade aislado de uno sin el otro romperá los peer deps. **Resolución: hacer el upgrade conjunto.**
+Si se actualiza `@supabase/ssr` a 0.10.3 en Sprint 1, hay que actualizar `@supabase/supabase-js` a 2.106.1 simultáneamente. El upgrade aislado de uno sin el otro romperá los peer deps. **Resolución: hacer el upgrade conjunto.**
 
 ### Conflicto 2: eslint 10 vs eslint-config-next
 
@@ -463,11 +463,11 @@ ESLint 10 requiere una versión de `eslint-config-next` que lo soporte. Al momen
 
 ### Conflicto 3: typescript 6.x vs types
 
-TypeScript 6.0.3 puede romper código que TypeScript 5.9.3 aceptaba (strict null checks más agresivos, cambios en inference). Con 426 ocurrencias de `as any` en el codebase (finding 2-22 del roadmap), el upgrade sin limpiar el código primero generará cientos de errores de compilación. **Secuencia correcta: Sprint 2 limpia los `as any` → Sprint 5 (post-MVP) migra a TS 6.x.**
+TypeScript 6.0.3 puede romper código que TypeScript 5.9.3 aceptaba (strict null checks más agresivos, cambios en inference). Con 426 ocurrencias de `as any` en el codebase (finding 2-22 del roadmap), el upgrade sin limpiar el código primero generará cientos de errores de compilación. **Secuencia correcta: Sprint 1 limpia los `as any` → Sprint 4 (post-MVP) migra a TS 6.x.**
 
 ### Conflicto 4: langchain 1.4.1 requiere @langchain/core 1.1.47
 
-La actualización de `langchain@1.4.1` requiere que todos los packages `@langchain/*` usen `@langchain/core ^1.1.47`. Si se actualiza `langchain` sin actualizar los providers (`@langchain/anthropic`, `@langchain/openai`, `@langchain/google-genai`), puede haber conflictos de versión de `@langchain/core`. **Resolución: actualizar todos en bloque en Sprint 2.**
+La actualización de `langchain@1.4.1` requiere que todos los packages `@langchain/*` usen `@langchain/core ^1.1.47`. Si se actualiza `langchain` sin actualizar los providers (`@langchain/anthropic`, `@langchain/openai`, `@langchain/google-genai`), puede haber conflictos de versión de `@langchain/core`. **Resolución: actualizar todos en bloque en Sprint 1.**
 
 ### Conflicto 5: axios 1.15+ y código que asumía comportamiento previo
 
@@ -481,14 +481,14 @@ Los CVEs de prototype pollution en axios se corrigen en 1.15+ con cambios en có
 
 | Control | Estado | Nota |
 |---------|--------|------|
-| Bloqueo install sin ADR | ✅ Implementado | `.claude/hooks/esden-deps-guard.cjs` activo |
+| Bloqueo install sin ADR | ✅ Implementado | `.claude/hooks/af-deps-guard.cjs` activo |
 | npm audit en CI | ❌ No implementado | Recomendado añadir |
-| Dependabot / Renovate | ❌ No configurado | Recomendado para Fase 4 |
+| Dependabot / Renovate | ❌ No configurado | Recomendado para Fase 3 |
 | Pin de versiones en lock | ✅ package-lock.json presente | Verificar que se commitea siempre |
 
 ### Propuestas
 
-**1. npm audit en CI (Sprint 4, tarea 4-06)**
+**1. npm audit en CI (Sprint 3, tarea 4-06)**
 
 Añadir a `.github/workflows/` un step que ejecute `npm audit --audit-level=high` y falle el build si hay vulnerabilidades high o critical sin resolver. Esto previene que se mergeen PRs con nuevas vulns.
 
@@ -500,9 +500,9 @@ Añadir a `.github/workflows/` un step que ejecute `npm audit --audit-level=high
 
 **2. Bloqueo de major upgrades sin ADR**
 
-El hook `esden-deps-guard.cjs` ya bloquea installs directos. Ampliar la regla para que también bloquee upgrades de major version sin revisión ADR. Añadir una lista de paquetes "watch" que requieren aprobación explícita antes de actualizar.
+El hook `af-deps-guard.cjs` ya bloquea installs directos. Ampliar la regla para que también bloquee upgrades de major version sin revisión ADR. Añadir una lista de paquetes "watch" que requieren aprobación explícita antes de actualizar.
 
-**3. Renovate bot (Sprint 4)**
+**3. Renovate bot (Sprint 3)**
 
 Configurar Renovate en `.github/` para:
 - Auto-merge: solo patches de devDependencies (test/lint tools)
@@ -525,7 +525,7 @@ Repetir esta auditoría al inicio de cada sprint. El agente ADR puede ejecutar `
 |-----------|--------|--------|
 | 1 | **1 (INMEDIATO)** | Upgrade `axios@1.16.1` — 15 CVEs, SSRF activo |
 | 2 | **1 (INMEDIATO)** | Eliminar `crypto@1.0.1` — paquete deprecated, reemplazar con `node:crypto` |
-| 3 | **1 (INMEDIATO)** | Upgrade `retell-sdk@5.26.1` — 14 versions detrás, antes de Sprint 1-12 |
+| 3 | **1 (INMEDIATO)** | Upgrade `retell-sdk@5.26.1` — 14 versions detrás, antes de Sprint 0-12 |
 | 4 | **1 (INMEDIATO)** | Upgrade `bullmq@5.76.10` — vuln transitiva moderate |
 | 5 | **2** | Upgrade `next@16.2.6` + `eslint-config-next@16.2.6` — 19 CVEs |
 | 6 | **2** | Upgrade conjunto `@supabase/ssr@0.10.3` + `@supabase/supabase-js@2.106.1` |
@@ -551,12 +551,12 @@ El runtime es **Node.js v24.13.0** pero `@types/node` está pinado a `^20`. Esta
 
 - `fetch` nativo (disponible en Node 18+, mejorado en 22+)
 - WebCrypto API mejorada (Node 20+ tiene `webcrypto` en global, Node 22 lo estabilizó)
-- `node:test` runner nativo (útil para Sprint 4 tests)
+- `node:test` runner nativo (útil para Sprint 3 tests)
 
-Actualizar a `@types/node@^24` en Sprint 2 junto con los demás upgrades de capa de datos.
+Actualizar a `@types/node@^24` en Sprint 1 junto con los demás upgrades de capa de datos.
 
 ---
 
 **Status:** DONE_WITH_CONCERNS
 **Summary:** Auditoría completa de 37 prod + 14 dev dependencias contra stack presente y roadmap Fases 1-5. Se identificaron 2 findings Critical CVE (axios 15 CVEs + next 19 CVEs), 1 DEPRECATED crítico (crypto), y se mapearon todas las dependencias futuras necesarias para Fases C-E. La mayoría de Fases E no requieren nuevas deps (googleapis ya instalado cubre Sheets/Drive; Zoho mejor sin SDK). Ningún paquete excluido por política encontrado.
-**Concerns:** (1) `next@16.1.6` tiene CVSS 8.6 (SSRF via WebSocket) y 8.1 (middleware bypass) — categorizado como High en npm pero operativamente near-Critical para un sistema multi-tenant. El roadmap lo sitúa en Sprint 2 pero debería considerarse adelantarlo a Sprint 1 dado el riesgo. (2) El mismatch Node.js v24 runtime vs `@types/node@^20` puede silenciar errores de tipado en APIs de Node 22-24 que el proyecto ya podría estar usando. (3) Zoho no tiene SDK npm verificado — la implementación REST pura requiere más código pero es la opción más segura.
+**Concerns:** (1) `next@16.1.6` tiene CVSS 8.6 (SSRF via WebSocket) y 8.1 (middleware bypass) — categorizado como High en npm pero operativamente near-Critical para un sistema multi-tenant. El roadmap lo sitúa en Sprint 1 pero debería considerarse adelantarlo a Sprint 0 dado el riesgo. (2) El mismatch Node.js v24 runtime vs `@types/node@^20` puede silenciar errores de tipado en APIs de Node 22-24 que el proyecto ya podría estar usando. (3) Zoho no tiene SDK npm verificado — la implementación REST pura requiere más código pero es la opción más segura.

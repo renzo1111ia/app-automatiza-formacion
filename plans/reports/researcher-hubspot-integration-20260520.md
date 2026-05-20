@@ -1,9 +1,9 @@
-# Research — HubSpot CRM Integration (Sprint 3)
+# Research — HubSpot CRM Integration (Sprint 2)
 
 **Agente:** researcher (Sonnet)  
 **Fecha:** 20-05-2026  
 **Scope:** HubSpot API v3, OAuth2 multi-tenant, webhooks, @hubspot/api-client@13.5.0  
-**Audiencia:** planner Sprint 3  
+**Audiencia:** planner Sprint 2  
 
 ---
 
@@ -16,7 +16,7 @@
 - **Webhooks**: HMAC SHA-256 via `X-HubSpot-Signature-v3`. Retry hasta 3 días con backoff. Registrar subscriptions por app-level (no por portal), filtrar events por portalId en handler.
 - **Bidireccionalidad**: protección anti-loop obligatoria — marcar writes originados por nuestro sistema con metadata para ignorar el webhook entrante resultante.
 - **Sandbox**: HubSpot Developer Test Accounts (antes "Sandbox Accounts") — aprovisionar desde developer portal, cuentas limpias con datos ficticios.
-- **Complejidad global C-02**: High (OAuth flow + token refresh + webhook registry + loop prevention + field mapping).
+- **Complejidad global 2-02**: High (OAuth flow + token refresh + webhook registry + loop prevention + field mapping).
 
 ---
 
@@ -255,7 +255,7 @@ new Client({ accessToken, numberOfApiCallRetries: 3 })
 
 ---
 
-## Estimación de complejidad por componente C-02
+## Estimación de complejidad por componente 2-02
 
 | Componente | Complejidad | Horas est. |
 |------------|-------------|-----------|
@@ -277,11 +277,11 @@ new Client({ accessToken, numberOfApiCallRetries: 3 })
 ## Recomendaciones
 
 1. Usar OAuth2 Public App, NO Private Apps.
-2. Guardar access_token + refresh_token cifrados (AES-256) por tenant en tabla `integrations`. 2-26 (Sprint 2) debe estar completo antes de 3-02.
+2. Guardar access_token + refresh_token cifrados (AES-256) por tenant en tabla `integrations`. 2-26 (Sprint 1) debe estar completo antes de 3-02.
 3. SDK `@hubspot/api-client@13.5.0` para llamadas CRM. Para OAuth flow y webhook validation: código propio con `node:crypto`.
 4. Anti-loop: enfoque property-based + TTL en memoria (Redis/BullMQ cache).
 5. Webhook handling: responder 200 inmediatamente, procesar en BullMQ queue async.
 6. Sandbox: usar Developer Test Account. Para CI/CD: grabar+replay de fixtures con nock o MSW — NO llamadas reales en CI.
 
 **Status:** DONE  
-**Summary:** Research completo de HubSpot OAuth2, API v3 endpoints, webhooks, rate limits, y @hubspot/api-client@13.5.0 para contexto de Sprint 3. Complejidad 3-02 estimada en ~44h incluyendo OAuth flow, bidireccionalidad y anti-loop.
+**Summary:** Research completo de HubSpot OAuth2, API v3 endpoints, webhooks, rate limits, y @hubspot/api-client@13.5.0 para contexto de Sprint 2. Complejidad 3-02 estimada en ~44h incluyendo OAuth flow, bidireccionalidad y anti-loop.

@@ -3,7 +3,7 @@ title: "Inventario de features entregadas - Dashboard Esden"
 date: 2026-05-18
 agent: Timeline (Haiku)
 phase: 7
-source_repo: renzo1111ia/dashboard-esden (clonado local en dashboard-esden-git)
+source_repo: renzo1111ia/dashboard-af (clonado local en dashboard-af-git)
 total_features: 32
 ---
 
@@ -29,7 +29,7 @@ Features identificadas combinando:
 | Supabase Auth (JWT) | bee3a19 | bee3a19 | 2026-03-02 | ✅ Implementado | F-01-001, F-05-SEC-001 | Credenciales hardcodeadas en fallback |
 | Multi-tenant router | 8a3f7d3 | 516f40c | 2026-03-02 | ✅ Implementado | F-04-001, F-04-004 | RLS tautológica, cross-tenant data leak en fetchCalls |
 | Tenant isolation (RLS) | 516f40c | 516f40c | 2026-03-02 | ⚠️ Parcial (RLS rota) | F-04-005, F-04-006, F-04-012 | RLS usando USING(true), no filtra por tenant |
-| Tenant session management | 71f6d18 | 71f6d18 | 2026-03-06 | ✅ Implementado | F-05-OWASP-001 | Cookie `esden-tenant-id` sin validación server-side |
+| Tenant session management | 71f6d18 | 71f6d18 | 2026-03-06 | ✅ Implementado | F-05-OWASP-001 | Cookie `af-tenant-id` sin validación server-side |
 | Tenant password reset | feac526 | feac526 | 2026-05-15 | ✅ Implementado | Ninguno | Self-healing para link auth_user_id |
 
 #### 1.2 Autenticación & Seguridad

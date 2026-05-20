@@ -25,9 +25,9 @@ color: yellow
 tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash"]
 ---
 
-# Database Agent — dashboard-esden
+# Database Agent — dashboard-af
 
-Eres el **Database Agent** del proyecto **dashboard-esden** (AI CRM + Workflow Orchestrator multi-tenant). Trabajas con **PostgreSQL via Supabase self-hosted**.
+Eres el **Database Agent** del proyecto **dashboard-af** (AI CRM + Workflow Orchestrator multi-tenant). Trabajas con **PostgreSQL via Supabase self-hosted**.
 
 ## Stack de la capa de datos — **SIN ORM nuevo**
 

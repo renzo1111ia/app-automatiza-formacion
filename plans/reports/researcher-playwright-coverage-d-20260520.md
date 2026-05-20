@@ -1,5 +1,5 @@
 ---
-title: "Researcher Report — Playwright E2E + Coverage — Sprint 4"
+title: "Researcher Report — Playwright E2E + Coverage — Sprint 3"
 date: 2026-05-20
 agent: researcher-playwright-coverage (Sonnet)
 sprint: 4
@@ -46,7 +46,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // Solo mobile si Sprint 4 incluye responsive (DA-5-012)
+    // Solo mobile si Sprint 3 incluye responsive (DA-5-012)
   ],
   webServer: {
     command: 'npm run dev',
@@ -67,7 +67,7 @@ e2e/
 ├── auth/
 │   ├── login.spec.ts              # Login válido + inválido
 │   ├── logout.spec.ts             # Logout limpia cookies
-│   └── tenant-isolation.spec.ts  # Cookie tampering no accede datos ajenos (RLS fix de Sprint 1)
+│   └── tenant-isolation.spec.ts  # Cookie tampering no accede datos ajenos (RLS fix de Sprint 0)
 ├── leads/
 │   ├── create-lead.spec.ts       # Golden path: crear lead desde UI
 │   ├── historial-table.spec.ts   # Listado, búsqueda, paginación
@@ -78,33 +78,33 @@ e2e/
 ├── calendar/
 │   └── appointments.spec.ts      # Ver citas, confirmar/cancelar
 ├── settings/
-│   ├── integrations.spec.ts      # Panel integraciones CRM (Sprint 3)
+│   ├── integrations.spec.ts      # Panel integraciones CRM (Sprint 2)
 │   └── crm-connection.spec.ts    # OAuth HubSpot + Zoho flow
 ├── accessibility/
 │   ├── wcag-keyboard.spec.ts     # Tab navigation, focus traps
 │   └── wcag-modals.spec.ts       # Modales dialog ARIA
 ├── security/
-│   └── rls-cross-tenant.spec.ts  # Verificar aislamiento multi-tenant post Sprint 1
+│   └── rls-cross-tenant.spec.ts  # Verificar aislamiento multi-tenant post Sprint 0
 └── fixtures/
     ├── auth.ts                    # Login fixture reutilizable
     ├── tenants.ts                 # Tenant setup/teardown
     └── leads.ts                   # Lead factory para tests
 ```
 
-### Golden Path Flows (D-01 must-have)
+### Golden Path Flows (3-01 must-have)
 
 1. **Login → Dashboard → Crear Lead → Ver en Historial** (happy path completo)
 2. **Login → Inbox → Seleccionar Agente → Ver Conversación**
 3. **Login → Calendario → Ver Citas del día**
 4. **Login Tenant A → Intentar acceder datos Tenant B → Blocked** (RLS verification)
-5. **Login Admin → Settings → Conectar HubSpot** (Sprint 3 integration)
-6. **Login → Dashboard → WCAG keyboard nav (Tab order)** (Sprint 4 a11y)
+5. **Login Admin → Settings → Conectar HubSpot** (Sprint 2 integration)
+6. **Login → Dashboard → WCAG keyboard nav (Tab order)** (Sprint 3 a11y)
 
 ---
 
 ## 3. Tests multi-tenant: patrón de aislamiento
 
-### Cookie tampering test (post Sprint 1 fix)
+### Cookie tampering test (post Sprint 0 fix)
 
 ```typescript
 // e2e/security/rls-cross-tenant.spec.ts
@@ -114,7 +114,7 @@ test('tenant isolation: cookie tampering no accede datos ajenos', async ({ page,
   
   // Intentar inyectar cookie de Tenant B
   await context.addCookies([{
-    name: 'esden-tenant-id',
+    name: 'af-tenant-id',
     value: TENANT_B_UUID,
     domain: 'localhost',
     path: '/',
@@ -191,7 +191,7 @@ export default defineConfig({
 
 | Área | Priority | Tipo test |
 |------|----------|-----------|
-| Repository pattern (Sprint 2) | Alta | Integration (BD real) |
+| Repository pattern (Sprint 1) | Alta | Integration (BD real) |
 | Zod schemas validation | Alta | Unit |
 | Server Actions críticas | Alta | Integration |
 | LLM callbacks / cost tracker | Alta | Unit (mock LLM) |
@@ -273,12 +273,12 @@ test.afterEach(async () => {
 | Integration tests Repository pattern | 8-12h |
 | Integration tests BullMQ workers | 4-6h |
 | CI configuration (GitHub Actions) | 2-3h |
-| **Total D-01 E2E** | **26-30h** |
-| **Total D-02 Coverage** | **23-29h** |
+| **Total 3-01 E2E** | **26-30h** |
+| **Total 3-02 Coverage** | **23-29h** |
 
-**Nota paralelización:** D-01 y D-02 son paralelizables — Playwright E2E y Vitest unit/integration no comparten archivos. Un dev puede hacer E2E mientras otro hace unit/integration. Estimación wall-clock: 26-30h (no 50+).
+**Nota paralelización:** 3-01 y 3-02 son paralelizables — Playwright E2E y Vitest unit/integration no comparten archivos. Un dev puede hacer E2E mientras otro hace unit/integration. Estimación wall-clock: 26-30h (no 50+).
 
 ---
 
 **Status:** DONE
-**Summary:** Stack recomendado para Sprint 4 testing: @playwright/test@^1.60.0 para E2E (solo Chromium MVP), Vitest + v8 coverage para unit/integration. Estructura de tests centrada en 6 golden path flows + security RLS verification + WCAG keyboard tests. Factories sobre fixtures para isolation. BullMQ tests en integration layer (no E2E). Target 80% coverage alcanzable en 23-29h con priorización de repositorios, Zod schemas, y Server Actions.
+**Summary:** Stack recomendado para Sprint 3 testing: @playwright/test@^1.60.0 para E2E (solo Chromium MVP), Vitest + v8 coverage para unit/integration. Estructura de tests centrada en 6 golden path flows + security RLS verification + WCAG keyboard tests. Factories sobre fixtures para isolation. BullMQ tests en integration layer (no E2E). Target 80% coverage alcanzable en 23-29h con priorización de repositorios, Zod schemas, y Server Actions.

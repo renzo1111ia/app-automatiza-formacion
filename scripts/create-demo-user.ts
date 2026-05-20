@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(
 async function createDemoUser() {
     console.log("📝  Creando usuario demo...");
 
-    const email = "demo@esden.com";
+    const email = "demo@af.com";
     const password = "demoPassword123!";
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({

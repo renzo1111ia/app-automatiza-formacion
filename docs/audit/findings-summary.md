@@ -15,7 +15,7 @@ sources:
   - docs/dependencies/outdated.md
 ---
 
-# Findings Summary - Auditoria dashboard-esden
+# Findings Summary - Auditoria dashboard-af
 
 ## Resumen ejecutivo
 
@@ -70,7 +70,7 @@ funcionan.
 | 3 | F-05-SEC-002 | JWT anon hardcodeado como fallback | src/lib/supabase/client.ts:16,20 | S | Security |
 | 4 | F-05-SEC-003 | URL Supabase produccion hardcodeada con IP interna | src/lib/auth-config.ts:9, src/lib/supabase/server.ts:6 | S | Security |
 | 5 | F-05-SEC-005 | Retell webhook sin validacion de firma HMAC | src/app/api/webhooks/retell/route.ts | M | Security |
-| 6 | F-05-OWASP-001 | Cookie esden-tenant-id sin validacion server-side de ownership | src/middleware.ts, src/lib/actions/tenant.ts | M | Security |
+| 6 | F-05-OWASP-001 | Cookie af-tenant-id sin validacion server-side de ownership | src/middleware.ts, src/lib/actions/tenant.ts | M | Security |
 | 7 | F-05-OWASP-003 | Widget embed script interpola id sin escapar - riesgo XSS/injection | src/app/api/widget/embed.js/route.ts:22 | S | Security |
 | 8 | F-05-OWASP-004 | exec_sql en route de migracion de tenant - SQL arbitrario | src/app/api/tenant/migrate/route.ts:263 | M | Security |
 | 9 | F-05-OWASP-005 | Redis sin autenticacion y puerto 6379 expuesto | docker-compose.yml:59 | S | Security |

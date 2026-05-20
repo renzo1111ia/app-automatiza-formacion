@@ -74,7 +74,7 @@ Acciones completadas:
 - ✓ PRODUCTIVITY.md actualizado
 - ✓ SESSION_LOG.md actualizado
 
-📋 Checklist de Fase 1 (16h estimadas):
+📋 Checklist de Fase 0 (16h estimadas):
 
 □ Inicializar Next.js 16.1 (30m)
 □ Configurar estructura carpetas (1h)

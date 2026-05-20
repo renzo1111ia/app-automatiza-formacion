@@ -36,7 +36,7 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Severidad**: Critical
 - **Esfuerzo**: S
 - **Descripción**: `AUTH_SUPABASE_ANON_KEY` y `AUTH_SUPABASE_SERVICE_ROLE_KEY` tienen JWTs hardcodeados como fallback. Si las variables de entorno no están configuradas, se usan tokens reales del servidor de producción (`api-db.automatizaformacion.com`). Cualquier desarrollador con acceso al repo tiene la `SERVICE_ROLE_KEY`, que otorga acceso administrativo completo a la base de datos.
-- **Spec relacionada**: D-002 (riesgo de seguridad multi-tenancy); D-003 (seguridad en datos)
+- **Spec relacionada**: 3-002 (riesgo de seguridad multi-tenancy); 3-003 (seguridad en datos)
 - **Fix sugerido**: Eliminar los valores de fallback hardcodeados. Lanzar excepción si las env vars no existen. En desarrollo, usar un archivo `.env.local` local nunca commiteado. Rotar inmediatamente las credenciales expuestas.
 
 ---
@@ -46,7 +46,7 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Severidad**: Critical
 - **Esfuerzo**: S
 - **Descripción**: `const VERIFY_TOKEN = "automatiza_for_2025"` está embebido directamente en el código fuente. Este token también aparece como placeholder en la UI de settings (`src/app/dashboard/settings/IntegrationsManager.tsx:375`), lo que lo convierte en una credencial pública conocida. Cualquiera que lo conozca puede hacer llamadas falsas al webhook de WhatsApp.
-- **Spec relacionada**: D-002 (seguridad)
+- **Spec relacionada**: 3-002 (seguridad)
 - **Fix sugerido**: Mover a variable de entorno `WHATSAPP_VERIFY_TOKEN`. Cambiar el valor actual en Meta Developers Dashboard inmediatamente. Eliminar el placeholder de la UI (que debe obtener el valor desde el servidor o mostrar un campo de configuración guardado por el tenant).
 
 ---
@@ -86,7 +86,7 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Severidad**: High
 - **Esfuerzo**: M
 - **Descripción**: La spec define una variable `{estado}` con valores `"cualificado"`, `"agendado"`, `"informado"`, `"matriculado"`, `"descartado"`, `"ilocalizable"`. El código usa el campo `tipo_lead` (en tabla `lead`) para almacenar estados como `"ilocalizable"`, `"nuevo"`, `"localizable"`. Existe además un campo `estado` en otras tablas (conversaciones, llamadas) con significado diferente. La variable de spec `{estado}` no tiene un campo BD unívoco claro — `tipo_lead` actúa como estado de ciclo de vida pero con nombre semánticamente erróneo.
-- **Spec relacionada**: `00-client-spec-extraction.md` §3, variable `{estado}`; D-012 (variables inventadas)
+- **Spec relacionada**: `00-client-spec-extraction.md` §3, variable `{estado}`; 3-012 (variables inventadas)
 - **Fix sugerido**: Clarificar con la cliente si `tipo_lead` es equivalente a `{estado}`. Si sí, renombrar la columna en BD de `tipo_lead` a `estado`. Definir el enum exhaustivo de valores válidos como constraint en Supabase.
 
 ---
@@ -96,7 +96,7 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Severidad**: High
 - **Esfuerzo**: S
 - **Descripción**: La spec oficial usa `{curse_name}` (typo intencional de la cliente, confirmado en los 3 documentos A/B/C). El código corrige silenciosamente el typo y usa `course_name`. Si el agente Virginia envía `curse_name` como variable y el código espera `course_name`, hay un mismatch que resulta en pérdida del nombre del curso. Adicionalmente, no hay mapeo explícito documentado entre ambas denominaciones.
-- **Spec relacionada**: `00-client-spec-extraction.md` §3, C-004: `{curse_name}` es nomenclatura oficial de la cliente
+- **Spec relacionada**: `00-client-spec-extraction.md` §3, 2-004: `{curse_name}` es nomenclatura oficial de la cliente
 - **Fix sugerido**: Decisión a tomar con la cliente (preguntar #5 de spec). Si se mantiene el typo oficial: añadir alias en el código `course_name = payload.curse_name || payload.course_name`. Si se corrige: actualizar el prompt de Virginia.
 
 ---
@@ -106,7 +106,7 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Severidad**: High
 - **Esfuerzo**: L
 - **Descripción**: No existe ningún archivo de test (`.test.ts`, `.spec.ts`, `__tests__`), ningún framework de testing en `package.json` (no jest, no vitest, no playwright, no cypress), y ningún script de test en `package.json`. Esto significa que cambios en reglas de negocio críticas (árbol de decisión de cualificación, lógica del orquestador) no tienen ninguna red de seguridad. El proyecto tiene lógica de negocio compleja que debería estar cubierta por tests unitarios.
-- **Spec relacionada**: D-011 (desarrollo sin estructura/estabilidad)
+- **Spec relacionada**: 3-011 (desarrollo sin estructura/estabilidad)
 - **Fix sugerido**: Instalar vitest (compatible con Next.js/ESM). Priorizar tests para: `qualifier.ts` (árbol de decisión), `fact-extractor.ts` (parsing de variables del agente), `orchestrator.ts` (flujo de lead). Al menos 80% de cobertura en los módulos de negocio críticos.
 
 ---
@@ -175,8 +175,8 @@ Los problemas estructurales más graves son: (1) credenciales hardcodeadas en `a
 - **Archivo**: `src/scripts/` (18 ficheros: `migrate-agents.ts`, `check_tenant_47e8.ts`, `print_all_tenants.ts`, etc.)
 - **Severidad**: Low
 - **Esfuerzo**: S
-- **Descripción**: Hay 18 scripts de mantenimiento/debug en `src/scripts/`. Varios usan `postgres` directamente (D-003 relacionado). No hay un `package.json` script o Makefile que documente cómo ejecutarlos. Algunos tienen nombres con IDs de tenant específicos (`check_tenant_47e8.ts`) que revelan información de datos internos en el repo.
-- **Spec relacionada**: D-003 (SQL directo sin ORM), D-012 (documentación deficiente)
+- **Descripción**: Hay 18 scripts de mantenimiento/debug en `src/scripts/`. Varios usan `postgres` directamente (3-003 relacionado). No hay un `package.json` script o Makefile que documente cómo ejecutarlos. Algunos tienen nombres con IDs de tenant específicos (`check_tenant_47e8.ts`) que revelan información de datos internos en el repo.
+- **Spec relacionada**: 3-003 (SQL directo sin ORM), 3-012 (documentación deficiente)
 - **Fix sugerido**: Mover a `scripts/` raíz. Añadir comentario de cabecera en cada script con propósito y cómo ejecutar. Eliminar archivos con IDs de tenant hardcodeados o reemplazarlos con parámetro de entrada.
 
 ---

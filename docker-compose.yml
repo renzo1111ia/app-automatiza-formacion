@@ -8,7 +8,7 @@ services:
       args:
         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-    container_name: esden-dashboard
+    container_name: af-dashboard
     restart: always
     ports:
       - "3000:3000"
@@ -31,7 +31,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: esden-worker
+    container_name: af-worker
     restart: always
     command: node worker.js
     environment:
@@ -50,7 +50,7 @@ services:
   # ── Redis: Persistent Queue Storage ───────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: esden-redis
+    container_name: af-redis
     restart: always
     ports:
       - "6379:6379"

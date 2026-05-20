@@ -1,4 +1,4 @@
-# Fase 5 — Repository pattern + Zod en boundaries
+# Fase 4 — Repository pattern + Zod en boundaries
 
 **Prioridad:** 🟡 Media (calidad, no seguridad crítica)
 **Tiempo estimado:** 5h 0min
@@ -6,7 +6,7 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 4 — Clientes Supabase](phase-04-refactor-clientes-supabase.md) (prerequisito)
+- [Fase 3 — Clientes Supabase](phase-04-refactor-clientes-supabase.md) (prerequisito)
 - [src/lib/validations/lead.ts](../../src/lib/validations/lead.ts) — esquema Zod existente
 
 ## Overview

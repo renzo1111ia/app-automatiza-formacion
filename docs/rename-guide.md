@@ -1,5 +1,5 @@
 ---
-title: "Rename Guide — dashboard-esden → Automatiza Formación Dashboard"
+title: "Rename Guide — dashboard-af → Automatiza Formación Dashboard"
 audience: Auditor (Javier HP) + lead del equipo
 date: 20-05-2026
 status: pendiente ejecución coordinada
@@ -21,12 +21,12 @@ GitHub no permite espacios en el nombre del repo. Por consistencia, propongo est
 | **Carpeta local Windows** | `Automatiza Formacion DashBoard` | Lo que pediste literal. Las comillas funcionan en PowerShell |
 | **Nombre humano / display** | "Automatiza Formación Dashboard" | Con tilde correcta, capitalización natural — para docs, READMEs, headers |
 | **`package.json` name** | `automatiza-formacion-dashboard` | npm exige kebab-case sin acentos |
-| **`.claude-plugin/plugin.json` name** | `automatiza-formacion-agents` | Reemplaza `esden-agents`. kebab-case sin acentos |
-| **Namespace de subagentes** | `automatiza-formacion-agents:manager`, etc | Reemplaza `esden-agents:*` |
+| **`.claude-plugin/plugin.json` name** | `automatiza-formacion-agents` | Reemplaza `af-agents`. kebab-case sin acentos |
+| **Namespace de subagentes** | `automatiza-formacion-agents:manager`, etc | Reemplaza `af-agents:*` |
 | **Display interno en docs (markdown)** | "Automatiza Formación Dashboard" | Texto humano |
 | **Identificador corto en código** | `af-dashboard` o `automatizaformacion-dashboard` | Opcional, para logs |
 
-> ⚠️ **Pregunta abierta**: ¿prefieres mantener el namespace `esden-agents:*` por ahorrar 57 reemplazos en docs y código, o lo cambiamos a `automatiza-formacion-agents:*` para ser totalmente coherentes? Te recomiendo cambiarlo — son edits mecánicos y mejor tenerlo limpio desde el principio.
+> ⚠️ **Pregunta abierta**: ¿prefieres mantener el namespace `af-agents:*` por ahorrar 57 reemplazos en docs y código, o lo cambiamos a `automatiza-formacion-agents:*` para ser totalmente coherentes? Te recomiendo cambiarlo — son edits mecánicos y mejor tenerlo limpio desde el principio.
 
 **Te pregunto antes de ejecutar el cambio de namespace** porque toca ~24 archivos (agentes, hooks, docs, settings).
 
@@ -39,7 +39,7 @@ GitHub no permite espacios en el nombre del repo. Por consistencia, propongo est
 Antes de tocar nada:
 
 - [ ] ¿Carpeta local con espacios `Automatiza Formacion DashBoard` o kebab-case `automatiza-formacion-dashboard`?
-- [ ] ¿Cambio el namespace de subagentes de `esden-agents:*` a `automatiza-formacion-agents:*`? (recomendado)
+- [ ] ¿Cambio el namespace de subagentes de `af-agents:*` a `automatiza-formacion-agents:*`? (recomendado)
 - [ ] ¿Tilde en "Formación" en los textos humanos? (recomendado sí)
 - [ ] ¿El nombre del proyecto en Antigravity lo cambias tú directamente o necesitas que te diga dónde está la config?
 
@@ -52,11 +52,11 @@ B. **Renombrar la carpeta local** (PowerShell):
 ```powershell
 cd e:\ClaudeCode\AutomatizaFormacion
 # Verifica primero que no queda nada con lock:
-Get-ChildItem -Path "dashboard-esden-main" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer -eq $false } | Select-Object -First 5
+Get-ChildItem -Path "dashboard-af-main" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer -eq $false } | Select-Object -First 5
 # Renombrar:
-Rename-Item -Path "dashboard-esden-main" -NewName "Automatiza Formacion DashBoard"
+Rename-Item -Path "dashboard-af-main" -NewName "Automatiza Formacion DashBoard"
 # (o si prefieres kebab-case)
-# Rename-Item -Path "dashboard-esden-main" -NewName "automatiza-formacion-dashboard"
+# Rename-Item -Path "dashboard-af-main" -NewName "automatiza-formacion-dashboard"
 ```
 
 C. **Renombrar el proyecto en Antigravity**:
@@ -71,8 +71,8 @@ Hago todos los edits internos del repo en una sola tanda:
 
 1. Actualizar `package.json` → `"name": "automatiza-formacion-dashboard"`
 2. Actualizar `.claude-plugin/plugin.json` → nuevo manifest
-3. Renombrar el namespace de subagentes (si confirmas): `esden-agents:*` → `automatiza-formacion-agents:*` en ~24 archivos
-4. Actualizar TODOS los textos humanos: "dashboard-esden" → "Automatiza Formación Dashboard"
+3. Renombrar el namespace de subagentes (si confirmas): `af-agents:*` → `automatiza-formacion-agents:*` en ~24 archivos
+4. Actualizar TODOS los textos humanos: "dashboard-af" → "Automatiza Formación Dashboard"
 5. Actualizar `CLAUDE.md` raíz + docs/dev-onboarding.md + docs/dev-team-handover.md + docs/release-process.md + plans/RoadMap.md + docs/audit/* + hooks `.cjs`
 6. Actualizar `.env.example` si tiene refs
 7. Actualizar scripts `promote.ps1` + `promote.sh` si referencian nombre antiguo
@@ -95,8 +95,8 @@ npm run dev              # debe arrancar sin errores con el nuevo nombre
 
 | Archivo | Qué cambia |
 | --- | --- |
-| `package.json` | `"name": "esden-dashboard"` → `"name": "automatiza-formacion-dashboard"` |
-| `.claude-plugin/plugin.json` | `"name": "esden-agents"` → `"name": "automatiza-formacion-agents"` + descripción + email author si quieres |
+| `package.json` | `"name": "af-dashboard"` → `"name": "automatiza-formacion-dashboard"` |
+| `.claude-plugin/plugin.json` | `"name": "af-agents"` → `"name": "automatiza-formacion-agents"` + descripción + email author si quieres |
 | `.claude/settings.json` | Limpiar refs (si hubiera) al nombre antiguo |
 | `.env.example` | Refs en comentarios |
 | `package-lock.json` | Regenerar con `npm install` tras cambio de name |
@@ -137,7 +137,7 @@ npm run dev              # debe arrancar sin errores con el nuevo nombre
 
 ### 3.5 Agentes y hooks (.claude/) (~24 archivos)
 
-Si confirmas cambio de namespace `esden-agents` → `automatiza-formacion-agents`:
+Si confirmas cambio de namespace `af-agents` → `automatiza-formacion-agents`:
 
 | Archivo | Cambios principales |
 | --- | --- |
@@ -150,20 +150,20 @@ Si confirmas cambio de namespace `esden-agents` → `automatiza-formacion-agents
 | `.claude/agents/help-docs-keeper.md` | Refs + Task examples |
 | `.claude/agents/roadmap-keeper.md` | Refs |
 | `.claude/agents/*.md` (resto) | Refs si existen |
-| `.claude/hooks/esden-roadmap-check.cjs` | Stack reminder + nombre |
-| `.claude/hooks/esden-task-tracker.cjs` | Mensajes |
-| `.claude/hooks/esden-deps-guard.cjs` | Mensaje del block + stack |
-| `.claude/hooks/esden-stop-checkpoint.cjs` | Refs |
+| `.claude/hooks/af-roadmap-check.cjs` | Stack reminder + nombre |
+| `.claude/hooks/af-task-tracker.cjs` | Mensajes |
+| `.claude/hooks/af-deps-guard.cjs` | Mensaje del block + stack |
+| `.claude/hooks/af-stop-checkpoint.cjs` | Refs |
 | `.claude/hooks/hooks.json` | (no refs, sólo paths) |
 | `.claude/commands/staging.md` | Refs |
 | `.claude/commands/staging-main.md` | Refs |
 
-Si renombramos también los ficheros hook (`esden-*.cjs` → `af-*.cjs` por ej.):
+Los ficheros hook fueron renombrados (`af-*.cjs`):
 
-- `.claude/hooks/esden-roadmap-check.cjs` → `af-roadmap-check.cjs`
-- `.claude/hooks/esden-task-tracker.cjs` → `af-task-tracker.cjs`
-- `.claude/hooks/esden-deps-guard.cjs` → `af-deps-guard.cjs`
-- `.claude/hooks/esden-stop-checkpoint.cjs` → `af-stop-checkpoint.cjs`
+- `.claude/hooks/af-roadmap-check.cjs` → `af-roadmap-check.cjs`
+- `.claude/hooks/af-task-tracker.cjs` → `af-task-tracker.cjs`
+- `.claude/hooks/af-deps-guard.cjs` → `af-deps-guard.cjs`
+- `.claude/hooks/af-stop-checkpoint.cjs` → `af-stop-checkpoint.cjs`
 - Actualizar `hooks.json` con nuevos paths.
 
 Te recomiendo SÍ renombrar los hooks (coherencia total). Confirmar.
@@ -185,7 +185,7 @@ Te recomiendo SÍ renombrar los hooks (coherencia total). Confirmar.
 
 | Archivo | Cambios |
 | --- | --- |
-| `~/.claude/projects/e--ClaudeCode-AutomatizaFormacion-dashboard-esden-main/memory/MEMORY.md` | La carpeta `projects/` de Claude Code está nombrada según la ruta. Cuando renombres la carpeta del repo, Claude Code creará una nueva entrada `projects/...Automatiza-Formacion-DashBoard/`. **Hay que mover los `.md` de memoria a esa nueva ubicación** para no perderlos. Yo te lo hago. |
+| `~/.claude/projects/e--ClaudeCode-AutomatizaFormacion-dashboard-af-main/memory/MEMORY.md` | La carpeta `projects/` de Claude Code está nombrada según la ruta. Cuando renombres la carpeta del repo, Claude Code creará una nueva entrada `projects/...Automatiza-Formacion-DashBoard/`. **Hay que mover los `.md` de memoria a esa nueva ubicación** para no perderlos. Yo te lo hago. |
 
 ### 3.9 GitHub repo (cuando lo crees)
 
@@ -197,7 +197,7 @@ Te recomiendo SÍ renombrar los hooks (coherencia total). Confirmar.
 | Crear `developer`, `staging`, `main` | Como ramas de `auditoria` o vacías |
 | Configurar branch protection | Settings → Branches (según `docs/release-process.md` §5) |
 
-> ⚠️ **NUNCA** añadas remote al GitHub del cliente `renzo1111ia/dashboard-esden`. Repo separado del equipo.
+> ⚠️ **NUNCA** añadas remote al GitHub del cliente `renzo1111ia/dashboard-af`. Repo separado del equipo.
 
 ---
 
@@ -230,7 +230,7 @@ Cuando renombres la carpeta local, Claude Code creará una nueva entrada en `~/.
 ## 6. Reversibilidad
 
 - El rename es **totalmente reversible** mientras no hayas pusheado a GitHub.
-- Si algo sale mal: renombras la carpeta de vuelta a `dashboard-esden-main`, revertimos los edits con `git checkout -- .` (en caso de que hayamos commiteado, `git revert`).
+- Si algo sale mal: renombras la carpeta de vuelta a `dashboard-af-main`, revertimos los edits con `git checkout -- .` (en caso de que hayamos commiteado, `git revert`).
 - Por seguridad: **NO commitees nada durante el proceso de rename**. Hacemos todo el sweep + 1 commit final cuando esté limpio.
 
 ---

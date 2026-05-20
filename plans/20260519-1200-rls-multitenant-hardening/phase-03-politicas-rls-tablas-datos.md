@@ -1,4 +1,4 @@
-# Fase 3 — Políticas RLS en las 11 tablas tenant-scoped
+# Fase 2 — Políticas RLS en las 11 tablas tenant-scoped
 
 **Prioridad:** 🟠 Alta (núcleo del aislamiento real)
 **Tiempo estimado:** 4h 0min
@@ -6,7 +6,7 @@
 
 ## Context Links
 - [Plan overview](plan.md)
-- [Fase 2 — tenant_members](phase-02-esquema-tenant-members.md) (prerequisito)
+- [Fase 1 — tenant_members](phase-02-esquema-tenant-members.md) (prerequisito)
 - [supabase/migrations/20260404_create_multitenant_schema.sql](../../supabase/migrations/20260404_create_multitenant_schema.sql)
 
 ## Overview
@@ -199,4 +199,4 @@ Verificar que el plan usa `idx_lead_tenant` y que `user_tenant_ids()` aparece co
 
 ## Next Steps
 
-→ [Fase 4 — Refactor capa cliente Supabase](phase-04-refactor-clientes-supabase.md)
+→ [Fase 3 — Refactor capa cliente Supabase](phase-04-refactor-clientes-supabase.md)

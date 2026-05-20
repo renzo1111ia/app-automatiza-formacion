@@ -1,7 +1,7 @@
 # Auth & RLS Security
 
 **Versión:** 1.0.0 — 2026-05-18 (Audit-Data, análisis estático)
-**Proyecto:** dashboard-esden (Next.js 16 + Supabase)
+**Proyecto:** dashboard-af (Next.js 16 + Supabase)
 
 ---
 
@@ -29,7 +29,7 @@ Browser
   │
   └─ Server Actions ──────────────────────────────────────────────────┐
                                                                        ↓
-                                                          getActiveTenantId() → cookie "esden-tenant-id"
+                                                          getActiveTenantId() → cookie "af-tenant-id"
                                                           (NO verifica sesión Supabase — solo lee cookie)
 ```
 
@@ -39,10 +39,10 @@ Browser
 
 | Cookie | Valor | Origen |
 |--------|-------|--------|
-| `esden-tenant-id` | UUID del tenant activo | Seteada en login o al seleccionar tenant |
+| `af-tenant-id` | UUID del tenant activo | Seteada en login o al seleccionar tenant |
 | `sb-*` (Supabase auth) | JWT de sesión Supabase | Gestionadas por `@supabase/ssr` en middleware |
 
-**Observación crítica:** El middleware lee y valida la sesión Supabase (`auth.getUser()`), pero los **Server Actions** no validan la sesión — solo leen la cookie `esden-tenant-id`. Un atacante que conozca el UUID de un tenant podría manipular esta cookie desde el browser y acceder a datos de otro tenant (si bypasea el middleware). Las Server Actions deberían validar sesión independientemente del middleware.
+**Observación crítica:** El middleware lee y valida la sesión Supabase (`auth.getUser()`), pero los **Server Actions** no validan la sesión — solo leen la cookie `af-tenant-id`. Un atacante que conozca el UUID de un tenant podría manipular esta cookie desde el browser y acceder a datos de otro tenant (si bypasea el middleware). Las Server Actions deberían validar sesión independientemente del middleware.
 
 ---
 
@@ -108,7 +108,7 @@ Patrón: `FOR ALL TO service_role USING (true) WITH CHECK (true)`
 | `knowledge_base_embeddings` | `USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)` | ídem |
 | `chat_summaries` | `USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)` | ídem |
 
-**Observación:** Estas políticas solo funcionan si el JWT del usuario contiene el claim `tenant_id`. El middleware actual no inyecta este claim — el tenant se propaga via cookie `esden-tenant-id`, no via JWT. Si el JWT no tiene `tenant_id`, `auth.jwt() ->> 'tenant_id'` devuelve NULL y la política bloquea todo acceso para usuarios autenticados normales. Como el backend siempre usa service_role (que bypasea RLS), esto no afecta al funcionamiento actual, pero las políticas son inefectivas para uso con JWT de usuario.
+**Observación:** Estas políticas solo funcionan si el JWT del usuario contiene el claim `tenant_id`. El middleware actual no inyecta este claim — el tenant se propaga via cookie `af-tenant-id`, no via JWT. Si el JWT no tiene `tenant_id`, `auth.jwt() ->> 'tenant_id'` devuelve NULL y la política bloquea todo acceso para usuarios autenticados normales. Como el backend siempre usa service_role (que bypasea RLS), esto no afecta al funcionamiento actual, pero las políticas son inefectivas para uso con JWT de usuario.
 
 ### 4.4 Tenants tabla — RLS permisivo
 
@@ -133,7 +133,7 @@ Cualquier usuario autenticado puede leer, insertar, actualizar y eliminar cualqu
 │ ESTRATEGIA REAL DE AISLAMIENTO (código, no RLS)             │
 │                                                             │
 │ 1. Server Action recibe request                             │
-│ 2. Lee tenant_id de cookie "esden-tenant-id"               │
+│ 2. Lee tenant_id de cookie "af-tenant-id"               │
 │ 3. Llama getSupabaseServerClient() con service_role        │
 │ 4. Añade .eq("tenant_id", tenantId) manualmente           │
 │ 5. RLS no aporta aislamiento real (service_role bypasea)   │
