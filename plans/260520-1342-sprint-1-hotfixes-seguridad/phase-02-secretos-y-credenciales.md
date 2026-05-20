@@ -151,7 +151,7 @@ FROM pg_user WHERE usename = 'app_user';
 3. Actualizar `DATABASE_URL` en env vars para que los scripts admin usen `app_user` (no `postgres`).
 4. **Si worker usa `pg` directo** (resultado del Step 1): actualizar también la cadena de conexión del worker hacia `app_user`. Verificar que el worker arranca correctamente tras el cambio.
 5. Guardar nota en `.env.example`: `DATABASE_URL=postgresql://app_user:<PASS>@<HOST>:5432/<DB>`.
-6. Este script se reutiliza en Fase 2 (B-02) cuando se migre completamente a `@supabase/ssr` con el usuario correcto.
+6. Este script se reutiliza en Fase 2 (2-02) cuando se migre completamente a `@supabase/ssr` con el usuario correcto.
 
 ## Todo List
 

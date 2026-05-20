@@ -266,7 +266,7 @@ AC webhook → POST /api/webhooks/activecampaign
 1. GHL: ¿registramos nuestra app en GHL Marketplace como app pública o usamos Private Integration (más simple)?
 2. AC: ¿los tenants usan su propia cuenta AC o revenden via nuestra white-label?
 3. ¿Prioridad de implementación: GHL antes que AC o viceversa?
-4. GHL Calendar: ¿se sincroniza en E-03 o queda fuera de scope?
+4. GHL Calendar: ¿se sincroniza en 5-03 o queda fuera de scope?
 
 **Status:** DONE
 **Summary:** GHL (OAuth2 v2, 200k req/día, locationId por tenant) y AC (API Key, 5 req/s, contact/sync upsert) son REST puros sin SDK. GHL es más complejo por OAuth; AC más simple pero más restrictiva en rate limits.

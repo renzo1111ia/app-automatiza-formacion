@@ -175,5 +175,5 @@ BullMQ cron (cada 6 días)
 ## Next Steps
 
 - Bloqueado por: Sprint 3 completado (IntegrationAdapter base)
-- Desbloquea: E-05 (generalización) cuando se completan E-01..E-04
-- Puede ejecutarse en paralelo con E-02, E-03, E-04 (archivos distintos)
+- Desbloquea: 5-05 (generalización) cuando se completan 5-01..5-04
+- Puede ejecutarse en paralelo con 5-02, 5-03, 5-04 (archivos distintos)

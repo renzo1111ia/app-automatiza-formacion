@@ -26,7 +26,7 @@ agents: [esden-agents:code, esden-agents:api]
 ## Key Insights
 
 - **REST puro con axios** — sin SDK npm oficial
-- **API Key auth** — la auth más simple de los 4 adapters 5-01..E-04
+- **API Key auth** — la auth más simple de los 4 adapters 5-01..5-04
 - Rate limit restrictivo: **5 req/s por cuenta** — BullMQ throttle obligatorio
 - `contact/sync` endpoint hace upsert por email automáticamente
 - Webhooks AC garantizan "at least once" — idempotencia obligatoria
@@ -156,6 +156,6 @@ Admin configura: API Key + Account URL
 ## Next Steps
 
 - Bloqueado por: Sprint 3 completado
-- E-04 es el más simple — candidato a implementar antes de 5-02/5-03 si se quiere victoria rápida
+- 5-04 es el más simple — candidato a implementar antes de 5-02/5-03 si se quiere victoria rápida
 - Puede ejecutarse en paralelo con 5-01, 5-02, 5-03
 - Desbloquea (junto con 5-01..5-03): 5-05

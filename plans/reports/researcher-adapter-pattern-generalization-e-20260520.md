@@ -8,7 +8,7 @@
 
 ## 1. Contexto
 
-Tras implementar 4-5 adapters, el patrón se consolida. E-05 = refactor para:
+Tras implementar 4-5 adapters, el patrón se consolida. 5-05 = refactor para:
 - Extraer interfaz `IntegrationAdapter` genérica
 - Generalizar field mapping universal (lead → record en cualquier CRM)
 - Unificar write policy R-014 (append-only + overwrite con audit)
@@ -177,7 +177,7 @@ for (const adapterId of TEST_ADAPTERS) {
 
 ---
 
-## 6. Estructura de archivos post-E-05
+## 6. Estructura de archivos post-5-05
 
 ```
 src/lib/integrations/
@@ -221,7 +221,7 @@ Patrón común: interfaz estrecha (5-7 métodos) + factory + FieldMapper configu
 
 ---
 
-## 8. Cuándo ejecutar E-05
+## 8. Cuándo ejecutar 5-05
 
 **Solo tiene sentido después de 4+ adapters reales implementados.** El refactor extrae lo común observado en la práctica, no lo que se asume de antemano (YAGNI).
 

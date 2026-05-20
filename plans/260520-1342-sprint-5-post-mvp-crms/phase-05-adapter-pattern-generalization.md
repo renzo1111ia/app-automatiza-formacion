@@ -135,7 +135,7 @@ Para cada adapter, verificar y homogeneizar:
 |--------|-------------|---------|------------|
 | Sobreabstracción — interfaz que no encaja con todos | Media | Alto | Interfaz estrecha (7 métodos max), opcionales para edge cases |
 | Regresión en producción por refactor | Baja | Alto | 0 cambios de comportamiento, solo estructura. Tests antes y después |
-| E-05 bloqueado porque algún 5-01..5-04 no se completa | Media | Bajo | E-05 es P3 — se puede diferir sin impacto funcional |
+| 5-05 bloqueado porque algún 5-01..5-04 no se completa | Media | Bajo | 5-05 es P3 — se puede diferir sin impacto funcional |
 
 ## Security Considerations
 
@@ -145,5 +145,5 @@ Para cada adapter, verificar y homogeneizar:
 ## Next Steps
 
 - Bloqueado por: 5-01 + 5-02 + 5-03 + 5-04 completados
-- Si algún 5-01..5-04 se retrasa, E-05 puede ejecutarse con los adapters disponibles (mínimo 4)
+- Si algún 5-01..5-04 se retrasa, 5-05 puede ejecutarse con los adapters disponibles (mínimo 4)
 - Desbloquea: adición futura de Tier 2 adapters (5-06) con menor esfuerzo

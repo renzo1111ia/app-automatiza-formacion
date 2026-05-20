@@ -296,7 +296,7 @@ LangChain actualiza con frecuencia. La versión `1.4.1` puede tener cambios en l
 
 **Versión declarada:** ^5 | **Instalada:** 5.9.3 | **Latest:** 6.0.3
 
-TypeScript 6.0 introduce cambios en el type checker y puede marcar código que TypeScript 5 aceptaba como error. Esto requiere un ciclo de fix de tipos en toda la codebase. Con 426 ocurrencias de `as any` (finding B-22), la migración puede descubrir problemas adicionales.
+TypeScript 6.0 introduce cambios en el type checker y puede marcar código que TypeScript 5 aceptaba como error. Esto requiere un ciclo de fix de tipos en toda la codebase. Con 426 ocurrencias de `as any` (finding 2-22), la migración puede descubrir problemas adicionales.
 
 **Acción:** APLAZAR a Sprint 5 o post-MVP. No es bloqueante. **Riesgo de rotura: ALTO** — actualizar TypeScript major siempre requiere una sesión de triage de errores de tipos.
 
@@ -401,15 +401,15 @@ El paquete `googleapis` (Google API Node.js Client) es monolítico y cubre todo 
 
 | Paquete | Acción | Razón |
 |---------|--------|-------|
-| `@playwright/test@^1.60.0` | Instalar como devDependency | Tests E2E (D-01). Latest: 1.60.0. Compatible con Node 24. |
-| Librería de observabilidad | Ver nota abajo | D-03 — logging estructurado |
+| `@playwright/test@^1.60.0` | Instalar como devDependency | Tests E2E (4-01). Latest: 1.60.0. Compatible con Node 24. |
+| Librería de observabilidad | Ver nota abajo | 4-03 — logging estructurado |
 | `eslint@9.x` (mantener) | NO actualizar a 10 | Esperar que eslint-config-next soporte ESLint 10 |
 | `prettier@3.8.3` | `npm update prettier` | Patch update |
 | `prettier-plugin-tailwindcss@0.7.4` | `npm update prettier-plugin-tailwindcss` | Patch (0.8.0 requiere verificación) |
 | `@tailwindcss/postcss@4.3.0` | `npm update @tailwindcss/postcss` | Minor update |
 | `tailwindcss@4.3.0` | `npm update tailwindcss` | Minor update |
 
-**Observabilidad (D-03):** Se recomienda evaluar una de estas opciones:
+**Observabilidad (4-03):** Se recomienda evaluar una de estas opciones:
 
 | Opción | Paquete | Ventaja |
 |--------|---------|---------|
@@ -463,7 +463,7 @@ ESLint 10 requiere una versión de `eslint-config-next` que lo soporte. Al momen
 
 ### Conflicto 3: typescript 6.x vs types
 
-TypeScript 6.0.3 puede romper código que TypeScript 5.9.3 aceptaba (strict null checks más agresivos, cambios en inference). Con 426 ocurrencias de `as any` en el codebase (finding B-22 del roadmap), el upgrade sin limpiar el código primero generará cientos de errores de compilación. **Secuencia correcta: Sprint 2 limpia los `as any` → Sprint 5 (post-MVP) migra a TS 6.x.**
+TypeScript 6.0.3 puede romper código que TypeScript 5.9.3 aceptaba (strict null checks más agresivos, cambios en inference). Con 426 ocurrencias de `as any` en el codebase (finding 2-22 del roadmap), el upgrade sin limpiar el código primero generará cientos de errores de compilación. **Secuencia correcta: Sprint 2 limpia los `as any` → Sprint 5 (post-MVP) migra a TS 6.x.**
 
 ### Conflicto 4: langchain 1.4.1 requiere @langchain/core 1.1.47
 

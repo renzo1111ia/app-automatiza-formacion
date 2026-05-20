@@ -170,7 +170,7 @@ export async function requireAdmin(request: NextRequest, tenantId: string): Prom
 2. Añadir `requireSession(request)` al inicio.
 3. Añadir verificación: solo admins pueden llamar a este endpoint.
 4. Devolver 401/403 si no cumple condiciones.
-5. Nota: el handler POST/PUT/otros de este mismo archivo también tiene el bug SSRF (A-22) — ese se trata en Ph6. Aquí solo se toca el GET.
+5. Nota: el handler POST/PUT/otros de este mismo archivo también tiene el bug SSRF (1-22) — ese se trata en Ph6. Aquí solo se toca el GET.
 
 ## Todo List
 
