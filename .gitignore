@@ -59,3 +59,11 @@ next-env.d.ts
 # Los devs reciben la spec normalizada en docs/audit/00-client-spec-extraction.md (sí versionada).
 docs/Docs-entrega-clienta/
 
+# Bundle de auditoría generado (HTML+PDF+ZIP) — no se versiona, se regenera con docs/audit/_build/build_bundle.py
+docs/auditoria/
+docs/auditoria.zip
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+

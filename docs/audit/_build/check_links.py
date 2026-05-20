@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3] / "dist" / "audit-bundle"
+ROOT = Path(__file__).resolve().parents[3] / "docs" / "auditoria"
 broken = []
 total = 0
 files_with_broken = set()

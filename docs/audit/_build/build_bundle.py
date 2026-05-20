@@ -18,8 +18,8 @@ import markdown
 ROOT = Path(__file__).resolve().parents[3]  # automatiza-formacion-dashboard/ (renombrado desde dashboard-af-main el 2026-05-20)
 DOCS = ROOT / "docs"
 BUILD_DIR = DOCS / "audit" / "_build"
-OUT = ROOT / "dist" / "audit-bundle"
-ZIP_OUT = ROOT / "dist" / f"audit-automatiza-formacion-dashboard-{datetime.date.today().isoformat()}.zip"
+OUT = ROOT / "docs" / "auditoria"
+ZIP_OUT = ROOT / "docs" / "auditoria.zip"
 CHARTJS = BUILD_DIR / "chart.umd.min.js"
 
 # Archivos a incluir (relativos a docs/)
