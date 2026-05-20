@@ -6,7 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:up": "npx supabase start",
+    "db:down": "npx supabase stop",
+    "db:status": "npx supabase status",
+    "db:reset": "npx supabase db reset",
+    "db:seed-demo": "npx tsx scripts/seed-demo.ts",
+    "redis:up": "docker-compose -f docker-compose.dev.yml up -d",
+    "redis:down": "docker-compose -f docker-compose.dev.yml down",
+    "local:setup": "npm run db:up && npm run redis:up && npm run db:seed-demo",
+    "local:teardown": "npm run db:down && npm run redis:down"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-agent-runtime": "^3.1031.0",

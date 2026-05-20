@@ -23,4 +23,6 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_tenant ON chat_messages(tenant_id, 
 -- RLS
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "service_role_all_chat_messages" ON chat_messages;
-CREATE POLICY "service_role_all_chat_messages" ON chat_messages FOR ALL USING (true);
+DROP POLICY IF EXISTS "service_role_all_chat_messages" ON chat_messages;
+CREATE POLICY "service_role_all_chat_messages"
+    ON chat_messages FOR ALL USING (true);

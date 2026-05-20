@@ -30,12 +30,14 @@ ALTER TABLE ai_agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_agent_variants ENABLE ROW LEVEL SECURITY;
 
 -- Tenant Isolation Policies
-CREATE POLICY "Tenants can only see their own agents" 
-ON ai_agents FOR ALL 
+DROP POLICY IF EXISTS "Tenants can only see their own agents" ON ai_agents;
+CREATE POLICY "Tenants can only see their own agents"
+    ON ai_agents FOR ALL 
 USING (tenant_id = (SELECT id FROM tenants WHERE id = ai_agents.tenant_id));
 
+DROP POLICY IF EXISTS "Tenants can only see their own agent variants" ON ai_agent_variants;
 CREATE POLICY "Tenants can only see their own agent variants"
-ON ai_agent_variants FOR ALL
+    ON ai_agent_variants FOR ALL
 USING (agent_id IN (SELECT id FROM ai_agents));
 
 -- Trigger for updated_at

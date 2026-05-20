@@ -25,8 +25,9 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
 -- 3. Enable RLS for Knowledge Base
 ALTER TABLE knowledge_base ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Tenants can only access their own knowledge base" 
-ON knowledge_base 
+DROP POLICY IF EXISTS "Tenants can only access their own knowledge base" ON knowledge_base;
+CREATE POLICY "Tenants can only access their own knowledge base"
+    ON knowledge_base 
 FOR ALL 
 USING (tenant_id::text = current_setting('app.current_tenant', true));
 

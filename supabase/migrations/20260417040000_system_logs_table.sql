@@ -19,5 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_system_logs_level       ON public.system_logs(lev
 
 -- RLS
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all_system_logs" 
+DROP POLICY IF EXISTS "service_role_all_system_logs" ON public.system_logs;
+CREATE POLICY "service_role_all_system_logs"
     ON public.system_logs FOR ALL TO service_role USING (true) WITH CHECK (true);

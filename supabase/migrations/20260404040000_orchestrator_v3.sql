@@ -40,7 +40,9 @@ CREATE TABLE IF NOT EXISTS tenant_orchestrator_config (
 );
 
 ALTER TABLE tenant_orchestrator_config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_config_access" ON tenant_orchestrator_config 
+DROP POLICY IF EXISTS "tenant_config_access" ON tenant_orchestrator_config;
+CREATE POLICY "tenant_config_access"
+    ON tenant_orchestrator_config 
     FOR ALL USING (true);
 
 -- ─── FASE 4: Calendario Nativo ────────────────────────────────────
@@ -86,9 +88,15 @@ ALTER TABLE advisors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_slots ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "advisors_access" ON advisors FOR ALL USING (true);
-CREATE POLICY "slots_access" ON availability_slots FOR ALL USING (true);
-CREATE POLICY "appointments_access" ON appointments FOR ALL USING (true);
+DROP POLICY IF EXISTS "advisors_access" ON advisors;
+CREATE POLICY "advisors_access"
+    ON advisors FOR ALL USING (true);
+DROP POLICY IF EXISTS "slots_access" ON availability_slots;
+CREATE POLICY "slots_access"
+    ON availability_slots FOR ALL USING (true);
+DROP POLICY IF EXISTS "appointments_access" ON appointments;
+CREATE POLICY "appointments_access"
+    ON appointments FOR ALL USING (true);
 
 -- ─── FASE 5: A/B Orchestration Logs ──────────────────────────────
 
@@ -108,7 +116,9 @@ CREATE TABLE IF NOT EXISTS orchestration_logs (
 );
 
 ALTER TABLE orchestration_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "logs_access" ON orchestration_logs FOR ALL USING (true);
+DROP POLICY IF EXISTS "logs_access" ON orchestration_logs;
+CREATE POLICY "logs_access"
+    ON orchestration_logs FOR ALL USING (true);
 
 -- ─── Índices para performance ─────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_orchestration_logs_tenant ON orchestration_logs(tenant_id, executed_at DESC);

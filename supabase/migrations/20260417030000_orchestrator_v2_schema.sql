@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.client_configs (
 ALTER TABLE public.client_configs ENABLE ROW LEVEL SECURITY;
 
 -- Policy for service_role
+DROP POLICY IF EXISTS "service_role_all_client_configs" ON public.client_configs;
 CREATE POLICY "service_role_all_client_configs"
     ON public.client_configs FOR ALL TO service_role USING (true) WITH CHECK (true);
 

@@ -222,36 +222,47 @@ ALTER TABLE public.campanas                 ENABLE ROW LEVEL SECURITY;
 -- POLÍTICAS RLS — EXCLUSIVO service_role (ESDEN backend)
 -- anon y authenticated NO tienen acceso directo a los datos
 -- ============================================================
+DROP POLICY IF EXISTS "esden_service_role_lead" ON public.lead;
 CREATE POLICY "esden_service_role_lead"
     ON public.lead FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_llamadas" ON public.llamadas;
 CREATE POLICY "esden_service_role_llamadas"
     ON public.llamadas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_agendamientos" ON public.agendamientos;
 CREATE POLICY "esden_service_role_agendamientos"
     ON public.agendamientos FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_lead_cualificacion" ON public.lead_cualificacion;
 CREATE POLICY "esden_service_role_lead_cualificacion"
     ON public.lead_cualificacion FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_conversaciones_whatsapp" ON public.conversaciones_whatsapp;
 CREATE POLICY "esden_service_role_conversaciones_whatsapp"
     ON public.conversaciones_whatsapp FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_intentos_llamadas" ON public.intentos_llamadas;
 CREATE POLICY "esden_service_role_intentos_llamadas"
     ON public.intentos_llamadas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_intentos" ON public.intentos;
 CREATE POLICY "esden_service_role_intentos"
     ON public.intentos FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_notificaciones" ON public.notificaciones;
 CREATE POLICY "esden_service_role_notificaciones"
     ON public.notificaciones FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_programas" ON public.programas;
 CREATE POLICY "esden_service_role_programas"
     ON public.programas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_lead_programas" ON public.lead_programas;
 CREATE POLICY "esden_service_role_lead_programas"
     ON public.lead_programas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "esden_service_role_campanas" ON public.campanas;
 CREATE POLICY "esden_service_role_campanas"
     ON public.campanas FOR ALL TO service_role USING (true) WITH CHECK (true);
 

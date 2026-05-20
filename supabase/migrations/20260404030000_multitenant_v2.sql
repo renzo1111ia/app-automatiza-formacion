@@ -74,36 +74,58 @@ ALTER TABLE public.campanas                 ENABLE ROW LEVEL SECURITY;
 --    (Nuestro backend usa service_role key, así que tiene acceso completo)
 --    Las políticas de usuario final las manejamos con filtros explícitos en el código.
 
+DROP POLICY IF EXISTS "service_role_all_lead" ON public.lead;
+DROP POLICY IF EXISTS "service_role_all_lead" ON public.lead;
 CREATE POLICY "service_role_all_lead"
     ON public.lead FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_llamadas" ON public.llamadas;
+DROP POLICY IF EXISTS "service_role_all_llamadas" ON public.llamadas;
 CREATE POLICY "service_role_all_llamadas"
     ON public.llamadas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_agendamientos" ON public.agendamientos;
+DROP POLICY IF EXISTS "service_role_all_agendamientos" ON public.agendamientos;
 CREATE POLICY "service_role_all_agendamientos"
     ON public.agendamientos FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_lead_cualificacion" ON public.lead_cualificacion;
+DROP POLICY IF EXISTS "service_role_all_lead_cualificacion" ON public.lead_cualificacion;
 CREATE POLICY "service_role_all_lead_cualificacion"
     ON public.lead_cualificacion FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_conversaciones_whatsapp" ON public.conversaciones_whatsapp;
+DROP POLICY IF EXISTS "service_role_all_conversaciones_whatsapp" ON public.conversaciones_whatsapp;
 CREATE POLICY "service_role_all_conversaciones_whatsapp"
     ON public.conversaciones_whatsapp FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_intentos_llamadas" ON public.intentos_llamadas;
+DROP POLICY IF EXISTS "service_role_all_intentos_llamadas" ON public.intentos_llamadas;
 CREATE POLICY "service_role_all_intentos_llamadas"
     ON public.intentos_llamadas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_intentos" ON public.intentos;
+DROP POLICY IF EXISTS "service_role_all_intentos" ON public.intentos;
 CREATE POLICY "service_role_all_intentos"
     ON public.intentos FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_notificaciones" ON public.notificaciones;
+DROP POLICY IF EXISTS "service_role_all_notificaciones" ON public.notificaciones;
 CREATE POLICY "service_role_all_notificaciones"
     ON public.notificaciones FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_programas" ON public.programas;
+DROP POLICY IF EXISTS "service_role_all_programas" ON public.programas;
 CREATE POLICY "service_role_all_programas"
     ON public.programas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_lead_programas" ON public.lead_programas;
+DROP POLICY IF EXISTS "service_role_all_lead_programas" ON public.lead_programas;
 CREATE POLICY "service_role_all_lead_programas"
     ON public.lead_programas FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "service_role_all_campanas" ON public.campanas;
+DROP POLICY IF EXISTS "service_role_all_campanas" ON public.campanas;
 CREATE POLICY "service_role_all_campanas"
     ON public.campanas FOR ALL TO service_role USING (true) WITH CHECK (true);
 

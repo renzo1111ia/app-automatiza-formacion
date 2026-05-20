@@ -46,6 +46,12 @@ ALTER TABLE public.orchestration_graphs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orchestration_rules ENABLE ROW LEVEL SECURITY;
 
 -- Note: Admin client (Service Role) bypasses these, but we add basic isolation for safety.
-CREATE POLICY "Tenant isolation for workflows" ON public.workflows FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
-CREATE POLICY "Tenant isolation for graphs" ON public.orchestration_graphs FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
-CREATE POLICY "Tenant isolation for rules" ON public.orchestration_rules FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
+DROP POLICY IF EXISTS "Tenant isolation for workflows" ON public.workflows;
+CREATE POLICY "Tenant isolation for workflows"
+    ON public.workflows FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
+DROP POLICY IF EXISTS "Tenant isolation for graphs" ON public.orchestration_graphs;
+CREATE POLICY "Tenant isolation for graphs"
+    ON public.orchestration_graphs FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
+DROP POLICY IF EXISTS "Tenant isolation for rules" ON public.orchestration_rules;
+CREATE POLICY "Tenant isolation for rules"
+    ON public.orchestration_rules FOR ALL USING (auth.jwt() ->> 'tenant_id' = tenant_id::text);
