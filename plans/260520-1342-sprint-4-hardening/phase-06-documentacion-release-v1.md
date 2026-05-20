@@ -13,7 +13,7 @@ agent: esden-agents:documentation
 ## Context Links
 
 - Plan overview: [plan.md](plan.md)
-- RoadMap: [RoadMap.md](../RoadMap.md) línea 334 (D-07)
+- RoadMap: [RoadMap.md](../RoadMap.md) línea 334 (4-07)
 - Spec de la cliente: `docs/Docs-entrega-clienta/` — fuente de verdad para nomenclatura y requisitos
 - Decisiones audit: `docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md`
 - Stack tecnológico: `docs/audit/STACK-TECNOLOGICO.md`
@@ -44,7 +44,7 @@ agent: esden-agents:documentation
 - `docs/system-architecture.md` — sección observabilidad + dashboard LLM añadida
 - Release notes para el cliente (formato accesible, no técnico)
 - `docs/dev-onboarding.md` — sección tests E2E (Playwright + Vitest setup)
-- README.md principal actualizado (B-35 generó el sistema de READMEs — este phase los actualiza)
+- README.md principal actualizado (2-35 generó el sistema de READMEs — este phase los actualiza)
 
 ### No funcionales
 - Release notes en español (cliente ES + Latam)
@@ -86,7 +86,7 @@ Documentos a producir:
 - `docs/development-roadmap.md`
 - `docs/system-architecture.md`
 - `docs/dev-onboarding.md`
-- `README.md`, `README.staging.md`, `README.main.md` (si sistema B-35 activo)
+- `README.md`, `README.staging.md`, `README.main.md` (si sistema 2-35 activo)
 
 ### Crear
 - `docs/release-notes-v0.4.0-cliente.md`
@@ -183,7 +183,7 @@ npm run test:integration  # Solo integration tests (requiere Redis + Supabase lo
 \`\`\`
 ```
 
-### Paso 6: Generar READMEs (si B-35 está activo)
+### Paso 6: Generar READMEs (si 2-35 está activo)
 ```bash
 npm run generate-readmes
 ```
@@ -197,7 +197,7 @@ npm run generate-readmes
 - [ ] `docs/system-architecture.md` — sección observabilidad + costes LLM
 - [ ] `docs/dev-onboarding.md` — sección tests E2E + unit
 - [ ] `docs/security/csrf-protection.md` — documentar protección CSRF built-in
-- [ ] `npm run generate-readmes` (si B-35 activo) o actualizar READMEs manualmente
+- [ ] `npm run generate-readmes` (si 2-35 activo) o actualizar READMEs manualmente
 - [ ] Revisión con el equipo: ¿algún breaking change para documentar en CHANGELOG?
 
 ## Success Criteria
