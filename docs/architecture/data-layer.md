@@ -1,0 +1,362 @@
+# Data Layer Architecture
+
+**Versión:** 1.0.0 — 2026-05-18 (Audit-Data, análisis estático)
+**Proyecto:** dashboard-esden (Next.js 16 + Supabase + BullMQ)
+
+---
+
+## 1. Visión general
+
+El sistema usa **Supabase** como único backend de base de datos, expuesto a través de `@supabase/supabase-js`. No hay ORM (sin Prisma). Las queries son directas al cliente de Supabase usando su SDK de tipo TypeScript generado a partir del schema (`src/types/database.ts`).
+
+Existe una arquitectura de **dual-mode tenancy** que enruta datos a dos destinos:
+
+```
+Dashboard usuario
+        ↓
+  middleware.ts (auth check)
+        ↓
+  Server Action / API Route
+        ↓
+  getTenantDataClient() ←─────────────────────────────────────┐
+        ├── mode: "central" → getSupabaseServerClient()       │
+        │       (Supabase compartido, filtro tenant_id)       │
+        └── mode: "external" → getTenantExternalClient()      │
+                (Supabase propio del cliente)                  │
+                                                              │
+  tenant-router.ts resuelve el modo leyendo "tenants" table──┘
+  (cacheado 5min en Map en memoria)
+```
+
+---
+
+## 2. Clientes de base de datos
+
+### 2.1 `src/lib/supabase/client.ts` — Browser client
+
+- Usa `createClient<Database>(url, anonKey)`
+- Directive `"use client"` — solo en componentes React del browser
+- Limitado a operaciones públicas (no debe acceder a datos sensibles)
+- Tiene fallback de anon key hardcodeada (riesgo, ver audit F-04-002)
+
+### 2.2 `src/lib/supabase/server.ts` — Servidor
+
+Expone tres funciones:
+
+| Función | Key usada | Uso |
+|---------|-----------|-----|
+| `getActiveTenantId()` | — | Lee cookie `esden-tenant-id` |
+| `getSupabaseServerClient()` | `service_role` (o anon fallback) | Server actions generales |
+| `getAdminSupabaseClient()` | `service_role` explícito | Operaciones administrativas |
+
+Ambos clientes crean instancias con `persistSession: false, autoRefreshToken: false` — son clientes sin sesión propia, requieren filtros manuales de tenant.
+
+### 2.3 `src/lib/supabase/tenant-client.ts` — Clientes externos
+
+Para tenants con su propio Supabase (mode "external"):
+- Cache en Map en memoria con TTL 5min por `tenantId`
+- Crea cliente con service_role del Supabase del cliente
+- Header custom `x-esden-tenant` para trazabilidad
+
+### 2.4 `src/lib/supabase/tenant-router.ts` — Router de datos
+
+Punto de entrada unificado para acceso multi-tenant:
+
+```typescript
+const { client, mode, applyTenantFilter } = await getTenantDataClient(tenantId);
+// En mode "central": applyTenantFilter añade .eq("tenant_id", tenantId)
+// En mode "external": applyTenantFilter no añade nada (BD ya aislada)
+```
+
+Cache en memoria (5min) del modo de cada tenant. Resolución inicial consultando tabla `tenants`.
+
+### 2.5 `src/middleware.ts` — Auth middleware
+
+Usa `@supabase/ssr` (`createServerClient`) con anon key para validar sesión en SSR:
+- Verifica `supabase.auth.getUser()` en cada request
+- Redirige `/login` si no hay sesión en rutas `/dashboard`
+- Restricción admin en `/dashboard/settings` via `user_metadata.is_admin`
+- No propaga `tenant_id` como claim JWT — el tenant se lee de cookie `esden-tenant-id`
+
+---
+
+## 3. Schema de base de datos real
+
+### 3.1 Módulo de identidad (tenants)
+
+```
+tenants
+├── id: UUID PK
+├── name: TEXT
+├── supabase_url: TEXT (nullable — para mode "external")
+├── supabase_anon_key: TEXT (nullable)
+├── client_email: TEXT
+├── auth_user_id: UUID
+└── config: JSONB {
+    whatsapp: {...},
+    retell: { api_key, from_number, agent_id },
+    ultravox: { api_key },
+    telephony: { provider, credentials },
+    company_name,
+    supabase_service_key  ← service key del cliente en config (no columna)
+    }
+
+tenant_orchestrator_config
+├── tenant_id: UUID FK → tenants (UNIQUE)
+└── config: JSONB {
+    timezone_rules: { start, end, working_days, phone_prefix_map },
+    sequence: [ {step, action, agents, delay_hours} ],
+    ab_testing: { enabled, split }
+    }
+
+client_configs
+├── tenant_id: UUID FK → tenants (UNIQUE)
+├── routing_rules: JSONB
+├── rescue_config: JSONB
+└── timezone_config: JSONB
+```
+
+### 3.2 Módulo de leads (núcleo del negocio)
+
+```
+lead
+├── id: UUID PK
+├── tenant_id: UUID FK → tenants
+├── id_lead_externo: TEXT (ID en CRM externo)
+├── nombre, apellido, telefono, email, pais
+├── tipo_lead, origen, campana
+├── fecha_ingreso_crm, fecha_primer_contacto, fecha_actualizacion
+├── is_ai_enabled: BOOLEAN
+├── current_stage: TEXT
+├── metadata: JSONB  ← datos dinámicos del agente IA
+├── last_interaction_at: TIMESTAMPTZ
+└── is_ai_paused: BOOLEAN
+
+lead_cualificacion (1:N con lead — 1 por interacción)
+├── id_lead: UUID FK → lead
+├── id_llamada: UUID FK → llamadas (nullable)
+├── cualificacion: TEXT  ← "si"/"no"/"anulado" (no coincide con spec "apto"/"no apto")
+├── motivo_anulacion: TEXT
+├── anios_experiencia: INTEGER
+├── nivel_estudios: TEXT
+└── tenant_id: UUID FK → tenants
+
+lead_programas (N:M)
+├── id_lead: UUID FK → lead
+└── id_programa: UUID FK → programas
+
+programas
+├── tenant_id: UUID FK → tenants
+├── nombre, id_producto
+├── presentacion, objetivos, precio, becas_financiacion
+├── metodologia, beneficios, practicas
+├── fechas_inicio, requisitos_cualificacion
+```
+
+### 3.3 Módulo de IA
+
+```
+ai_agents
+├── tenant_id: UUID FK → tenants
+├── name, description
+├── type: TEXT (QUALIFY/REMINDER/CLOSER)
+└── status: TEXT (ACTIVE/PAUSED)
+
+ai_agent_variants (M:1 con ai_agents)
+├── agent_id: UUID FK → ai_agents
+├── prompt_text: TEXT
+├── is_active: BOOLEAN, is_variant_b: BOOLEAN
+├── weight: FLOAT (A/B testing)
+├── model_name: TEXT (gpt-4o-mini, gpt-4o...)
+├── api_key: TEXT  ← OpenAI key del tenant
+├── tracked_variables: JSONB  ← lista de vars a extraer
+├── dynamic_variables: JSONB
+├── automation_rules, crm_config: JSONB
+├── knowledge_base_ids: UUID[]
+└── scheduling_config: JSONB
+
+voice_agents + voice_agent_variants (análogo a ai_agents)
+
+web_widgets
+├── tenant_id, agent_id
+├── welcome_message, required_variables
+└── bubble_color, bubble_icon, status
+```
+
+### 3.4 Módulo de comunicación y logs
+
+```
+llamadas
+├── tenant_id: UUID FK → tenants
+├── id_lead: UUID FK → lead
+├── id_llamada_retell: TEXT
+├── estado_llamada, razon_termino
+├── fecha_inicio, duracion_segundos
+├── url_grabacion, transcripcion, resumen
+
+intentos_llamadas (tabla actual)
+├── tenant_id, id_lead, id_llamada
+├── tipo_intento, numero_intento
+├── fecha_reintento, estado, fecha_ejecucion
+
+intentos (tabla LEGACY — duplicada)
+├── misma estructura que intentos_llamadas
+└── ← pendiente deprecar
+
+conversaciones_whatsapp
+├── tenant_id, id_lead
+├── id_conversacion_chatwoot
+├── acepta_whatsapp, opt_in_whatsapp
+├── estado, fecha_ultimo_mensaje
+
+chat_messages (mensajes individuales WhatsApp)
+├── tenant_id: TEXT (!)  ← no UUID, no FK
+├── lead_id: UUID FK → lead
+├── direction: INBOUND/OUTBOUND
+├── message_type, content, sent_by, status
+└── metadata: JSONB
+
+chat_summaries (memoria consolidada)
+├── tenant_id: UUID FK → tenants
+├── lead_id: UUID FK → lead (UNIQUE)
+└── summary: TEXT  ← historial completo en 1 fila
+
+notificaciones, system_logs, ai_agent_logs, lead_events
+```
+
+### 3.5 Módulo de citas (duplicado)
+
+Existen **dos tablas de citas** en producción:
+
+| Tabla | Migration | Campo fecha | Estado |
+|-------|-----------|-------------|--------|
+| `agendamientos` | multitenant_schema.sql | `fecha_agendada_cliente`, `fecha_agendada_lead` | Schema legacy |
+| `appointments` | orchestrator_v3.sql | `scheduled_at` | Schema activo |
+
+El código usa `appointments` en la mayoría de casos (calendar.ts, orchestrator.ts) pero `agendamientos` sigue presente y algunos server actions la referencian. Requiere consolidación.
+
+### 3.6 Módulo de orquestación
+
+```
+workflows
+├── tenant_id, name, description
+└── is_active, is_primary
+
+orchestration_graphs (estado visual ReactFlow)
+├── workflow_id: UUID FK → workflows
+└── graph_data: JSONB
+
+orchestration_rules (secuencias de ejecución)
+├── workflow_id: UUID FK → workflows
+├── step_name, action_type, sequence_order
+└── config: JSONB
+
+tenant_orchestrator_config (config BullMQ por tenant)
+```
+
+### 3.7 Módulo de knowledge base
+
+```
+knowledge_base
+├── tenant_id: UUID FK → tenants
+├── name, description, file_key (MinIO/S3)
+├── content_hash, is_active
+└── metadata: JSONB
+
+knowledge_base_embeddings
+├── tenant_id: UUID FK → tenants
+├── file_id, content: TEXT
+├── embedding: vector(1536)  ← pgvector/ivfflat
+└── metadata: JSONB
+
+Función: match_knowledge_base(query_embedding, match_threshold, match_count, tenant_id)
+```
+
+---
+
+## 4. Capa de cache
+
+### 4.1 Redis (src/lib/cache/tenant-cache.ts)
+
+- **TTL:** 5 minutos
+- **Prefijo:** `esden:tenant:config:`
+- **Patrón de clave:** `esden:tenant:config:{tenantId}:{key}`
+- **Librería:** `redis` npm (con soporte TLS para Upstash)
+- **Fallback:** Si Redis no está disponible, se va a BD sin cache (silencioso)
+- **Invalidación:** `invalidateTenantConfigCache(tenantId)` usa `redis.keys(pattern)` + `redis.del`
+
+### 4.2 Map en memoria (tenant-router.ts, tenant-client.ts)
+
+- `metaCache: Map<tenantId, TenantMeta>` — 5min TTL — modo de conexión por tenant
+- `clientCache: Map<tenantId, SupabaseClient>` — 5min TTL — cliente externo por tenant
+
+---
+
+## 5. Flujo de datos: lead → BD
+
+```
+CRM externo (webhook/polling)
+        ↓
+POST /api/webhooks/crm o /api/leads/ingest
+        ↓
+Upsert en lead con { onConflict: "tenant_id, id_lead_externo" }
+        ↓
+Orchestrator.processLead(leadId, tenantId)
+        ↓
+┌─────────────────────────────────────────┐
+│ 1. Verificar zona horaria               │
+│ 2. Determinar canal (call/whatsapp)     │
+│ 3. Llamar a Retell/Ultravox             │
+│    → dynamicVariables: {               │
+│        id_lead, user_name, user_phone,  │
+│        user_country, master_name,       │
+│        course_info, etc.               │
+│      }                                  │
+└─────────────────────────────────────────┘
+        ↓
+POST /api/webhooks/retell (fin de llamada)
+        ↓
+PostAnalysisService.processInteraction()
+        ├── analyzeConversation(transcript) → LLM extraction
+        ├── Upsert lead_cualificacion
+        ├── FactExtractionService (tracked_variables)
+        │   └── UPDATE lead.metadata (JSONB merge)
+        ├── Update chat_summaries (1 fila por lead)
+        └── Si cualificado → Orchestrator.handleLeadQualification()
+                └── calendar.bookAppointment() → INSERT appointments
+```
+
+---
+
+## 6. Migraciones aplicadas (orden cronológico)
+
+| Archivo | Descripción | Notas |
+|---------|-------------|-------|
+| `20260403200000_orchestration_system.sql` | workflows, graphs, rules | RLS con auth.jwt() tenant_id |
+| `20260404_ai_agents.sql` | ai_agents, ai_agent_variants | RLS tautológica |
+| `20260404_chat_messages.sql` | chat_messages | tenant_id como TEXT |
+| `20260404_create_multitenant_schema.sql` | lead y tablas centrales | 12 tablas + RLS service_role |
+| `20260404_multitenant_v2.sql` | Añade tenant_id a tablas existentes | Migración retrocompatible |
+| `20260404_orchestrator_v3.sql` | advisors, availability_slots, appointments | RLS `USING(true)` genérico |
+| `20260406_add_flow_config.sql` | config de flujos | — |
+| `20260410_scaling_and_deduplication.sql` | índices deduplicación lead | idx_lead_tenant_phone, idx_lead_tenant_email |
+| `20260410_worker_specialization.sql` | status a appointments | — |
+| `20260413_*` (múltiples) | lead photo, segmentation, model, retell config, flow graph, ai toggle | — |
+| `20260417_dynamic_inactivity_fields.sql` | campos de inactividad | — |
+| `20260417_orchestrator_v2_schema.sql` | current_stage, metadata en lead; client_configs | — |
+| `20260417_system_logs_table.sql` | system_logs | RLS service_role correcto |
+| `20260421_*` | fix variants upsert, rename columns | — |
+| `20260423_*` | tracked_variables, agent variables, model_name | — |
+| `20260424_knowledge_and_billing.sql` | knowledge_base, spend limits | RLS con app.current_tenant (roto) |
+| `20260427_web_widgets.sql` | web_widgets | RLS sin aislamiento real |
+| `20260429_appointment_reminders_and_pacing.sql` | advisors, appointments reminders | — |
+| `20260504_add_advisor_filters.sql` | advisors filtros | — |
+| `20260512_fix_appointments_schema.sql` | columnas faltantes en appointments | — |
+| `20260513_add_metadata_to_lead.sql` | lead.metadata JSONB | Duplica lo de orchestrator_v2 |
+
+**Archivos SQL sueltos no en migrations/:**
+- `tenants.sql` — schema inicial de tenants
+- `knowledge_base.sql` — schema KB con funciones pgvector
+- `schema.sql` — stub vacío (legacy)
+- `MASTER_RESTORE.sql` — script de recuperación con datos de tenant hardcodeados
+- `repair_and_setup.sql`, `restore_all_data.sql`, etc. — scripts de mantenimiento ad-hoc

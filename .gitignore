@@ -30,8 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — NEVER commit real .env, only .env.example (placeholders)
+.env
+.env.*
+!.env.example
+!.env.*.example
 
 # vercel
 .vercel
@@ -44,9 +47,15 @@ next-env.d.ts
 /brain/
 /scratch/
 
-# === Audit branch — norma global del proyecto ===
-# Carpetas internas que NO deben subirse al GitHub del cliente
-.claude/
-docs/
-plans/
+# build outputs / runtime caches
+/dist/
+/.playwright-mcp/
+
+# === Team scaffold — se versionan en `developer` (decisión 2026-05-20) ===
+# .claude/, docs/, plans/, .claude-plugin/ SÍ van a git para compartir con el equipo de desarrollo.
+# El repo local NO tiene remote al GitHub del cliente — eso garantiza que NO suba a renzo1111ia/dashboard-esden.
+#
+# Sub-excepción: las docs originales de la cliente (PDFs/DOCX/PNG raw) NO se versionan.
+# Los devs reciben la spec normalizada en docs/audit/00-client-spec-extraction.md (sí versionada).
+docs/Docs-entrega-clienta/
 

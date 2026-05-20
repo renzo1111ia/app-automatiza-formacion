@@ -1,0 +1,60 @@
+# ============================================================================
+# CI guard: garantiza que staging/main NUNCA contengan docs/, plans/, .claude/,
+# .claude-plugin/ ni CLAUDE.md (artefactos internos del equipo).
+#
+# Si algun commit a esas ramas trae cualquiera de estos paths, el workflow
+# falla y bloquea el merge (si la rama esta protegida con "require status
+# checks to pass").
+# ============================================================================
+
+name: Staging/Main Purity Check
+
+on:
+  push:
+    branches: [staging, main]
+  pull_request:
+    branches: [staging, main]
+
+jobs:
+  purity-check:
+    name: Verify no internal artifacts on protected branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for forbidden paths
+        run: |
+          FAIL=0
+          FORBIDDEN=("docs" "plans" ".claude" ".claude-plugin" "CLAUDE.md")
+
+          echo "Branch: ${GITHUB_REF##*/}"
+          echo "Checking that none of these paths exist in the tree:"
+          printf '  - %s\n' "${FORBIDDEN[@]}"
+          echo ""
+
+          for p in "${FORBIDDEN[@]}"; do
+            if [ -e "$p" ]; then
+              echo "::error::Forbidden path '$p' found on protected branch. Use scripts/promote.ps1 (or .sh) to promote cleanly from developer."
+              FAIL=1
+            fi
+          done
+
+          # Tambien rechazamos planes y dev-onboarding sueltos
+          if [ -f "docs/dev-onboarding.md" ]; then
+            echo "::error::docs/dev-onboarding.md should not exist on this branch."
+            FAIL=1
+          fi
+
+          if [ $FAIL -eq 1 ]; then
+            echo ""
+            echo "How to fix:"
+            echo "  1. Revert this commit/PR on staging/main."
+            echo "  2. From developer branch, run:"
+            echo "     ./scripts/promote.ps1 -From developer -To staging -Version X.Y.Z   (PowerShell)"
+            echo "     ./scripts/promote.sh --from developer --to staging --version X.Y.Z (Bash)"
+            echo "  3. The script removes docs/, plans/, .claude/, .claude-plugin/, CLAUDE.md automatically."
+            exit 1
+          fi
+
+          echo "OK — no forbidden paths found."

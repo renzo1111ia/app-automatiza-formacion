@@ -1,0 +1,4 @@
+- [Sprint A plan operativo](project-sprint-a-plan.md) — Plan creado 20-05-2026. 24 hotfixes de seguridad, 7 fases, ~93h est. Preguntas abiertas documentadas en el plan.
+- [Sistema logs de tiempo por sprint](project-sistema-logs.md) — Plan creado 20-05-2026. Split roadmap-keeper/productivity. productivity subido a sonnet. Flujo manual Sprint A, hook automático Sprint B.
+- [Sprint C plan operativo](project-sprint-c-plan.md) — Plan creado 20-05-2026. Adapter+HubSpot+Zoho MVP. 8 fases, ~104h, depende B-18+B-26. 7 preguntas abiertas.
+- [Sprint E plan operativo](project-sprint-e-plan.md) — Plan creado 20-05-2026. 4 integraciones post-MVP (Sheets/SF/GHL/AC) + Adapter Pattern. Modelo incremental, ~207-378h. 8 preguntas abiertas para Renzo.
