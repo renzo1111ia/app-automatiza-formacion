@@ -3,10 +3,10 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 21-05-2026 20:45
-last_updated_by: Renzo (sesión 21-05-2026: Sprint 0 — 4 tareas 🔵, 1 código-listo apply-pendiente, 2 diferidas)
+last_updated: 21-05-2026 22:00
+last_updated_by: Renzo (sesión 21-05-2026: Sprint 0 — Ph1 cerrada (1-01, 1-02), 6 tareas 🔵 + 1 🟠 + 2 🟡 diferidas)
 project_version: v0.0.0
-sprint_0_progress: "0-00, 0-01, 1-04, 1-26 → 🔵 pushed. 1-06 → 🟠 código listo, apply manual pendiente. 1-03, 1-05 → 🟡 diferidas pre-deploy. Resto 🔘 pendiente."
+sprint_0_progress: "Ph1 ✅ cerrada. 0-00, 0-01, 1-01, 1-02, 1-04, 1-26 → 🔵 pushed. 1-06 → 🟠 código listo. 1-03, 1-05 → 🟡 diferidas pre-deploy. Resto 🔘 pendiente."
 excluded_from: [staging, main]
 ---
 
@@ -105,12 +105,12 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 #### Bloque 1.1 — Orquestador BullMQ (bloqueante de cadencia)
 
-| ID   | Tarea                                                                                  | Estimación | Estado                   | Refs audit         | Notas                                                                                       |
-| ---- | -------------------------------------------------------------------------------------- | ---------- | ------------------------ | ------------------ | ------------------------------------------------------------------------------------------- |
-| 0-00 | Setup Playwright local + baseline tests E2E (devDependency `@playwright/test`)         | 4h         | 🔵 Subida `feature/sp-0` | DA-5 pre-requisito | ✅ Commit `00cc35a` 21-05-2026 — config chromium + smoke spec + 5 scripts npm               |
-| 0-01 | Setup pre-push hooks (Husky/lefthook) — typecheck + lint + test + build en local       | 3h         | 🔵 Subida `feature/sp-0` | Política operativa | ✅ Commit `a74406e` 21-05-2026 — husky + lint-staged + commit-msg + bonus 3 fixes typecheck |
-| 1-01 | Fix `worker.js:58` firma incorrecta `executeSequenceStep` — desbloquea flujo multi-día | 4h         | 🔘 Pendiente             | F-02-001 / DA-1    | **Crítico #1** — sin esto, el sistema entero está roto en producción                        |
-| 1-02 | Fix `enqueueLeadStep` — quitar silenciado errores Redis (jobs perdidos sin log)        | 3h         | 🔘 Pendiente             | DA-1-005           | Jobs desaparecen sin rastro                                                                 |
+| ID   | Tarea                                                                                  | Estimación | Estado                   | Refs audit         | Notas                                                                                                                                                                                                         |
+| ---- | -------------------------------------------------------------------------------------- | ---------- | ------------------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0-00 | Setup Playwright local + baseline tests E2E (devDependency `@playwright/test`)         | 4h         | 🔵 Subida `feature/sp-0` | DA-5 pre-requisito | ✅ Commit `00cc35a` 21-05-2026 — config chromium + smoke spec + 5 scripts npm                                                                                                                                 |
+| 0-01 | Setup pre-push hooks (Husky/lefthook) — typecheck + lint + test + build en local       | 3h         | 🔵 Subida `feature/sp-0` | Política operativa | ✅ Commit `a74406e` 21-05-2026 — husky + lint-staged + commit-msg + bonus 3 fixes typecheck                                                                                                                   |
+| 1-01 | Fix `worker.js:58` firma incorrecta `executeSequenceStep` — desbloquea flujo multi-día | 4h         | 🔵 Subida `feature/sp-0` | F-02-001 / DA-1    | ✅ Commit `847ef79` — worker carga lead+config+sequence antes de llamar con firma `(lead, tenantId, sequence, stepIndex, config)`. typecheck+build OK. Test multi-día diferido a SP-1-CLOSE-2                 |
+| 1-02 | Fix `enqueueLeadStep` — quitar silenciado errores Redis (jobs perdidos sin log)        | 3h         | 🔵 Subida `feature/sp-0` | DA-1-005           | ✅ Catch silencioso reemplazado por log estructurado (sin PII) + re-throw. Sin ID ficticio. 3 callers ya manejan throw (orchestrator/worker re-queue, widget `.catch`, webhook try/catch). typecheck+build OK |
 
 #### Bloque 1.2 — Secretos y credenciales
 
