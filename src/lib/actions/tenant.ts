@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
-import { requireEnv, requireEnvAny } from "@/lib/env";
+import { requireEnvAny } from "@/lib/env";
 import { Tenant } from "@/types/tenant";
 
 /**
