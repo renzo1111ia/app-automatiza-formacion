@@ -3,8 +3,8 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 21-05-2026 12:00
-last_updated_by: roadmap-keeper (fechas + asignación Javi HP solo + prerequisitos Sprint 0 + Playwright setup 0-00 + métricas éxito por sprint)
+last_updated: 21-05-2026 14:30
+last_updated_by: roadmap-keeper (políticas operativas: sin vacaciones, MVP ASAP, staging on-demand, local-first, log propio, minimizar GH Actions + tarea 0-01 pre-push hooks)
 project_version: v0.0.0
 excluded_from: [staging, main]
 ---
@@ -14,6 +14,21 @@ excluded_from: [staging, main]
 > ⚠️ **Documento vivo**. Mantenido proactivamente por el agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md). NO editar directamente sin orden del lead — pide al agente que lo haga.
 >
 > Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+
+---
+
+## Políticas operativas (sesión planificación 21-05-2026)
+
+| Item | Política |
+|---|---|
+| Vacaciones / festivos | **Javi HP sin vacaciones programadas en 2026.** Calendario L-V completo. |
+| Deadline MVP | **"Lo antes posible"** — objetivo Lun 10-08-2026 (v0.4.0). Sin compromiso externo de fecha con cliente. |
+| Release a staging | **NO automático por sprint.** El usuario decide manualmente cuándo subir cada sprint a `staging` para review de la cliente. PRs paran en `developer` hasta orden explícita. |
+| Acceso Supabase del cliente (VPS) | **Diferido al pre-deploy.** Trabajamos **local-first** con Supabase self-hosted local. El acceso al VPS de Easypanel se prepara y rota tokens **antes del primer despliegue a staging**, no antes. |
+| Tracking de tiempos y tareas | **Sistema propio** — hook `af-productivity-logger.cjs` (tarea 2-30, Sprint 1). NO se usa GitHub Issues, Linear, Jira ni sistemas externos. |
+| GitHub Actions | **Minimizar al máximo.** Tier gratis = 2000 min/mes. Todo lo que pueda ejecutarse en local (typecheck, lint, build, test, browser tests, security scan) se ejecuta **LOCAL** vía pre-push hooks (tarea 0-01). CI en GH Actions solo para verificación mínima sobre PRs a `developer`. |
+
+> Decisiones tomadas en sesión 21-05-2026 con Javi HP. Si alguna cambia, actualizar este bloque ANTES de seguir con el resto del roadmap.
 
 ---
 
@@ -69,14 +84,15 @@ excluded_from: [staging, main]
 | **Fin Est.**                   | 15-06-2026 18:00                  |
 | **Fin Real**                   | —                                 |
 
-> **Asignado a:** Javi HP (solo). Capacidad: 6h productivas/día, L-V. 18 días lab. **Nota:** no se cuentan vacaciones agosto (usuario ajusta si procede).
+> **Asignado a:** Javi HP (solo). Capacidad: 6h productivas/día, L-V. 18 días lab (~108h disponibles). Sin vacaciones en 2026.
 
 ### Prerequisitos del sprint
 
 | Item | Estado | Ref |
 |------|--------|-----|
 | ADR auditoría dependencias 20-05-2026 (next 16.2.6, axios 1.16.1, crypto removal) | ✅ Aprobado DONE_WITH_CONCERNS | [plans/reports/adr-auditoria-dependencias-20260520.md](../plans/reports/adr-auditoria-dependencias-20260520.md) |
-| Acceso Supabase del cliente (rotar tras Sprint 0) | 🔘 Pendiente verificar | — |
+| Supabase local self-hosted activo (Docker) | ✅ OK — Sprint 0 trabaja contra local | `npm run db:up` + commit 42ba022 |
+| Acceso Supabase del cliente en VPS Easypanel | 🟡 **Diferido pre-deploy** — se prepara antes de subir a staging, no antes de Sprint 0 | Pendiente que Javi HP obtenga acceso del cliente |
 | Repo limpio en `developer` sincronizado origin | ✅ OK | commit 42ba022 |
 | Plantilla CHANGELOG.md disponible | 🔘 Pendiente verificar | — |
 
@@ -89,6 +105,7 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 | ID   | Tarea                                                                                  | Estimación | Estado      | Refs audit      | Notas                                                                |
 | ---- | -------------------------------------------------------------------------------------- | ---------- | ----------- | --------------- | -------------------------------------------------------------------- |
 | 0-00 | Setup Playwright local + baseline tests E2E (devDependency `@playwright/test`)         | 4h         | 🔘 Pendiente | DA-5 pre-requisito | Necesario para SP-X-CLOSE-2 de cada sprint. Vía af-agents:adr     |
+| 0-01 | Setup pre-push hooks (Husky/lefthook) — typecheck + lint + test + build en local       | 3h         | 🔘 Pendiente | Política operativa | Minimiza GitHub Actions (tier gratis 2000 min/mes). Vía af-agents:adr para elegir Husky vs lefthook |
 | 1-01 | Fix `worker.js:58` firma incorrecta `executeSequenceStep` — desbloquea flujo multi-día | 4h         | 🔘 Pendiente | F-02-001 / DA-1 | **Crítico #1** — sin esto, el sistema entero está roto en producción |
 | 1-02 | Fix `enqueueLeadStep` — quitar silenciado errores Redis (jobs perdidos sin log)        | 3h         | 🔘 Pendiente | DA-1-005        | Jobs desaparecen sin rastro                                          |
 
@@ -122,8 +139,8 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 #### Bloque 1.5 — Privilege escalation y RLS
 
-| ID   | Tarea                                                                                 | Estimación | Estado      | Refs audit       | Notas                                                 |
-| ---- | ------------------------------------------------------------------------------------- | ---------- | ----------- | ---------------- | ----------------------------------------------------- |
+| ID   | Tarea                                                                                 | Estimación | Estado　　　 | Refs audit       | Notas                                                 |
+| ------| ---------------------------------------------------------------------------------------| ------------| --------------| ------------------| -------------------------------------------------------|
 | 1-16 | Fix privilege escalation via `user_metadata.is_admin` editable por usuario            | 4h         | 🔘 Pendiente | DA-2-005         | Mover `is_admin` a `app_metadata` (server-controlled) |
 | 1-17 | Verificación rol admin en `createTenant`/`deleteTenant`/`updateTenant` server actions | 3h         | 🔘 Pendiente | DA-2-004         | `src/lib/actions/tenant.ts:140-197`                   |
 | 1-18 | Fix RLS tabla `tenants` (quitar policy tautológica `USING(true)`)                     | 3h         | 🔘 Pendiente | DA-2-010         | RLS hardening multi-tenant #1                         |
@@ -149,14 +166,14 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 > Estas 5 tareas SE EJECUTAN AL FINAL DE CADA SPRINT. Plantilla copiada para todos los sprints.
 
-| ID                            | Tarea                                                                                                                                                                                                    | Estimación                     | Estado      | Notas                                                                                                                                                       |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| SP-1-CLOSE-1                  | **Auto test** — `npm run typecheck` + `npm run lint` + `npm run build` + `npm test` (unit + integration). Reporte de coverage.                                                                           | 1h 30min                       | 🔘 Pendiente | Delegado a `af-agents:testing`                                                                                                                           |
-| SP-1-CLOSE-2                  | **Test E2C Local** — Abrir browser con Playwright, recorrer flujos implementados, validar visual + diseño + **WCAG 2.2 AA**. Generar reporte con screenshots de pasos clave + findings de accesibilidad. | 2h 30min                       | 🔘 Pendiente | Delegado a `af-agents:testing` + `af-agents:uxui`                                                                                                     |
-| SP-1-CLOSE-3                  | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales de prueba si aplica. Entregar guía paso-a-paso: qué probar, cómo, qué esperar. Esperar feedback.                               | 1h                             | 🔘 Pendiente | Delegado al manager (interacción con humano)                                                                                                                |
-| SP-1-CLOSE-4                  | **Corrección de Bugs y cambios detectados** — Subtareas dinámicas: una por cada bug/cambio que reporte el dev. Cada subtarea con su propio estado. Esta tarea queda 🟡 mientras haya subtareas abiertas.  | (variable)                     | 🔘 Pendiente | Delegado a `af-agents:code` + `af-agents:debugger`                                                                                                    |
-| SP-1-CLOSE-5                  | **Cierre de Sprint** — PR `feature/sp-0-sprint-0-hotfixes` → `developer`. Tras merge: bump SemVer a `v0.1.0`, invitar al dev a tomar siguiente sprint, crear rama `feature/sp-2-capa-datos`.             | 30min                          | 🔘 Pendiente | Delegado a `af-agents:git` (verifica estados previos) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
-| **Subtotal cierre Sprint 0**  |                                                                                                                                                                                                          | **5h 30min + Corrección bugs** |             |                                                                                                                                                             |
+| ID                           | Tarea                                                                                                                                                                                                    | Estimación                     | Estado　　　 | Notas                                                                                                                                              |
+| ------------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| --------------------------------| --------------| ----------------------------------------------------------------------------------------------------------------------------------------------------|
+| SP-1-CLOSE-1                 | **Auto test** — `npm run typecheck` + `npm run lint` + `npm run build` + `npm test` (unit + integration). Reporte de coverage.                                                                           | 1h 30min                       | 🔘 Pendiente | Delegado a `af-agents:testing`                                                                                                                     |
+| SP-1-CLOSE-2                 | **Test E2C Local** — Abrir browser con Playwright, recorrer flujos implementados, validar visual + diseño + **WCAG 2.2 AA**. Generar reporte con screenshots de pasos clave + findings de accesibilidad. | 2h 30min                       | 🔘 Pendiente | Delegado a `af-agents:testing` + `af-agents:uxui`                                                                                                  |
+| SP-1-CLOSE-3                 | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales de prueba si aplica. Entregar guía paso-a-paso: qué probar, cómo, qué esperar. Esperar feedback.                               | 1h                             | 🔘 Pendiente | Delegado al manager (interacción con humano)                                                                                                       |
+| SP-1-CLOSE-4                 | **Corrección de Bugs y cambios detectados** — Subtareas dinámicas: una por cada bug/cambio que reporte el dev. Cada subtarea con su propio estado. Esta tarea queda 🟡 mientras haya subtareas abiertas.  | (variable)                     | 🔘 Pendiente | Delegado a `af-agents:code` + `af-agents:debugger`                                                                                                 |
+| SP-1-CLOSE-5                 | **Cierre de Sprint** — PR `feature/sp-0-sprint-0-hotfixes` → `developer`. Tras merge: bump SemVer a `v0.1.0`, invitar al dev a tomar siguiente sprint, crear rama `feature/sp-2-capa-datos`.             | 30min                          | 🔘 Pendiente | Delegado a `af-agents:git` (verifica estados previos) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
+| **Subtotal cierre Sprint 0** |                                                                                                                                                                                                          | **5h 30min + Corrección bugs** | 　　　　　　 |                                                                                                                                                    |
 
 ### Pre-requisitos del cierre (gates obligatorios)
 
@@ -214,8 +231,8 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 #### Bloque 2.3 — Repository pattern
 
-| ID   | Tarea                                                                       | Estimación | Estado      | Notas                                                       |
-| ---- | --------------------------------------------------------------------------- | ---------- | ----------- | ----------------------------------------------------------- |
+| ID   | Tarea                                                                       | Estimación | Estado　　　 | Notas                                                       |
+| ------| -----------------------------------------------------------------------------| ------------| --------------| -------------------------------------------------------------|
 | 2-12 | Estructura `src/lib/repositories/` + interface base + helpers tenant-scoped | 4h         | 🔘 Pendiente | Convención `findByTenant`, `create`, `update`, `softDelete` |
 | 2-13 | Repository: `leads`                                                         | 6h         | 🔘 Pendiente | El de más uso, hacer bien                                   |
 | 2-14 | Repository: `tenants`                                                       | 4h         | 🔘 Pendiente |                                                             |
@@ -226,8 +243,8 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 #### Bloque 2.4 — Refactor queries existentes (paralelizable)
 
-| ID   | Tarea                                                                       | Estimación | Estado      | Notas                                               |
-| ---- | --------------------------------------------------------------------------- | ---------- | ----------- | --------------------------------------------------- |
+| ID   | Tarea                                                                       | Estimación | Estado　　　 | Notas                                               |
+| ------| -----------------------------------------------------------------------------| ------------| --------------| -----------------------------------------------------|
 | 2-19 | Refactor: mover queries de `src/app/api/**/*.ts` a repositorios             | 8h         | 🔘 Pendiente | Paralelo con 2-20 y 2-21                            |
 | 2-20 | Refactor: mover queries de server actions `src/lib/actions/` a repositorios | 6h         | 🔘 Pendiente | Crítico — aquí estaban los 9 fallbacks service_role |
 | 2-21 | Refactor: mover queries de `worker.js` + processors a repositorios          | 4h         | 🔘 Pendiente | Continuación de 1-01                                |
@@ -250,9 +267,9 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 #### Bloque 2.7 — Testing y documentación
 
-| ID   | Tarea                                                                            | Estimación | Estado      | Notas                                   |
-| ---- | -------------------------------------------------------------------------------- | ---------- | ----------- | --------------------------------------- |
-| 2-28 | Tests de integración con BD real (NO mocks) para repositorios principales        | 12h        | 🔘 Pendiente | Suite mínima — más en Fase 3            |
+| ID   | Tarea                                                                            | Estimación | Estado　　　 | Notas                                |
+| ------| ----------------------------------------------------------------------------------| ------------| --------------| --------------------------------------|
+| 2-28 | Tests de integración con BD real (NO mocks) para repositorios principales        | 12h        | 🔘 Pendiente | Suite mínima — más en Fase 3         |
 | 2-29 | Documentar capa de datos en `docs/architecture/data-layer.md` (refresh completo) | 4h         | 🔘 Pendiente | Delegado a `af-agents:documentation` |
 
 #### Bloque 2.8 — Hardening de dependencias (hallazgos ADR audit 2026-05-20)

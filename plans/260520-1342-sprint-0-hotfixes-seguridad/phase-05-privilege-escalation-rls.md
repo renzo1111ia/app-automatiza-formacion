@@ -29,6 +29,7 @@ Esta es la fase más voluminosa del Sprint 0. Combina:
 - **DA-2-010**: Tabla `tenants` tiene política `USING(true)` para `authenticated` — cualquier usuario logueado ve y modifica TODOS los tenants. **SOLAPE**: este hallazgo ya está cubierto en el plan RLS `phase-01-hotfix-vulnerabilidades.md` Paso 1. Ver referencia.
 - **F-04-004**: `migrations/20260424_knowledge_and_billing.sql:28` — la política RLS de `knowledge_base` usa `app.current_tenant` como variable de sesión, pero esa variable nunca se setea en ningún punto del código. La política es una "dead letter" — nunca se evalúa correctamente, la RLS de `knowledge_base` es inefectiva.
 - **F-04-001**: `src/lib/actions/calls.ts:56-371` — 4 funciones de `fetchCalls` hacen queries a la tabla `calls` sin filtro `tenant_id`. Devuelven llamadas de todos los tenants mezcladas.
+- **F-04-001b** (verificado en browser 2026-05-21 con seed demo dual-tenant): `/dashboard/historial` devuelve los leads de TODOS los tenants en lugar de filtrar por el tenant activo. Con seed `seed-demo.ts` (15 organizaciones B2B en tenant "Automatiza Formación" + 40 personas B2C en tenant "Demo - Academia AF") el historial muestra los 55 mezclados. El bug está en el query del historial que hace JOIN `lead` + `llamadas` sin pasar `.eq("tenant_id", activeTenantId)`. Las **métricas del Panel General SÍ filtran correctamente** (mostraron 11 llamadas = solo AF, no las ~70 totales) — el bug es específico de la ruta del historial. Adicional al fix de 1-20 (que cubre `calls.ts`), revisar las queries de `src/app/dashboard/historial/page.tsx` o donde resida el `fetchHistorial`/`fetchLeads` que alimente esa vista.
 - **DA-2 inbox sweep**: `inbox.ts:448-501` — 9 funciones aceptan UUIDs arbitrarios en parámetros sin verificar que el tenant del usuario tenga ownership sobre ese recurso. Es el IDOR más extenso del sistema.
 
 ## Requirements
@@ -38,7 +39,7 @@ Esta es la fase más voluminosa del Sprint 0. Combina:
 - 1-17: Añadir verificación de rol admin en `createTenant`, `deleteTenant`, `updateTenant` antes de ejecutar ninguna acción.
 - 1-18: Fix RLS tabla `tenants` — quitar `USING(true)`. **Ver plan RLS Paso 1**.
 - 1-19: Fix RLS `knowledge_base` — reemplazar política `app.current_tenant` por política funcional con `auth.uid()` y lookup real.
-- 1-20: Añadir filtro `tenant_id` en las 4 funciones de `fetchCalls` en `calls.ts:56-371`.
+- 1-20: Añadir filtro `tenant_id` en las 4 funciones de `fetchCalls` en `calls.ts:56-371` **+ también revisar y arreglar las queries que alimentan `/dashboard/historial` (finding F-04-001b verificado en browser con seed dual-tenant 2026-05-21).**
 - 1-21: Añadir verificación de ownership en las 9 funciones de `inbox.ts:448-501`.
 
 ### No funcionales
