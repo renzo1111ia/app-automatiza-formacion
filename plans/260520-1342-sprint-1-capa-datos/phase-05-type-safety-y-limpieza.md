@@ -19,7 +19,12 @@
 
 ## Key Insights
 
-- **2-22 (426 `as any`):** NO atacar de golpe. Estrategia: primero los archivos que ya tienen repository/schema (Fases 1-4), luego el resto. Objetivo: reducir >80% (de 426 → <85).
+- **2-22 (`as any` + `: any` declarations):** NO atacar de golpe. Estrategia: primero los archivos que ya tienen repository/schema (Fases 1-4), luego el resto.
+  - **Métrica ground truth (baseline 21-05-2026):** `npm run lint` reporta **164 errores `@typescript-eslint/no-explicit-any`** en código de producción (`src/lib/`, `src/app/`, `src/components/`, `src/types/`). Ver `plans/reports/lint-baseline-20260521.md` para distribución por archivo y log raw.
+  - **Quick win Fase 01:** regenerar `src/types/database.ts` con `npx supabase gen types typescript --local` → fix instantáneo de 3 errores `any` consecutivos en línea 550.
+  - **Objetivo Sprint 1:** 164 → 0 al cerrar (SP-2-CLOSE-1 ya exige `npm run lint` con 0 errores).
+  - **Distribución típica:** integraciones SDK externos (HubSpot, Zoho, Retell, Ultravox, WhatsApp), processors BullMQ, Recharts charts. Cada archivo concentra 1-3 errores → fragmentado y abordable incrementalmente.
+  - **Compromiso por fase:** cualquier fase del Sprint 1 que toque un archivo de la lista del baseline DEBE dejarlo en 0 errores antes de cerrar. Tracking en `plans/logs/sprint-2/lint-debt.log.md`.
 - **2-31 (lucide-react major):** API principal no cambió, pero algunos iconos fueron renombrados entre 0.x y 1.x. Requiere inventario visual.
 - **2-32 (shadcn):** ADR recomienda APLAZAR a Sprint 3. Solo afecta CLI tool, no runtime. Los componentes instalados en `src/components/ui/` no se ven afectados. **Excluido de Sprint 1.**
 - **2-33 (@types/node):** Es un cambio en devDependencies — bajo riesgo pero debe pasar ADR por ser major de tipos.
@@ -29,16 +34,19 @@
 ## Requirements
 
 **Funcionales (2-22):**
+
 - `as any` reducido de 426 a < 85 ocurrencias
 - Tipos reemplazantes deben ser `z.infer<typeof Schema>` — no declarar tipos TS manuales adicionales
 
 **Funcionales (updates ADR):**
+
 - `lucide-react` actualizado a 1.16.0 sin iconos rotos en UI
 - `@types/node` actualizado a `^24` (alineado con runtime Node 24)
 - `langchain` + providers actualizados en bloque: `langchain@1.4.1` + `@langchain/anthropic@1.4.0` + `@langchain/openai` + `@langchain/google-genai` (versiones compatibles per ADR MED-002/MED-005)
 - 2-34: investigación documentada (proceder o aplazar con razón)
 
 **No-funcionales:**
+
 - 2-35 (langchain): aprobado por agente ADR en auditoría 20-05-2026 — NO requiere nueva ronda ADR. Ejecutar directamente.
 - 2-31, 2-33: cada update pasa por `af-agents:adr` antes de instalar (regla CLAUDE.md)
 - `npm run typecheck` pass tras cada update
@@ -57,10 +65,12 @@ Estrategia 2-22 (eliminar `as any`):
 ## Related Code Files
 
 **Modificar (2-22):**
+
 - Todos los archivos en `src/` con `as any` — inventario dinámico
 - Priorizar los archivos tocados en Fases 01-04
 
 **Modificar (updates):**
+
 - `package.json` — 2-31: lucide-react, 2-33: @types/node, 2-35: langchain
 - `src/components/` — 2-31: ajustar iconos renombrados
 
@@ -126,12 +136,12 @@ Estrategia 2-22 (eliminar `as any`):
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| lucide-react 1.x rompe iconos en prod | Baja | Medio | Inventario previo + review visual completo antes de merge |
-| langchain 1.4.1 cambia API de chains | Media | Medio | Test pipeline en dev antes de merge; revisar changelog |
-| 2-22 descubre tipos incompatibles con BD real | Media | Alto | Si hay mismatch tipo Zod vs BD → actualizar schema Zod (Fase 02) |
-| eslint 10 instalado por error rompe lint | Baja | Alto | NO instalar si peer dep sigue siendo ^9; 2-34 es solo investigación |
+| Riesgo                                        | Prob  | Impacto | Mitigación                                                          |
+| --------------------------------------------- | ----- | ------- | ------------------------------------------------------------------- |
+| lucide-react 1.x rompe iconos en prod         | Baja  | Medio   | Inventario previo + review visual completo antes de merge           |
+| langchain 1.4.1 cambia API de chains          | Media | Medio   | Test pipeline en dev antes de merge; revisar changelog              |
+| 2-22 descubre tipos incompatibles con BD real | Media | Alto    | Si hay mismatch tipo Zod vs BD → actualizar schema Zod (Fase 02)    |
+| eslint 10 instalado por error rompe lint      | Baja  | Alto    | NO instalar si peer dep sigue siendo ^9; 2-34 es solo investigación |
 
 ## Security Considerations
 
