@@ -48,11 +48,17 @@ export async function updateLeadSegment(
   leadId: string,
   segment: InboxLead["segmentacion"]
 ): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix — antes cualquier user podía editar leads
+  // de OTROS tenants por ID. Ahora filtra siempre por tenant_id activo.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
   const { error } = await supabase
     .from("lead")
     .update({ segmentacion: segment } as never)
-    .eq("id", leadId);
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -307,10 +313,12 @@ export async function sendManualMessage(
   const supabase = await getAdminSupabaseClient();
 
   // 1. Fetch Lead data (for phone and name)
+  // Sprint 0 tarea 1-21: IDOR fix — filtro tenant_id obligatorio.
   const { data: leadRaw, error: leadError } = await supabase
     .from("lead")
     .select("telefono, nombre, is_ai_enabled")
     .eq("id", leadId)
+    .eq("tenant_id", tenant.id)
     .single();
 
   if (leadError || !leadRaw) return { success: false, error: "Lead no encontrado" };
@@ -376,11 +384,13 @@ export async function sendManualMessage(
   }
 
   // 4. HANDOVER: Disable AI for this lead since a human intervened
+  // Sprint 0 tarea 1-21: filtro tenant_id obligatorio.
   if (lead.is_ai_enabled) {
     await supabase
       .from("lead")
       .update({ is_ai_enabled: false } as never)
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .eq("tenant_id", tenant.id);
   }
 
   // 5. Persist message in DB
@@ -417,6 +427,16 @@ export async function injectMockupMessage(
   if (!tenant) return;
 
   const supabase = await getAdminSupabaseClient();
+
+  // Sprint 0 tarea 1-21: IDOR fix — verifica que el lead pertenece al tenant
+  // activo antes de inyectar un mock message.
+  const { data: leadOwner } = await supabase
+    .from("lead")
+    .select("tenant_id")
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id)
+    .maybeSingle();
+  if (!leadOwner) return;
   await supabase.from("chat_messages").insert({
     tenant_id: tenant.id,
     lead_id: leadId,
@@ -435,13 +455,19 @@ export async function toggleLeadAI(
   leadId: string,
   enabled: boolean
 ): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix — filtro tenant_id obligatorio.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
   const { error } = await (
     supabase
       .from("lead")
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update({ is_ai_enabled: enabled } as never) as any
-  ).eq("id", leadId);
+  )
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) {
     if (error.message.includes("column")) {
@@ -461,6 +487,10 @@ export async function toggleLeadAI(
  * Assigns a specific agent to a lead.
  */
 export async function assignAgentToLead(leadId: string, agentId: string | null) {
+  // Sprint 0 tarea 1-21: IDOR fix — filtro tenant_id obligatorio.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
   const { error } = await (
     supabase
@@ -468,7 +498,8 @@ export async function assignAgentToLead(leadId: string, agentId: string | null) 
       .from("lead" as any) as any
   )
     .update({ ai_agent_id: agentId } as never)
-    .eq("id", leadId);
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) {
     if (error.message.includes("column")) {
@@ -486,15 +517,25 @@ export async function assignAgentToLead(leadId: string, agentId: string | null) 
  * Deletes a lead and all associated data (cascading).
  */
 export async function deleteLead(leadId: string): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix — solo borra si el lead pertenece al tenant activo.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
 
   // 1. Delete associated chat messages first (manual cascading if not in DB)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("chat_messages" as any) as any).delete().eq("lead_id", leadId);
+  await (supabase.from("chat_messages" as any) as any)
+    .delete()
+    .eq("lead_id", leadId)
+    .eq("tenant_id", tenant.id);
 
   // 2. Delete the lead
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("lead" as any) as any).delete().eq("id", leadId);
+  const { error } = await (supabase.from("lead" as any) as any)
+    .delete()
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -506,11 +547,16 @@ export async function deleteLead(leadId: string): Promise<{ success: boolean; er
 export async function deleteChatHistory(
   leadId: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from("chat_messages" as any) as any)
     .delete()
-    .eq("lead_id", leadId);
+    .eq("lead_id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -522,11 +568,16 @@ export async function deleteChatHistory(
 export async function deleteLeadFacts(
   leadId: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from("lead" as any) as any)
     .update({ metadata: {} } as never)
-    .eq("id", leadId);
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };
@@ -539,14 +590,22 @@ export async function updateLeadInfo(
   leadId: string,
   updates: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
+  // Sprint 0 tarea 1-21: IDOR fix. Además, no permitimos que el caller
+  // sobrescriba `tenant_id` en el payload de updates.
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
+  const { tenant_id: _ignoredTenantId, ...safeUpdates } = updates;
+
   const supabase = await getAdminSupabaseClient();
   const { error } = await (
     supabase
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("lead" as any) as any
   )
-    .update(updates)
-    .eq("id", leadId);
+    .update(safeUpdates)
+    .eq("id", leadId)
+    .eq("tenant_id", tenant.id);
 
   if (error) return { success: false, error: error.message };
   return { success: true };

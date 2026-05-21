@@ -7,6 +7,47 @@ import { requireEnvAny } from "@/lib/env";
 import { Tenant } from "@/types/tenant";
 
 /**
+ * Sprint 0 tarea 1-17: gate de admin para server actions sensibles
+ * (createTenant, updateTenant, deleteTenant). Antes cualquier usuario
+ * autenticado podía ejecutarlas → DA-2-004.
+ *
+ * Lee el user vía SSR cookies y verifica `app_metadata.is_admin` (1-16).
+ * Devuelve error tipado para que las actions retornen `{ error }` consistente.
+ */
+async function assertAdminAccess(): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {
+          // read-only en server actions de gating
+        },
+      },
+    });
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+      return { ok: false, error: "No autenticado. Inicia sesión." };
+    }
+    const appMeta = data.user.app_metadata ?? {};
+    const isAdmin =
+      appMeta.is_admin === true ||
+      appMeta.is_admin === "true" ||
+      appMeta.admin === true ||
+      appMeta.admin === "true";
+    if (!isAdmin) {
+      return { ok: false, error: "Acción requiere rol admin." };
+    }
+    return { ok: true };
+  } catch (e) {
+    console.error("[assertAdminAccess] error:", e);
+    return { ok: false, error: "Error verificando permisos." };
+  }
+}
+
+/**
  * Sets the active tenant cookie using tenantId (V2 multi-tenant model).
  * No longer stores supabase URL/key — the central DB handles all tenants.
  */
@@ -64,6 +105,11 @@ async function getServiceSupabase() {
 
 export async function getTenants(): Promise<Tenant[]> {
   try {
+    // Sprint 0 tarea 1-17: solo admin puede listar todos los tenants
+    // (devuelve cross-tenant data; sin gate cualquier user autenticado lo veía).
+    const adminGate = await assertAdminAccess();
+    if (!adminGate.ok) return [];
+
     // Sprint 0 tarea 1-04: sin fallback hardcoded.
     const serviceKey = requireEnvAny(["SUPABASE_SERVICE_ROLE_KEY", "SERVICE_ROLE_KEY"]);
     const url = requireEnvAny(["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL"]);
@@ -137,6 +183,9 @@ export async function getTenantByUserId(userId: string): Promise<Tenant | null> 
 
 export async function createTenant(tenant: Partial<Tenant> & { password?: string }) {
   try {
+    const adminGate = await assertAdminAccess();
+    if (!adminGate.ok) return { error: adminGate.error };
+
     const supabase = await getAdminSupabase();
     const serviceSupabase = await getServiceSupabase();
 
@@ -144,12 +193,17 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
 
     // 1. If email and password provided, create user in Auth
     if (tenant.client_email && tenant.password) {
+      // Sprint 0 tarea 1-16: `is_admin` se escribe en app_metadata (server-controlled).
+      // Antes iba en user_metadata, editable por el propio usuario via
+      // supabase.auth.updateUser → privilege escalation trivial (DA-2-005).
       const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
         email: tenant.client_email,
         password: tenant.password,
         email_confirm: true,
+        app_metadata: {
+          is_admin: !!tenant.is_admin,
+        },
         user_metadata: {
-          admin: !!tenant.is_admin,
           tenant_name: tenant.name,
           username: tenant.username || "",
         },
@@ -197,6 +251,9 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
 
 export async function updateTenant(id: string, updates: Partial<Tenant> & { password?: string }) {
   try {
+    const adminGate = await assertAdminAccess();
+    if (!adminGate.ok) return { error: adminGate.error };
+
     const supabase = await getAdminSupabase();
     const serviceSupabase = await getServiceSupabase();
 
@@ -217,12 +274,15 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
 
     // 1. If password is provided AND we have/found an auth_user_id, update it
     if (updates.password && targetAuthUserId) {
+      // Sprint 0 tarea 1-16: is_admin va en app_metadata (server-controlled).
       const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
         targetAuthUserId,
         {
           password: updates.password,
+          app_metadata: {
+            is_admin: !!updates.is_admin,
+          },
           user_metadata: {
-            admin: !!updates.is_admin,
             username: updates.username,
           },
         }
@@ -234,12 +294,15 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
     }
     // 1b. If password is provided but NO user exists yet, CREATE it
     else if (updates.password && !targetAuthUserId && updates.client_email) {
+      // Sprint 0 tarea 1-16: is_admin va en app_metadata (server-controlled).
       const { data: authData, error: authError } = await serviceSupabase.auth.admin.createUser({
         email: updates.client_email,
         password: updates.password,
         email_confirm: true,
+        app_metadata: {
+          is_admin: !!updates.is_admin,
+        },
         user_metadata: {
-          admin: !!updates.is_admin,
           username: updates.username || "",
         },
       });
@@ -255,12 +318,15 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
       (updates.is_admin !== undefined || updates.username !== undefined) &&
       targetAuthUserId
     ) {
-      // Update metadata even if password is not provided
+      // Update metadata even if password is not provided.
+      // Sprint 0 tarea 1-16: is_admin va en app_metadata (server-controlled).
       const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
         targetAuthUserId,
         {
+          app_metadata: {
+            is_admin: !!updates.is_admin,
+          },
           user_metadata: {
-            admin: !!updates.is_admin,
             username: updates.username,
           },
         }
@@ -380,6 +446,12 @@ export async function updateTenantConfig(id: string, partialConfig: Record<strin
 }
 
 export async function deleteTenant(id: string) {
+  // Sprint 0 tarea 1-17: gate admin (antes cualquier user autenticado podía borrar tenants).
+  const adminGate = await assertAdminAccess();
+  if (!adminGate.ok) {
+    throw new Error(adminGate.error);
+  }
+
   const supabase = await getAdminSupabase();
   const { error } = await supabase.from("tenants").delete().eq("id", id);
   if (error) {

@@ -64,13 +64,9 @@ export async function requireApiUser(): Promise<ApiUserContext | NextResponse> {
     return unauthorized();
   }
 
-  const meta = user.user_metadata ?? {};
+  // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata (server-controlled).
   const appMeta = user.app_metadata ?? {};
   const isAdmin =
-    meta.admin === true ||
-    meta.admin === "true" ||
-    meta.is_admin === true ||
-    meta.is_admin === "true" ||
     appMeta.is_admin === true ||
     appMeta.is_admin === "true" ||
     appMeta.admin === true ||
