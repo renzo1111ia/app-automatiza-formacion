@@ -1,0 +1,40 @@
+{
+  "_doc": "Workspace settings for dashboard-af. Markdown experience tuned for plans/ and docs/ workflow.",
+
+  "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+  "markdown-preview-enhanced.previewTheme": "github-light.css",
+  "markdown-preview-enhanced.codeBlockTheme": "github.css",
+  "markdown-preview-enhanced.revealjsTheme": "white.css",
+  "markdown-preview-enhanced.mermaidTheme": "default",
+  "markdown-preview-enhanced.enableScriptExecution": false,
+  "markdown-preview-enhanced.scrollSync": true,
+  "markdown-preview-enhanced.liveUpdate": true,
+  "markdown-preview-enhanced.singlePreview": true,
+  "markdown-preview-enhanced.breakOnSingleNewLine": true,
+  "markdown-preview-enhanced.enableTypographer": true,
+
+  "markdown.preview.fontSize": 14,
+  "markdown.preview.lineHeight": 1.6,
+  "markdown.preview.scrollEditorWithPreview": true,
+  "markdown.preview.scrollPreviewWithEditor": true,
+
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    },
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "files.trimTrailingWhitespace": false
+  },
+
+  "markdownlint.config": {
+    "MD013": false,
+    "MD033": false,
+    "MD041": false,
+    "MD024": { "siblings_only": true }
+  }
+}

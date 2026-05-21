@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "db:up": "npx supabase start",
     "db:down": "npx supabase stop",
     "db:status": "npx supabase status",
@@ -15,7 +19,8 @@
     "redis:up": "docker-compose -f docker-compose.dev.yml up -d",
     "redis:down": "docker-compose -f docker-compose.dev.yml down",
     "local:setup": "npm run db:up && npm run redis:up && npm run db:seed-demo",
-    "local:teardown": "npm run db:down && npm run redis:down"
+    "local:teardown": "npm run db:down && npm run redis:down",
+    "prepare": "husky"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-agent-runtime": "^3.1031.0",
@@ -73,6 +78,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "shadcn": "^3.8.5",
@@ -80,5 +87,14 @@
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   }
 }
