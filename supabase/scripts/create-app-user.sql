@@ -38,13 +38,12 @@ BEGIN
   END IF;
 END $$;
 
--- 2. Garantizar que NO tiene privilegios elevados (defensivo)
-ALTER ROLE app_user
-  NOSUPERUSER
-  NOCREATEDB
-  NOCREATEROLE
-  NOREPLICATION
-  NOBYPASSRLS;
+-- 2. Garantizar que NO tiene CREATEDB ni CREATEROLE (atributos manejables por postgres no-superuser).
+--    NOTA: NOSUPERUSER / NOREPLICATION / NOBYPASSRLS no se aplican aquí — solo un SUPERUSER real
+--    puede alterar esos atributos (limitación Postgres). Los defaults de CREATE ROLE ya los excluyen,
+--    así que un rol recién creado no los tiene. Si se sospecha que el rol fue tamper-eado a SUPERUSER,
+--    ejecutar este script como supabase_admin (no como postgres) en local, o como rds_superuser/etc en prod.
+ALTER ROLE app_user NOCREATEDB NOCREATEROLE;
 
 -- 3. Permitir conexión a la BD actual
 GRANT CONNECT ON DATABASE postgres TO app_user;
