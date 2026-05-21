@@ -19,10 +19,23 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
         async function loadTenants() {
             const data = await getTenants();
             // Filter out admins from the selector, it's only for clients
-            setTenants(data.filter(t => !t.is_admin));
+            const clientTenants = data.filter(t => !t.is_admin);
+            setTenants(clientTenants);
             setLoading(false);
+            // Auto-seleccionar el primer tenant si no hay ninguno activo (primer login)
+            if (!tenantName && clientTenants.length > 0) {
+                const first = clientTenants[0];
+                setTenant({
+                    tenantId: first.id,
+                    tenantName: first.name,
+                    config: first.config,
+                    isAdmin: !!first.is_admin,
+                });
+                setTenantCookies(first.id, first.name).then(() => router.refresh());
+            }
         }
         loadTenants();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     async function handleSelect(t: Tenant) {

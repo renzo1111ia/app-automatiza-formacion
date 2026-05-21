@@ -1,14 +1,20 @@
 /**
  * Seed demo — dashboard-af
  *
- * Genera datos ficticios abundantes para desarrollo local contra Supabase
- * self-hosted (puerto 8100). NO usar contra Supabase del cliente.
+ * Crea DOS tenants:
+ *  1. "Automatiza Formación"  → cliente final (B2B: organizaciones formativas)
+ *  2. "Demo - Academia AF"    → sandbox de pruebas (B2C: personas / leads tipicos)
  *
- * Lee credenciales del demo user desde .env.local (DEMO_USER_EMAIL +
- * DEMO_USER_PASSWORD). La password es generada con crypto al crear .env.local.
+ * Orden alfabetico: "Automatiza..." va antes que "Demo..." -> el primero
+ * aparece preseleccionado en el dropdown del dashboard.
  *
  * Uso:
  *   npx tsx scripts/seed-demo.ts
+ *
+ * Requisitos:
+ *   - Supabase local corriendo (npm run db:up)
+ *   - .env.local con DEMO_USER_PASSWORD (admin) — viewer se crea con
+ *     show-demo-credentials.ts.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -23,7 +29,7 @@ const DEMO_EMAIL = process.env.DEMO_USER_EMAIL ?? "demo@af.local";
 const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD;
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
-    console.error("[seed-demo] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+    console.error("[seed-demo] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
     process.exit(1);
 }
 if (!DEMO_PASSWORD || DEMO_PASSWORD.length < 16) {
@@ -35,22 +41,24 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
 });
 
-// ---------- Catalogos ----------
-const NOMBRES = ["Carlos", "Maria", "Javier", "Ana", "Luis", "Carmen", "Miguel", "Laura", "Antonio", "Elena", "Jose", "Cristina", "Manuel", "Patricia", "Francisco", "Lucia", "David", "Isabel", "Pedro", "Sofia"];
+// ---------- Catalogos B2C ----------
+const NOMBRES_PERSONA = ["Carlos", "Maria", "Javier", "Ana", "Luis", "Carmen", "Miguel", "Laura", "Antonio", "Elena", "Jose", "Cristina", "Manuel", "Patricia", "Francisco", "Lucia", "David", "Isabel", "Pedro", "Sofia"];
 const APELLIDOS = ["Garcia", "Rodriguez", "Martinez", "Lopez", "Sanchez", "Gonzalez", "Fernandez", "Perez", "Martin", "Ruiz", "Hernandez", "Jimenez", "Diaz", "Moreno", "Alvarez", "Romero", "Alonso", "Gutierrez"];
 const PAISES = ["Spain", "Mexico", "Argentina", "Colombia", "Chile", "Peru", "Ecuador", "Uruguay"];
 const ORIGENES = ["facebook_ads", "google_ads", "organico_web", "referido", "instagram_ads", "linkedin_ads", "tiktok_ads"];
-const TIPOS_LEAD = ["frio", "templado", "caliente", "muy_caliente"];
-const STATUS_LEAD = ["PENDING", "CONTACTED", "QUALIFIED", "ENROLLED", "REJECTED"];
-const ADVISORS_NOMBRES = ["Patricia Asesor", "Carlos Asesor", "Maria Asesor", "Javier Asesor"];
-const PROGRAMAS = [
-    { name: "Master IA Aplicada", category: "Tecnologia", precio: 4900, duracion_meses: 9 },
-    { name: "Bootcamp Full-Stack Developer", category: "Desarrollo", precio: 3500, duracion_meses: 6 },
-    { name: "Curso Marketing Digital", category: "Marketing", precio: 1200, duracion_meses: 3 },
-    { name: "Master Ciencia de Datos", category: "Tecnologia", precio: 5500, duracion_meses: 10 },
-    { name: "Programa Cybersecurity", category: "Seguridad", precio: 4200, duracion_meses: 8 },
-    { name: "Diploma UX/UI Design", category: "Diseño", precio: 2800, duracion_meses: 5 },
+const TIPOS_LEAD_B2C = ["frio", "templado", "caliente", "muy_caliente"];
+
+// ---------- Catalogos B2B (organizaciones formativas) ----------
+const NOMBRES_ORG = [
+    "Academia Demo Madrid", "Centro Formativo Barcelona Pro", "Instituto Demo Valencia",
+    "Escuela Demo Sevilla", "Academia Bilbao Plus", "Centro Demo Malaga",
+    "Instituto Online Murcia", "Escuela Digital Zaragoza", "Academia Palma Tech",
+    "Centro Formacion Canarias", "Instituto Demo Granada", "Escuela Online Alicante",
+    "Academia Vigo Plus", "Centro Demo Toledo", "Instituto Salamanca Online",
 ];
+const TIPOS_ORG = ["academia", "universidad", "instituto", "centro_formacion", "escuela_negocios"];
+const ORIGENES_B2B = ["evento_formativo", "referido_partner", "linkedin_outreach", "web_directa", "feria_sector", "publicidad_b2b"];
+const TIPOS_LEAD_B2B = ["prospect_frio", "interesado", "oportunidad", "cliente_actual", "renovacion_pendiente"];
 
 function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 function rand(min: number, max: number): number { return Math.floor(Math.random() * (max - min + 1)) + min; }
@@ -58,301 +66,373 @@ function phone(country: string): string {
     const prefijos: Record<string, string> = { Spain: "+34", Mexico: "+52", Argentina: "+54", Colombia: "+57", Chile: "+56", Peru: "+51", Ecuador: "+593", Uruguay: "+598" };
     return `${prefijos[country] ?? "+34"} ${rand(600000000, 999999999)}`;
 }
-function daysAgo(d: number): string {
-    return new Date(Date.now() - d * 86400000).toISOString();
-}
-function daysFromNow(d: number): string {
-    return new Date(Date.now() + d * 86400000).toISOString();
-}
+function daysAgo(d: number): string { return new Date(Date.now() - d * 86400000).toISOString(); }
+function daysFromNow(d: number): string { return new Date(Date.now() + d * 86400000).toISOString(); }
 
-async function clearExistingDemo(tenantId: string) {
-    // limpia cualquier rastro previo para que el seed sea idempotente
+async function clearTenant(tenantId: string) {
     const tables = ["chat_messages", "conversaciones_whatsapp", "llamadas", "intentos_llamadas", "intentos", "notificaciones", "lead_cualificacion", "lead_programas", "agendamientos", "appointments", "lead", "campanas", "programas", "advisors", "voice_agents", "ai_agent_variants", "ai_agents"];
     for (const t of tables) {
         await admin.from(t).delete().eq("tenant_id", tenantId);
     }
 }
 
-async function main() {
-    console.log(`[seed-demo] Supabase: ${SUPABASE_URL}`);
-
-    // ---------- 1. Tenant ----------
-    console.log("[1] Tenant demo...");
-    let tenantId: string;
-    const { data: existingTenant } = await admin.from("tenants").select("id").eq("name", "Academia AF Demo").maybeSingle();
-    if (existingTenant) {
-        tenantId = existingTenant.id;
-        console.log(`    -> tenant existente: ${tenantId}`);
-        await clearExistingDemo(tenantId);
-    } else {
-        const { data, error } = await admin.from("tenants").insert({
-            name: "Academia AF Demo",
-            supabase_url: SUPABASE_URL,
-            supabase_anon_key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "demo-key",
-            client_email: DEMO_EMAIL,
-            config: { headers: [], dashboard_title: "Academia AF — Dashboard Demo", primary_color: "#4f46e5" },
-        }).select("id").single();
-        if (error) { console.error("    FAIL:", error.message); process.exit(1); }
-        tenantId = data.id;
-        console.log(`    -> tenant creado: ${tenantId}`);
+async function upsertTenant(nameKey: string, name: string, clientEmail: string, dashboardTitle: string): Promise<string> {
+    const { data: existing } = await admin.from("tenants").select("id").eq("name", name).maybeSingle();
+    if (existing) {
+        await clearTenant(existing.id);
+        return existing.id;
     }
+    const { data, error } = await admin.from("tenants").insert({
+        name,
+        supabase_url: SUPABASE_URL,
+        supabase_anon_key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "demo-key",
+        client_email: clientEmail,
+        config: { headers: [], dashboard_title: dashboardTitle, primary_color: "#4f46e5", demo_key: nameKey },
+    }).select("id").single();
+    if (error) { console.error(`FAIL tenant ${name}:`, error.message); process.exit(1); }
+    return data.id;
+}
 
-    // ---------- 2. Usuario admin ----------
-    console.log("[2] Usuario admin...");
-    const { data: userData, error: userErr } = await admin.auth.admin.createUser({
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
-        email_confirm: true,
-        user_metadata: { is_admin: true, tenant_id: tenantId, full_name: "Demo Admin" },
+async function ensureAuthUser(email: string, password: string, metadata: Record<string, unknown>): Promise<string | null> {
+    const { data: list } = await admin.auth.admin.listUsers();
+    const existing = list?.users?.find((u) => u.email === email);
+    if (existing) {
+        await admin.auth.admin.updateUserById(existing.id, { user_metadata: metadata });
+        return existing.id;
+    }
+    const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: metadata });
+    if (error) { console.error(`createUser ${email}:`, error.message); return null; }
+    return data?.user?.id ?? null;
+}
+
+// ============================================================
+// TENANT 1: AUTOMATIZA FORMACION (B2B — organizaciones)
+// ============================================================
+async function seedAutomatizaFormacion(): Promise<{ id: string; leadsCount: number }> {
+    console.log("\n========== TENANT 1: Automatiza Formación (B2B) ==========");
+
+    const tenantId = await upsertTenant("af", "Automatiza Formación", "beatriz@automatizaformacion.com", "Automatiza Formación — CRM Comercial");
+    console.log(`tenant_id: ${tenantId}`);
+
+    // Asignar al admin (Beatriz) — usuario auth principal del cliente
+    const beatrizId = await ensureAuthUser(DEMO_EMAIL, DEMO_PASSWORD!, {
+        is_admin: true,
+        tenant_id: tenantId,
+        full_name: "Beatriz",
     });
-    if (userErr && !userErr.message.toLowerCase().includes("already")) {
-        console.error("    FAIL:", userErr.message);
-    } else {
-        console.log(`    -> ${DEMO_EMAIL} (password en .env.local)`);
-        if (userData?.user?.id) {
-            await admin.from("tenants").update({ auth_user_id: userData.user.id }).eq("id", tenantId);
-        }
-    }
+    if (beatrizId) await admin.from("tenants").update({ auth_user_id: beatrizId }).eq("id", tenantId);
 
-    // ---------- 3. Advisors ----------
-    console.log("[3] Advisors...");
-    const { data: advisors } = await admin.from("advisors").insert(
-        ADVISORS_NOMBRES.map((n) => ({
-            tenant_id: tenantId,
-            name: n,
-            email: `${n.toLowerCase().replace(/\s+/g, ".")}@af.local`,
-            phone: phone("Spain"),
-            is_active: true,
-            origins: ["facebook_ads", "google_ads"],
-            campaigns: ["Q1 2026"],
-            countries: ["ES", "MX"],
-            courses: ["Master IA", "Bootcamp"],
-        }))
-    ).select("id, name");
-    console.log(`    -> ${advisors?.length ?? 0} advisors`);
-
-    // ---------- 4. Programas ----------
-    console.log("[4] Programas...");
-    const { data: programas } = await admin.from("programas").insert(
-        PROGRAMAS.map((p) => ({ tenant_id: tenantId, ...p, activo: true }))
-    ).select("id, name");
-    console.log(`    -> ${programas?.length ?? 0} programas`);
-
-    // ---------- 5. Campanas ----------
-    console.log("[5] Campanas...");
-    const campanas = [
-        { nombre: "Black Friday 2026", activa: true, fecha_inicio: daysAgo(15) },
-        { nombre: "Nuevo Curso IA", activa: true, fecha_inicio: daysAgo(30) },
-        { nombre: "Beca Latam 2026", activa: true, fecha_inicio: daysAgo(45) },
-        { nombre: "Open Day Marketing", activa: false, fecha_inicio: daysAgo(90) },
-    ];
-    const { data: campanasIns } = await admin.from("campanas").insert(campanas.map((c) => ({ tenant_id: tenantId, ...c }))).select("id, nombre");
-    console.log(`    -> ${campanasIns?.length ?? 0} campanas`);
-
-    // ---------- 6. AI Agents + Variants ----------
-    console.log("[6] AI Agents...");
-    const { data: aiAgents } = await admin.from("ai_agents").insert([
-        { tenant_id: tenantId, name: "Virginia (Cualificacion)", type: "QUALIFY", status: "ACTIVE", description: "Agente IA principal de cualificacion de leads" },
-        { tenant_id: tenantId, name: "Sofia (Followup)", type: "FOLLOWUP", status: "ACTIVE", description: "Agente IA de seguimiento post-llamada" },
+    // Advisors (equipo comercial interno de AF)
+    const { data: advisors } = await admin.from("advisors").insert([
+        { tenant_id: tenantId, name: "Beatriz CEO", email: "beatriz@automatizaformacion.com", phone: phone("Spain"), is_active: true, origins: ["evento_formativo"], campaigns: ["Q1 2026"], countries: ["ES"], courses: [] },
+        { tenant_id: tenantId, name: "Sergio Ventas", email: "sergio@automatizaformacion.com", phone: phone("Spain"), is_active: true, origins: ["linkedin_outreach"], campaigns: [], countries: ["ES", "MX"], courses: [] },
+        { tenant_id: tenantId, name: "Lucia Comercial Latam", email: "lucia@automatizaformacion.com", phone: phone("Mexico"), is_active: true, origins: ["referido_partner"], campaigns: [], countries: ["MX", "CO", "AR"], courses: [] },
     ]).select("id, name");
-    if (aiAgents && aiAgents.length > 0) {
+
+    // Programas / Servicios que ofrece AF a sus academias clientes
+    const { data: programas } = await admin.from("programas").insert([
+        { tenant_id: tenantId, name: "CRM + Workflow Orchestrator", category: "Producto SaaS", precio: 499, duracion_meses: 12, activo: true },
+        { tenant_id: tenantId, name: "Asistente IA Whatsapp", category: "Producto SaaS", precio: 199, duracion_meses: 12, activo: true },
+        { tenant_id: tenantId, name: "Onboarding + Setup Inicial", category: "Servicio", precio: 1200, duracion_meses: 1, activo: true },
+        { tenant_id: tenantId, name: "Consultoria Funnel", category: "Servicio", precio: 800, duracion_meses: 1, activo: true },
+    ]).select("id, name");
+
+    // Campanas comerciales B2B
+    const { data: campanas } = await admin.from("campanas").insert([
+        { tenant_id: tenantId, nombre: "Outbound LinkedIn Q1 2026", activa: true, fecha_inicio: daysAgo(30) },
+        { tenant_id: tenantId, nombre: "Inbound Web Demo Request", activa: true, fecha_inicio: daysAgo(60) },
+        { tenant_id: tenantId, nombre: "Feria Expoformacion 2026", activa: true, fecha_inicio: daysAgo(15) },
+        { tenant_id: tenantId, nombre: "Partner Referrals", activa: true, fecha_inicio: daysAgo(45) },
+    ]).select("id, nombre");
+
+    // AI Agents (Comercial IA de AF)
+    const { data: aiAgents } = await admin.from("ai_agents").insert([
+        { tenant_id: tenantId, name: "BDR Bot - Cualificacion B2B", type: "QUALIFY", status: "ACTIVE", description: "Cualifica academias prospect via web/whatsapp" },
+        { tenant_id: tenantId, name: "Onboarding Bot - Setup", type: "FOLLOWUP", status: "ACTIVE", description: "Acompaña en setup inicial de la plataforma" },
+    ]).select("id, name");
+    if (aiAgents) {
         await admin.from("ai_agent_variants").insert(aiAgents.map((a) => ({
-            agent_id: a.id,
-            tenant_id: tenantId,
-            version_label: "v1.0",
-            prompt_text: `Prompt placeholder para ${a.name}. EDITAR en Studio.`,
-            is_active: true,
-            model_provider: "openai",
-            model_name: "gpt-4.1-mini",
+            agent_id: a.id, tenant_id: tenantId, version_label: "v1.0",
+            prompt_text: `Prompt comercial B2B para ${a.name}. Sector: formacion ES+Latam.`,
+            is_active: true, model_provider: "anthropic", model_name: "claude-sonnet-4-7",
         })));
     }
-    console.log(`    -> ${aiAgents?.length ?? 0} AI agents + variants`);
 
-    // ---------- 7. Voice Agents ----------
-    console.log("[7] Voice Agents...");
-    const { data: voiceAgents } = await admin.from("voice_agents").insert([
-        { tenant_id: tenantId, name: "Maria (Voice Demo)", status: "ACTIVE", provider: "RETELL", provider_agent_id: "agent_demo_local", voice_id: "voice_demo", from_number: "+34900000001", prompt_text_retell: "Voice prompt placeholder. EDITAR en Studio." },
-    ]).select("id, name");
-    console.log(`    -> ${voiceAgents?.length ?? 0} voice agents`);
-
-    // ---------- 8. Leads (40) ----------
-    console.log("[8] Leads (40)...");
+    // ---------- LEADS B2B: organizaciones formativas ----------
     const advisorIds = (advisors ?? []).map((a) => a.id);
-    const leadsRaw = Array.from({ length: 40 }, (_, i) => {
+    const leads = NOMBRES_ORG.map((orgName, i) => {
+        const pais = i < 11 ? "Spain" : pick(["Mexico", "Colombia", "Argentina", "Chile"]);
+        const contactoNombre = pick(NOMBRES_PERSONA);
+        const contactoApellido = pick(APELLIDOS);
+        const tipoOrg = pick(TIPOS_ORG);
+        const numAlumnos = rand(150, 3500);
+        return {
+            tenant_id: tenantId,
+            id_lead_externo: `AF-ORG-${100 + i}`,
+            nombre: orgName,                     // nombre de la organizacion
+            apellido: `${contactoNombre} ${contactoApellido}`,  // contacto principal (campo aprovechado para B2B)
+            telefono: phone(pais),
+            email: `contacto@${orgName.toLowerCase().replace(/\s+/g, "")}.demo`,
+            pais,
+            tipo_lead: pick(TIPOS_LEAD_B2B),
+            origen: pick(ORIGENES_B2B),
+            campana: pick(campanas ?? [{ nombre: "Sin campana" }]).nombre,
+            status: pick(["PENDING", "CONTACTED", "QUALIFIED", "CLIENTE", "REJECTED"]),
+            is_ai_enabled: true,
+            advisor_id: advisorIds.length > 0 ? pick(advisorIds) : null,
+            metadata: {
+                lead_type: "organization",
+                organization_name: orgName,
+                tipo_organizacion: tipoOrg,
+                num_alumnos_anuales: numAlumnos,
+                num_empleados: rand(10, 200),
+                website: `https://${orgName.toLowerCase().replace(/\s+/g, "")}.demo`,
+                contact_person: {
+                    name: contactoNombre,
+                    surname: contactoApellido,
+                    role: pick(["CEO", "Director Comercial", "Responsable Marketing", "Director Academico", "Coordinador IT"]),
+                    email: `${contactoNombre.toLowerCase()}.${contactoApellido.toLowerCase()}@${orgName.toLowerCase().replace(/\s+/g, "")}.demo`,
+                    phone: phone(pais),
+                },
+                notas_internas: pick(["Interes confirmado en demo", "Necesita aprobacion direccion", "Cliente del competidor X", "Renovacion en 3 meses", "Decision Q2"]),
+            },
+            fecha_ingreso_crm: daysAgo(rand(0, 120)),
+        };
+    });
+    const { data: leadsInserted, error: leadsErr } = await admin.from("lead").insert(leads).select("id");
+    if (leadsErr) { console.error("FAIL leads B2B:", leadsErr.message); }
+    const leadsCount = leadsInserted?.length ?? 0;
+    console.log(`  ${leadsCount} organizaciones + contactos`);
+
+    if (leadsInserted && leadsInserted.length > 0) {
+        // Cualificaciones B2B
+        await admin.from("lead_cualificacion").insert(leadsInserted.slice(0, 12).map((l) => ({
+            tenant_id: tenantId, id_lead: l.id,
+            cualificacion: pick(["CUALIFICADO", "NO_CUALIFICADO", "PENDIENTE"]),
+            motivo_anulacion: null,
+            anios_experiencia: rand(2, 25),
+            nivel_estudios: pick(["empresa_consolidada", "startup", "scaleup", "centenaria"]),
+        })));
+
+        // Llamadas comerciales
+        await admin.from("llamadas").insert(leadsInserted.slice(0, 10).flatMap((l, i) => Array.from({ length: rand(1, 3) }, () => ({
+            tenant_id: tenantId, id_lead: l.id,
+            id_llamada_retell: `af_call_${i}_${Math.random().toString(36).slice(2, 8)}`,
+            tipo_agente: pick(["humano", "ia"]),
+            nombre_agente: pick(["Beatriz CEO", "Sergio Ventas", "Lucia Comercial Latam", "BDR Bot - Cualificacion B2B"]),
+            estado_llamada: pick(["completada", "no_contestada", "buzon"]),
+            razon_termino: pick(["demo_agendada", "info_enviada", "no_interes_actual", "decision_pendiente"]),
+            fecha_inicio: daysAgo(rand(0, 60)),
+            duracion_segundos: rand(180, 1800),
+            url_grabacion: `https://demo-recordings.local/af_${Math.random().toString(36).slice(2, 8)}.mp3`,
+            resumen: pick(["Demo agendada para semana siguiente", "Pendiente confirmacion direccion", "Cliente solicita propuesta personalizada", "Comparativa con competidor en marcha"]),
+        }))));
+
+        // Citas (demos comerciales)
+        const ags = leadsInserted.slice(0, 8).map((l, i) => ({
+            tenant_id: tenantId, id_lead: l.id,
+            advisor_id: advisorIds.length > 0 ? pick(advisorIds) : null,
+            fecha_agendada_cliente: i < 4 ? daysFromNow(rand(1, 21)) : daysAgo(rand(1, 30)),
+            fecha_agendada_lead: i < 4 ? daysFromNow(rand(1, 21)) : daysAgo(rand(1, 30)),
+            confirmado: i < 4 ? Math.random() > 0.3 : true,
+            meeting_link: `https://meet.google.com/af-demo-${Math.random().toString(36).slice(2, 8)}`,
+            notas: pick(["Demo plataforma 30 min", "Propuesta comercial", "Onboarding kickoff", "Renovacion contrato"]),
+        }));
+        await admin.from("agendamientos").insert(ags);
+
+        // Notificaciones internas
+        await admin.from("notificaciones").insert(leadsInserted.slice(0, 8).map((l) => ({
+            tenant_id: tenantId, id_lead: l.id,
+            tipo: pick(["demo_proxima", "renovacion_pendiente", "lead_calificado", "propuesta_enviada"]),
+            titulo: pick(["Demo programada hoy", "Renovacion en 30 dias", "Nuevo lead cualificado", "Propuesta lista para revision"]),
+            mensaje: "Notificacion demo del CRM de Automatiza Formacion",
+            leida: Math.random() > 0.4,
+        })));
+    }
+
+    return { id: tenantId, leadsCount };
+}
+
+// ============================================================
+// TENANT 2: DEMO - ACADEMIA AF (B2C — leads tipicos para sandbox)
+// ============================================================
+async function seedDemoAcademia(): Promise<{ id: string; leadsCount: number }> {
+    console.log("\n========== TENANT 2: Demo - Academia AF (B2C sandbox) ==========");
+
+    // Si existia "Academia AF Demo" lo renombramos
+    const { data: oldDemo } = await admin.from("tenants").select("id").eq("name", "Academia AF Demo").maybeSingle();
+    if (oldDemo) {
+        await admin.from("tenants").update({ name: "Demo - Academia AF" }).eq("id", oldDemo.id);
+    }
+
+    const tenantId = await upsertTenant("demo", "Demo - Academia AF", "demo@af.local", "Demo - Academia AF (sandbox)");
+    console.log(`tenant_id: ${tenantId}`);
+
+    const { data: advisors } = await admin.from("advisors").insert([
+        { tenant_id: tenantId, name: "Patricia Asesor", email: "patricia@af.local", phone: phone("Spain"), is_active: true, origins: ["facebook_ads"], campaigns: ["Q1 2026"], countries: ["ES"], courses: [] },
+        { tenant_id: tenantId, name: "Carlos Asesor", email: "carlos@af.local", phone: phone("Spain"), is_active: true, origins: ["google_ads"], campaigns: [], countries: ["ES", "MX"], courses: [] },
+        { tenant_id: tenantId, name: "Maria Asesor", email: "maria@af.local", phone: phone("Mexico"), is_active: true, origins: ["instagram_ads"], campaigns: [], countries: ["MX", "CO"], courses: [] },
+        { tenant_id: tenantId, name: "Javier Asesor", email: "javier@af.local", phone: phone("Argentina"), is_active: true, origins: ["referido"], campaigns: [], countries: ["AR", "CL"], courses: [] },
+    ]).select("id");
+
+    const { data: programas } = await admin.from("programas").insert([
+        { tenant_id: tenantId, name: "Master IA Aplicada", category: "Tecnologia", precio: 4900, duracion_meses: 9, activo: true },
+        { tenant_id: tenantId, name: "Bootcamp Full-Stack Developer", category: "Desarrollo", precio: 3500, duracion_meses: 6, activo: true },
+        { tenant_id: tenantId, name: "Curso Marketing Digital", category: "Marketing", precio: 1200, duracion_meses: 3, activo: true },
+        { tenant_id: tenantId, name: "Master Ciencia de Datos", category: "Tecnologia", precio: 5500, duracion_meses: 10, activo: true },
+        { tenant_id: tenantId, name: "Programa Cybersecurity", category: "Seguridad", precio: 4200, duracion_meses: 8, activo: true },
+        { tenant_id: tenantId, name: "Diploma UX/UI Design", category: "Diseño", precio: 2800, duracion_meses: 5, activo: true },
+    ]).select("id");
+
+    const { data: campanas } = await admin.from("campanas").insert([
+        { tenant_id: tenantId, nombre: "Black Friday 2026", activa: true, fecha_inicio: daysAgo(15) },
+        { tenant_id: tenantId, nombre: "Nuevo Curso IA", activa: true, fecha_inicio: daysAgo(30) },
+        { tenant_id: tenantId, nombre: "Beca Latam 2026", activa: true, fecha_inicio: daysAgo(45) },
+        { tenant_id: tenantId, nombre: "Open Day Marketing", activa: false, fecha_inicio: daysAgo(90) },
+    ]).select("id, nombre");
+
+    const { data: aiAgents } = await admin.from("ai_agents").insert([
+        { tenant_id: tenantId, name: "Virginia (Cualificacion)", type: "QUALIFY", status: "ACTIVE", description: "Cualifica leads de programas formativos" },
+        { tenant_id: tenantId, name: "Sofia (Followup)", type: "FOLLOWUP", status: "ACTIVE", description: "Seguimiento post-llamada" },
+    ]).select("id, name");
+    if (aiAgents) {
+        await admin.from("ai_agent_variants").insert(aiAgents.map((a) => ({
+            agent_id: a.id, tenant_id: tenantId, version_label: "v1.0",
+            prompt_text: `Placeholder prompt para ${a.name}.`,
+            is_active: true, model_provider: "openai", model_name: "gpt-4.1-mini",
+        })));
+    }
+
+    await admin.from("voice_agents").insert([{
+        tenant_id: tenantId, name: "Maria (Voice Demo)", status: "ACTIVE", provider: "RETELL",
+        provider_agent_id: "agent_demo_local", voice_id: "voice_demo", from_number: "+34900000001",
+        prompt_text_retell: "Voice prompt demo placeholder.",
+    }]);
+
+    // Leads B2C (personas)
+    const advisorIds = (advisors ?? []).map((a) => a.id);
+    const leads = Array.from({ length: 40 }, (_, i) => {
         const pais = pick(PAISES);
-        const nombre = pick(NOMBRES);
+        const nombre = pick(NOMBRES_PERSONA);
         const apellido = pick(APELLIDOS);
         return {
             tenant_id: tenantId,
             id_lead_externo: `DEMO-${1000 + i}`,
-            nombre,
-            apellido,
+            nombre, apellido,
             telefono: phone(pais),
             email: `${nombre.toLowerCase()}.${apellido.toLowerCase()}.${i}@demo.af.local`,
             pais,
-            tipo_lead: pick(TIPOS_LEAD),
+            tipo_lead: pick(TIPOS_LEAD_B2C),
             origen: pick(ORIGENES),
-            campana: pick(campanas).nombre,
-            status: pick(STATUS_LEAD),
+            campana: pick(campanas ?? [{ nombre: "Sin campana" }]).nombre,
+            status: pick(["PENDING", "CONTACTED", "QUALIFIED", "ENROLLED", "REJECTED"]),
             is_ai_enabled: Math.random() > 0.2,
             advisor_id: advisorIds.length > 0 && Math.random() > 0.3 ? pick(advisorIds) : null,
-            metadata: { USER_NAME: nombre, demo: true },
+            metadata: { lead_type: "person", USER_NAME: nombre, demo: true },
             fecha_ingreso_crm: daysAgo(rand(0, 90)),
         };
     });
-    const { data: leads, error: leadsErr } = await admin.from("lead").insert(leadsRaw).select("id");
-    if (leadsErr) { console.error("    FAIL:", leadsErr.message); }
-    console.log(`    -> ${leads?.length ?? 0} leads`);
+    const { data: leadsInserted } = await admin.from("lead").insert(leads).select("id");
+    const leadsCount = leadsInserted?.length ?? 0;
+    console.log(`  ${leadsCount} leads (personas)`);
 
-    if (!leads || leads.length === 0) {
-        console.log("[seed-demo] Sin leads, terminando.");
-        process.exit(0);
-    }
+    if (!leadsInserted || leadsInserted.length === 0) return { id: tenantId, leadsCount: 0 };
 
-    // ---------- 9. Lead-Programas (relacion) ----------
-    if (programas && programas.length > 0) {
-        console.log("[9] Lead-Programas...");
-        const lp = leads.slice(0, 25).map((l) => ({
-            tenant_id: tenantId,
-            id_lead: l.id,
-            id_programa: pick(programas).id,
+    // Lead-programas
+    if (programas) {
+        await admin.from("lead_programas").insert(leadsInserted.slice(0, 25).map((l) => ({
+            tenant_id: tenantId, id_lead: l.id, id_programa: pick(programas).id,
             estado: pick(["INTERESADO", "INSCRITO", "MATRICULADO", "DESCARTADO"]),
-        }));
-        await admin.from("lead_programas").insert(lp);
-        console.log(`    -> ${lp.length} relaciones lead-programa`);
+        })));
     }
 
-    // ---------- 10. Lead Cualificacion ----------
-    console.log("[10] Cualificaciones...");
-    const cualifs = leads.slice(0, 30).map((l) => {
+    // Cualificaciones
+    await admin.from("lead_cualificacion").insert(leadsInserted.slice(0, 30).map((l) => {
         const cualif = pick(["CUALIFICADO", "NO_CUALIFICADO", "PENDIENTE", "SI", "NO"]);
         return {
-            tenant_id: tenantId,
-            id_lead: l.id,
-            cualificacion: cualif,
+            tenant_id: tenantId, id_lead: l.id, cualificacion: cualif,
             motivo_anulacion: cualif === "NO" || cualif === "NO_CUALIFICADO"
                 ? pick(["No interesado", "Sin presupuesto", "Lead duplicado", "No contesta", "Fuera de target"])
                 : null,
             anios_experiencia: rand(0, 15),
             nivel_estudios: pick(["secundaria", "bachillerato", "fp", "grado", "master", "doctorado"]),
         };
-    });
-    await admin.from("lead_cualificacion").insert(cualifs);
-    console.log(`    -> ${cualifs.length} cualificaciones`);
+    }));
 
-    // ---------- 11. Llamadas ----------
-    console.log("[11] Llamadas...");
-    const llamadas = leads.slice(0, 30).flatMap((l, i) => Array.from({ length: rand(1, 3) }, () => ({
-        tenant_id: tenantId,
-        id_lead: l.id,
+    // Llamadas
+    await admin.from("llamadas").insert(leadsInserted.slice(0, 30).flatMap((l, i) => Array.from({ length: rand(1, 3) }, () => ({
+        tenant_id: tenantId, id_lead: l.id,
         id_llamada_retell: `call_demo_${i}_${Math.random().toString(36).slice(2, 8)}`,
         tipo_agente: pick(["ia", "humano"]),
-        nombre_agente: pick(["Virginia IA", ...ADVISORS_NOMBRES]),
+        nombre_agente: pick(["Virginia IA", "Patricia Asesor", "Carlos Asesor"]),
         estado_llamada: pick(["completada", "no_contestada", "buzon", "rechazada", "en_curso"]),
         razon_termino: pick(["finalizada_ok", "no_contesta", "rechaza", "buzon_voz", "agendamiento"]),
         fecha_inicio: daysAgo(rand(0, 30)),
         duracion_segundos: rand(15, 600),
         url_grabacion: `https://demo-recordings.local/call_${Math.random().toString(36).slice(2, 8)}.mp3`,
-        transcripcion: pick([
-            "Lead: Hola, me interesa el master de IA. Agente: Perfecto, le envio info.",
-            "Lead: No tengo presupuesto. Agente: Tenemos planes de financiacion.",
-            "Lead: Cuando empieza? Agente: La proxima convocatoria es en septiembre.",
-        ]),
-        resumen: pick(["Interesado en master IA", "Pidio info de becas", "Lead frio, no contesta", "Agendamiento confirmado"]),
-    })));
-    await admin.from("llamadas").insert(llamadas);
-    console.log(`    -> ${llamadas.length} llamadas`);
+        resumen: pick(["Interesado en master IA", "Pidio info de becas", "Lead frio", "Agendamiento confirmado"]),
+    }))));
 
-    // ---------- 12. Conversaciones WhatsApp + Messages ----------
-    console.log("[12] Conversaciones WhatsApp...");
-    const conversaciones = leads.slice(0, 20).map((l) => ({
-        tenant_id: tenantId,
-        id_lead: l.id,
+    // WhatsApp
+    await admin.from("conversaciones_whatsapp").insert(leadsInserted.slice(0, 20).map((l) => ({
+        tenant_id: tenantId, id_lead: l.id,
         id_conversacion_chatwoot: `cw_${Math.random().toString(36).slice(2, 10)}`,
         opt_in_whatsapp: Math.random() > 0.2,
         estado: pick(["ACTIVA", "CERRADA", "PENDIENTE"]),
         fecha_ultimo_mensaje: daysAgo(rand(0, 5)),
-    }));
-    await admin.from("conversaciones_whatsapp").insert(conversaciones);
+    })));
+    await admin.from("chat_messages").insert(leadsInserted.slice(0, 20).flatMap((l) => Array.from({ length: rand(3, 8) }, (_, i) => ({
+        tenant_id: tenantId, lead_id: l.id,
+        direction: i % 2 === 0 ? "INBOUND" : "OUTBOUND",
+        message_type: "TEXT",
+        content: pick(["Hola, me interesa el master de IA", "¿Cual es el precio?", "¿Hay becas?", "Si, agendemos una llamada", "¿Cuando empieza?"]),
+        sent_by: i % 2 === 0 ? "Lead" : "Virginia IA",
+        status: "DELIVERED",
+        created_at: daysAgo(rand(0, 30)),
+    }))));
 
-    // Y chat_messages (whatsapp inbox)
-    const messages = leads.slice(0, 20).flatMap((l) => {
-        const numMessages = rand(3, 8);
-        return Array.from({ length: numMessages }, (_, i) => ({
-            tenant_id: tenantId,
-            lead_id: l.id,
-            direction: i % 2 === 0 ? "INBOUND" : "OUTBOUND",
-            message_type: "TEXT",
-            content: pick([
-                "Hola, me interesa el master de IA",
-                "¿Cual es el precio?",
-                "¿Hay becas disponibles?",
-                "Gracias por la informacion",
-                "Si, me gustaria agendar una llamada",
-                "¿Cuando empieza el siguiente curso?",
-                "Perfecto, hablamos manana",
-                "¿Me podrias mandar el temario?",
-            ]),
-            sent_by: i % 2 === 0 ? "Lead" : pick(["Virginia IA", "Patricia Asesor"]),
-            status: "DELIVERED",
-            created_at: daysAgo(rand(0, 30)),
-        }));
-    });
-    await admin.from("chat_messages").insert(messages);
-    console.log(`    -> ${conversaciones.length} conversaciones, ${messages.length} mensajes`);
-
-    // ---------- 13. Citas (agendamientos en es; appointments espejo) ----------
-    console.log("[13] Citas...");
-    const agendamientos = leads.slice(0, 12).map((l, i) => {
+    // Citas
+    await admin.from("agendamientos").insert(leadsInserted.slice(0, 12).map((l, i) => {
         const fecha = i < 6 ? daysFromNow(rand(1, 14)) : daysAgo(rand(1, 30));
         return {
-            tenant_id: tenantId,
-            id_lead: l.id,
+            tenant_id: tenantId, id_lead: l.id,
             advisor_id: advisorIds.length > 0 ? pick(advisorIds) : null,
-            fecha_agendada_cliente: fecha,
-            fecha_agendada_lead: fecha,
+            fecha_agendada_cliente: fecha, fecha_agendada_lead: fecha,
             confirmado: i < 6 ? Math.random() > 0.3 : true,
             meeting_link: `https://meet.google.com/demo-${Math.random().toString(36).slice(2, 8)}`,
-            notas: pick(["Primera llamada de info", "Revision de programa", "Cierre venta", "Followup post-demo"]),
+            notas: pick(["Primera llamada de info", "Revision de programa", "Cierre venta", "Followup"]),
         };
-    });
-    await admin.from("agendamientos").insert(agendamientos);
-    // Espejo en appointments (algunas vistas usan este nombre)
-    const appointments = agendamientos.map((a) => ({
-        tenant_id: a.tenant_id, lead_id: a.id_lead, advisor_id: a.advisor_id,
-        scheduled_at: a.fecha_agendada_cliente, duration_minutes: 30,
-        status: a.confirmado ? "SCHEDULED" : "PENDING",
-        meeting_link: a.meeting_link, notes: a.notas,
     }));
-    await admin.from("appointments").insert(appointments);
-    console.log(`    -> ${agendamientos.length} citas (agendamientos + appointments)`);
 
-    // ---------- 14. Notificaciones ----------
-    console.log("[14] Notificaciones...");
-    const notifs = leads.slice(0, 15).map((l) => ({
-        tenant_id: tenantId,
-        id_lead: l.id,
+    // Notificaciones
+    await admin.from("notificaciones").insert(leadsInserted.slice(0, 15).map((l) => ({
+        tenant_id: tenantId, id_lead: l.id,
         tipo: pick(["nuevo_lead", "llamada_perdida", "cita_proxima", "tarea_pendiente"]),
         titulo: pick(["Nuevo lead asignado", "Llamada perdida", "Cita en 1 hora", "Tarea pendiente"]),
-        mensaje: "Notificacion demo generada por seed-demo.ts",
+        mensaje: "Notificacion demo del sandbox",
         leida: Math.random() > 0.5,
-    }));
-    await admin.from("notificaciones").insert(notifs);
-    console.log(`    -> ${notifs.length} notificaciones`);
+    })));
 
-    // ---------- Resumen ----------
-    console.log("\n========================================");
-    console.log("Seed COMPLETADO");
-    console.log("========================================");
-    console.log(`  Tenant:   ${tenantId}`);
-    console.log(`  Login:    ${DEMO_EMAIL}`);
-    console.log(`  Password: en .env.local (DEMO_USER_PASSWORD)`);
-    console.log(`  App URL:  http://localhost:8000`);
-    console.log(`  Studio:   http://localhost:8300`);
-    console.log("========================================");
+    return { id: tenantId, leadsCount };
 }
 
-main().catch((err) => {
-    console.error("[seed-demo] error inesperado:", err);
-    process.exit(1);
-});
+async function main() {
+    console.log(`[seed-demo] Supabase: ${SUPABASE_URL}`);
+
+    const af = await seedAutomatizaFormacion();
+    const demo = await seedDemoAcademia();
+
+    console.log("\n=====================================================");
+    console.log("SEED COMPLETADO — 2 tenants");
+    console.log("=====================================================");
+    console.log(`[1] Automatiza Formación  (B2B) ${af.leadsCount} organizaciones   id=${af.id}`);
+    console.log(`[2] Demo - Academia AF    (B2C) ${demo.leadsCount} personas       id=${demo.id}`);
+    console.log("");
+    console.log(`Login admin: ${DEMO_EMAIL}  (password en .env.local DEMO_USER_PASSWORD)`);
+    console.log(`  full_name: Beatriz   tenant default: Automatiza Formación`);
+    console.log("App URL:     http://localhost:8050");
+    console.log("Studio URL:  http://localhost:8300");
+    console.log("=====================================================\n");
+}
+
+main().catch((err) => { console.error("[seed-demo] error:", err); process.exit(1); });

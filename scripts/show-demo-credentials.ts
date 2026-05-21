@@ -28,9 +28,11 @@ function genPassword(): string {
 
 async function main() {
     // ---------- Buscar tenant demo ----------
-    const { data: tenant } = await admin.from("tenants").select("id, name").eq("name", "Academia AF Demo").single();
-    if (!tenant) { console.error("No existe tenant demo. Ejecuta npm run db:seed-demo primero."); process.exit(1); }
-    const tenantId = tenant.id;
+    // Prioriza el tenant 'Automatiza Formación' (cliente principal); fallback a 'Demo - Academia AF'
+    const { data: tenants } = await admin.from("tenants").select("id, name").in("name", ["Automatiza Formación", "Demo - Academia AF"]);
+    if (!tenants || tenants.length === 0) { console.error("No existen tenants demo. Ejecuta npm run db:seed-demo primero."); process.exit(1); }
+    const main = tenants.find((t) => t.name === "Automatiza Formación") ?? tenants[0];
+    const tenantId = main.id;
 
     // ---------- Usuario NO-admin (viewer) ----------
     const viewerEmail = "viewer@af.local";
