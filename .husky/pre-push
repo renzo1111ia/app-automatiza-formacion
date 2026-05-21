@@ -52,7 +52,7 @@ if [ -n "$base" ]; then
   else
     echo "[pre-push] Linteando archivos cambiados:"
     echo "$changed_files" | sed 's/^/  - /'
-    echo "$changed_files" | tr '\n' '\0' | xargs -0 npx eslint --max-warnings=0
+    echo "$changed_files" | tr '\n' '\0' | xargs -0 npx eslint --max-warnings=0 --no-warn-ignored
   fi
 fi
 
