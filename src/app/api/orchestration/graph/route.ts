@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- casts legacy Supabase, refactor pendiente en Sprint 1 tarea 2-22 */
 import { NextResponse } from "next/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { requireApiUser, requireTenantAccess } from "@/lib/api-auth";
 
 /**
  * API: GET ORCHESTRATION GRAPH (v2.0 - Workflow Aware)
@@ -7,33 +9,41 @@ import { getAdminSupabaseClient } from "@/lib/supabase/server";
  */
 
 export async function GET(req: Request) {
-    try {
-        const { searchParams } = new URL(req.url);
-        const workflowId = searchParams.get("workflowId");
+  try {
+    const ctx = await requireApiUser();
+    if (ctx instanceof NextResponse) return ctx;
 
-        if (!workflowId) {
-            return NextResponse.json({ error: "Falta el workflowId" }, { status: 400 });
-        }
+    const { searchParams } = new URL(req.url);
+    const workflowId = searchParams.get("workflowId");
 
-        const supabase = await getAdminSupabaseClient();
-
-        const { data, error } = await (supabase
-            .from("orchestration_graphs" as any) as any)
-            .select("*")
-            .eq("workflow_id", workflowId)
-            .single();
-
-        if (error && error.code !== 'PGRST116') { // PGRST116: no rows found
-            console.error("[API_GET_GRAPH] Error de Supabase:", error);
-            throw error;
-        }
-
-        // Return empty graph if none exists
-        return NextResponse.json(data || { graph_data: { nodes: [], edges: [] } });
-
-    } catch (error: unknown) {
-        const err = error as { message: string };
-        console.error("[API_GET_GRAPH] Error crítico:", err.message);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    if (!workflowId) {
+      return NextResponse.json({ error: "Falta el workflowId" }, { status: 400 });
     }
+
+    const supabase = await getAdminSupabaseClient();
+
+    const { data, error } = await (supabase.from("orchestration_graphs" as any) as any)
+      .select("*")
+      .eq("workflow_id", workflowId)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      // PGRST116: no rows found
+      console.error("[API_GET_GRAPH] Error de Supabase:", error);
+      throw error;
+    }
+
+    // Verify ownership: the row (if exists) must belong to a tenant the user controls.
+    if (data && (data as { tenant_id?: string }).tenant_id) {
+      const tenantGuard = await requireTenantAccess(ctx, (data as { tenant_id: string }).tenant_id);
+      if (tenantGuard) return tenantGuard;
+    }
+
+    // Return empty graph if none exists
+    return NextResponse.json(data || { graph_data: { nodes: [], edges: [] } });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    console.error("[API_GET_GRAPH] Error crítico:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

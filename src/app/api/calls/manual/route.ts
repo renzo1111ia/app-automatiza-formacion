@@ -3,11 +3,12 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { retellBridge, RetellConfig } from "@/lib/integrations/retell";
 import { z } from "zod";
 import { Tenant } from "@/types/tenant";
+import { requireApiUser, requireTenantAccess, requireOrchestrationEnabled } from "@/lib/api-auth";
 
 const callSchema = z.object({
-    phoneNumber: z.string().min(8),
-    agentId: z.string().optional(),
-    tenantId: z.string().uuid()
+  phoneNumber: z.string().min(8),
+  agentId: z.string().optional(),
+  tenantId: z.string().uuid(),
 });
 
 /**
@@ -16,52 +17,64 @@ const callSchema = z.object({
  */
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const { phoneNumber, agentId, tenantId } = callSchema.parse(body);
+  try {
+    const ctx = await requireApiUser();
+    if (ctx instanceof NextResponse) return ctx;
 
-        const supabase = await getSupabaseServerClient();
+    const body = await req.json();
+    const { phoneNumber, agentId, tenantId } = callSchema.parse(body);
 
-        // 1. Fetch Tenant Config (API Keys)
-        const { data: tenant, error: tenantError } = await supabase
-            .from("tenants")
-            .select("*")
-            .eq("id", tenantId)
-            .single();
+    const tenantGuard = await requireTenantAccess(ctx, tenantId);
+    if (tenantGuard) return tenantGuard;
 
-        if (tenantError || !tenant) {
-            return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
-        }
+    const orchGuard = await requireOrchestrationEnabled(tenantId);
+    if (orchGuard) return orchGuard;
 
-        const tenantData = tenant as unknown as Tenant;
-        const config = (tenantData.config || {}) as Record<string, unknown>;
-        const retell = (config.retell || {}) as Record<string, unknown>;
-        
-        const apiKey = typeof retell.apiKey === "string" ? retell.apiKey : "";
-        const targetAgentId = agentId || (typeof retell.qualifyAgentId === "string" ? retell.qualifyAgentId : "");
-        const fromNumber = typeof retell.fromNumber === "string" ? retell.fromNumber : "";
+    const supabase = await getSupabaseServerClient();
 
-        const retellConfig: RetellConfig = { apiKey };
+    // 1. Fetch Tenant Config (API Keys)
+    const { data: tenant, error: tenantError } = await supabase
+      .from("tenants")
+      .select("*")
+      .eq("id", tenantId)
+      .single();
 
-        if (!retellConfig.apiKey || !targetAgentId || !fromNumber) {
-            return NextResponse.json({ error: "Retell configuration incomplete for this tenant" }, { status: 400 });
-        }
-
-        // 2. Trigger Call via Bridge
-        const callData = await retellBridge.createCall(
-            phoneNumber,
-            targetAgentId,
-            fromNumber,
-            { source: "manual_dialer", tenant_id: tenantId },
-            {}, // No dynamic variables for manual call
-            retellConfig
-        );
-
-        return NextResponse.json({ success: true, callId: callData.call_id });
-
-    } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "An unknown error occurred";
-        console.error("[API_MANUAL_CALL] Error:", msg);
-        return NextResponse.json({ error: msg }, { status: 500 });
+    if (tenantError || !tenant) {
+      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
+
+    const tenantData = tenant as unknown as Tenant;
+    const config = (tenantData.config || {}) as Record<string, unknown>;
+    const retell = (config.retell || {}) as Record<string, unknown>;
+
+    const apiKey = typeof retell.apiKey === "string" ? retell.apiKey : "";
+    const targetAgentId =
+      agentId || (typeof retell.qualifyAgentId === "string" ? retell.qualifyAgentId : "");
+    const fromNumber = typeof retell.fromNumber === "string" ? retell.fromNumber : "";
+
+    const retellConfig: RetellConfig = { apiKey };
+
+    if (!retellConfig.apiKey || !targetAgentId || !fromNumber) {
+      return NextResponse.json(
+        { error: "Retell configuration incomplete for this tenant" },
+        { status: 400 }
+      );
+    }
+
+    // 2. Trigger Call via Bridge
+    const callData = await retellBridge.createCall(
+      phoneNumber,
+      targetAgentId,
+      fromNumber,
+      { source: "manual_dialer", tenant_id: tenantId },
+      {}, // No dynamic variables for manual call
+      retellConfig
+    );
+
+    return NextResponse.json({ success: true, callId: callData.call_id });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("[API_MANUAL_CALL] Error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }

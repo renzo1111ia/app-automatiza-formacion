@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { requireApiAdmin, requireApiUser } from "@/lib/api-auth";
 
 /**
  * POST /api/tenant/migrate
@@ -242,74 +243,84 @@ CREATE POLICY IF NOT EXISTS "service_role_all_chat_messages" ON chat_messages FO
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(req: NextRequest) {
-    try {
-        const cookieStore = await cookies();
-        const tenantUrl = cookieStore.get("esden-tenant-url")?.value;
-        const tenantKey = cookieStore.get("esden-tenant-key")?.value;
-        const tenantName = cookieStore.get("esden-tenant-name")?.value;
+  try {
+    // Sprint 0 tarea 1-11: usuarios autenticados solamente (SSRF restante en 1-22).
+    const ctx = await requireApiUser();
+    if (ctx instanceof NextResponse) return ctx;
 
-        if (!tenantUrl || !tenantKey) {
-            return NextResponse.json({
-                success: false,
-                error: "No hay un tenant activo seleccionado. Por favor selecciona un cliente primero."
-            }, { status: 400 });
-        }
+    const cookieStore = await cookies();
+    const tenantUrl = cookieStore.get("esden-tenant-url")?.value;
+    const tenantKey = cookieStore.get("esden-tenant-key")?.value;
+    const tenantName = cookieStore.get("esden-tenant-name")?.value;
 
-        // Connect to the TENANT's own Supabase using their service role key
-        const supabase = createClient(tenantUrl, tenantKey);
-
-        // Execute the migration via RPC or direct SQL
-        // Supabase JS doesn't support raw SQL directly — but we can use the REST API
-        const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
-            method: "POST",
-            headers: {
-                "apikey": tenantKey,
-                "Authorization": `Bearer ${tenantKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sql: MIGRATION_SQL }),
-        });
-
-        // If exec_sql doesn't exist, try using pg_dump alternative via supabase management API
-        if (!response.ok) {
-            // Fallback: run table creation one by one using the JS client
-            // We'll test with a simple table check
-            const { error: testError } = await supabase
-                .from("tenant_orchestrator_config")
-                .select("id")
-                .limit(1);
-
-            if (testError && testError.message.includes("does not exist")) {
-                return NextResponse.json({
-                    success: false,
-                    needsManualMigration: true,
-                    sql: MIGRATION_SQL,
-                    error: "Las tablas no existen aún. Ejecuta el SQL proporcionado en el editor SQL de Supabase de este cliente.",
-                    tenant: tenantName
-                });
-            }
-
-            // Tables already exist
-            return NextResponse.json({
-                success: true,
-                message: `Tablas verificadas correctamente en ${tenantName || tenantUrl}.`,
-                alreadyExists: true
-            });
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: `✅ Migración completada en Supabase de "${tenantName}". Todas las tablas del orquestador fueron creadas.`,
-            tenant: tenantName
-        });
-
-    } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "Error desconocido";
-        return NextResponse.json({ success: false, error: msg }, { status: 500 });
+    if (!tenantUrl || !tenantKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No hay un tenant activo seleccionado. Por favor selecciona un cliente primero.",
+        },
+        { status: 400 }
+      );
     }
+
+    // Connect to the TENANT's own Supabase using their service role key
+    const supabase = createClient(tenantUrl, tenantKey);
+
+    // Execute the migration via RPC or direct SQL
+    // Supabase JS doesn't support raw SQL directly — but we can use the REST API
+    const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
+      method: "POST",
+      headers: {
+        apikey: tenantKey,
+        Authorization: `Bearer ${tenantKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sql: MIGRATION_SQL }),
+    });
+
+    // If exec_sql doesn't exist, try using pg_dump alternative via supabase management API
+    if (!response.ok) {
+      // Fallback: run table creation one by one using the JS client
+      // We'll test with a simple table check
+      const { error: testError } = await supabase
+        .from("tenant_orchestrator_config")
+        .select("id")
+        .limit(1);
+
+      if (testError && testError.message.includes("does not exist")) {
+        return NextResponse.json({
+          success: false,
+          needsManualMigration: true,
+          sql: MIGRATION_SQL,
+          error:
+            "Las tablas no existen aún. Ejecuta el SQL proporcionado en el editor SQL de Supabase de este cliente.",
+          tenant: tenantName,
+        });
+      }
+
+      // Tables already exist
+      return NextResponse.json({
+        success: true,
+        message: `Tablas verificadas correctamente en ${tenantName || tenantUrl}.`,
+        alreadyExists: true,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `✅ Migración completada en Supabase de "${tenantName}". Todas las tablas del orquestador fueron creadas.`,
+      tenant: tenantName,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
 }
 
 export async function GET() {
-    // Return migration SQL for manual execution
-    return NextResponse.json({ sql: MIGRATION_SQL });
+  // Sprint 0 tarea 1-11: el GET devolvía el MIGRATION_SQL completo a cualquier
+  // anónimo (info disclosure DA-2-003). Ahora exige rol admin.
+  const ctx = await requireApiAdmin();
+  if (ctx instanceof NextResponse) return ctx;
+  return NextResponse.json({ sql: MIGRATION_SQL });
 }
