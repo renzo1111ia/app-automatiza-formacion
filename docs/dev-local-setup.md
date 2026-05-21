@@ -15,7 +15,16 @@ Levanta el dashboard en local con Supabase self-hosted (Docker) + Redis + datos 
 - **npm** 10.x
 - **Docker Desktop** corriendo
 - ~3 GB libres en disco (imagenes Supabase)
-- Puertos libres: 54321, 54322, 54323, 54324, 6379, 3000
+- Puertos libres del rango **8050-8500** (todo el proyecto vive en ese rango):
+  - `8050` Next.js dev server
+  - `8100` Supabase API + Storage S3
+  - `8200` Supabase Postgres
+  - `8290` shadow DB
+  - `8295` DB pooler
+  - `8300` Supabase Studio
+  - `8350` Analytics (logflare)
+  - `8400` Mailpit (inbucket / mail server local)
+  - `8500` Redis (BullMQ)
 
 ## 2. Primer arranque
 
