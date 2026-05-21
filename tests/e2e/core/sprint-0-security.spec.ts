@@ -1,4 +1,4 @@
-import { expect, test, request as pwRequest, type APIRequestContext } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "@playwright/test";
 
 /**
  * Sprint 0 SP-1-CLOSE-2 — Tests E2C de seguridad (anti-regresión).
