@@ -152,7 +152,7 @@ export async function resetPasswordAction(email: string) {
   // In server actions we can get headers
   const { headers } = await import("next/headers");
   const h = await headers();
-  const origin = h.get("origin") || h.get("host") || "http://localhost:3000";
+  const origin = h.get("origin") || h.get("host") || "http://localhost:8500";
   const protocol = origin.startsWith("http") ? "" : "https://";
   const redirectTo = `${protocol}${origin}/auth/callback`;
 

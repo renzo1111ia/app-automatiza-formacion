@@ -4,7 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Playwright config — dashboard-af
  *
  * Convención local:
- *   - El dev server se lanza con `npm run dev` (puerto 3000).
+ *   - El dev server se lanza con `npm run dev` (puerto 8500).
  *   - Playwright NO arranca el server automáticamente en local — reusa el que ya tengas.
  *   - En CI sí lo arranca (cuando se active CI en Sprint 3+).
  *
@@ -14,7 +14,7 @@ import { defineConfig, devices } from "@playwright/test";
  *   - Tests transversales (auth, RLS multi-tenant, smoke) van en `tests/e2e/core/`.
  */
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:8500";
 const IS_CI = !!process.env.CI;
 
 export default defineConfig({

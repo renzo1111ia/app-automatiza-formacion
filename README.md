@@ -49,7 +49,7 @@ cp .env.example .env.local
 npm run local:setup     # equivale a db:up + redis:up + db:seed-demo
 
 # 4. Dev server
-npm run dev             # http://localhost:3000
+npm run dev             # http://localhost:8500
 
 # 5. (Opcional) Tests E2E
 npm run test:e2e        # requiere dev server corriendo

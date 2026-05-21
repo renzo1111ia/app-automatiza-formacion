@@ -20,7 +20,7 @@ test.describe("sprint-0 security gates @core", () => {
 
   test.beforeAll(async ({ playwright }) => {
     api = await playwright.request.newContext({
-      baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
+      baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:8500",
     });
   });
 
