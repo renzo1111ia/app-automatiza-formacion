@@ -24,7 +24,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 
@@ -187,6 +187,128 @@ export function requireCronSecret(req: Request): NextResponse | null {
     if (!timingSafeEqual(a, b)) return unauthorized("Invalid cron secret");
   } catch {
     return unauthorized("Invalid cron secret");
+  }
+  return null;
+}
+
+/**
+ * Compara HMAC-SHA256 (o algoritmo dado) en tiempo constante.
+ *
+ * Acepta firmas en dos formatos comunes:
+ *   - `"sha256=<hex>"`  (formato Meta/GitHub-style con prefijo)
+ *   - `"<hex>"` o `"<base64>"` (formato Retell/genérico sin prefijo)
+ *
+ * Sprint 0 tareas 1-12 / 1-13 / 1-14 / 1-15.
+ *
+ * @param rawBody  Body crudo recibido (sin parsear). MUY IMPORTANTE — JSON.parse
+ *                 normaliza espacios y rompe la firma.
+ * @param headerSig Valor del header de firma proveniente del proveedor.
+ * @param secret    Secret compartido (env var o de DB).
+ * @param algo      Algoritmo HMAC (default: sha256).
+ * @returns true si la firma es válida.
+ */
+export function verifyHmacSignature(
+  rawBody: string,
+  headerSig: string | null | undefined,
+  secret: string,
+  algo: "sha256" | "sha1" = "sha256"
+): boolean {
+  if (!headerSig || !secret) return false;
+
+  // Limpia prefijo `sha256=` o `sha1=` si viene
+  const cleanSig = headerSig.replace(/^sha(?:256|1)=/i, "").trim();
+  if (!cleanSig) return false;
+
+  const computed = createHmac(algo, secret).update(rawBody).digest("hex");
+
+  const a = Buffer.from(cleanSig, "hex");
+  const b = Buffer.from(computed, "hex");
+
+  // Si la longitud no coincide (header malformado o base64) intenta base64
+  if (a.length !== b.length) {
+    try {
+      const aB64 = Buffer.from(cleanSig, "base64");
+      const bRaw = createHmac(algo, secret).update(rawBody).digest();
+      if (aB64.length !== bRaw.length) return false;
+      return timingSafeEqual(aB64, bRaw);
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Verifica la firma de un webhook Retell.
+ * Lee `x-retell-signature` y la valida contra `RETELL_WEBHOOK_SECRET` env.
+ *
+ * Sprint 0 tareas 1-12 (webhooks) y 1-13 (tools live).
+ *
+ * Devuelve `null` si OK o `NextResponse` 401/503 en caso contrario.
+ */
+export function verifyRetellWebhook(req: Request, rawBody: string): NextResponse | null {
+  const secret = process.env.RETELL_WEBHOOK_SECRET?.trim();
+  if (!secret) {
+    return serviceUnavailable(
+      "RETELL_WEBHOOK_SECRET not configured. Required to validate Retell webhooks."
+    );
+  }
+  const headerSig =
+    req.headers.get("x-retell-signature") || req.headers.get("retell-signature") || "";
+  if (!verifyHmacSignature(rawBody, headerSig, secret)) {
+    return unauthorized("Invalid Retell signature");
+  }
+  return null;
+}
+
+/**
+ * Verifica firma de webhook CRM con secret per-tenant.
+ *
+ * Sprint 0 tarea 1-15: el endpoint CRM aceptaba `x-tenant-id` en header sin
+ * firma, permitiendo a cualquiera inyectar leads en cualquier tenant
+ * (DA-2-009). El secret se almacena en `tenants.config.webhook_crm_secret`.
+ *
+ * El header de firma soportado es `x-webhook-signature` (HMAC-SHA256 hex sobre
+ * el rawBody). Si attacker cambia `x-tenant-id`, el secret consultado cambia y
+ * la firma falla — la firma queda atada al tenant_id implícitamente.
+ *
+ * Devuelve `null` si OK o `NextResponse` 401/403/503.
+ */
+export async function verifyCrmWebhookSignature(
+  req: Request,
+  rawBody: string,
+  tenantId: string
+): Promise<NextResponse | null> {
+  const supabase = await getAdminSupabaseClient();
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("config")
+    .eq("id", tenantId)
+    .single();
+
+  if (error || !data) return forbidden("Tenant not found");
+
+  const config = (data as { config: Record<string, unknown> | null }).config ?? {};
+  const secret =
+    typeof config["webhook_crm_secret"] === "string"
+      ? (config["webhook_crm_secret"] as string).trim()
+      : "";
+
+  if (!secret) {
+    return serviceUnavailable(
+      "webhook_crm_secret not configured for this tenant. Set tenants.config.webhook_crm_secret before invoking the CRM webhook."
+    );
+  }
+
+  const headerSig =
+    req.headers.get("x-webhook-signature") || req.headers.get("x-hub-signature-256") || "";
+  if (!verifyHmacSignature(rawBody, headerSig, secret)) {
+    return unauthorized("Invalid CRM webhook signature");
   }
   return null;
 }
