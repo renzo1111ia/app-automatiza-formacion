@@ -23,13 +23,13 @@ Cuando haya cualquier duda de comportamiento esperado, consultar en este orden:
 
 ## Plan vigente (5 fases — ver `DECISIONES R-020-refinement-v2`)
 
-| Fase | Contenido | Status |
-| --- | --- | --- |
-| **0 — Sprint 0** | Hotfixes de seguridad (4 vulnerabilidades RLS multi-tenant + tokens OAuth + Kong EOL) | Pendiente |
-| **1 — Capa de datos** | Consolidación capa Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
-| **2 — Adapter layer + 2 CRMs** | HubSpot adapter + Zoho adapter + UI admin de conexión (**MVP**) | Pendiente |
-| **3 — Hardening** | Tests E2E, observabilidad, dashboards de costes | Pendiente |
-| **4 — Post-release** | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign | Futuro |
+| Fase                           | Contenido                                                                              | Status    |
+| ------------------------------ | -------------------------------------------------------------------------------------- | --------- |
+| **0 — Sprint 0**               | Hotfixes de seguridad (4 vulnerabilidades RLS multi-tenant + tokens OAuth + Kong EOL)  | Pendiente |
+| **1 — Capa de datos**          | Consolidación capa Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
+| **2 — Adapter layer + 2 CRMs** | HubSpot adapter + Zoho adapter + UI admin de conexión (**MVP**)                        | Pendiente |
+| **3 — Hardening**              | Tests E2E, observabilidad, dashboards de costes                                        | Pendiente |
+| **4 — Post-release**           | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign                | Futuro    |
 
 **MVP Fase 2 = HubSpot + Zoho.** Sheets NO entra en MVP — está aplazado a Fase 4.
 
@@ -59,13 +59,47 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 
 ## Model Tier Policy (heredada del global, recordatorio)
 
-| Modelo | Cuándo |
-| --- | --- |
-| Haiku | Docs, traducciones, listados, sync, informes con datos ya investigados |
-| Sonnet | Código CRUD, tests, refactor sencillo, análisis de tecnologías habituales (Next/React/Supabase/Zod) |
-| Opus | Concurrencia, seguridad cripto, decisiones arquitectónicas con trade-offs, research multi-fuente profundo |
+| Modelo | Cuándo                                                                                                    |
+| ------ | --------------------------------------------------------------------------------------------------------- |
+| Haiku  | Docs, traducciones, listados, sync, informes con datos ya investigados                                    |
+| Sonnet | Código CRUD, tests, refactor sencillo, análisis de tecnologías habituales (Next/React/Supabase/Zod)       |
+| Opus   | Concurrencia, seguridad cripto, decisiones arquitectónicas con trade-offs, research multi-fuente profundo |
 
 Quota Fallback al 80% según política global. **NUNCA Opus por defecto.**
+
+### Escalado proactivo por contexto/dificultad (anticipar, no esperar a que falle)
+
+Filosofía base (idéntica a la global `~/.claude/CLAUDE.md`):
+
+- **Haiku** para editar archivos y acciones sencillas con poco contexto. Si hay mucho contexto o le cuesta → **subir a Sonnet**.
+- **Sonnet** para la mayoría de tareas y codificación. Si hay mucho contexto o le cuesta → **subir a Opus**.
+- **Opus** reservado para investigación, mucho contexto y programación compleja donde Sonnet puede fallar.
+
+Triggers de escalado **preventivo** (antes de empezar la tarea, sin esperar a fallar):
+
+| Trigger                                                                                                   | Acción                                             |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Haiku necesita >5 archivos de contexto, o el archivo objetivo >300 líneas                                 | Subir a Sonnet desde el inicio                     |
+| Haiku tarea con lógica condicional no trivial (>1 if/else anidado o branching no lineal)                  | Subir a Sonnet desde el inicio                     |
+| Sonnet necesita >15 archivos de contexto cross-package o cross-stack                                      | Subir a Opus desde el inicio                       |
+| Sonnet tarea con concurrencia, criptografía, RLS multi-tenant, OAuth multi-DC, transacciones distribuidas | Subir a Opus desde el inicio                       |
+| Sonnet tarea de research multi-fuente (3+ docs/webs/repos a sintetizar) o trade-offs arquitectónicos      | Subir a Opus desde el inicio                       |
+| Cualquier modelo: bucle de >2 reintentos sobre el mismo error/test                                        | Escalar al siguiente tier y reintentar UNA vez más |
+
+**Aplicación en `dashboard-af`:**
+
+- Sprint 0 (hotfixes RLS, JWT, crypto, next bump): orquestación en **Sonnet**, escalada puntual a **Opus** para decisiones de RLS multi-tenant y firma de webhooks.
+- Sprint 1 (capa de datos, Zod, Repository): **Sonnet** por defecto. **Opus** sólo para diseño del Repository pattern multi-tenant y cifrado AES-256 de tokens OAuth (tarea 2-26).
+- Sprint 2 (adapter HubSpot + Zoho): **Sonnet** para adapters y OAuth flow estándar. **Opus** para Zoho multi-DC y diseño del `IntegrationAdapter` interface.
+- Tareas de docs/READMEs/logs/traducciones/listados: **Haiku** salvo que el contexto pase de 5 archivos.
+
+**Diferencia con regla global #6:**
+
+- Regla #6 es reactiva (escalar tras fallo confirmado).
+- Esta regla es preventiva (escalar antes de empezar si pinta complejo).
+- Quota Fallback al 80% es ortogonal (escala/desciende por cuota, no por dificultad).
+
+**Aplicación al abrir chat nuevo:** si el prompt del usuario contiene una tarea claramente compleja (research multi-fuente, refactor cross-package, decisión arquitectónica, debug no trivial), arrancar directamente en el tier adecuado sin esperar a fallar en uno inferior.
 
 ## Execution Autonomy
 
