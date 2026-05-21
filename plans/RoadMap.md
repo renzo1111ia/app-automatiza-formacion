@@ -3,10 +3,10 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 21-05-2026 23:55
-last_updated_by: Renzo (1-06 a 🔵 tras apply local — rol app_user creado, 3 verificaciones OK)
+last_updated: 22-05-2026 02:30
+last_updated_by: Renzo (Bloques 1.3-1.6 cerrados a 🔵 — 19 tareas dev pusheadas, dev Sprint 0 al 100% local)
 project_version: v0.0.0
-sprint_0_progress: "0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-26 → 🔵 (7 tareas dev). 1-03, 1-05 → 🟡 100% VPS pre-deploy. Resto 🔘 pendiente. ⏱ Real total a push: ~4h 40min vs 27h estimadas."
+sprint_0_progress: "DEV completo a 🔵: 0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-07..1-26 (25 tareas). 1-03, 1-05 → 🟡 100% VPS pre-deploy. ⏱ Real total a push: ~6h 15min vs 107h 30min estimadas. Cierre Sprint 0 (SP-1-CLOSE-1..5) pendiente — falta test E2C + manual."
 excluded_from: [staging, main]
 ---
 
@@ -73,204 +73,133 @@ excluded_from: [staging, main]
 
 ---
 
-## 🎯 Cuadro de mando — Estado completo (jerárquico)
+## 🎯 Cuadro de mando — Vista por sprint
 
-> Tabla maestra de monitoreo. Muestra TODOS los sprints, fases (bloques) y tareas en jerarquía.
-> Reglas de relleno de tiempo real:
+> Vista de monitoreo agregada. **Una tabla por sprint** con cabecera repetida — separación visual clara entre sprints.
 >
-> - **Tarea / Bloque → ⏱ Push** se rellena cuando la tarea/bloque llega a 🔵 (pusheada a GH).
-> - **Sprint → ⏱ Cierre** se rellena cuando el sprint completa `SP-X-CLOSE-5` (probado y mergeado a `developer`).
-> - El agente `roadmap-keeper` actualiza estas celdas automáticamente al cambiar el estado.
+> Reglas de relleno:
+>
+> - **Bloque → ⏱ Push** = suma de tiempos reales de las tareas hijas que estén a 🔵 (las tareas individuales viven en sus secciones detalladas más abajo, `## Fase X — Sprint Y`).
+> - **Sprint → ⏱ Push** = suma de los ⏱ Push de sus bloques.
+> - **Sprint → ⏱ Cierre** SE RELLENA SOLO cuando el sprint completa `SP-X-CLOSE-5` (probado + mergeado a `developer`).
+> - El estado se propaga automáticamente: tarea a 🔵 → bloque recalcula; todas las del bloque a 🔵/diferida → bloque 🔵 cerrada; todas dev+cierre a 🟢 → sprint 🟢.
+> - **Detalle por tarea individual** (con commits, refs, estado fino): ver cada sección `## Fase X — Sprint Y` más abajo. Los estados de tareas SE ACTUALIZAN allí; el agente `roadmap-keeper` propaga los agregados a este cuadro.
 
-| Item                                                      | Estado                        | Estim.       | ⏱ Push   | ⏱ Cierre | Notas                                                                                                  |
-| --------------------------------------------------------- | ----------------------------- | ------------ | -------- | -------- | ------------------------------------------------------------------------------------------------------ |
-| **🚀 Sprint 0 — Hotfixes seguridad**                      | 🟡 En Desarrollo              | 107h 30min   | 4h 40min | —        | v0.1.0 · `feature/sp-0-sprint-0-hotfixes` · 7/26 dev tareas a 🔵 · 2 diferidas pre-deploy              |
-| ▸ Bloque 1.1 — Orquestador BullMQ                         | 🔵 Ph1 cerrada                | 14h          | 2h 40min | —        | Ph1 ✅ desarrollada · 4/4 tareas a 🔵                                                                  |
-| · · 0-00 Setup Playwright local + smoke tests             | 🔵                            | 4h           | 45min    | —        | commit `00cc35a`                                                                                       |
-| · · 0-01 Pre-push hooks (husky + lint-staged)             | 🔵                            | 3h           | 1h       | —        | commit `a74406e`                                                                                       |
-| · · 1-01 Fix worker.js:58 firma executeSequenceStep       | 🔵                            | 4h           | 30min    | —        | commit `847ef79` · test multi-día diferido a CLOSE-2                                                   |
-| · · 1-02 Fix enqueueLeadStep silencio errores Redis       | 🔵                            | 3h           | 25min    | —        | commit `662073f`                                                                                       |
-| ▸ Bloque 1.2 — Secretos y credenciales                    | 🟡 Parcial                    | 12h          | 1h 30min | —        | 2/4 🔵 (1-04, 1-06) · 2/4 🟡 diferidas pre-deploy (1-03, 1-05)                                         |
-| · · 1-03 Rotar JWTs Supabase comprometidos                | 🟡 DIFERIDA                   | 2h           | —        | —        | 100% VPS pre-deploy                                                                                    |
-| · · 1-04 Quitar 10 JWTs hardcoded de src/                 | 🔵                            | 6h           | 50min    | —        | commit `d595287` · helper requireEnv                                                                   |
-| · · 1-05 Cambio password Postgres default                 | 🟡 DIFERIDA                   | 1h           | —        | —        | 100% VPS pre-deploy                                                                                    |
-| · · 1-06 SQL app_user least-privilege                     | 🔵                            | 3h           | 40min    | —        | commit `67b53c8` + apply local 21-05 — rol creado, 3 verificaciones OK. Apply VPS diferido pre-staging |
-| ▸ Bloque 1.3 — Endpoints sin auth                         | 🔘 Pendiente                  | 17h          | —        | —        | 0/5 tareas iniciadas                                                                                   |
-| · · 1-07 Auth en 7 endpoints orquestación                 | 🔘                            | 8h           | —        | —        | DA-2-001                                                                                               |
-| · · 1-08 Auth en 3 cron endpoints públicos                | 🔘                            | 4h           | —        | —        | DA-3-001 / DA-3-007 · PII expuesta                                                                     |
-| · · 1-09 Guard tenants.test_orchestrator_enabled          | 🔘                            | 2h           | —        | —        | DA-3-003 · temporal — eliminar Fase 3                                                                  |
-| · · 1-10 Cerrar /api/admin/tenants/[id]/client-sql        | 🔘                            | 2h           | —        | —        | DA-2-002                                                                                               |
-| · · 1-11 Cerrar /api/tenant/migrate GET                   | 🔘                            | 1h           | —        | —        | DA-2-003                                                                                               |
-| ▸ Bloque 1.4 — Webhooks y firmas                          | 🔘 Pendiente                  | 18h          | —        | —        | 0/4 tareas iniciadas                                                                                   |
-| · · 1-12 Validación firma webhook Retell                  | 🔘                            | 4h           | —        | —        | DA-4-001 · HMAC                                                                                        |
-| · · 1-13 Validación firma Retell tools                    | 🔘                            | 6h           | —        | —        | DA-2-007 · el más peligroso                                                                            |
-| · · 1-14 HMAC WhatsApp obligatorio (no condicional)       | 🔘                            | 2h           | —        | —        | DA-2-006                                                                                               |
-| · · 1-15 Firma webhook CRM (anti tenant_id spoofing)      | 🔘                            | 6h           | —        | —        | DA-2-009 · +2h secret por tenant                                                                       |
-| ▸ Bloque 1.5 — Privilege escalation y RLS                 | 🔘 Pendiente                  | 24h          | —        | —        | 0/6 tareas iniciadas                                                                                   |
-| · · 1-16 Fix privilege escalation user_metadata.is_admin  | 🔘                            | 4h           | —        | —        | DA-2-005 · mover a app_metadata                                                                        |
-| · · 1-17 Verif rol admin en createTenant/delete/update    | 🔘                            | 3h           | —        | —        | DA-2-004                                                                                               |
-| · · 1-18 Fix RLS tenants (quitar USING(true))             | 🔘                            | 3h           | —        | —        | DA-2-010                                                                                               |
-| · · 1-19 Fix RLS knowledge_base (dead letter)             | 🔘                            | 2h           | —        | —        | F-04-004                                                                                               |
-| · · 1-20 Fix fetchCalls — añadir filtro tenant_id         | 🔘                            | 4h           | —        | —        | F-04-001 / DA-2                                                                                        |
-| · · 1-21 Fix IDOR inbox.ts 9 funciones                    | 🔘                            | 8h           | —        | —        | DA-2 inbox sweep                                                                                       |
-| ▸ Bloque 1.6 — Otros críticos                             | 🔵 Parcial                    | 23h          | 30min    | —        | 1/5 🔵 · 4/5 🔘                                                                                        |
-| · · 1-22 Fix SSRF /api/tenant/migrate cookie              | 🔘                            | 8h           | —        | —        | DA-3-002 · +2h allowlist dinámica                                                                      |
-| · · 1-23 Sanitización XSS widget embed                    | 🔘                            | 4h           | —        | —        | DA-3-004                                                                                               |
-| · · 1-24 Update axios@1.14.0 (15 CVEs)                    | 🔘                            | 4h           | —        | —        | DA-3-CVE-001 · vía ADR                                                                                 |
-| · · 1-25 Reemplazar paquete crypto deprecated             | 🔘                            | 3h           | —        | —        | ADR-2026-05-20                                                                                         |
-| · · 1-26 Update next@16.1.6 → 16.2.6                      | 🔵                            | 4h           | 30min    | —        | commit `1ce8e0b` · 19 CVEs cerrados incl. middleware bypass                                            |
-| ▸ Bloque cierre Sprint 0 (SP-1-CLOSE-1..5)                | 🔘 Pendiente                  | 5h 30min     | —        | —        | Bloqueado hasta todas las dev a 🔵/🟢                                                                  |
-| · · SP-1-CLOSE-1 Auto test (typecheck+lint+build+tests)   | 🔘                            | 1h 30min     | —        | —        | af-agents:testing                                                                                      |
-| · · SP-1-CLOSE-2 Test E2C Local + WCAG 2.2 AA             | 🔘                            | 2h 30min     | —        | —        | af-agents:testing + uxui                                                                               |
-| · · SP-1-CLOSE-3 Test Manual del Dev                      | 🔘                            | 1h           | —        | —        | manager (humano)                                                                                       |
-| · · SP-1-CLOSE-4 Corrección bugs detectados               | 🔘                            | variable     | —        | —        | af-agents:code + debugger                                                                              |
-| · · SP-1-CLOSE-5 PR a developer + bump v0.1.0             | 🔘                            | 30min        | —        | —        | af-agents:git + deployment + productivity                                                              |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 1 — Capa de datos (sin ORM nuevo)**           | 🔘 Pendiente                  | ~172h        | —        | —        | v0.2.0 · `feature/sp-2-capa-datos` · Inicio Vie 05-06-2026                                             |
-| ▸ Bloque 2.1 — Unificación cliente Supabase               | 🔘                            | 19h          | —        | —        | 0/3                                                                                                    |
-| · · 2-01 Auditar usos directos pg/postgres en src/        | 🔘                            | 4h           | —        | —        |                                                                                                        |
-| · · 2-02 Refactor a @supabase/ssr cliente unificado       | 🔘                            | 12h          | —        | —        |                                                                                                        |
-| · · 2-03 Eliminar JWTs service_role residuales            | 🔘                            | 3h           | —        | —        | continuación de 1-04                                                                                   |
-| ▸ Bloque 2.2 — Schemas Zod                                | 🔘                            | 23h          | —        | —        | 0/8                                                                                                    |
-| · · 2-04 Estructura src/lib/schemas/ + helpers base       | 🔘                            | 4h           | —        | —        |                                                                                                        |
-| · · 2-05 Zod schemas: leads (VARIABLES DEFINIDAS)         | 🔘                            | 4h           | —        | —        | nomenclatura cliente obligatoria                                                                       |
-| · · 2-06 Zod schemas: tenants + tenant_members            | 🔘                            | 2h           | —        | —        |                                                                                                        |
-| · · 2-07 Zod schemas: programs / courses                  | 🔘                            | 2h           | —        | —        |                                                                                                        |
-| · · 2-08 Zod schemas: appointments + calls                | 🔘                            | 3h           | —        | —        |                                                                                                        |
-| · · 2-09 Zod schemas: ai_agents / variants / prompts      | 🔘                            | 3h           | —        | —        |                                                                                                        |
-| · · 2-10 Zod schemas: knowledge_base / chat               | 🔘                            | 2h           | —        | —        |                                                                                                        |
-| · · 2-11 Zod schemas: integrations / webhooks / mapping   | 🔘                            | 3h           | —        | —        | prep Fase 2                                                                                            |
-| ▸ Bloque 2.3 — Repository pattern                         | 🔘                            | 31h          | —        | —        | 0/7                                                                                                    |
-| · · 2-12 Estructura repositories + interface base         | 🔘                            | 4h           | —        | —        |                                                                                                        |
-| · · 2-13 Repository: leads                                | 🔘                            | 6h           | —        | —        | el de más uso                                                                                          |
-| · · 2-14 Repository: tenants                              | 🔘                            | 4h           | —        | —        |                                                                                                        |
-| · · 2-15 Repository: appointments + calls                 | 🔘                            | 5h           | —        | —        |                                                                                                        |
-| · · 2-16 Repository: ai_agents + variants                 | 🔘                            | 4h           | —        | —        |                                                                                                        |
-| · · 2-17 Repository: knowledge_base + chat_memory         | 🔘                            | 5h           | —        | —        |                                                                                                        |
-| · · 2-18 Repository: integrations + webhooks              | 🔘                            | 3h           | —        | —        | bloqueante Sprint 2                                                                                    |
-| ▸ Bloque 2.4 — Refactor queries existentes                | 🔘                            | 18h          | —        | —        | 0/3                                                                                                    |
-| · · 2-19 Refactor queries src/app/api/\*_/_.ts            | 🔘                            | 8h           | —        | —        |                                                                                                        |
-| · · 2-20 Refactor queries src/lib/actions/                | 🔘                            | 6h           | —        | —        | crítico — 9 fallbacks service_role                                                                     |
-| · · 2-21 Refactor queries worker.js + processors          | 🔘                            | 4h           | —        | —        | continuación 1-01                                                                                      |
-| ▸ Bloque 2.5 — Type safety + limpieza                     | 🔘                            | 16h          | —        | —        | 0/1                                                                                                    |
-| · · 2-22 Limpieza as any / as unknown → z.infer           | 🔘                            | 16h          | —        | —        | 426 ocurrencias                                                                                        |
-| ▸ Bloque 2.6 — RLS hardening complementario               | 🔘                            | 19h          | —        | —        | 0/4 (2-27 reasignada)                                                                                  |
-| · · 2-23 Fix RLS ai_agents / variants                     | 🔘                            | 3h           | —        | —        | F-04-005                                                                                               |
-| · · 2-24 Fix RLS web_widgets                              | 🔘                            | 2h           | —        | —        | F-04-006                                                                                               |
-| · · 2-25 Fix getPrograms — filtro tenant                  | 🔘                            | 2h           | —        | —        | F-04-008                                                                                               |
-| · · 2-26 Cifrar Google OAuth tokens en JSONB              | 🔘                            | 12h          | —        | —        | DA-3-006 · bloqueante Sprint 2                                                                         |
-| · · 2-27 ~~Update next~~ MOVIDA a 1-26                    | ✅ Reasignada                 | —            | —        | —        | ver 1-26                                                                                               |
-| ▸ Bloque 2.7 — Testing + documentación                    | 🔘                            | 16h          | —        | —        | 0/2                                                                                                    |
-| · · 2-28 Tests integración BD real (repos principales)    | 🔘                            | 12h          | —        | —        | NO mocks                                                                                               |
-| · · 2-29 Doc capa de datos en docs/architecture/          | 🔘                            | 4h           | —        | —        | af-agents:documentation                                                                                |
-| ▸ Bloque 2.8 — Hardening dependencias (ADR audit)         | 🔘                            | 20h          | —        | —        | 0/5                                                                                                    |
-| · · 2-30 Hook af-productivity-logger.cjs                  | 🔘                            | 6h           | —        | —        | tracking automático tiempos                                                                            |
-| · · 2-31 Update lucide-react 0.x → 1.x (major)            | 🔘                            | 4h           | —        | —        | ADR-2026-05-20 · testing visual                                                                        |
-| · · 2-32 Update shadcn 3.x → 4.x (major)                  | 🔘                            | 6h           | —        | —        | ADR-2026-05-20 · revisar componentes                                                                   |
-| · · 2-33 Alinear @types/node@20 con Node 24               | 🔘                            | 2h           | —        | —        | ADR-2026-05-20                                                                                         |
-| · · 2-34 Investigar eslint 9 → 10                         | 🔘                            | 2h           | —        | —        | bloqueado por eslint-config-next                                                                       |
-| ▸ Bloque cierre Sprint 1 (SP-2-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        | misma plantilla                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 2 — Adapter HubSpot + Zoho (MVP)**            | 🔘 Pendiente                  | 148h         | —        | —        | v0.3.0 · `feature/sp-3-adapter-hubspot-zoho` · Inicio Mié 01-07-2026                                   |
-| ▸ Tareas de desarrollo Fase 2                             | 🔘                            | 148h         | —        | —        | 0/7                                                                                                    |
-| · · 3-01 IntegrationAdapter interface + factory           | 🔘                            | 12h          | —        | —        | phase-01                                                                                               |
-| · · 3-02 Adapter HubSpot (OAuth2 + contacts + deals)      | 🔘                            | 44h          | —        | —        | el más grande del sprint                                                                               |
-| · · 3-03 Adapter Zoho (OAuth2 multi-DC + leads + deals)   | 🔘                            | 28h          | —        | —        | multi-DC EU/US                                                                                         |
-| · · 3-04 crm_field_mapping + write_policy R-014           | 🔘                            | 14h          | —        | —        | append-only por defecto                                                                                |
-| · · 3-05 UI admin panel — conectar CRM del tenant         | 🔘                            | 20h          | —        | —        |                                                                                                        |
-| · · 3-06 crm_write_audit log + visualización admin        | 🔘                            | 10h          | —        | —        |                                                                                                        |
-| · · 3-07 Tests integración sandbox HubSpot + Zoho         | 🔘                            | 20h          | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 2 (SP-3-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 3 — Hardening (cierre MVP v0.4.0)**           | 🔘 Pendiente                  | 100-132h     | —        | —        | v0.4.0 · `feature/sp-4-hardening` · Inicio Jue 23-07-2026                                              |
-| ▸ Tareas de desarrollo Fase 3                             | 🔘                            | 100-132h     | —        | —        | 0/7                                                                                                    |
-| · · 4-01 Test suite E2E Playwright golden path            | 🔘                            | 20-22h       | —        | —        |                                                                                                        |
-| · · 4-02 Coverage ≥80% unit + integration                 | 🔘                            | 8-10h        | —        | —        |                                                                                                        |
-| · · 4-03 Observabilidad logging + métricas BullMQ         | 🔘                            | 12-16h       | —        | —        | crea llm_usage_logs                                                                                    |
-| · · 4-04 Dashboard costes LLM (tokens/proveedor/tenant)   | 🔘                            | 16-22h       | —        | —        | depende 4-03                                                                                           |
-| · · 4-05 Refactor WCAG 2.2 AA en admin panel              | 🔘                            | 28-40h       | —        | —        | DA-5 (24 findings)                                                                                     |
-| · · 4-06 Hardening rate limits + CSP + CSRF               | 🔘                            | 10-14h       | —        | —        |                                                                                                        |
-| · · 4-07 Release notes v0.4.0                             | 🔘                            | 6-8h         | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 3 (SP-4-CLOSE-1..5)                | 🔘                            | 8h           | —        | —        | más extenso (cierre MVP)                                                                               |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 4 — Google Sheets bidireccional** (post-MVP)  | 🔘 Pendiente                  | 60-100h      | —        | —        | v0.5.0 · `feature/sp-5-01-google-sheets` · Inicio Mar 11-08-2026                                       |
-| ▸ Tareas de desarrollo Fase 4                             | 🔘                            | 60-100h      | —        | —        | 0/6 · googleapis ya instalado                                                                          |
-| · · 5-01-a DB migration columnas Sheets                   | 🔘                            | 4-6h         | —        | —        | sobre crm_connections                                                                                  |
-| · · 5-01-b GoogleSheetsAdapter + OAuth2                   | 🔘                            | 14-22h       | —        | —        |                                                                                                        |
-| · · 5-01-c Push job BullMQ + idempotencia                 | 🔘                            | 12-18h       | —        | —        | reutiliza patrón Sprint 2                                                                              |
-| · · 5-01-d Pull webhook + Drive push notifications        | 🔘                            | 14-22h       | —        | —        | TTL 7 días, canal renew cron                                                                           |
-| · · 5-01-e UI admin Sheets + field-mapper                 | 🔘                            | 10-18h       | —        | —        |                                                                                                        |
-| · · 5-01-f Tests sandbox + crm_write_audit                | 🔘                            | 6-14h        | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 4 (SP-5-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 5 — Salesforce adapter** (post-MVP)           | 🔘 Pendiente                  | 60-100h      | —        | —        | v0.6.0 · `feature/sp-6-salesforce` · Inicio Lun 24-08-2026                                             |
-| ▸ Tareas de desarrollo Fase 5                             | 🔘                            | 60-100h      | —        | —        | 0/6 · jsforce vía ADR                                                                                  |
-| · · 6-01 ADR + instalación jsforce@^3.10.15               | 🔘                            | 2-4h         | —        | —        |                                                                                                        |
-| · · 6-02 OAuth2 Connected App + multi-instance            | 🔘                            | 12-20h       | —        | —        | prod/sandbox                                                                                           |
-| · · 6-03 SalesforceAdapter: Leads + Contacts + Opps       | 🔘                            | 18-30h       | —        | —        |                                                                                                        |
-| · · 6-04 Webhooks Platform Events / Streaming API         | 🔘                            | 12-20h       | —        | —        |                                                                                                        |
-| · · 6-05 UI admin Salesforce + field-mapper               | 🔘                            | 8-14h        | —        | —        |                                                                                                        |
-| · · 6-06 Tests integración sandbox Salesforce             | 🔘                            | 8-12h        | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 5 (SP-6-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 6 — GoHighLevel adapter** (post-MVP)          | 🔘 Pendiente                  | 40-80h       | —        | —        | v0.7.0 · `feature/sp-7-gohighlevel` · Inicio Vie 04-09-2026                                            |
-| ▸ Tareas de desarrollo Fase 6                             | 🔘                            | 40-80h       | —        | —        | 0/5 · foco Latam EduTech                                                                               |
-| · · 7-01 Registrar app GHL Marketplace + OAuth2 v2        | 🔘                            | 4-8h         | —        | —        | bloqueante externo                                                                                     |
-| · · 7-02 GoHighLevelAdapter: Contacts + Opps + Calendars  | 🔘                            | 14-26h       | —        | —        |                                                                                                        |
-| · · 7-03 Webhooks GHL bidireccionales                     | 🔘                            | 8-16h        | —        | —        |                                                                                                        |
-| · · 7-04 UI admin GHL + field-mapper                      | 🔘                            | 8-14h        | —        | —        |                                                                                                        |
-| · · 7-05 Tests integración sandbox GHL                    | 🔘                            | 6-16h        | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 6 (SP-7-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 7 — ActiveCampaign adapter** (post-MVP)       | 🔘 Pendiente                  | 20-50h       | —        | —        | v0.8.0 · `feature/sp-8-activecampaign` · Inicio Mar 15-09-2026                                         |
-| ▸ Tareas de desarrollo Fase 7                             | 🔘                            | 20-50h       | —        | —        | 0/5 · auth API Key (la más sencilla)                                                                   |
-| · · 8-01 Setup auth API Key + multi-cuenta                | 🔘                            | 2-4h         | —        | —        |                                                                                                        |
-| · · 8-02 ActiveCampaignAdapter: Contacts/Deals/Tags/Lists | 🔘                            | 8-20h        | —        | —        |                                                                                                        |
-| · · 8-03 Webhooks AC (contact updated, deal stage)        | 🔘                            | 4-10h        | —        | —        |                                                                                                        |
-| · · 8-04 UI admin AC + field-mapper                       | 🔘                            | 4-10h        | —        | —        |                                                                                                        |
-| · · 8-05 Tests integración sandbox                        | 🔘                            | 2-6h         | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 7 (SP-8-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 8 — Adapter pattern generalization**          | 🔘 Bloqueado hasta SP-4..SP-7 | 20-40h       | —        | —        | v0.9.0 · `feature/sp-9-adapter-generalization` · Inicio Lun 21-09-2026                                 |
-| ▸ Tareas de desarrollo Fase 8                             | 🔘                            | 20-40h       | —        | —        | 0/4                                                                                                    |
-| · · 9-01 Análisis comparativo 6 adapters                  | 🔘                            | 4-8h         | —        | —        | bloqueado hasta SP-4..SP-7                                                                             |
-| · · 9-02 Refactor IntegrationAdapter base genérico        | 🔘                            | 8-14h        | —        | —        |                                                                                                        |
-| · · 9-03 Generalizar webhook + signature verification     | 🔘                            | 4-8h         | —        | —        |                                                                                                        |
-| · · 9-04 Generalizar rate limiting / retry / breaker      | 🔘                            | 4-10h        | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 8 (SP-9-CLOSE-1..5)                | 🔘                            | 5h 30min     | —        | —        |                                                                                                        |
-|                                                           |                               |              |          |          |                                                                                                        |
-| **🚀 Sprint 9 — Tier 2 on-demand (backlog)**              | 🔘 Backlog                    | 30-50h/CRM   | —        | —        | v0.10.x+ por CRM · sólo bajo pedido cliente                                                            |
-| · · 10-01 Clientify adapter (on-demand)                   | 🔘 Backlog                    | 30-50h       | —        | —        |                                                                                                        |
-| · · 10-02 Bitrix24 adapter (on-demand)                    | 🔘 Backlog                    | 30-50h       | —        | —        |                                                                                                        |
-| · · 10-03 Pipedrive adapter (on-demand)                   | 🔘 Backlog                    | 30-50h       | —        | —        |                                                                                                        |
-| · · 10-04 Monday adapter (on-demand)                      | 🔘 Backlog                    | 30-50h       | —        | —        |                                                                                                        |
-| · · 10-05 Holded adapter (on-demand)                      | 🔘 Backlog                    | 30-50h       | —        | —        |                                                                                                        |
-| ▸ Bloque cierre Sprint 9 (SP-10-CLOSE-1..5 por CRM)       | 🔘 Backlog                    | 5h 30min/CRM | —        | —        | plantilla por CRM                                                                                      |
+### Sprint 0 — Hotfixes seguridad
+
+| Item                                      | Estado           | Estim.          | ⏱ Push   | ⏱ Cierre | Notas                                                                                      |
+| ----------------------------------------- | ---------------- | --------------- | -------- | -------- | ------------------------------------------------------------------------------------------ |
+| **🚀 Sprint 0**                           | 🟡 En Desarrollo | 107h 30min      | 6h 15min | —        | v0.1.0 · `feature/sp-0-sprint-0-hotfixes` · 25/26 dev tareas a 🔵 · 2 diferidas pre-deploy |
+| ▸ Bloque 1.1 — Orquestador BullMQ         | 🔵 Ph cerrada    | 14h             | 2h 40min | —        | 4/4 🔵 (0-00, 0-01, 1-01, 1-02)                                                            |
+| ▸ Bloque 1.2 — Secretos y credenciales    | 🟡 Parcial       | 12h             | 1h 30min | —        | 2/4 🔵 (1-04, 1-06) · 2/4 🟡 diferidas pre-deploy (1-03, 1-05)                             |
+| ▸ Bloque 1.3 — Endpoints sin auth         | 🔵 Ph cerrada    | 17h             | 30min    | —        | 5/5 🔵 (1-07, 1-08, 1-09, 1-10, 1-11) · commit `4da79b1`                                   |
+| ▸ Bloque 1.4 — Webhooks y firmas          | 🔵 Ph cerrada    | 18h             | 25min    | —        | 4/4 🔵 (1-12, 1-13, 1-14, 1-15) · commit `a17c687`                                         |
+| ▸ Bloque 1.5 — Privilege escalation y RLS | 🔵 Ph cerrada    | 24h             | 35min    | —        | 6/6 🔵 (1-16..1-21) · migrations RLS + admin-meta aplicadas en local · commit `da64297`    |
+| ▸ Bloque 1.6 — Otros críticos             | 🔵 Ph cerrada    | 23h             | 45min    | —        | 5/5 🔵 (1-22, 1-23, 1-24, 1-25, 1-26) · commits `1ce8e0b`+`2c9437c`                        |
+| ▸ Cierre Sprint 0 (SP-1-CLOSE-1..5)       | 🔘 Pendiente     | 5h 30min + bugs | —        | —        | DEV completo, lanzable: typecheck OK · falta auto test + E2C Playwright + manual del dev   |
+
+### Sprint 1 — Capa de datos (sin ORM nuevo)
+
+| Item                                        | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                      |
+| ------------------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------- |
+| **🚀 Sprint 1**                             | 🔘 Pendiente | ~172h           | —      | —        | v0.2.0 · `feature/sp-2-capa-datos` · Inicio Vie 05-06-2026 |
+| ▸ Bloque 2.1 — Unificación cliente Supabase | 🔘           | 19h             | —      | —        | 0/3 (2-01..2-03)                                           |
+| ▸ Bloque 2.2 — Schemas Zod                  | 🔘           | 23h             | —      | —        | 0/8 (2-04..2-11)                                           |
+| ▸ Bloque 2.3 — Repository pattern           | 🔘           | 31h             | —      | —        | 0/7 (2-12..2-18)                                           |
+| ▸ Bloque 2.4 — Refactor queries existentes  | 🔘           | 18h             | —      | —        | 0/3 (2-19..2-21)                                           |
+| ▸ Bloque 2.5 — Type safety + limpieza       | 🔘           | 16h             | —      | —        | 0/1 (2-22)                                                 |
+| ▸ Bloque 2.6 — RLS hardening complementario | 🔘           | 19h             | —      | —        | 0/4 (2-23..2-26 · 2-27 reasignada a 1-26)                  |
+| ▸ Bloque 2.7 — Testing + documentación      | 🔘           | 16h             | —      | —        | 0/2 (2-28, 2-29)                                           |
+| ▸ Bloque 2.8 — Hardening dependencias (ADR) | 🔘           | 20h             | —      | —        | 0/5 (2-30..2-34)                                           |
+| ▸ Cierre Sprint 1 (SP-2-CLOSE-1..5)         | 🔘           | 5h 30min + bugs | —      | —        |                                                            |
+
+### Sprint 2 — Adapter HubSpot + Zoho (MVP)
+
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | -------------------------------------------------------------------- |
+| **🚀 Sprint 2**                     | 🔘 Pendiente | 148h            | —      | —        | v0.3.0 · `feature/sp-3-adapter-hubspot-zoho` · Inicio Mié 01-07-2026 |
+| ▸ Tareas de desarrollo (Fase 2)     | 🔘           | 148h            | —      | —        | 0/7 (3-01..3-07) — sin sub-bloques                                   |
+| ▸ Cierre Sprint 2 (SP-3-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                      |
+
+### Sprint 3 — Hardening (cierre MVP v0.4.0)
+
+| Item                                | Estado       | Estim.    | ⏱ Push | ⏱ Cierre | Notas                                                     |
+| ----------------------------------- | ------------ | --------- | ------ | -------- | --------------------------------------------------------- |
+| **🚀 Sprint 3**                     | 🔘 Pendiente | 100-132h  | —      | —        | v0.4.0 · `feature/sp-4-hardening` · Inicio Jue 23-07-2026 |
+| ▸ Tareas de desarrollo (Fase 3)     | 🔘           | 100-132h  | —      | —        | 0/7 (4-01..4-07) — sin sub-bloques                        |
+| ▸ Cierre Sprint 3 (SP-4-CLOSE-1..5) | 🔘           | 8h + bugs | —      | —        | Más extenso (cierre MVP)                                  |
+
+### Sprint 4 — Google Sheets bidireccional (post-MVP)
+
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                            |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------------- |
+| **🚀 Sprint 4**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.5.0 · `feature/sp-5-01-google-sheets` · Inicio Mar 11-08-2026 |
+| ▸ Tareas de desarrollo (Fase 4)     | 🔘           | 60-100h         | —      | —        | 0/6 (5-01-a..5-01-f) · googleapis ya instalado                   |
+| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                  |
+
+### Sprint 5 — Salesforce adapter (post-MVP)
+
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                      |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------- |
+| **🚀 Sprint 5**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.6.0 · `feature/sp-6-salesforce` · Inicio Lun 24-08-2026 |
+| ▸ Tareas de desarrollo (Fase 5)     | 🔘           | 60-100h         | —      | —        | 0/6 (6-01..6-06) · jsforce vía ADR                         |
+| ▸ Cierre Sprint 5 (SP-6-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                            |
+
+### Sprint 6 — GoHighLevel adapter (post-MVP)
+
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                       |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ----------------------------------------------------------- |
+| **🚀 Sprint 6**                     | 🔘 Pendiente | 40-80h          | —      | —        | v0.7.0 · `feature/sp-7-gohighlevel` · Inicio Vie 04-09-2026 |
+| ▸ Tareas de desarrollo (Fase 6)     | 🔘           | 40-80h          | —      | —        | 0/5 (7-01..7-05) · foco Latam EduTech                       |
+| ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                             |
+
+### Sprint 7 — ActiveCampaign adapter (post-MVP)
+
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                          |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | -------------------------------------------------------------- |
+| **🚀 Sprint 7**                     | 🔘 Pendiente | 20-50h          | —      | —        | v0.8.0 · `feature/sp-8-activecampaign` · Inicio Mar 15-09-2026 |
+| ▸ Tareas de desarrollo (Fase 7)     | 🔘           | 20-50h          | —      | —        | 0/5 (8-01..8-05) · auth API Key (la más sencilla)              |
+| ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                |
+
+### Sprint 8 — Adapter pattern generalization
+
+| Item                                | Estado                        | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                  |
+| ----------------------------------- | ----------------------------- | --------------- | ------ | -------- | ---------------------------------------------------------------------- |
+| **🚀 Sprint 8**                     | 🔘 Bloqueado hasta SP-4..SP-7 | 20-40h          | —      | —        | v0.9.0 · `feature/sp-9-adapter-generalization` · Inicio Lun 21-09-2026 |
+| ▸ Tareas de desarrollo (Fase 8)     | 🔘                            | 20-40h          | —      | —        | 0/4 (9-01..9-04)                                                       |
+| ▸ Cierre Sprint 8 (SP-9-CLOSE-1..5) | 🔘                            | 5h 30min + bugs | —      | —        |                                                                        |
+
+### Sprint 9 — Tier 2 on-demand (backlog)
+
+| Item                                         | Estado     | Estim.         | ⏱ Push | ⏱ Cierre | Notas                                          |
+| -------------------------------------------- | ---------- | -------------- | ------ | -------- | ---------------------------------------------- |
+| **🚀 Sprint 9**                              | 🔘 Backlog | 30-50h por CRM | —      | —        | v0.10.x+ · sólo bajo pedido cliente            |
+| ▸ CRMs Tier 2 (10-01..10-05)                 | 🔘 Backlog | 30-50h c/u     | —      | —        | Clientify, Bitrix24, Pipedrive, Monday, Holded |
+| ▸ Cierre Sprint 9 (SP-10-CLOSE-1..5 por CRM) | 🔘 Backlog | 5h 30min/CRM   | —      | —        | Plantilla por CRM activado                     |
 
 ### Lectura rápida del cuadro
 
-- **🚀 fila gruesa** = sprint completo (con su versión objetivo y branch).
-- **▸ fila** = bloque/fase dentro del sprint (subtotal acumulado de las tareas hijas).
-- **· · fila** = tarea individual.
-- **⏱ Push** se rellena con el tiempo real consumido hasta dejar la tarea a 🔵 Subida.
-- **⏱ Cierre** SOLO se rellena en la fila del sprint, cuando termina `SP-X-CLOSE-5` (probado + mergeado a `developer`).
-- El roadmap-keeper agrega los **⏱ Push** de cada tarea a su bloque padre automáticamente.
+- **🚀 fila** = sprint completo (versión objetivo + branch + fecha de inicio).
+- **▸ fila** = bloque/fase dentro del sprint (subtotal acumulado de sus tareas hijas).
+- Las **tareas individuales NO aparecen en este cuadro**. Se siguen actualizando en sus secciones detalladas `## Fase X — Sprint Y` más abajo; el agente `roadmap-keeper` propaga los agregados aquí.
+- **⏱ Push** se rellena con el tiempo real al pasar tareas a 🔵; el bloque suma sus hijas y el sprint suma sus bloques.
+- **⏱ Cierre** SOLO se rellena en la fila Sprint, cuando termina `SP-X-CLOSE-5` (probado + mergeado a `developer`).
 
 ---
 
 ## Fase 0 — Sprint 0: Hotfixes de seguridad
 
-| Campo                            | Valor                                                       |
-| -------------------------------- | ----------------------------------------------------------- |
-| **Sprint ID**                    | `SP-1`                                                      |
-| **Versión objetivo al cierre**   | `v0.1.0`                                                    |
-| **Estado del sprint**            | 🟡 En Desarrollo (5 tareas a 🔵, 2 diferidas)               |
-| **Estimación total**             | ~107h 30min (11 días lab × 10h)                             |
-| **Rama de trabajo sugerida**     | `feature/sp-0-sprint-0-hotfixes` (pushed origin 21-05-2026) |
-| **Inicio**                       | Jue 21-05-2026 09:00                                        |
-| **Fin Est.**                     | Jue 04-06-2026 19:00                                        |
-| **Fin Real**                     | —                                                           |
-| **Horas consumidas (estimadas)** | ~17h (0-00: 4h + 0-01: 3h + 1-04: 6h + 1-26: 4h)            |
+| Campo                          | Valor                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| **Sprint ID**                  | `SP-1`                                                                        |
+| **Versión objetivo al cierre** | `v0.1.0`                                                                      |
+| **Estado del sprint**          | 🟡 En Desarrollo (25/26 dev a 🔵 · 2 diferidas pre-deploy · cierre pendiente) |
+| **Estimación total**           | ~107h 30min (11 días lab × 10h)                                               |
+| **Rama de trabajo sugerida**   | `feature/sp-0-sprint-0-hotfixes` (pushed origin 22-05-2026 commit `2c9437c`)  |
+| **Inicio**                     | Jue 21-05-2026 09:00                                                          |
+| **Fin Est.**                   | Jue 04-06-2026 19:00                                                          |
+| **Fin Real**                   | —                                                                             |
+| **Horas reales DEV (a push)**  | ~6h 15min (vs 107h 30min estimadas)                                           |
 
 > **Asignado a:** Javi HP (solo). Capacidad: 10h productivas/día, L-V. 11 días lab (~110h disponibles). Sin vacaciones en 2026.
 
@@ -308,44 +237,44 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 #### Bloque 1.3 — Endpoints sin autenticación
 
-| ID   | Tarea                                                                                                                                         | Estimación | Estado       | Refs audit          | Notas                            |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------------ | ------------------- | -------------------------------- |
-| 1-07 | Auth en 7 endpoints orquestación (`/api/orchestration/deploy`, `graph`, `publish`, `sweep`, `workflows`, `calls/manual`, `cron/appointments`) | 8h         | 🔘 Pendiente | DA-2-001            | 1h por endpoint promedio + tests |
-| 1-08 | Auth en 3 cron endpoints públicos (`/api/orchestration/sweep`, `/api/cron/appointments/reminders`)                                            | 4h         | 🔘 Pendiente | DA-3-001 / DA-3-007 | Reminders expone PII además      |
-| 1-09 | Guard condicional `tenants.test_orchestrator_enabled` (deny by default)                                                                       | 2h         | 🔘 Pendiente | DA-3-003            | TEMPORAL — eliminar en Fase 3    |
-| 1-10 | Cerrar `/api/admin/tenants/[id]/client-sql` (descarga SQL config sin auth)                                                                    | 2h         | 🔘 Pendiente | DA-2-002            | Requiere refactor mínimo         |
-| 1-11 | Cerrar `/api/tenant/migrate` GET (sirve MIGRATION_SQL completo)                                                                               | 1h         | 🔘 Pendiente | DA-2-003            | Anónimo accesible                |
+| ID   | Tarea                                                                                        | Estimación | Estado                   | Refs audit          | Notas                                                                                                                                                           |
+| ---- | -------------------------------------------------------------------------------------------- | ---------- | ------------------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-07 | Auth en endpoints orquestación user-driven (deploy, graph, publish, workflows, calls/manual) | 8h         | 🔵 Subida `feature/sp-0` | DA-2-001            | ⏱ Real (a push): 25min · helper `src/lib/api-auth.ts` (requireApiUser + requireTenantAccess) · graph verifica ownership vía `data.tenant_id` · commit `4da79b1` |
+| 1-08 | Auth en cron endpoints (sweep + cron/appointments/reminders)                                 | 4h         | 🔵 Subida `feature/sp-0` | DA-3-001 / DA-3-007 | ⏱ Real (a push): 10min · `requireCronSecret` timing-safe + `CRON_SECRET` añadido a `.env.example` · commit `4da79b1`                                            |
+| 1-09 | Guard condicional `tenants.config.test_orchestrator_enabled` (DENY by default)               | 2h         | 🔵 Subida `feature/sp-0` | DA-3-003            | ⏱ Real (a push): 10min · `requireOrchestrationEnabled` aplicado a deploy/publish/workflows POST/calls/manual · TEMPORAL — eliminar en Fase 3 · commit `4da79b1` |
+| 1-10 | Cerrar `/api/admin/tenants/[id]/client-sql` (descarga SQL config sin auth)                   | 2h         | 🔵 Subida `feature/sp-0` | DA-2-002            | ⏱ Real (a push): 5min · `requireApiAdmin` añadido al GET · commit `4da79b1`                                                                                     |
+| 1-11 | Cerrar `/api/tenant/migrate` GET (sirve MIGRATION_SQL completo) + POST user-auth             | 1h         | 🔵 Subida `feature/sp-0` | DA-2-003            | ⏱ Real (a push): 5min · GET → `requireApiAdmin`, POST → `requireApiUser` (SSRF cerrado en 1-22) · commit `4da79b1`                                              |
 
 #### Bloque 1.4 — Webhooks y firmas
 
-| ID   | Tarea                                                      | Estimación | Estado       | Refs audit | Notas                                                            |
-| ---- | ---------------------------------------------------------- | ---------- | ------------ | ---------- | ---------------------------------------------------------------- |
-| 1-12 | Validación firma webhook Retell                            | 4h         | 🔘 Pendiente | DA-4-001   | HMAC obligatorio                                                 |
-| 1-13 | Validación firma Retell **tools** (cancelar/agendar citas) | 6h         | 🔘 Pendiente | DA-2-007   | El endpoint más peligroso                                        |
-| 1-14 | Validación HMAC WhatsApp obligatoria (no condicional)      | 2h         | 🔘 Pendiente | DA-2-006   | Quitar fallback "si env var ausente"                             |
-| 1-15 | Validación firma webhook CRM (anti tenant_id spoofing)     | 6h         | 🔘 Pendiente | DA-2-009   | Cualquiera puede inyectar leads ahora. +2h por secret por tenant |
+| ID   | Tarea                                                      | Estimación | Estado                   | Refs audit | Notas                                                                                                                                                                                          |
+| ---- | ---------------------------------------------------------- | ---------- | ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-12 | Validación firma webhook Retell                            | 4h         | 🔵 Subida `feature/sp-0` | DA-4-001   | ⏱ Real (a push): 8min · `verifyHmacSignature` + `verifyRetellWebhook` lee `x-retell-signature` y `RETELL_WEBHOOK_SECRET` env · commit `a17c687`                                                |
+| 1-13 | Validación firma Retell **tools** (cancelar/agendar citas) | 6h         | 🔵 Subida `feature/sp-0` | DA-2-007   | ⏱ Real (a push): 5min · mismo helper que 1-12 · el más peligroso sin auth · commit `a17c687`                                                                                                   |
+| 1-14 | Validación HMAC WhatsApp obligatoria (no condicional)      | 2h         | 🔵 Subida `feature/sp-0` | DA-2-006   | ⏱ Real (a push): 7min · `WHATSAPP_APP_SECRET` ahora obligatorio · `WHATSAPP_VERIFY_TOKEN` movido a env (antes hardcoded) · commit `a17c687`                                                    |
+| 1-15 | Validación firma webhook CRM (anti tenant_id spoofing)     | 6h         | 🔵 Subida `feature/sp-0` | DA-2-009   | ⏱ Real (a push): 8min · `verifyCrmWebhookSignature` con secret per-tenant (`tenants.config.webhook_crm_secret`) · firma del header `x-webhook-signature` atada al tenant_id · commit `a17c687` |
 
 #### Bloque 1.5 — Privilege escalation y RLS
 
-| ID   | Tarea                                                                                 | Estimación | Estado　　　 | Refs audit       | Notas                                                 |
-| ---- | ------------------------------------------------------------------------------------- | ---------- | ------------ | ---------------- | ----------------------------------------------------- |
-| 1-16 | Fix privilege escalation via `user_metadata.is_admin` editable por usuario            | 4h         | 🔘 Pendiente | DA-2-005         | Mover `is_admin` a `app_metadata` (server-controlled) |
-| 1-17 | Verificación rol admin en `createTenant`/`deleteTenant`/`updateTenant` server actions | 3h         | 🔘 Pendiente | DA-2-004         | `src/lib/actions/tenant.ts:140-197`                   |
-| 1-18 | Fix RLS tabla `tenants` (quitar policy tautológica `USING(true)`)                     | 3h         | 🔘 Pendiente | DA-2-010         | RLS hardening multi-tenant #1                         |
-| 1-19 | Fix RLS `knowledge_base` (quitar `app.current_tenant` dead letter — nunca se setea)   | 2h         | 🔘 Pendiente | F-04-004         | Migration nueva con policy correcta                   |
-| 1-20 | Fix `fetchCalls` — añadir filtro `tenant_id` en 4 funciones                           | 4h         | 🔘 Pendiente | F-04-001 / DA-2  | `src/lib/actions/calls.ts:56-371`                     |
-| 1-21 | Fix IDOR `inbox.ts` 9 funciones — verificar ownership tenant                          | 8h         | 🔘 Pendiente | DA-2 inbox sweep | `inbox.ts:448-501`                                    |
+| ID   | Tarea                                                                               | Estimación | Estado　　　             | Refs audit       | Notas                                                                                                                                                                                                                                                                                  |
+| ---- | ----------------------------------------------------------------------------------- | ---------- | ------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-16 | Fix privilege escalation via `user_metadata.is_admin` editable por usuario          | 4h         | 🔵 Subida `feature/sp-0` | DA-2-005         | ⏱ Real (a push): 10min · middleware.ts/auth.ts/api-auth.ts/tenant.ts leen+escriben `is_admin` SOLO en `app_metadata` · script `supabase/scripts/migrate-is-admin-to-app-metadata.sql` aplicado en local (1 user migrado) · commit `da64297`                                            |
+| 1-17 | Verificación rol admin en `createTenant`/`deleteTenant`/`updateTenant`/`getTenants` | 3h         | 🔵 Subida `feature/sp-0` | DA-2-004         | ⏱ Real (a push): 6min · helper `assertAdminAccess()` añadido a las 4 server actions · commit `da64297`                                                                                                                                                                                 |
+| 1-18 | Fix RLS tabla `tenants` (quitar policy tautológica `USING(true)`)                   | 3h         | 🔵 Subida `feature/sp-0` | DA-2-010         | ⏱ Real (a push): 8min · migration `20260521000000_rls_tenants_hardening.sql` · SELECT por `auth_user_id`+admin / IUD solo admin · **aplicada en local** (4 CREATE POLICY OK) · 🟡 VPS pre-deploy · commit `da64297`                                                                    |
+| 1-19 | Fix RLS `knowledge_base` (quitar `app.current_tenant` dead letter — nunca se setea) | 2h         | 🔵 Subida `feature/sp-0` | F-04-004         | ⏱ Real (a push): 7min · migration `20260521000001_rls_knowledge_base_hardening.sql` · 4 policies (S/I/U/D) ownership-based · **aplicada en local** · 🟡 VPS pre-deploy · commit `da64297`                                                                                              |
+| 1-20 | Fix `fetchCalls` — añadir filtro `tenant_id` en 4 funciones                         | 4h         | 🔵 Subida `feature/sp-0` | F-04-001 / DA-2  | ⏱ Real (a push): 6min · fetchCalls/getCallsByPhone/fetchIntentosByPhone/fetchWhatsappByPhone usan `getActiveTenantId` + `.eq("tenant_id", id)` · sin tenant → resultado vacío · commit `da64297`                                                                                       |
+| 1-21 | Fix IDOR `inbox.ts` 9 funciones — verificar ownership tenant                        | 8h         | 🔵 Subida `feature/sp-0` | DA-2 inbox sweep | ⏱ Real (a push): 13min · updateLeadSegment/sendManualMessage/injectMockupMessage/toggleLeadAI/assignAgentToLead/deleteLead/deleteChatHistory/deleteLeadFacts/updateLeadInfo · todas con `.eq("tenant_id", tenant.id)` + updateLeadInfo filtra tenant_id del payload · commit `da64297` |
 
 #### Bloque 1.6 — Otros críticos
 
-| ID                               | Tarea                                                                         | Estimación      | Estado                   | Refs audit                         | Notas                                                                                                                                                                                    |
-| -------------------------------- | ----------------------------------------------------------------------------- | --------------- | ------------------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1-22                             | Fix SSRF `/api/tenant/migrate` cookie `af-tenant-url` (añadir allowlist)      | 8h              | 🔘 Pendiente             | DA-3-002                           | Cookie editable por JS = vector activo. +2h por allowlist dinámica por tenant                                                                                                            |
-| 1-23                             | Sanitización XSS widget embed (interpolación `id` en JS servido a terceros)   | 4h              | 🔘 Pendiente             | DA-3-004                           | URL pública vulnerable                                                                                                                                                                   |
-| 1-24                             | Update `axios@1.14.0` (15 CVEs: SSRF + Prototype Pollution)                   | 4h              | 🔘 Pendiente             | DA-3-CVE-001                       | Pasar por `af-agents:adr` antes                                                                                                                                                          |
-| 1-25                             | Reemplazar paquete `crypto@1.0.1` DEPRECATED por built-in `node:crypto`       | 3h              | 🔘 Pendiente             | ADR-2026-05-20                     | Imports en todo el src/ y worker.js. Vía af-agents:adr                                                                                                                                   |
-| 1-26                             | Update `next@16.1.6` → `next@16.2.6` (cierre 19 CVEs incl. middleware bypass) | 4h              | 🔵 Subida `feature/sp-0` | DA-3-CVE-002                       | ⏱ Real (a push): 30min · ✅ Commit `1ce8e0b` 21-05-2026 — `next@16.2.6` + `eslint-config-next@16.2.6` + ADR-002 documentado. typecheck/build limpios. Smoke test diferido a SP-1-CLOSE-2 |
-| **Subtotal Fase 0 — Desarrollo** |                                                                               | **~104h 30min** |                          | (incluye 0-00 Playwright setup 4h) |                                                                                                                                                                                          |
+| ID                               | Tarea                                                                         | Estimación      | Estado                   | Refs audit                         | Notas                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ----------------------------------------------------------------------------- | --------------- | ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-22                             | Fix SSRF `/api/tenant/migrate` cookie `af-tenant-url` (añadir allowlist)      | 8h              | 🔵 Subida `feature/sp-0` | DA-3-002                           | ⏱ Real (a push): 12min · URL+key del Supabase del tenant resueltas DESDE DB (no de cookie) usando `esden-tenant-id` · gate `requireApiAdmin` · `isAllowedTenantUrl()` bloquea loopback/RFC1918 (override en dev con `ALLOW_INTERNAL_TENANT_URLS=true`) · commit `2c9437c` |
+| 1-23                             | Sanitización XSS widget embed (interpolación `id` en JS servido a terceros)   | 4h              | 🔵 Subida `feature/sp-0` | DA-3-004                           | ⏱ Real (a push): 4min · validación regex UUID estricta antes de interpolar · `id`+`baseUrl` inyectados vía `JSON.stringify` (corte de escape imposible) · 400 si formato inválido · commit `2c9437c`                                                                      |
+| 1-24                             | Update `axios@1.14.0` → `axios@1.16.1` (15 CVEs: SSRF + Prototype Pollution)  | 4h              | 🔵 Subida `feature/sp-0` | DA-3-CVE-001                       | ⏱ Real (a push): 8min · ADR-2026-05-20 ya aprobado · `npm install` OK · ajuste tipos `AxiosHeaderValue` en WhatsAppWebhookProcessor (content-type normalizado a string\|undefined) · commit `2c9437c`                                                                     |
+| 1-25                             | Reemplazar paquete `crypto@1.0.1` DEPRECATED por built-in `node:crypto`       | 3h              | 🔵 Subida `feature/sp-0` | ADR-2026-05-20                     | ⏱ Real (a push): 3min · grep `from 'crypto'` en src/ + worker.js = 0 ocurrencias · paquete removido limpio de `package.json` · helpers HMAC ya usan `node:crypto` explícito · commit `2c9437c`                                                                            |
+| 1-26                             | Update `next@16.1.6` → `next@16.2.6` (cierre 19 CVEs incl. middleware bypass) | 4h              | 🔵 Subida `feature/sp-0` | DA-3-CVE-002                       | ⏱ Real (a push): 30min · ✅ Commit `1ce8e0b` 21-05-2026 — `next@16.2.6` + `eslint-config-next@16.2.6` + ADR-002 documentado. typecheck/build limpios. Smoke test diferido a SP-1-CLOSE-2                                                                                  |
+| **Subtotal Fase 0 — Desarrollo** |                                                                               | **~104h 30min** |                          | (incluye 0-00 Playwright setup 4h) |                                                                                                                                                                                                                                                                           |
 
 > Aplazados a Fase 1: cifrar Google OAuth tokens (DA-3-006, L).
 > **Nota:** 2-27 (update Next.js, DA-3-CVE-002) MOVIDA a Sprint 0 como **1-26** tras hallazgo en auditoría ADR del 20-05-2026 (el middleware bypass anula efectivamente los hotfixes de auth 1-07, 1-08, 1-16).
