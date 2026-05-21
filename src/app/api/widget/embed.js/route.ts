@@ -1,20 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Sprint 0 tarea 1-23: el `id` venía directamente al JS servido a terceros
+ * (`var widgetId = "${id}";`). Sin sanitizar, permitía XSS por payload de
+ * comillas y corte del literal. Ahora:
+ *   - Validamos UUID estricto en `id` antes de cualquier interpolación.
+ *   - Para `baseUrl` (que también se inyectaba al string) usamos JSON.stringify
+ *     como cinturón de seguridad adicional.
+ *   - El header `Content-Type` mantiene `application/javascript` porque el
+ *     widget se sirve como módulo JS embebido en sitios de terceros.
+ */
+const WIDGET_ID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
 
-    if (!id) {
-        return new NextResponse("Missing widget ID", { status: 400 });
-    }
+  if (!id) {
+    return new NextResponse("Missing widget ID", { status: 400 });
+  }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+  if (!WIDGET_ID_REGEX.test(id)) {
+    return new NextResponse("Invalid widget ID format", { status: 400 });
+  }
 
-    // The script that will be executed on the client's website
-    const script = `
+  const baseUrlRaw =
+    process.env.NEXT_PUBLIC_APP_URL || `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+  const safeWidgetId = JSON.stringify(id);
+  const safeBaseUrl = JSON.stringify(baseUrlRaw);
+
+  // The script that will be executed on the client's website
+  const script = `
 (function() {
-    var widgetId = "${id}";
-    var baseUrl = "${baseUrl}";
+    var widgetId = ${safeWidgetId};
+    var baseUrl = ${safeBaseUrl};
     
     // Create the bubble button
     var bubble = document.createElement('div');
@@ -95,10 +114,10 @@ export async function GET(req: NextRequest) {
 })();
     `;
 
-    return new NextResponse(script, {
-        headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "public, max-age=3600",
-        },
-    });
+  return new NextResponse(script, {
+    headers: {
+      "Content-Type": "application/javascript",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
 }
