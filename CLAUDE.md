@@ -40,9 +40,9 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 ```
 
 - Trabajo activo: feature branches partiendo de `developer` (o `auditoria` durante el audit inicial).
-- **Naming de ramas por sprint** (decisión 21-05-2026):
+- **Naming de ramas por sprint** (decisión 21-05-2026, refinada 22-05-2026):
   - Sprint 0 (excepción legacy): `feature/sp-0-sprint-0-hotfixes` — ya creada, NO renombrar.
-  - **A partir del Sprint 1**: `feature/sprint-N-<slug>` (ej. `feature/sprint-1-capa-datos`, `feature/sprint-2-adapter-hubspot-zoho`). El prefijo `sp-` queda deprecated.
+  - **A partir del Sprint 1**: `feature/sprint-NN-<slug>` con **dos dígitos** (ej. `feature/sprint-01-capa-datos`, `feature/sprint-02-adapter-hubspot-zoho`, `feature/sprint-03-hardening`). El prefijo `sp-` queda deprecated. NN coincide con el número de sprint (no con el sprint_id `SP-X` del RoadMap, que va offset +1).
 - **`developer`** versiona TODO el scaffold de Claude Code (`.claude/`, `.claude-plugin/`, `docs/`, `plans/`, `.env.example`).
 - **`staging`** y **`main`** son ramas protegidas — **NO se tocan sin orden explícita del usuario**.
 - Versionado SemVer: `v0.0.0` inicial. Sprint cerrado → `v0.x.0`. Patch en sprint → `v0.0.x`. MVP completo → `v0.4.0`.

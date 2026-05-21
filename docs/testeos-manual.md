@@ -144,7 +144,7 @@ curl -i -X POST http://localhost:3000/api/webhooks/crm -H "x-tenant-id: 00000000
 
 ## Sprint 1 — Capa de datos
 
-> Versión objetivo: `v0.2.0` · Rama: `feature/sprint-1-capa-datos` · Bloque cubierto: tareas 2-01..2-34.
+> Versión objetivo: `v0.2.0` · Rama: `feature/sprint-01-capa-datos` · Bloque cubierto: tareas 2-01..2-34.
 
 ### Tabla de tests manuales — Sprint 1
 
@@ -174,7 +174,7 @@ curl -i -X POST http://localhost:3000/api/webhooks/crm -H "x-tenant-id: 00000000
 
 ## Sprint 2 — Adapter HubSpot + Zoho
 
-> Versión objetivo: `v0.3.0` · Rama: `feature/sprint-2-adapter-hubspot-zoho` · Tareas 3-01..3-07.
+> Versión objetivo: `v0.3.0` · Rama: `feature/sprint-02-adapter-hubspot-zoho` · Tareas 3-01..3-07.
 
 ### Tabla de tests manuales — Sprint 2
 
@@ -197,7 +197,7 @@ curl -i -X POST http://localhost:3000/api/webhooks/crm -H "x-tenant-id: 00000000
 
 ## Sprint 3 — Hardening
 
-> Versión objetivo: `v0.4.0` (MVP) · Rama: `feature/sprint-3-hardening` · Tareas 4-01..4-07.
+> Versión objetivo: `v0.4.0` (MVP) · Rama: `feature/sprint-03-hardening` · Tareas 4-01..4-07.
 
 ### Tabla de tests manuales — Sprint 3
 

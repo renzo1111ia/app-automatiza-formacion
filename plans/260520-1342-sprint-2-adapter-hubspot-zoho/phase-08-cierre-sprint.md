@@ -28,6 +28,7 @@ npm test             # todos los tests unitarios pass
 ### SP-3-CLOSE-2 — Test E2E Local + WCAG 2.2 AA (2h 30min)
 
 Playwright — flujos a cubrir:
+
 1. **Flujo OAuth HubSpot completo:** `/admin/integraciones` → "Conectar HubSpot" → OAuth sandbox → callback → estado "Conectado" visible
 2. **Flujo OAuth Zoho completo (EU):** `/admin/integraciones` → "Conectar Zoho" → seleccionar EU → OAuth sandbox → callback → estado "Conectado"
 3. **Field mapping:** editar política de un campo → guardar → verificar persistido
@@ -39,6 +40,7 @@ Prerrequisito: ngrok activo para OAuth callbacks en local.
 ### SP-3-CLOSE-3 — Test Manual del Dev (1h)
 
 Guía para el desarrollador:
+
 1. Abrir `/admin/integraciones` en browser
 2. Conectar cuenta HubSpot sandbox → verificar "Conectado"
 3. Conectar cuenta Zoho Developer Edition (EU) → verificar "Conectado"
@@ -50,6 +52,7 @@ Guía para el desarrollador:
 ### SP-3-CLOSE-4 — Corrección de Bugs (variable)
 
 Subtareas dinámicas creadas durante los tests anteriores.
+
 - Priorizar bugs que bloqueen criterios de éxito del sprint
 - Bugs cosméticos: documentar para Sprint 3 si no son bloqueantes
 
@@ -57,7 +60,7 @@ Subtareas dinámicas creadas durante los tests anteriores.
 
 ```bash
 # 1. Asegurar rama actualizada
-git checkout feature/sp-3-adapter-hubspot-zoho
+git checkout feature/sprint-02-adapter-hubspot-zoho
 git pull origin developer
 
 # 2. Bump versión (patch → minor al cerrar sprint)
@@ -68,7 +71,7 @@ git add package.json package-lock.json
 git commit -m "chore: bump version to v0.3.0 — Sprint 2 complete"
 
 # 4. Push y crear PR
-git push origin feature/sp-3-adapter-hubspot-zoho
+git push origin feature/sprint-02-adapter-hubspot-zoho
 gh pr create --title "Sprint 2: Adapter HubSpot + Zoho MVP (v0.3.0)" \
   --body "..."
   --base developer
@@ -77,7 +80,7 @@ gh pr create --title "Sprint 2: Adapter HubSpot + Zoho MVP (v0.3.0)" \
 # 6. Crear rama para Sprint 3
 git checkout developer
 git pull
-git checkout -b feature/sp-4-hardening
+git checkout -b feature/sprint-03-hardening
 ```
 
 **NOTA:** El merge a `developer` y la creación de rama Sprint 3 requieren autorización explícita del usuario antes de ejecutar.
@@ -106,14 +109,14 @@ git checkout -b feature/sp-4-hardening
 
 ## Estimación cierre
 
-| Tarea | Estimación |
-|-------|-----------|
-| SP-3-CLOSE-1 Auto tests | 1h 30min |
-| SP-3-CLOSE-2 Playwright + WCAG | 2h 30min |
-| SP-3-CLOSE-3 Test manual | 1h |
-| SP-3-CLOSE-4 Bugs (estimado) | variable (~4h buffer) |
-| SP-3-CLOSE-5 PR + bump | 30min |
-| **Total cierre** | **~10h** |
+| Tarea                          | Estimación            |
+| ------------------------------ | --------------------- |
+| SP-3-CLOSE-1 Auto tests        | 1h 30min              |
+| SP-3-CLOSE-2 Playwright + WCAG | 2h 30min              |
+| SP-3-CLOSE-3 Test manual       | 1h                    |
+| SP-3-CLOSE-4 Bugs (estimado)   | variable (~4h buffer) |
+| SP-3-CLOSE-5 PR + bump         | 30min                 |
+| **Total cierre**               | **~10h**              |
 
 ## Agentes Esden asignados
 

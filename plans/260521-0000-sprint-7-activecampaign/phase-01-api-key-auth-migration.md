@@ -5,7 +5,7 @@ priority: P2
 estimation: 3-6h
 phase_id: 7-01
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -32,11 +32,13 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Migration: columnas `ac_account_url`, `ac_webhook_id` en `crm_connections`
 - Helper `validateACCredentials(apiKey, accountUrl)`: `GET /users/me` con throw on 401
 - Helper `getACAxiosClient(tenantId)`: axios instance con baseURL + Api-Token header
 
 **No funcionales:**
+
 - API Key cifrada AES-256-GCM
 - RLS multi-tenant
 
@@ -58,11 +60,13 @@ src/lib/integrations/activecampaign/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/activecampaign/ac-api-client.ts`
 - `src/lib/integrations/activecampaign/ac-auth.ts`
 - `src/db/migrations/2026XXXX_crm_connections_ac_columns.sql`
 
 **Modificar:**
+
 - `src/lib/schemas/integrations-schema.ts` (campos AC)
 
 ## Implementation Steps
@@ -96,10 +100,10 @@ src/lib/integrations/activecampaign/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| AC API URL diferente por región (us1/eu1/au1) | Alta | Bajo | Almacenar URL completa, no derivar |
-| API Key revocada externamente | Media | Medio | Detectar 401 → marcar `status='revoked'` |
+| Riesgo                                        | Prob  | Impacto | Mitigación                               |
+| --------------------------------------------- | ----- | ------- | ---------------------------------------- |
+| AC API URL diferente por región (us1/eu1/au1) | Alta  | Bajo    | Almacenar URL completa, no derivar       |
+| API Key revocada externamente                 | Media | Medio   | Detectar 401 → marcar `status='revoked'` |
 
 ## Security Considerations
 

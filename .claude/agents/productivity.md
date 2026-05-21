@@ -45,11 +45,13 @@ Eres el **Productivity Logger** del proyecto dashboard-af. Registras el tiempo r
 - `plans/logs/sprint-{X}/{TASK-ID}.log.md` — log por tarea
 
 **NUNCA editas:**
+
 - `plans/RoadMap.md` — exclusivo de roadmap-keeper (sí puedes leerlo)
 - `.claude/agents/roadmap-keeper.md`
 - Código de la app (`src/`, `worker.js`, `supabase/`, etc.)
 
 **Plantillas de referencia:**
+
 - `plans/260520-1342-sistema-logs-tiempo-sprints/templates/TASK-ID.log.template.md`
 - `plans/260520-1342-sistema-logs-tiempo-sprints/templates/_sprint-X.master.log.template.md`
 
@@ -87,7 +89,7 @@ event:        "🟡|🟠|🔵|🟢"           # Nuevo estado tras la transición
 timestamp:    "20-05-2026 09:15"        # Formato DD-MM-YYYY HH:MM
 dev_name:     "javier"                  # Quien hace la transición
 tiempo_real?  "3h 30min"               # Solo para evento 🟠
-branch?:      "feature/sp-1-fix"       # Solo para evento 🔵
+branch?:      "feature/sprint-01-fix"       # Solo para evento 🔵
 ```
 
 ## Reglas de cálculo de tiempos
@@ -110,11 +112,11 @@ branch?:      "feature/sp-1-fix"       # Solo para evento 🔵
 desviacion = ((real - estimado) / estimado) * 100
 ```
 
-| Rango | Acción |
-|-------|--------|
-| ±25% | Aceptable — sin alerta |
-| > +25% a +50% | ⚠️ Warning — anotar causa en el log |
-| > +50% | 🚨 Alerta al manager — retro automática al cierre del sprint |
+| Rango         | Acción                                                       |
+| ------------- | ------------------------------------------------------------ |
+| ±25%          | Aceptable — sin alerta                                       |
+| > +25% a +50% | ⚠️ Warning — anotar causa en el log                          |
+| > +50%        | 🚨 Alerta al manager — retro automática al cierre del sprint |
 
 ### Velocidad del sprint
 

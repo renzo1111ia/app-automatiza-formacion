@@ -5,7 +5,7 @@ priority: P2
 estimation: 10-16h
 phase_id: 4-04
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -37,6 +37,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Endpoint `POST /api/webhooks/google-sheets` valida `X-Goog-Channel-Token`
 - Pull job procesa async (BullMQ): lee filas, compara con BD, detecta cambios manuales
 - Aplicar R-014 al actualizar lead (campo a campo según `write_policy`)
@@ -44,6 +45,7 @@ created: 2026-05-21
 - Cooldown 30s post-push para evitar bucle
 
 **No funcionales:**
+
 - Latencia pull < 5 min
 - Sin update si solo hubo push propio
 - Logging de cada decisión de conflict resolution en `crm_write_audit`
@@ -78,12 +80,14 @@ BullMQ worker sheets-pull:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/api/webhooks/google-sheets/route.ts`
 - `src/jobs/sheets-pull.job.ts`
 - `src/lib/integrations/sheets/sheets-conflict-resolver.ts`
 - `src/db/migrations/2026XXXX_sync_events_table.sql` (si no existe ya)
 
 **Depende de:**
+
 - `src/lib/integrations/sheets/sheets-adapter.ts` (4-03)
 - Write policy R-014 ya generalizada en Sprint 2
 
@@ -127,12 +131,12 @@ BullMQ worker sheets-pull:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Bucle push/pull si cooldown insuficiente | Media | Alto | Cooldown 30s + comparación `_esden_updated_at` |
-| Webhook duplicado | Alta | Bajo | Tabla `sync_events` con UNIQUE constraint |
-| Diff costoso en hojas grandes (>10k filas) | Baja | Medio | Leer solo rango con modifiedRange si disponible |
-| Token de canal compartido entre tenants | Baja | Alto | Validación estricta tenant_id vs channel_id |
+| Riesgo                                     | Prob  | Impacto | Mitigación                                      |
+| ------------------------------------------ | ----- | ------- | ----------------------------------------------- |
+| Bucle push/pull si cooldown insuficiente   | Media | Alto    | Cooldown 30s + comparación `_esden_updated_at`  |
+| Webhook duplicado                          | Alta  | Bajo    | Tabla `sync_events` con UNIQUE constraint       |
+| Diff costoso en hojas grandes (>10k filas) | Baja  | Medio   | Leer solo rango con modifiedRange si disponible |
+| Token de canal compartido entre tenants    | Baja  | Alto    | Validación estricta tenant_id vs channel_id     |
 
 ## Security Considerations
 

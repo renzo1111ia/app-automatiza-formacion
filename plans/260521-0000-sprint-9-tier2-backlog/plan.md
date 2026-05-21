@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 9: adapters Tier 2 (Clientify, Bitrix24, Pip
 status: backlog
 priority: P3
 effort: 30-50h por CRM (NO suma a total del sprint)
-branch: feature/sp-9-{crm}-adapter (por CRM al activarse)
+branch: feature/sprint-09-{crm}-adapter (por CRM al activarse)
 sprint_id: SP-9
 version_target: v0.5.x (por CRM)
 tags: [tier2, on-demand, backlog, clientify, bitrix24, pipedrive, monday, holded, sprint-9]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 9 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-9` |
-| Versión objetivo | `v0.5.x` (por CRM) |
-| Estado | **Backlog on-demand** |
-| Estimación total | ~30-50h **cada CRM** (con Sprint 8 hecho) — NO suma proactivamente |
-| Rama sugerida | `feature/sp-9-{crm}-adapter` por CRM |
+| Campo               | Valor                                                               |
+| ------------------- | ------------------------------------------------------------------- |
+| Sprint ID           | `SP-9`                                                              |
+| Versión objetivo    | `v0.5.x` (por CRM)                                                  |
+| Estado              | **Backlog on-demand**                                               |
+| Estimación total    | ~30-50h **cada CRM** (con Sprint 8 hecho) — NO suma proactivamente  |
+| Rama sugerida       | `feature/sprint-09-{crm}-adapter` por CRM                           |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-06-tier2-on-demand.md` |
 
 ## Contexto
@@ -49,14 +49,14 @@ Para activar un CRM Tier 2:
 
 ## Fases (placeholders on-demand)
 
-| # | CRM | Auth | Docs API | Est. con SP-8 | Est. sin SP-8 | Estado | Archivo |
-|---|-----|------|----------|---------------|---------------|--------|---------|
-| 1 | Clientify | API Key | Pobres | 30-50h | 60-80h | Backlog | [phase-01](phase-01-clientify.md) |
-| 2 | Bitrix24 | OAuth2/webhook | Medias | 35-50h | 60-80h | Backlog | [phase-02](phase-02-bitrix24.md) |
-| 3 | Pipedrive | OAuth2 | Excelentes | 25-35h | 50-70h | Backlog | [phase-03](phase-03-pipedrive.md) |
-| 4 | Monday CRM | OAuth2 + GraphQL | Buenas | 40-60h | 70-100h | Backlog | [phase-04](phase-04-monday.md) |
-| 5 | Holded | API Key | Razonables | 30-40h | 50-70h | Backlog | [phase-05](phase-05-holded.md) |
-| 6 | Cierre genérico (template reutilizable) | — | — | — | — | Reference | [phase-06](phase-06-cierre-generico.md) |
+| #   | CRM                                     | Auth             | Docs API   | Est. con SP-8 | Est. sin SP-8 | Estado    | Archivo                                 |
+| --- | --------------------------------------- | ---------------- | ---------- | ------------- | ------------- | --------- | --------------------------------------- |
+| 1   | Clientify                               | API Key          | Pobres     | 30-50h        | 60-80h        | Backlog   | [phase-01](phase-01-clientify.md)       |
+| 2   | Bitrix24                                | OAuth2/webhook   | Medias     | 35-50h        | 60-80h        | Backlog   | [phase-02](phase-02-bitrix24.md)        |
+| 3   | Pipedrive                               | OAuth2           | Excelentes | 25-35h        | 50-70h        | Backlog   | [phase-03](phase-03-pipedrive.md)       |
+| 4   | Monday CRM                              | OAuth2 + GraphQL | Buenas     | 40-60h        | 70-100h       | Backlog   | [phase-04](phase-04-monday.md)          |
+| 5   | Holded                                  | API Key          | Razonables | 30-40h        | 50-70h        | Backlog   | [phase-05](phase-05-holded.md)          |
+| 6   | Cierre genérico (template reutilizable) | —                | —          | —             | —             | Reference | [phase-06](phase-06-cierre-generico.md) |
 
 **Total Sprint 9**: NO se suma — depende de qué CRMs se activan.
 
@@ -88,11 +88,11 @@ Reference                                         │
 
 ## Riesgos top-3 (cross-CRM)
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| ROI insuficiente → CRM no rentable | Media | Bajo | Decisión tras evaluación; no implementar si <2 tenants |
-| Docs API pobres (especialmente Clientify) | Alta | Medio | Spike de 4h antes de comprometer estimación |
-| Sprint 8 NO está hecho → costo doble | Baja | Medio | Forzar Sprint 8 antes de cualquier Tier 2 |
+| Riesgo                                    | Prob  | Impacto | Mitigación                                             |
+| ----------------------------------------- | ----- | ------- | ------------------------------------------------------ |
+| ROI insuficiente → CRM no rentable        | Media | Bajo    | Decisión tras evaluación; no implementar si <2 tenants |
+| Docs API pobres (especialmente Clientify) | Alta  | Medio   | Spike de 4h antes de comprometer estimación            |
+| Sprint 8 NO está hecho → costo doble      | Baja  | Medio   | Forzar Sprint 8 antes de cualquier Tier 2              |
 
 ## Notas SDKs
 

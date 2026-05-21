@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-10h
 phase_id: 4-02
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -34,12 +34,14 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Migration añade columnas `spreadsheet_id`, `gsheet_channel_id`, `gsheet_channel_expiry`, `gsheet_template_id` a `crm_connections`
 - Función `copyTemplateToTenant(tenantId, oauth2Client)` crea spreadsheet en Drive del tenant
 - Validación post-copia: leer columnas y verificar headers esperados
 - Vincular `spreadsheet_id` resultante a `crm_connections` del tenant
 
 **No funcionales:**
+
 - Migration idempotente (re-ejecutable sin error)
 - Si copy falla → no crear registro en `crm_connections` (transaccional)
 
@@ -61,14 +63,17 @@ src/lib/integrations/sheets/sheets-template.ts
 ## Related Code Files
 
 **Crear:**
+
 - `src/db/migrations/2026XXXX_crm_connections_sheets_columns.sql`
 - `src/lib/integrations/sheets/sheets-template.ts`
 
 **Modificar:**
+
 - `src/lib/schemas/integrations-schema.ts` (añadir campos opcionales Sheets)
 - `.env.example` (añadir `GOOGLE_SHEETS_MASTER_TEMPLATE_ID`)
 
 **Depende de:**
+
 - `src/lib/integrations/sheets/sheets-oauth.ts` (4-01)
 
 ## Implementation Steps
@@ -104,11 +109,11 @@ src/lib/integrations/sheets/sheets-template.ts
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Tenant ya tiene spreadsheet existente | Media | Bajo | UI ofrece "usar existente" o "crear copia" |
-| Drive quota límite del tenant | Baja | Medio | Capturar 403 quota y mostrar error claro |
-| Plantilla maestra renombrada/borrada | Baja | Alto | Lockear ID en env + monitorear health check semanal |
+| Riesgo                                | Prob  | Impacto | Mitigación                                          |
+| ------------------------------------- | ----- | ------- | --------------------------------------------------- |
+| Tenant ya tiene spreadsheet existente | Media | Bajo    | UI ofrece "usar existente" o "crear copia"          |
+| Drive quota límite del tenant         | Baja  | Medio   | Capturar 403 quota y mostrar error claro            |
+| Plantilla maestra renombrada/borrada  | Baja  | Alto    | Lockear ID en env + monitorear health check semanal |
 
 ## Security Considerations
 

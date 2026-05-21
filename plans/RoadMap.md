@@ -100,74 +100,74 @@ excluded_from: [staging, main]
 
 ### Sprint 1 — Capa de datos (sin ORM nuevo)
 
-| Item                                        | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                      |
-| ------------------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------- |
-| **🚀 Sprint 1**                             | 🔘 Pendiente | ~172h           | —      | —        | v0.2.0 · `feature/sp-2-capa-datos` · Inicio Vie 05-06-2026 |
-| ▸ Bloque 2.1 — Unificación cliente Supabase | 🔘           | 19h             | —      | —        | 0/3 (2-01..2-03)                                           |
-| ▸ Bloque 2.2 — Schemas Zod                  | 🔘           | 23h             | —      | —        | 0/8 (2-04..2-11)                                           |
-| ▸ Bloque 2.3 — Repository pattern           | 🔘           | 31h             | —      | —        | 0/7 (2-12..2-18)                                           |
-| ▸ Bloque 2.4 — Refactor queries existentes  | 🔘           | 18h             | —      | —        | 0/3 (2-19..2-21)                                           |
-| ▸ Bloque 2.5 — Type safety + limpieza       | 🔘           | 16h             | —      | —        | 0/1 (2-22)                                                 |
-| ▸ Bloque 2.6 — RLS hardening complementario | 🔘           | 19h             | —      | —        | 0/4 (2-23..2-26 · 2-27 reasignada a 1-26)                  |
-| ▸ Bloque 2.7 — Testing + documentación      | 🔘           | 16h             | —      | —        | 0/2 (2-28, 2-29)                                           |
-| ▸ Bloque 2.8 — Hardening dependencias (ADR) | 🔘           | 20h             | —      | —        | 0/5 (2-30..2-34)                                           |
-| ▸ Cierre Sprint 1 (SP-2-CLOSE-1..5)         | 🔘           | 5h 30min + bugs | —      | —        |                                                            |
+| Item                                        | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                           |
+| ------------------------------------------- | ------------ | --------------- | ------ | -------- | --------------------------------------------------------------- |
+| **🚀 Sprint 1**                             | 🔘 Pendiente | ~172h           | —      | —        | v0.2.0 · `feature/sprint-01-capa-datos` · Inicio Vie 05-06-2026 |
+| ▸ Bloque 2.1 — Unificación cliente Supabase | 🔘           | 19h             | —      | —        | 0/3 (2-01..2-03)                                                |
+| ▸ Bloque 2.2 — Schemas Zod                  | 🔘           | 23h             | —      | —        | 0/8 (2-04..2-11)                                                |
+| ▸ Bloque 2.3 — Repository pattern           | 🔘           | 31h             | —      | —        | 0/7 (2-12..2-18)                                                |
+| ▸ Bloque 2.4 — Refactor queries existentes  | 🔘           | 18h             | —      | —        | 0/3 (2-19..2-21)                                                |
+| ▸ Bloque 2.5 — Type safety + limpieza       | 🔘           | 16h             | —      | —        | 0/1 (2-22)                                                      |
+| ▸ Bloque 2.6 — RLS hardening complementario | 🔘           | 19h             | —      | —        | 0/4 (2-23..2-26 · 2-27 reasignada a 1-26)                       |
+| ▸ Bloque 2.7 — Testing + documentación      | 🔘           | 16h             | —      | —        | 0/2 (2-28, 2-29)                                                |
+| ▸ Bloque 2.8 — Hardening dependencias (ADR) | 🔘           | 20h             | —      | —        | 0/5 (2-30..2-34)                                                |
+| ▸ Cierre Sprint 1 (SP-2-CLOSE-1..5)         | 🔘           | 5h 30min + bugs | —      | —        |                                                                 |
 
 ### Sprint 2 — Adapter HubSpot + Zoho (MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | -------------------------------------------------------------------- |
-| **🚀 Sprint 2**                     | 🔘 Pendiente | 148h            | —      | —        | v0.3.0 · `feature/sp-3-adapter-hubspot-zoho` · Inicio Mié 01-07-2026 |
-| ▸ Tareas de desarrollo (Fase 2)     | 🔘           | 148h            | —      | —        | 0/7 (3-01..3-07) — sin sub-bloques                                   |
-| ▸ Cierre Sprint 2 (SP-3-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                      |
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                     |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------- |
+| **🚀 Sprint 2**                     | 🔘 Pendiente | 148h            | —      | —        | v0.3.0 · `feature/sprint-02-adapter-hubspot-zoho` · Inicio Mié 01-07-2026 |
+| ▸ Tareas de desarrollo (Fase 2)     | 🔘           | 148h            | —      | —        | 0/7 (3-01..3-07) — sin sub-bloques                                        |
+| ▸ Cierre Sprint 2 (SP-3-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                           |
 
 ### Sprint 3 — Hardening (cierre MVP v0.4.0)
 
-| Item                                | Estado       | Estim.    | ⏱ Push | ⏱ Cierre | Notas                                                     |
-| ----------------------------------- | ------------ | --------- | ------ | -------- | --------------------------------------------------------- |
-| **🚀 Sprint 3**                     | 🔘 Pendiente | 100-132h  | —      | —        | v0.4.0 · `feature/sp-4-hardening` · Inicio Jue 23-07-2026 |
-| ▸ Tareas de desarrollo (Fase 3)     | 🔘           | 100-132h  | —      | —        | 0/7 (4-01..4-07) — sin sub-bloques                        |
-| ▸ Cierre Sprint 3 (SP-4-CLOSE-1..5) | 🔘           | 8h + bugs | —      | —        | Más extenso (cierre MVP)                                  |
+| Item                                | Estado       | Estim.    | ⏱ Push | ⏱ Cierre | Notas                                                          |
+| ----------------------------------- | ------------ | --------- | ------ | -------- | -------------------------------------------------------------- |
+| **🚀 Sprint 3**                     | 🔘 Pendiente | 100-132h  | —      | —        | v0.4.0 · `feature/sprint-03-hardening` · Inicio Jue 23-07-2026 |
+| ▸ Tareas de desarrollo (Fase 3)     | 🔘           | 100-132h  | —      | —        | 0/7 (4-01..4-07) — sin sub-bloques                             |
+| ▸ Cierre Sprint 3 (SP-4-CLOSE-1..5) | 🔘           | 8h + bugs | —      | —        | Más extenso (cierre MVP)                                       |
 
 ### Sprint 4 — Google Sheets bidireccional (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                            |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------------- |
-| **🚀 Sprint 4**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.5.0 · `feature/sp-5-01-google-sheets` · Inicio Mar 11-08-2026 |
-| ▸ Tareas de desarrollo (Fase 4)     | 🔘           | 60-100h         | —      | —        | 0/6 (5-01-a..5-01-f) · googleapis ya instalado                   |
-| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                  |
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                              |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------ |
+| **🚀 Sprint 4**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.5.0 · `feature/sprint-04-google-sheets` · Inicio Mar 11-08-2026 |
+| ▸ Tareas de desarrollo (Fase 4)     | 🔘           | 60-100h         | —      | —        | 0/6 (5-01-a..5-01-f) · googleapis ya instalado                     |
+| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                    |
 
 ### Sprint 5 — Salesforce adapter (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                      |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------- |
-| **🚀 Sprint 5**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.6.0 · `feature/sp-6-salesforce` · Inicio Lun 24-08-2026 |
-| ▸ Tareas de desarrollo (Fase 5)     | 🔘           | 60-100h         | —      | —        | 0/6 (6-01..6-06) · jsforce vía ADR                         |
-| ▸ Cierre Sprint 5 (SP-6-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                            |
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                           |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | --------------------------------------------------------------- |
+| **🚀 Sprint 5**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.6.0 · `feature/sprint-05-salesforce` · Inicio Lun 24-08-2026 |
+| ▸ Tareas de desarrollo (Fase 5)     | 🔘           | 60-100h         | —      | —        | 0/6 (6-01..6-06) · jsforce vía ADR                              |
+| ▸ Cierre Sprint 5 (SP-6-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                 |
 
 ### Sprint 6 — GoHighLevel adapter (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                       |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ----------------------------------------------------------- |
-| **🚀 Sprint 6**                     | 🔘 Pendiente | 40-80h          | —      | —        | v0.7.0 · `feature/sp-7-gohighlevel` · Inicio Vie 04-09-2026 |
-| ▸ Tareas de desarrollo (Fase 6)     | 🔘           | 40-80h          | —      | —        | 0/5 (7-01..7-05) · foco Latam EduTech                       |
-| ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                             |
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                            |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ---------------------------------------------------------------- |
+| **🚀 Sprint 6**                     | 🔘 Pendiente | 40-80h          | —      | —        | v0.7.0 · `feature/sprint-06-gohighlevel` · Inicio Vie 04-09-2026 |
+| ▸ Tareas de desarrollo (Fase 6)     | 🔘           | 40-80h          | —      | —        | 0/5 (7-01..7-05) · foco Latam EduTech                            |
+| ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                  |
 
 ### Sprint 7 — ActiveCampaign adapter (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                          |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | -------------------------------------------------------------- |
-| **🚀 Sprint 7**                     | 🔘 Pendiente | 20-50h          | —      | —        | v0.8.0 · `feature/sp-8-activecampaign` · Inicio Mar 15-09-2026 |
-| ▸ Tareas de desarrollo (Fase 7)     | 🔘           | 20-50h          | —      | —        | 0/5 (8-01..8-05) · auth API Key (la más sencilla)              |
-| ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                |
+| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                               |
+| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------- |
+| **🚀 Sprint 7**                     | 🔘 Pendiente | 20-50h          | —      | —        | v0.8.0 · `feature/sprint-07-activecampaign` · Inicio Mar 15-09-2026 |
+| ▸ Tareas de desarrollo (Fase 7)     | 🔘           | 20-50h          | —      | —        | 0/5 (8-01..8-05) · auth API Key (la más sencilla)                   |
+| ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        |                                                                     |
 
 ### Sprint 8 — Adapter pattern generalization
 
-| Item                                | Estado                        | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                  |
-| ----------------------------------- | ----------------------------- | --------------- | ------ | -------- | ---------------------------------------------------------------------- |
-| **🚀 Sprint 8**                     | 🔘 Bloqueado hasta SP-4..SP-7 | 20-40h          | —      | —        | v0.9.0 · `feature/sp-9-adapter-generalization` · Inicio Lun 21-09-2026 |
-| ▸ Tareas de desarrollo (Fase 8)     | 🔘                            | 20-40h          | —      | —        | 0/4 (9-01..9-04)                                                       |
-| ▸ Cierre Sprint 8 (SP-9-CLOSE-1..5) | 🔘                            | 5h 30min + bugs | —      | —        |                                                                        |
+| Item                                | Estado                        | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                       |
+| ----------------------------------- | ----------------------------- | --------------- | ------ | -------- | --------------------------------------------------------------------------- |
+| **🚀 Sprint 8**                     | 🔘 Bloqueado hasta SP-4..SP-7 | 20-40h          | —      | —        | v0.9.0 · `feature/sprint-08-adapter-generalization` · Inicio Lun 21-09-2026 |
+| ▸ Tareas de desarrollo (Fase 8)     | 🔘                            | 20-40h          | —      | —        | 0/4 (9-01..9-04)                                                            |
+| ▸ Cierre Sprint 8 (SP-9-CLOSE-1..5) | 🔘                            | 5h 30min + bugs | —      | —        |                                                                             |
 
 ### Sprint 9 — Tier 2 on-demand (backlog)
 
@@ -289,7 +289,7 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 | SP-1-CLOSE-2                 | **Test E2C Local** — Abrir browser con Playwright, recorrer flujos implementados, validar visual + diseño + **WCAG 2.2 AA**. Generar reporte con screenshots de pasos clave + findings de accesibilidad. | 2h 30min                       | 🔘 Pendiente | Delegado a `af-agents:testing` + `af-agents:uxui`                                                                                                  |
 | SP-1-CLOSE-3                 | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales de prueba si aplica. Entregar guía paso-a-paso: qué probar, cómo, qué esperar. Esperar feedback.                               | 1h                             | 🔘 Pendiente | Delegado al manager (interacción con humano)                                                                                                       |
 | SP-1-CLOSE-4                 | **Corrección de Bugs y cambios detectados** — Subtareas dinámicas: una por cada bug/cambio que reporte el dev. Cada subtarea con su propio estado. Esta tarea queda 🟡 mientras haya subtareas abiertas. | (variable)                     | 🔘 Pendiente | Delegado a `af-agents:code` + `af-agents:debugger`                                                                                                 |
-| SP-1-CLOSE-5                 | **Cierre de Sprint** — PR `feature/sp-0-sprint-0-hotfixes` → `developer`. Tras merge: bump SemVer a `v0.1.0`, invitar al dev a tomar siguiente sprint, crear rama `feature/sp-2-capa-datos`.             | 30min                          | 🔘 Pendiente | Delegado a `af-agents:git` (verifica estados previos) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
+| SP-1-CLOSE-5                 | **Cierre de Sprint** — PR `feature/sp-0-sprint-0-hotfixes` → `developer`. Tras merge: bump SemVer a `v0.1.0`, invitar al dev a tomar siguiente sprint, crear rama `feature/sprint-01-capa-datos`.        | 30min                          | 🔘 Pendiente | Delegado a `af-agents:git` (verifica estados previos) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
 | **Subtotal cierre Sprint 0** |                                                                                                                                                                                                          | **5h 30min + Corrección bugs** | 　　　　　　 |                                                                                                                                                    |
 
 ### Pre-requisitos del cierre (gates obligatorios)
@@ -308,16 +308,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 1 — Sprint 1: Capa de datos (sin ORM nuevo)
 
-| Campo                          | Valor                     |
-| ------------------------------ | ------------------------- |
-| **Sprint ID**                  | `SP-2`                    |
-| **Versión objetivo al cierre** | `v0.2.0`                  |
-| **Estado del sprint**          | 🔘 Pendiente              |
-| **Estimación total**           | 3-4 sem (120h–160h)       |
-| **Rama de trabajo sugerida**   | `feature/sp-2-capa-datos` |
-| **Inicio**                     | Vie 05-06-2026 09:00      |
-| **Fin Est.**                   | Mar 30-06-2026 19:00      |
-| **Fin Real**                   | —                         |
+| Campo                          | Valor                          |
+| ------------------------------ | ------------------------------ |
+| **Sprint ID**                  | `SP-2`                         |
+| **Versión objetivo al cierre** | `v0.2.0`                       |
+| **Estado del sprint**          | 🔘 Pendiente                   |
+| **Estimación total**           | 3-4 sem (120h–160h)            |
+| **Rama de trabajo sugerida**   | `feature/sprint-01-capa-datos` |
+| **Inicio**                     | Vie 05-06-2026 09:00           |
+| **Fin Est.**                   | Mar 30-06-2026 19:00           |
+| **Fin Real**                   | —                              |
 
 > **Asignado a:** Javi HP (solo). 18 días lab × 10h/día = 180h.
 
@@ -415,16 +415,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 2 — Sprint 2: Adapter layer + 2 CRMs (MVP)
 
-| Campo                          | Valor                               |
-| ------------------------------ | ----------------------------------- |
-| **Sprint ID**                  | `SP-3`                              |
-| **Versión objetivo al cierre** | `v0.3.0`                            |
-| **Estado del sprint**          | 🔘 Pendiente                        |
-| **Estimación total**           | 2-3 sem (80h–120h)                  |
-| **Rama de trabajo sugerida**   | `feature/sp-3-adapter-hubspot-zoho` |
-| **Inicio**                     | Mié 01-07-2026 09:00                |
-| **Fin Est.**                   | Mié 22-07-2026 19:00                |
-| **Fin Real**                   | —                                   |
+| Campo                          | Valor                                    |
+| ------------------------------ | ---------------------------------------- |
+| **Sprint ID**                  | `SP-3`                                   |
+| **Versión objetivo al cierre** | `v0.3.0`                                 |
+| **Estado del sprint**          | 🔘 Pendiente                             |
+| **Estimación total**           | 2-3 sem (80h–120h)                       |
+| **Rama de trabajo sugerida**   | `feature/sprint-02-adapter-hubspot-zoho` |
+| **Inicio**                     | Mié 01-07-2026 09:00                     |
+| **Fin Est.**                   | Mié 22-07-2026 19:00                     |
+| **Fin Real**                   | —                                        |
 
 > **Asignado a:** Javi HP (solo). 16 días lab × 10h/día = 160h. Sin vacaciones, sin descuentos.
 
@@ -464,7 +464,7 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Versión objetivo al cierre** | `v0.4.0` (MVP completo, post-hardening) |
 | **Estado del sprint**          | 🔘 Pendiente                            |
 | **Estimación total**           | 2-3 sem (80h–120h)                      |
-| **Rama de trabajo sugerida**   | `feature/sp-4-hardening`                |
+| **Rama de trabajo sugerida**   | `feature/sprint-03-hardening`           |
 | **Inicio**                     | Jue 23-07-2026 09:00                    |
 | **Fin Est.**                   | Lun 10-08-2026 19:00                    |
 | **Fin Real**                   | —                                       |
@@ -507,7 +507,7 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Versión objetivo al cierre** | `v0.5.0`                                 |
 | **Estado del sprint**          | 🔘 Pendiente (post-MVP, requiere v0.4.0) |
 | **Estimación total**           | 60-100h                                  |
-| **Rama de trabajo sugerida**   | `feature/sp-5-01-google-sheets`          |
+| **Rama de trabajo sugerida**   | `feature/sprint-04-google-sheets`        |
 | **Inicio**                     | Mar 11-08-2026 09:00                     |
 | **Fin Est.**                   | Vie 21-08-2026 19:00                     |
 | **Fin Real**                   | —                                        |
@@ -543,16 +543,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 5 — Sprint 5: Salesforce adapter
 
-| Campo                          | Valor                     |
-| ------------------------------ | ------------------------- |
-| **Sprint ID**                  | `SP-6`                    |
-| **Versión objetivo al cierre** | `v0.6.0`                  |
-| **Estado del sprint**          | 🔘 Pendiente              |
-| **Estimación total**           | 60-100h                   |
-| **Rama de trabajo sugerida**   | `feature/sp-6-salesforce` |
-| **Inicio**                     | Lun 24-08-2026 09:00      |
-| **Fin Est.**                   | Jue 03-09-2026 19:00      |
-| **Fin Real**                   | —                         |
+| Campo                          | Valor                          |
+| ------------------------------ | ------------------------------ |
+| **Sprint ID**                  | `SP-6`                         |
+| **Versión objetivo al cierre** | `v0.6.0`                       |
+| **Estado del sprint**          | 🔘 Pendiente                   |
+| **Estimación total**           | 60-100h                        |
+| **Rama de trabajo sugerida**   | `feature/sprint-05-salesforce` |
+| **Inicio**                     | Lun 24-08-2026 09:00           |
+| **Fin Est.**                   | Jue 03-09-2026 19:00           |
+| **Fin Real**                   | —                              |
 
 > **Asignado a:** Javi HP (solo). 9 días lab × 10h/día = 90h. Estimación dentro del rango 60-100h.
 
@@ -585,16 +585,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 6 — Sprint 6: GoHighLevel adapter
 
-| Campo                          | Valor                      |
-| ------------------------------ | -------------------------- |
-| **Sprint ID**                  | `SP-7`                     |
-| **Versión objetivo al cierre** | `v0.7.0`                   |
-| **Estado del sprint**          | 🔘 Pendiente               |
-| **Estimación total**           | 40-80h                     |
-| **Rama de trabajo sugerida**   | `feature/sp-7-gohighlevel` |
-| **Inicio**                     | Vie 04-09-2026 09:00       |
-| **Fin Est.**                   | Lun 14-09-2026 19:00       |
-| **Fin Real**                   | —                          |
+| Campo                          | Valor                           |
+| ------------------------------ | ------------------------------- |
+| **Sprint ID**                  | `SP-7`                          |
+| **Versión objetivo al cierre** | `v0.7.0`                        |
+| **Estado del sprint**          | 🔘 Pendiente                    |
+| **Estimación total**           | 40-80h                          |
+| **Rama de trabajo sugerida**   | `feature/sprint-06-gohighlevel` |
+| **Inicio**                     | Vie 04-09-2026 09:00            |
+| **Fin Est.**                   | Lun 14-09-2026 19:00            |
+| **Fin Real**                   | —                               |
 
 > **Asignado a:** Javi HP (solo). 7 días lab × 10h/día = 70h. Estimación dentro del rango 40-80h.
 
@@ -626,16 +626,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 7 — Sprint 7: ActiveCampaign adapter
 
-| Campo                          | Valor                         |
-| ------------------------------ | ----------------------------- |
-| **Sprint ID**                  | `SP-8`                        |
-| **Versión objetivo al cierre** | `v0.8.0`                      |
-| **Estado del sprint**          | 🔘 Pendiente                  |
-| **Estimación total**           | 20-50h                        |
-| **Rama de trabajo sugerida**   | `feature/sp-8-activecampaign` |
-| **Inicio**                     | Mar 15-09-2026 09:00          |
-| **Fin Est.**                   | Vie 18-09-2026 19:00          |
-| **Fin Real**                   | —                             |
+| Campo                          | Valor                              |
+| ------------------------------ | ---------------------------------- |
+| **Sprint ID**                  | `SP-8`                             |
+| **Versión objetivo al cierre** | `v0.8.0`                           |
+| **Estado del sprint**          | 🔘 Pendiente                       |
+| **Estimación total**           | 20-50h                             |
+| **Rama de trabajo sugerida**   | `feature/sprint-07-activecampaign` |
+| **Inicio**                     | Mar 15-09-2026 09:00               |
+| **Fin Est.**                   | Vie 18-09-2026 19:00               |
+| **Fin Real**                   | —                                  |
 
 > **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-50h.
 
@@ -673,7 +673,7 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Versión objetivo al cierre** | `v0.9.0`                                            |
 | **Estado del sprint**          | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) |
 | **Estimación total**           | 20-40h                                              |
-| **Rama de trabajo sugerida**   | `feature/sp-9-adapter-generalization`               |
+| **Rama de trabajo sugerida**   | `feature/sprint-08-adapter-generalization`          |
 | **Inicio**                     | Lun 21-09-2026 09:00                                |
 | **Fin Est.**                   | Jue 24-09-2026 19:00                                |
 | **Fin Real**                   | —                                                   |
@@ -707,16 +707,16 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 9 — Sprint 9: Tier 2 on-demand (backlog)
 
-| Campo                          | Valor                                 |
-| ------------------------------ | ------------------------------------- |
-| **Sprint ID**                  | `SP-10`                               |
-| **Versión objetivo al cierre** | `v0.10.x+` (incremental por CRM)      |
-| **Estado del sprint**          | 🔘 Backlog (on-demand)                |
-| **Estimación total**           | ~30-50h por CRM (sólo bajo pedido)    |
-| **Rama de trabajo sugerida**   | `feature/sp-10-tier2-<crm>` (por CRM) |
-| **Inicio**                     | TBD (on-demand)                       |
-| **Fin Est.**                   | TBD (on-demand)                       |
-| **Fin Real**                   | —                                     |
+| Campo                          | Valor                                     |
+| ------------------------------ | ----------------------------------------- |
+| **Sprint ID**                  | `SP-10`                                   |
+| **Versión objetivo al cierre** | `v0.10.x+` (incremental por CRM)          |
+| **Estado del sprint**          | 🔘 Backlog (on-demand)                    |
+| **Estimación total**           | ~30-50h por CRM (sólo bajo pedido)        |
+| **Rama de trabajo sugerida**   | `feature/sprint-09-tier2-<crm>` (por CRM) |
+| **Inicio**                     | TBD (on-demand)                           |
+| **Fin Est.**                   | TBD (on-demand)                           |
+| **Fin Real**                   | —                                         |
 
 > **Asignado a:** Javi HP (solo, por defecto). On-demand: sólo bajo pedido cliente.
 

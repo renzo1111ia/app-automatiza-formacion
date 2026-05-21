@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-10h + bugs
 phase_id: 7-06
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -36,6 +36,7 @@ created: 2026-05-21
 ### Tests integration (1-2h)
 
 Contra AC trial account (skip si no hay `AC_TEST_*`):
+
 - Push contact via `contact/sync`
 - Apply tags
 - Upsert deal
@@ -82,7 +83,7 @@ npm run test
 
 ### SP-7-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-7-activecampaign-adapter` → `developer`
+- [ ] PR `feature/sprint-07-activecampaign-adapter` → `developer`
 - [ ] Bump `v0.5.3`
 - [ ] Update RoadMap + changelog
 - [ ] Tag `v0.5.3`
@@ -90,10 +91,12 @@ npm run test
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/activecampaign/__tests__/*.test.ts`
 - `src/lib/integrations/activecampaign/__tests__/fixtures/*.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/__tests__/adapter-contract.test.ts`
 - `.env.test.example` (`AC_TEST_*`)
 - `package.json` (bump version)
@@ -129,11 +132,11 @@ npm run test
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| AC trial limits hit | Media | Bajo | Account dedicada |
-| Bug late discovery | Baja | Medio | Buffer estimación |
-| Webhook test simulado no representativo | Media | Bajo | Test E2E manual real |
+| Riesgo                                  | Prob  | Impacto | Mitigación           |
+| --------------------------------------- | ----- | ------- | -------------------- |
+| AC trial limits hit                     | Media | Bajo    | Account dedicada     |
+| Bug late discovery                      | Baja  | Medio   | Buffer estimación    |
+| Webhook test simulado no representativo | Media | Bajo    | Test E2E manual real |
 
 ## Security Considerations
 

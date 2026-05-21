@@ -5,7 +5,7 @@ priority: P2
 estimation: 8-14h
 phase_id: 6-03
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Endpoint `POST /api/webhooks/ghl` verifica HMAC-SHA256
 - Determinar tenant por `locationId` del payload
 - Idempotency con tabla `sync_events` (event_id GHL)
@@ -41,6 +42,7 @@ created: 2026-05-21
 - Soporte para los 4 eventos (Contact CRUD + OpportunityStatusUpdate)
 
 **No funcionales:**
+
 - Respuesta 200 inmediata (proceso async vía BullMQ)
 - Logging audit completo
 - Constant-time HMAC comparison
@@ -68,11 +70,13 @@ BullMQ worker ghl-pull:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/api/webhooks/ghl/route.ts`
 - `src/jobs/ghl-pull.job.ts`
 - `src/lib/integrations/ghl/ghl-webhook-verifier.ts`
 
 **Modificar:**
+
 - `.env.example` (`GHL_WEBHOOK_SECRET`)
 
 ## Implementation Steps
@@ -121,11 +125,11 @@ BullMQ worker ghl-pull:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| HMAC key incorrecta en docs GHL | Media | Alto | Test con webhook real desde GHL antes de prod |
-| Tenant no encontrado por locationId | Baja | Bajo | Log warning + 200 (no error) |
-| Webhook timing attack | Baja | Medio | Constant-time compare obligatorio |
+| Riesgo                              | Prob  | Impacto | Mitigación                                    |
+| ----------------------------------- | ----- | ------- | --------------------------------------------- |
+| HMAC key incorrecta en docs GHL     | Media | Alto    | Test con webhook real desde GHL antes de prod |
+| Tenant no encontrado por locationId | Baja  | Bajo    | Log warning + 200 (no error)                  |
+| Webhook timing attack               | Baja  | Medio   | Constant-time compare obligatorio             |
 
 ## Security Considerations
 

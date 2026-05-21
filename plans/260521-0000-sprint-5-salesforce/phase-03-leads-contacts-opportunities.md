@@ -5,7 +5,7 @@ priority: P2
 estimation: 12-18h
 phase_id: 5-03
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `SalesforceAdapter implements IntegrationAdapter`
 - `upsertLead(lead, fieldMappings)`: upsert por Email
 - `upsertContact(contact, fieldMappings)`: upsert por Email (si tenant configurado para Contact en vez de Lead)
@@ -42,6 +43,7 @@ created: 2026-05-21
 - FieldMapper con defaults Lead/Contact/Opportunity
 
 **No funcionales:**
+
 - Append-only R-014 por defecto
 - Logging audit por cada upsert
 - Throttle por tenant según API limits Edition
@@ -71,11 +73,13 @@ src/jobs/salesforce-push.job.ts
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/salesforce/salesforce-adapter.ts`
 - `src/lib/integrations/salesforce/salesforce-field-mapper.ts`
 - `src/jobs/salesforce-push.job.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/_integration-adapter-factory.ts` (registrar salesforce)
 - `src/lib/events/lead-events.ts` (suscriptor sf-push)
 
@@ -121,12 +125,12 @@ src/jobs/salesforce-push.job.ts
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Stage names varían por org | Alta | Bajo | Mapping configurable por tenant + default genérico |
-| API limit hit en bulk push | Media | Medio | Throttle 10/min default + alerta % cuota |
-| `Company` field validation | Alta | Bajo | Default academia.name + validación pre-push |
-| Picklist values no permitidos | Media | Medio | Validar antes de push o capturar `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST` |
+| Riesgo                        | Prob  | Impacto | Mitigación                                                                 |
+| ----------------------------- | ----- | ------- | -------------------------------------------------------------------------- |
+| Stage names varían por org    | Alta  | Bajo    | Mapping configurable por tenant + default genérico                         |
+| API limit hit en bulk push    | Media | Medio   | Throttle 10/min default + alerta % cuota                                   |
+| `Company` field validation    | Alta  | Bajo    | Default academia.name + validación pre-push                                |
+| Picklist values no permitidos | Media | Medio   | Validar antes de push o capturar `INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST` |
 
 ## Security Considerations
 

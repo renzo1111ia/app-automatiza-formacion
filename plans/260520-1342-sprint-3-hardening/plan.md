@@ -4,10 +4,23 @@ description: "Tests E2E, coverage 80%, observabilidad, dashboard costes LLM, WCA
 status: pending
 priority: P1
 effort: 116h base (+ 8h cierre = 124h total, bugs variables)
-branch: feature/sp-4-hardening
+branch: feature/sprint-03-hardening
 sprint_id: SP-4
 version_target: v0.4.0
-tags: [testing, e2e, playwright, vitest, coverage, observabilidad, wcag, hardening, csp, rate-limits, llm-costs]
+tags:
+  [
+    testing,
+    e2e,
+    playwright,
+    vitest,
+    coverage,
+    observabilidad,
+    wcag,
+    hardening,
+    csp,
+    rate-limits,
+    llm-costs,
+  ]
 created: 2026-05-20
 ---
 
@@ -19,15 +32,15 @@ created: 2026-05-20
 
 ## Fases
 
-| # | Archivo | Tareas RoadMap | Est. | Estado |
-|---|---------|---------------|------|--------|
-| 1 | [phase-01-e2e-tests-playwright.md](phase-01-e2e-tests-playwright.md) | 4-01 + 4-02 (parcial) | 28-32h | Pendiente |
-| 2 | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03 | 12-16h | Pendiente |
-| 3 | [phase-03-dashboard-costes-llm.md](phase-03-dashboard-costes-llm.md) | 4-04 | 16-22h | Pendiente |
-| 4 | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md) | 4-05 (24 findings DA-5) | 28-40h | Pendiente |
-| 5 | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md) | 4-06 | 10-14h | Pendiente |
-| 6 | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md) | 4-07 | 6-8h | Pendiente |
-| 7 | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md) | SP-4-CLOSE-1..5 | 8h + bugs | Pendiente |
+| #   | Archivo                                                                                    | Tareas RoadMap          | Est.      | Estado    |
+| --- | ------------------------------------------------------------------------------------------ | ----------------------- | --------- | --------- |
+| 1   | [phase-01-e2e-tests-playwright.md](phase-01-e2e-tests-playwright.md)                       | 4-01 + 4-02 (parcial)   | 28-32h    | Pendiente |
+| 2   | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03                    | 12-16h    | Pendiente |
+| 3   | [phase-03-dashboard-costes-llm.md](phase-03-dashboard-costes-llm.md)                       | 4-04                    | 16-22h    | Pendiente |
+| 4   | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md)                                           | 4-05 (24 findings DA-5) | 28-40h    | Pendiente |
+| 5   | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md)     | 4-06                    | 10-14h    | Pendiente |
+| 6   | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md)               | 4-07                    | 6-8h      | Pendiente |
+| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                     | SP-4-CLOSE-1..5         | 8h + bugs | Pendiente |
 
 **Total desarrollo:** ~100-132h · **Total con cierre:** ~108-140h · **Objetivo:** 116h base
 
@@ -55,12 +68,12 @@ DEPENDENCIAS INTERNAS:
 
 ## Solapes con sprints anteriores
 
-| Sprint anterior | Componente reutilizado |
-|----------------|----------------------|
-| Sprint 0 (SP-1-CLOSE-2) | Playwright setup base (si se instaló en Sprint 0) |
-| Sprint 1 (2-30, 2-31) | Componentes shadcn actualizados (WCAG aprovecha) |
-| Sprint 1 (2-14..2-18) | Repository pattern (coverage targets aprovecha repos) |
-| Sprint 2 | Multi-LLM pipeline existente (dashboard costes usa callbacks) |
+| Sprint anterior         | Componente reutilizado                                        |
+| ----------------------- | ------------------------------------------------------------- |
+| Sprint 0 (SP-1-CLOSE-2) | Playwright setup base (si se instaló en Sprint 0)             |
+| Sprint 1 (2-30, 2-31)   | Componentes shadcn actualizados (WCAG aprovecha)              |
+| Sprint 1 (2-14..2-18)   | Repository pattern (coverage targets aprovecha repos)         |
+| Sprint 2                | Multi-LLM pipeline existente (dashboard costes usa callbacks) |
 
 ## Criterios de éxito del Sprint 3
 
@@ -82,13 +95,13 @@ Logs en `plans/logs/sprint-4/4-XX.log.md` (misma estructura Sprints 1/2/3).
 
 ## Riesgos top-5
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| DA-5-012 (responsive AIAgentInbox) desborda tiempo Ph4 | Alta | Medio | Marcar como P2 dentro de Ph4; cortar si sprint va a >130h |
-| CSP `unsafe-inline` necesario para Tailwind rompe política strict | Media | Medio | Aceptar compromiso `unsafe-inline` styles para MVP; strict-dynamic en Sprint 4 |
-| Tests E2E flaky por timing (BullMQ async) | Media | Medio | `waitForResponse` + timeouts generosos; retry 2 en CI |
-| Coverage 80% inalcanzable sin tests de Workers BullMQ | Media | Alto | Integration tests con Redis local; Vitest + ioredis real |
-| Playwright instala Chromium (~200MB) en CI | Baja | Bajo | Cache `~/.cache/ms-playwright` en GitHub Actions |
+| Riesgo                                                            | Prob  | Impacto | Mitigación                                                                     |
+| ----------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------ |
+| DA-5-012 (responsive AIAgentInbox) desborda tiempo Ph4            | Alta  | Medio   | Marcar como P2 dentro de Ph4; cortar si sprint va a >130h                      |
+| CSP `unsafe-inline` necesario para Tailwind rompe política strict | Media | Medio   | Aceptar compromiso `unsafe-inline` styles para MVP; strict-dynamic en Sprint 4 |
+| Tests E2E flaky por timing (BullMQ async)                         | Media | Medio   | `waitForResponse` + timeouts generosos; retry 2 en CI                          |
+| Coverage 80% inalcanzable sin tests de Workers BullMQ             | Media | Alto    | Integration tests con Redis local; Vitest + ioredis real                       |
+| Playwright instala Chromium (~200MB) en CI                        | Baja  | Bajo    | Cache `~/.cache/ms-playwright` en GitHub Actions                               |
 
 ## Referencias
 

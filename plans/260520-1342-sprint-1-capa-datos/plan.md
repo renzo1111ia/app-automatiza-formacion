@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 1: unificación Supabase, Zod schemas, Repos
 status: pending
 priority: P1
 effort: 173h
-branch: feature/sp-2-capa-datos
+branch: feature/sprint-01-capa-datos
 tags: [supabase, zod, repository-pattern, rls, sprint-2, data-layer]
 created: 2026-05-20
 ---
@@ -17,7 +17,7 @@ created: 2026-05-20
 | Versión objetivo | `v0.2.0`                                                               |
 | Estado           | Pendiente                                                              |
 | Estimación total | ~173h max / ~169h min (2-30 condicional: 7h si spike OK, 3h si plan 2) |
-| Rama sugerida    | `feature/sp-2-capa-datos`                                              |
+| Rama sugerida    | `feature/sprint-01-capa-datos`                                         |
 
 ## Fases
 

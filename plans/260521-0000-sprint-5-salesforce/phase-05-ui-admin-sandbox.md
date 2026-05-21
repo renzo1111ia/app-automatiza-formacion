@@ -5,7 +5,7 @@ priority: P2
 estimation: 8-12h
 phase_id: 5-05
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Página `/admin/integrations/salesforce` con wizard:
   1. Toggle sandbox/prod
   2. OAuth consent → callback
@@ -45,6 +46,7 @@ created: 2026-05-21
 - Doc collapsible para Workflow Rule setup
 
 **No funcionales:**
+
 - Mobile responsive
 - A11y compliant
 - Toasts informativos
@@ -71,6 +73,7 @@ Components:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/admin/integrations/salesforce/page.tsx`
 - `src/components/integrations/salesforce-connection-form.tsx`
 - `src/components/integrations/salesforce-env-toggle.tsx`
@@ -80,6 +83,7 @@ Components:
 - `src/lib/actions/salesforce-connect.ts`
 
 **Modificar:**
+
 - `src/app/admin/integrations/page.tsx` (añadir card Salesforce)
 
 ## Implementation Steps
@@ -124,11 +128,11 @@ Components:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Confusión sandbox vs prod | Alta | Alto | Warning UI + diferentes colores en badge |
-| Mapping campos custom no documentado | Media | Medio | Permitir custom fields free-text + validación pre-push |
-| Doc Workflow Rule muy técnica | Media | Bajo | Vídeo loom embebido (futuro) o screenshots step-by-step |
+| Riesgo                               | Prob  | Impacto | Mitigación                                              |
+| ------------------------------------ | ----- | ------- | ------------------------------------------------------- |
+| Confusión sandbox vs prod            | Alta  | Alto    | Warning UI + diferentes colores en badge                |
+| Mapping campos custom no documentado | Media | Medio   | Permitir custom fields free-text + validación pre-push  |
+| Doc Workflow Rule muy técnica        | Media | Bajo    | Vídeo loom embebido (futuro) o screenshots step-by-step |
 
 ## Security Considerations
 

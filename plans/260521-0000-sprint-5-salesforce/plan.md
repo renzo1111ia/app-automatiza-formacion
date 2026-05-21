@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 5: Connected App + OAuth2, jsforce setup, ma
 status: pending
 priority: P2
 effort: 60-100h
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 sprint_id: SP-5
 version_target: v0.5.1
 tags: [salesforce, jsforce, oauth2, crm, integrations, sprint-5, post-mvp, enterprise]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 5 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-5` |
-| Versión objetivo | `v0.5.1` |
-| Estado | Pendiente |
-| Estimación total | ~60-100h |
-| Rama sugerida | `feature/sp-5-salesforce-adapter` |
+| Campo               | Valor                                                                  |
+| ------------------- | ---------------------------------------------------------------------- |
+| Sprint ID           | `SP-5`                                                                 |
+| Versión objetivo    | `v0.5.1`                                                               |
+| Estado              | Pendiente                                                              |
+| Estimación total    | ~60-100h                                                               |
+| Rama sugerida       | `feature/sprint-05-salesforce-adapter`                                 |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-02-salesforce-adapter.md` |
 
 ## Contexto
@@ -35,16 +35,16 @@ con sandbox/prod por tenant.
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | Connected App + ADR jsforce + OAuth2 flow | 10-14h | Pendiente | [phase-01](phase-01-connected-app-oauth2.md) |
-| 2 | jsforce setup + DB migration + auth persistence | 6-10h | Pendiente | [phase-02](phase-02-jsforce-setup-migration.md) |
-| 3 | Leads + Contacts + Opportunities mapping | 12-18h | Pendiente | [phase-03](phase-03-leads-contacts-opportunities.md) |
-| 4 | Webhooks bidireccional (Platform Events / outbound) | 10-16h | Pendiente | [phase-04](phase-04-webhooks-bidireccional.md) |
-| 5 | UI admin (sandbox toggle + mapping) | 8-12h | Pendiente | [phase-05](phase-05-ui-admin-sandbox.md) |
-| 6 | Audit log + rate limit handling | 4-8h | Pendiente | [phase-06](phase-06-audit-rate-limit.md) |
-| 7 | Tests sandbox (Developer Edition free) | 6-12h | Pendiente | [phase-07](phase-07-tests-sandbox.md) |
-| 8 | Cierre Sprint 5 (typecheck/lint/build + E2E + PR) | 4-10h + bugs | Pendiente | [phase-08](phase-08-cierre-sprint.md) |
+| #   | Fase                                                | Estimación   | Estado    | Archivo                                              |
+| --- | --------------------------------------------------- | ------------ | --------- | ---------------------------------------------------- |
+| 1   | Connected App + ADR jsforce + OAuth2 flow           | 10-14h       | Pendiente | [phase-01](phase-01-connected-app-oauth2.md)         |
+| 2   | jsforce setup + DB migration + auth persistence     | 6-10h        | Pendiente | [phase-02](phase-02-jsforce-setup-migration.md)      |
+| 3   | Leads + Contacts + Opportunities mapping            | 12-18h       | Pendiente | [phase-03](phase-03-leads-contacts-opportunities.md) |
+| 4   | Webhooks bidireccional (Platform Events / outbound) | 10-16h       | Pendiente | [phase-04](phase-04-webhooks-bidireccional.md)       |
+| 5   | UI admin (sandbox toggle + mapping)                 | 8-12h        | Pendiente | [phase-05](phase-05-ui-admin-sandbox.md)             |
+| 6   | Audit log + rate limit handling                     | 4-8h         | Pendiente | [phase-06](phase-06-audit-rate-limit.md)             |
+| 7   | Tests sandbox (Developer Edition free)              | 6-12h        | Pendiente | [phase-07](phase-07-tests-sandbox.md)                |
+| 8   | Cierre Sprint 5 (typecheck/lint/build + E2E + PR)   | 4-10h + bugs | Pendiente | [phase-08](phase-08-cierre-sprint.md)                |
 
 **Total**: 60-100h (coincide con rango original).
 
@@ -85,11 +85,11 @@ Final                                           │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Connected App mal configurada por tenant | Alta | Alto | Guía paso a paso en UI + test connection |
-| Sandbox vs prod confusión | Media | Alto | Toggle explícito + warning UI + columna `sf_environment` |
-| API limits Edition (15k/día) | Media | Medio | BullMQ throttle per-tenant + alerta % cuota |
+| Riesgo                                   | Prob  | Impacto | Mitigación                                               |
+| ---------------------------------------- | ----- | ------- | -------------------------------------------------------- |
+| Connected App mal configurada por tenant | Alta  | Alto    | Guía paso a paso en UI + test connection                 |
+| Sandbox vs prod confusión                | Media | Alto    | Toggle explícito + warning UI + columna `sf_environment` |
+| API limits Edition (15k/día)             | Media | Medio   | BullMQ throttle per-tenant + alerta % cuota              |
 
 ## Notas SDKs
 

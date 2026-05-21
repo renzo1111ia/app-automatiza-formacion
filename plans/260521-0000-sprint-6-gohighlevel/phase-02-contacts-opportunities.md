@@ -5,7 +5,7 @@ priority: P2
 estimation: 12-20h
 phase_id: 6-02
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `GHLAdapter implements IntegrationAdapter`
 - `upsertContact(contact, fieldMappings)`: search → upsert por email
 - `upsertOpportunity(deal, fieldMappings)`: search en pipeline → upsert
@@ -42,6 +43,7 @@ created: 2026-05-21
 - BullMQ job `ghl-push` con throttle 90 req/10s por tenant
 
 **No funcionales:**
+
 - Append-only R-014 por defecto
 - Audit log por operación
 - Retry exponencial en 429/5xx
@@ -73,12 +75,14 @@ Endpoints GHL usados:
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/ghl/ghl-adapter.ts`
 - `src/lib/integrations/ghl/ghl-api-client.ts`
 - `src/lib/integrations/ghl/ghl-field-mapper.ts`
 - `src/jobs/ghl-push.job.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/_integration-adapter-factory.ts` (registrar ghl)
 - `src/lib/events/lead-events.ts` (suscriptor ghl-push)
 
@@ -123,11 +127,11 @@ Endpoints GHL usados:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Custom fields IDs varían por location | Alta | Bajo | FieldMapper configurable por tenant |
-| Pipeline IDs no documentados | Alta | Medio | Endpoint GET pipelines en UI admin (6-04) |
-| API v2 changes durante development | Media | Medio | Pin a versión de API en headers |
+| Riesgo                                | Prob  | Impacto | Mitigación                                |
+| ------------------------------------- | ----- | ------- | ----------------------------------------- |
+| Custom fields IDs varían por location | Alta  | Bajo    | FieldMapper configurable por tenant       |
+| Pipeline IDs no documentados          | Alta  | Medio   | Endpoint GET pipelines en UI admin (6-04) |
+| API v2 changes durante development    | Media | Medio   | Pin a versión de API en headers           |
 
 ## Security Considerations
 

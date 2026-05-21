@@ -5,7 +5,7 @@ priority: P3
 estimation: 30-40h (con SP-8) / 50-70h (sin SP-8)
 phase_id: 9-05
 sprint_id: SP-9
-branch: feature/sp-9-holded-adapter (al activarse)
+branch: feature/sprint-09-holded-adapter (al activarse)
 created: 2026-05-21
 ---
 
@@ -73,11 +73,11 @@ plans/YYMMDD-HHmm-sprint-9-05-holded/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Modelo de datos ERP+CRM confuso | Media | Bajo | Solo mapear entidad "contact" + "lead", ignorar entidades ERP-only |
-| Rate limit 5 req/s | Media | Bajo | Throttle 4 req/s (igual que AC) |
-| Webhooks limitados | Media | Bajo | Polling fallback si necesario |
+| Riesgo                          | Prob  | Impacto | Mitigación                                                         |
+| ------------------------------- | ----- | ------- | ------------------------------------------------------------------ |
+| Modelo de datos ERP+CRM confuso | Media | Bajo    | Solo mapear entidad "contact" + "lead", ignorar entidades ERP-only |
+| Rate limit 5 req/s              | Media | Bajo    | Throttle 4 req/s (igual que AC)                                    |
+| Webhooks limitados              | Media | Bajo    | Polling fallback si necesario                                      |
 
 ## Próximos pasos
 

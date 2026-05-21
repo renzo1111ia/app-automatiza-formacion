@@ -64,7 +64,7 @@ npm run test:e2e:ui     # modo interactivo
 feature/* ──► PR ──► developer ──► (orden explícita) ──► staging ──► (orden explícita) ──► main
 ```
 
-- Trabajo activo: ramas `feature/sp-N-<slug>` (N = número de sprint) que parten de `developer`.
+- Trabajo activo: ramas `feature/sprint-NN-<slug>` (NN = número de sprint con dos dígitos, ej. `sprint-01`, `sprint-02`) que parten de `developer`. **Excepción legacy**: Sprint 0 mantiene `feature/sp-0-sprint-0-hotfixes` (no se renombra).
 - **`developer`** versiona TODO el scaffold de Claude Code (`.claude/`, `.claude-plugin/`, `docs/`, `plans/`, `.env.example`).
 - **`staging`** y **`main`** son ramas protegidas — **NO se tocan sin orden explícita del lead**.
 

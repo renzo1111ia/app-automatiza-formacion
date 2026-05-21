@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 6: OAuth2 v2 setup, Contacts + Opportunities
 status: pending
 priority: P2
 effort: 40-80h
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 sprint_id: SP-6
 version_target: v0.5.2
 tags: [gohighlevel, ghl, oauth2, crm, integrations, sprint-6, post-mvp, latam]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 6 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-6` |
-| Versión objetivo | `v0.5.2` |
-| Estado | Pendiente |
-| Estimación total | ~40-80h |
-| Rama sugerida | `feature/sp-6-ghl-adapter` |
+| Campo               | Valor                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Sprint ID           | `SP-6`                                                                  |
+| Versión objetivo    | `v0.5.2`                                                                |
+| Estado              | Pendiente                                                               |
+| Estimación total    | ~40-80h                                                                 |
+| Rama sugerida       | `feature/sprint-06-ghl-adapter`                                         |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-03-gohighlevel-adapter.md` |
 
 ## Contexto
@@ -34,14 +34,14 @@ OAuth2 v2 + REST puro con axios (CERO deps). Cada tenant = una Location en GHL.
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | OAuth2 v2 setup + Marketplace app registry | 6-12h | Pendiente | [phase-01](phase-01-oauth2-v2-marketplace.md) |
-| 2 | Contacts + Opportunities REST puro | 12-20h | Pendiente | [phase-02](phase-02-contacts-opportunities.md) |
-| 3 | Webhooks HMAC + idempotency | 8-14h | Pendiente | [phase-03](phase-03-webhooks-hmac.md) |
-| 4 | UI admin (locationId + pipeline mapping) | 6-12h | Pendiente | [phase-04](phase-04-ui-admin-locationid.md) |
-| 5 | Tests (unit + integration sandbox) | 4-10h | Pendiente | [phase-05](phase-05-tests.md) |
-| 6 | Cierre Sprint 6 (typecheck/lint/build + E2E + PR) | 4-12h + bugs | Pendiente | [phase-06](phase-06-cierre-sprint.md) |
+| #   | Fase                                              | Estimación   | Estado    | Archivo                                        |
+| --- | ------------------------------------------------- | ------------ | --------- | ---------------------------------------------- |
+| 1   | OAuth2 v2 setup + Marketplace app registry        | 6-12h        | Pendiente | [phase-01](phase-01-oauth2-v2-marketplace.md)  |
+| 2   | Contacts + Opportunities REST puro                | 12-20h       | Pendiente | [phase-02](phase-02-contacts-opportunities.md) |
+| 3   | Webhooks HMAC + idempotency                       | 8-14h        | Pendiente | [phase-03](phase-03-webhooks-hmac.md)          |
+| 4   | UI admin (locationId + pipeline mapping)          | 6-12h        | Pendiente | [phase-04](phase-04-ui-admin-locationid.md)    |
+| 5   | Tests (unit + integration sandbox)                | 4-10h        | Pendiente | [phase-05](phase-05-tests.md)                  |
+| 6   | Cierre Sprint 6 (typecheck/lint/build + E2E + PR) | 4-12h + bugs | Pendiente | [phase-06](phase-06-cierre-sprint.md)          |
 
 **Total**: 40-80h (coincide con rango original).
 
@@ -80,11 +80,11 @@ Final                                            │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Registro GHL Marketplace tarda o se rechaza | Alta | Alto | Iniciar proceso ANTES del sprint (no bloquear) |
-| API v2 docs incompletas | Media | Medio | Test sandbox antes de implementar |
-| `locationId` confuso para tenant | Media | Medio | Mostrar locationId tras OAuth |
+| Riesgo                                      | Prob  | Impacto | Mitigación                                     |
+| ------------------------------------------- | ----- | ------- | ---------------------------------------------- |
+| Registro GHL Marketplace tarda o se rechaza | Alta  | Alto    | Iniciar proceso ANTES del sprint (no bloquear) |
+| API v2 docs incompletas                     | Media | Medio   | Test sandbox antes de implementar              |
+| `locationId` confuso para tenant            | Media | Medio   | Mostrar locationId tras OAuth                  |
 
 ## Notas SDKs
 

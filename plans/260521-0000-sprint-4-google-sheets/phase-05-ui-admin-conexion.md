@@ -5,7 +5,7 @@ priority: P2
 estimation: 8-12h
 phase_id: 4-05
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Página `/admin/integrations/sheets` con flow wizard 3 pasos:
   1. OAuth consent → callback
   2. Elegir spreadsheet existente o crear desde plantilla
@@ -43,6 +44,7 @@ created: 2026-05-21
 - Modal de errores recientes (últimos 10 de `crm_write_audit`)
 
 **No funcionales:**
+
 - Mobile-friendly (academias pequeñas operan desde móvil)
 - Loading states + optimistic updates
 - Toasts informativos (Tailwind + shadcn)
@@ -70,6 +72,7 @@ Components:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/admin/integrations/sheets/page.tsx`
 - `src/components/integrations/sheets-connection-form.tsx`
 - `src/components/integrations/sheets-step-oauth.tsx`
@@ -79,6 +82,7 @@ Components:
 - `src/lib/actions/sheets-connect.ts` (server actions)
 
 **Modificar:**
+
 - `src/app/admin/integrations/page.tsx` (añadir card Sheets)
 - `src/lib/repositories/integrations-repository.ts` (queries específicas Sheets)
 
@@ -122,11 +126,11 @@ Components:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Mapping confuso para usuarios no técnicos | Alta | Medio | Wizard guiado + tooltips + defaults razonables |
-| Spreadsheet existente sin columnas esperadas | Media | Medio | Validar headers con `verifyTemplateStructure()` |
-| Polling status genera carga | Baja | Bajo | Polling 30s + websocket en fase futura |
+| Riesgo                                       | Prob  | Impacto | Mitigación                                      |
+| -------------------------------------------- | ----- | ------- | ----------------------------------------------- |
+| Mapping confuso para usuarios no técnicos    | Alta  | Medio   | Wizard guiado + tooltips + defaults razonables  |
+| Spreadsheet existente sin columnas esperadas | Media | Medio   | Validar headers con `verifyTemplateStructure()` |
+| Polling status genera carga                  | Baja  | Bajo    | Polling 30s + websocket en fase futura          |
 
 ## Security Considerations
 

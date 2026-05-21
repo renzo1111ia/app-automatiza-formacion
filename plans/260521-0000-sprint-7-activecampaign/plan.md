@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 7: API Key auth, contact/sync upsert, tags, 
 status: pending
 priority: P2
 effort: 20-50h
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 sprint_id: SP-7
 version_target: v0.5.3
 tags: [activecampaign, api-key, crm, integrations, sprint-7, post-mvp]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 7 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-7` |
-| Versión objetivo | `v0.5.3` |
-| Estado | Pendiente |
-| Estimación total | ~20-50h |
-| Rama sugerida | `feature/sp-7-activecampaign-adapter` |
+| Campo               | Valor                                                                      |
+| ------------------- | -------------------------------------------------------------------------- |
+| Sprint ID           | `SP-7`                                                                     |
+| Versión objetivo    | `v0.5.3`                                                                   |
+| Estado              | Pendiente                                                                  |
+| Estimación total    | ~20-50h                                                                    |
+| Rama sugerida       | `feature/sprint-07-activecampaign-adapter`                                 |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-04-activecampaign-adapter.md` |
 
 ## Contexto
@@ -34,14 +34,14 @@ requiere throttling cuidadoso.
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | API Key auth + DB migration | 3-6h | Pendiente | [phase-01](phase-01-api-key-auth-migration.md) |
-| 2 | Contacts + Tags (contact/sync upsert) | 5-10h | Pendiente | [phase-02](phase-02-contacts-tags.md) |
-| 3 | Deals + Automations sync | 4-8h | Pendiente | [phase-03](phase-03-deals-automations.md) |
-| 4 | Webhook pull + idempotency | 3-8h | Pendiente | [phase-04](phase-04-webhook-pull.md) |
-| 5 | UI admin (API Key + Account URL + mapping) | 3-8h | Pendiente | [phase-05](phase-05-ui-admin.md) |
-| 6 | Tests + Cierre Sprint 7 (incluye PR) | 4-10h + bugs | Pendiente | [phase-06](phase-06-tests-cierre.md) |
+| #   | Fase                                       | Estimación   | Estado    | Archivo                                        |
+| --- | ------------------------------------------ | ------------ | --------- | ---------------------------------------------- |
+| 1   | API Key auth + DB migration                | 3-6h         | Pendiente | [phase-01](phase-01-api-key-auth-migration.md) |
+| 2   | Contacts + Tags (contact/sync upsert)      | 5-10h        | Pendiente | [phase-02](phase-02-contacts-tags.md)          |
+| 3   | Deals + Automations sync                   | 4-8h         | Pendiente | [phase-03](phase-03-deals-automations.md)      |
+| 4   | Webhook pull + idempotency                 | 3-8h         | Pendiente | [phase-04](phase-04-webhook-pull.md)           |
+| 5   | UI admin (API Key + Account URL + mapping) | 3-8h         | Pendiente | [phase-05](phase-05-ui-admin.md)               |
+| 6   | Tests + Cierre Sprint 7 (incluye PR)       | 4-10h + bugs | Pendiente | [phase-06](phase-06-tests-cierre.md)           |
 
 **Total**: 22-50h (coincide con rango original 20-50h).
 
@@ -80,11 +80,11 @@ Final                                       │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Rate limit 5 req/s en sync masivo | Alta | Medio | Throttle 4 req/s estricto |
-| Webhook "at least once" duplicado | Alta | Bajo | sync_events idempotency |
-| Custom field IDs varían por cuenta | Alta | Bajo | FieldMapper configurable |
+| Riesgo                             | Prob | Impacto | Mitigación                |
+| ---------------------------------- | ---- | ------- | ------------------------- |
+| Rate limit 5 req/s en sync masivo  | Alta | Medio   | Throttle 4 req/s estricto |
+| Webhook "at least once" duplicado  | Alta | Bajo    | sync_events idempotency   |
+| Custom field IDs varían por cuenta | Alta | Bajo    | FieldMapper configurable  |
 
 ## Notas SDKs
 

@@ -5,7 +5,7 @@ priority: P3
 estimation: 3-6h
 phase_id: 8-04
 sprint_id: SP-8
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 created: 2026-05-21
 ---
 
@@ -32,6 +32,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - ADR `adr-adapter-pattern-generalization-{date}.md`
 - `adapter.contract.test.ts` que verifica:
   - Cada adapter implementa todos los métodos core
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Verificar 0 regresiones en suite completo
 
 **No funcionales:**
+
 - Doc en español + ejemplos de código
 - Contract test usa mocks (no llama APIs reales)
 
@@ -75,6 +77,7 @@ src/lib/integrations/__tests__/
 ## Related Code Files
 
 **Crear:**
+
 - `plans/reports/adr-adapter-pattern-generalization-{YYYYMMDD}.md`
 - `src/lib/integrations/__tests__/adapter.contract.test.ts`
 - `src/lib/integrations/__tests__/mocks/*-mock.ts` (uno por CRM)
@@ -124,11 +127,11 @@ src/lib/integrations/__tests__/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Contract test descubre bug latente en algún adapter | Media | Medio | Fix bug + nota en cierre |
-| Coverage decrece por refactor | Baja | Bajo | Tests existentes ya cubrían; revisar |
-| ADR poco clara, dificulta futuros adapters | Baja | Medio | Review con `af-agents:adr` |
+| Riesgo                                              | Prob  | Impacto | Mitigación                           |
+| --------------------------------------------------- | ----- | ------- | ------------------------------------ |
+| Contract test descubre bug latente en algún adapter | Media | Medio   | Fix bug + nota en cierre             |
+| Coverage decrece por refactor                       | Baja  | Bajo    | Tests existentes ya cubrían; revisar |
+| ADR poco clara, dificulta futuros adapters          | Baja  | Medio   | Review con `af-agents:adr`           |
 
 ## Security Considerations
 

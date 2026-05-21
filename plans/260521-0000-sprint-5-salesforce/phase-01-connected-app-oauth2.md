@@ -5,7 +5,7 @@ priority: P2
 estimation: 10-14h
 phase_id: 5-01
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -35,6 +35,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - ADR documentado para `jsforce@^3.10.15` con verificación peer deps (Node 24, Next 16)
 - Connected App ISV creada (proceso manual documentado paso a paso)
 - Endpoint `GET /api/oauth/salesforce/start` con parámetro `?env=sandbox|prod`
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Persistencia: `access_token`, `refresh_token`, `instance_url`, `sf_environment` cifrados
 
 **No funcionales:**
+
 - State CSRF obligatorio
 - Tokens cifrados AES-256-GCM
 - RLS multi-tenant en `crm_connections`
@@ -69,12 +71,14 @@ src/app/api/oauth/salesforce/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/salesforce/salesforce-oauth.ts`
 - `src/app/api/oauth/salesforce/start/route.ts`
 - `src/app/api/oauth/salesforce/callback/route.ts`
 - `plans/reports/adr-jsforce-20260521.md` (ADR formal)
 
 **Modificar:**
+
 - `.env.example` (`SALESFORCE_CONSUMER_KEY`, `SALESFORCE_CONSUMER_SECRET`)
 
 ## Implementation Steps
@@ -112,11 +116,11 @@ src/app/api/oauth/salesforce/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Connected App ISV requiere review SF | Media | Alto | Iniciar review ANTES del sprint (puede tardar días) |
-| Callback URL mismatch | Alta | Bajo | Doc clara + error UI explícito |
-| jsforce peer dep conflicto | Baja | Alto | Verificar en ADR antes de instalar |
+| Riesgo                               | Prob  | Impacto | Mitigación                                          |
+| ------------------------------------ | ----- | ------- | --------------------------------------------------- |
+| Connected App ISV requiere review SF | Media | Alto    | Iniciar review ANTES del sprint (puede tardar días) |
+| Callback URL mismatch                | Alta  | Bajo    | Doc clara + error UI explícito                      |
+| jsforce peer dep conflicto           | Baja  | Alto    | Verificar en ADR antes de instalar                  |
 
 ## Security Considerations
 

@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-10h
 phase_id: 4-06
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Audit entries Sheets con: `crm_type='sheets'`, `operation`, `field`, `old_value`, `new_value`, `decision` (blocked/updated/overwritten)
 - Job cron `sheets-channel-renew` BullMQ ejecuta diariamente
 - Para cada tenant con Sheets activo + `gsheet_channel_expiry < now + 24h`:
@@ -43,6 +44,7 @@ created: 2026-05-21
 - Health check endpoint `/api/health/integrations/sheets` para monitoring externo
 
 **No funcionales:**
+
 - Cron idempotente: si ya se renovó hoy, skip
 - Métricas: contador de renovaciones exitosas vs fallidas
 
@@ -72,14 +74,17 @@ Canal renew:
 ## Related Code Files
 
 **Crear:**
+
 - `src/jobs/sheets-channel-renew.job.ts`
 - `src/app/api/health/integrations/sheets/route.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/sheets/sheets-adapter.ts` (helper para audit entries)
 - `src/lib/jobs/scheduler.ts` (registrar el cron)
 
 **Depende de:**
+
 - `crm_write_audit` (Sprint 2)
 - `crm_connections.gsheet_channel_*` (4-02)
 
@@ -122,11 +127,11 @@ Canal renew:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Cron no ejecuta (worker caído) | Baja | Alto | Alerta si último `channel_renewed` > 7d |
-| Stop del canal anterior falla pero watch nuevo OK | Media | Bajo | Log warning, continuar (canales viejos expiran solos) |
-| Drive `files.watch` rate-limited en bulk renew | Baja | Medio | Throttle 1 req/s en el cron loop |
+| Riesgo                                            | Prob  | Impacto | Mitigación                                            |
+| ------------------------------------------------- | ----- | ------- | ----------------------------------------------------- |
+| Cron no ejecuta (worker caído)                    | Baja  | Alto    | Alerta si último `channel_renewed` > 7d               |
+| Stop del canal anterior falla pero watch nuevo OK | Media | Bajo    | Log warning, continuar (canales viejos expiran solos) |
+| Drive `files.watch` rate-limited en bulk renew    | Baja  | Medio   | Throttle 1 req/s en el cron loop                      |
 
 ## Security Considerations
 

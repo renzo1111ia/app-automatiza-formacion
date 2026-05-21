@@ -4,7 +4,7 @@ sprint_task: 5-02
 status: pending
 priority: P2
 effort: 60-100h
-branch: feature/sp-5-02-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 version_bump: v0.5.1
 agents: [af-agents:code, af-agents:api, af-agents:adr]
 ---
@@ -36,6 +36,7 @@ agents: [af-agents:code, af-agents:api, af-agents:adr]
 ## Requirements
 
 **Funcionales:**
+
 - Push: lead actualizado en Esden → Lead/Contact upsert en Salesforce (upsert por email)
 - Soporte Lead y Contact (según configuración del tenant: convertir o no)
 - Soporte Opportunity básico (matrícula = opportunity en SF)
@@ -43,6 +44,7 @@ agents: [af-agents:code, af-agents:api, af-agents:adr]
 - UI admin: OAuth consent, selección sandbox/prod, field mapping, test connection
 
 **No funcionales:**
+
 - Multi-tenant: jsforce.Connection por tenant con sus OAuth tokens
 - Error handling: `REQUEST_LIMIT_EXCEEDED` → queue + backoff
 - Auditable: cada sync en `crm_write_audit`
@@ -53,6 +55,7 @@ agents: [af-agents:code, af-agents:api, af-agents:adr]
 ### Data flows
 
 **Push (Esden → Salesforce):**
+
 ```
 lead.updated event
   → BullMQ job: salesforce-push
@@ -65,6 +68,7 @@ lead.updated event
 ```
 
 **OAuth2 flow:**
+
 ```
 Admin clic "Conectar Salesforce"
   → Redirect a Salesforce consent screen (login.salesforce.com o test.salesforce.com)
@@ -74,6 +78,7 @@ Admin clic "Conectar Salesforce"
 ```
 
 ### Componentes nuevos
+
 - `src/lib/integrations/salesforce/salesforce-adapter.ts`
 - `src/lib/integrations/salesforce/salesforce-oauth.ts`
 - `src/lib/integrations/salesforce/salesforce-field-mapper.ts`
@@ -82,6 +87,7 @@ Admin clic "Conectar Salesforce"
 - `src/components/integrations/salesforce-connection-form.tsx`
 
 ### Componentes reutilizados (Sprint 2)
+
 - `IntegrationAdapter` base interface
 - `crm_connections` tabla
 - `crm_write_audit` tabla
@@ -91,6 +97,7 @@ Admin clic "Conectar Salesforce"
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/salesforce/salesforce-adapter.ts`
 - `src/lib/integrations/salesforce/salesforce-oauth.ts`
 - `src/lib/integrations/salesforce/salesforce-field-mapper.ts`
@@ -99,6 +106,7 @@ Admin clic "Conectar Salesforce"
 - `src/components/integrations/salesforce-connection-form.tsx`
 
 **Modificar:**
+
 - `src/lib/integrations/adapter-factory.ts` (registrar salesforce)
 - `package.json` (instalar jsforce@^3.10.15 tras ADR)
 - `src/db/migrations/` (columnas SF en crm_connections: `sf_instance_url`, `sf_environment`)
@@ -141,13 +149,13 @@ Admin clic "Conectar Salesforce"
 
 ## Risk Assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Connected App mal configurada por tenant | Alta | Alto | Guía step-by-step en UI + test connection visible |
-| Sandbox vs prod confusión | Media | Alto | Toggle sandbox/prod explícito + warning en UI |
-| API limits edición Essentials (15k/día) | Media | Medio | BullMQ throttle per-tenant, alerta en % de cuota |
-| `Company` requerido en Lead SF | Alta | Bajo | Default = nombre de la academia del tenant |
-| jsforce peer dep conflicto | Baja | Alto | Verificar en ADR antes de instalar |
+| Riesgo                                   | Probabilidad | Impacto | Mitigación                                        |
+| ---------------------------------------- | ------------ | ------- | ------------------------------------------------- |
+| Connected App mal configurada por tenant | Alta         | Alto    | Guía step-by-step en UI + test connection visible |
+| Sandbox vs prod confusión                | Media        | Alto    | Toggle sandbox/prod explícito + warning en UI     |
+| API limits edición Essentials (15k/día)  | Media        | Medio   | BullMQ throttle per-tenant, alerta en % de cuota  |
+| `Company` requerido en Lead SF           | Alta         | Bajo    | Default = nombre de la academia del tenant        |
+| jsforce peer dep conflicto               | Baja         | Alto    | Verificar en ADR antes de instalar                |
 
 ## Security Considerations
 

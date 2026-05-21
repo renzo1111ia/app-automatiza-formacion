@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-8h
 phase_id: 7-03
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -33,11 +33,13 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `upsertDeal(deal, fieldMappings)`: search by contactId + pipelineId → POST/PUT
 - `triggerAutomation(contactId, automationId)`: POST `contactAutomations`
 - Configuración por tenant: qué pipeline usar, qué automation triggear
 
 **No funcionales:**
+
 - Idempotente: search antes de POST
 - Audit log
 - Throttle compartido con 7-02 (mismo BullMQ worker `ac-push`)
@@ -59,6 +61,7 @@ Endpoints:
 ## Related Code Files
 
 **Modificar:**
+
 - `src/lib/integrations/activecampaign/ac-adapter.ts`
 - `src/lib/integrations/activecampaign/ac-field-mapper.ts` (defaults Deal)
 
@@ -94,11 +97,11 @@ Endpoints:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Pipeline ID inválido | Media | Medio | Validar en UI admin al guardar |
-| Automation triggered múltiples veces | Alta | Bajo | Verificar `contactAutomations` existe antes de POST |
-| Stage names varían | Alta | Bajo | Mapping configurable |
+| Riesgo                               | Prob  | Impacto | Mitigación                                          |
+| ------------------------------------ | ----- | ------- | --------------------------------------------------- |
+| Pipeline ID inválido                 | Media | Medio   | Validar en UI admin al guardar                      |
+| Automation triggered múltiples veces | Alta  | Bajo    | Verificar `contactAutomations` existe antes de POST |
+| Stage names varían                   | Alta  | Bajo    | Mapping configurable                                |
 
 ## Security Considerations
 

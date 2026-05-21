@@ -5,7 +5,7 @@ priority: P2
 estimation: 10-16h
 phase_id: 4-03
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Implementar `SheetsAdapter` que extiende `IntegrationAdapter` (Sprint 2)
 - `upsertLead(tenantId, lead)`: find → append/update → marca timestamp
 - BullMQ job `sheets-push` registrado, escucha event `lead.updated`
@@ -41,6 +42,7 @@ created: 2026-05-21
 - Append-only por defecto (R-014) excepto en campos explícitamente marcados `overwrite_with_audit`
 
 **No funcionales:**
+
 - Idempotente: re-push del mismo lead actualiza fila existente, no crea duplicado
 - Latencia push < 5 min desde event `lead.updated`
 - Exponential backoff en 429
@@ -76,11 +78,13 @@ src/jobs/sheets-push.job.ts
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/sheets/sheets-adapter.ts`
 - `src/lib/integrations/sheets/sheets-field-mapper.ts`
 - `src/jobs/sheets-push.job.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/_integration-adapter-factory.ts` (registrar `sheets`)
 - `src/lib/events/lead-events.ts` (suscriptor sheets-push)
 
@@ -125,12 +129,12 @@ src/jobs/sheets-push.job.ts
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Cuota 1000 writes/min excedida en sync masivo | Media | Medio | Batch + throttle BullMQ por tenant |
-| Race condition find→update | Baja | Medio | Mutex BullMQ por (tenantId, leadId) |
-| Sheets API renombra hoja "Sheet1" | Baja | Bajo | Leer nombre real con `spreadsheets.get` y cachear |
-| Lead sin lead_id (legacy) | Media | Bajo | Validación pre-push: skip si no lead_id |
+| Riesgo                                        | Prob  | Impacto | Mitigación                                        |
+| --------------------------------------------- | ----- | ------- | ------------------------------------------------- |
+| Cuota 1000 writes/min excedida en sync masivo | Media | Medio   | Batch + throttle BullMQ por tenant                |
+| Race condition find→update                    | Baja  | Medio   | Mutex BullMQ por (tenantId, leadId)               |
+| Sheets API renombra hoja "Sheet1"             | Baja  | Bajo    | Leer nombre real con `spreadsheets.get` y cachear |
+| Lead sin lead_id (legacy)                     | Media | Bajo    | Validación pre-push: skip si no lead_id           |
 
 ## Security Considerations
 

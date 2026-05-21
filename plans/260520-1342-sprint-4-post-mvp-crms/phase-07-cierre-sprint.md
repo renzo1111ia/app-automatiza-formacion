@@ -4,7 +4,7 @@ sprint_task: SP-5-CLOSE-1..5
 status: pending
 priority: P2
 effort: 9-12h + bugs
-branch: feature/sp-5-fase-5-post-release
+branch: feature/sprint-05-fase-5-post-release
 ---
 
 # SP-5-CLOSE — Cierre Sprint 4
@@ -52,6 +52,7 @@ Playwright — recorrido completo por cada integración implementada:
 ### SP-5-CLOSE-3 — Test manual dev (2h)
 
 Recorrido funcional confirmando:
+
 - [ ] Flujo completo de un lead desde creación hasta sync en cada CRM
 - [ ] Error handling visible: token expirado → UI muestra error claro; 429 → se reintenta
 - [ ] Rate limiting: AC 5 req/s no genera errores en bulk
@@ -75,14 +76,14 @@ Recorrido funcional confirmando:
 
 ## Estimación
 
-| Tarea | Estimación |
-|-------|-----------|
-| SP-5-CLOSE-1: Auto test | 1h 30min |
-| SP-5-CLOSE-2: E2E local | 3-4h |
-| SP-5-CLOSE-3: Test manual dev | 2h |
-| SP-5-CLOSE-4: Corrección bugs | variable |
-| SP-5-CLOSE-5: PR + cierre | 30min |
-| **Total** | **7-8h + bugs** |
+| Tarea                         | Estimación      |
+| ----------------------------- | --------------- |
+| SP-5-CLOSE-1: Auto test       | 1h 30min        |
+| SP-5-CLOSE-2: E2E local       | 3-4h            |
+| SP-5-CLOSE-3: Test manual dev | 2h              |
+| SP-5-CLOSE-4: Corrección bugs | variable        |
+| SP-5-CLOSE-5: PR + cierre     | 30min           |
+| **Total**                     | **7-8h + bugs** |
 
 ---
 

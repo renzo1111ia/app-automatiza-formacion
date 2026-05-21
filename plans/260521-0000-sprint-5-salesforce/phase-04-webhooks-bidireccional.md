@@ -5,7 +5,7 @@ priority: P2
 estimation: 10-16h
 phase_id: 5-04
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Endpoint `POST /api/webhooks/salesforce` recibe SOAP/XML
 - Parse XML payload con `fast-xml-parser` (ya en deps probablemente, si no añadir via ADR)
 - Validar `organizationId` contra `crm_connections.sf_org_id`
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Idempotency: tabla `sync_events` con `event_id` único
 
 **No funcionales:**
+
 - Respuesta ACK < 3s (SF marca timeout)
 - Procesamiento async via BullMQ (responder 200 inmediato)
 - Logging audit completo
@@ -67,12 +69,14 @@ BullMQ worker sf-pull:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/api/webhooks/salesforce/route.ts`
 - `src/jobs/salesforce-pull.job.ts`
 - `src/lib/integrations/salesforce/salesforce-xml-parser.ts`
 - `src/db/migrations/2026XXXX_crm_connections_sf_org_id.sql` (añadir `sf_org_id`)
 
 **Reutilizar:**
+
 - `src/lib/integrations/conflict-resolver.ts` (de Sprint 4 si ya generalizado, o copiar de sheets)
 
 ## Implementation Steps
@@ -111,11 +115,11 @@ BullMQ worker sf-pull:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| ACK XML mal formado → SF retry continuo | Media | Alto | Test contract del formato ACK |
-| Validación `organizationId` confundida | Media | Alto | Strict match + audit cuando rechaza |
-| Tenant no configura Workflow Rule | Alta | Bajo | Doc clara + sin webhook = pull no funciona pero push sigue OK |
+| Riesgo                                  | Prob  | Impacto | Mitigación                                                    |
+| --------------------------------------- | ----- | ------- | ------------------------------------------------------------- |
+| ACK XML mal formado → SF retry continuo | Media | Alto    | Test contract del formato ACK                                 |
+| Validación `organizationId` confundida  | Media | Alto    | Strict match + audit cuando rechaza                           |
+| Tenant no configura Workflow Rule       | Alta  | Bajo    | Doc clara + sin webhook = pull no funciona pero push sigue OK |
 
 ## Security Considerations
 

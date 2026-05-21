@@ -5,7 +5,7 @@ priority: P3
 estimation: 25-35h (con SP-8) / 50-70h (sin SP-8)
 phase_id: 9-03
 sprint_id: SP-9
-branch: feature/sp-9-pipedrive-adapter (al activarse)
+branch: feature/sprint-09-pipedrive-adapter (al activarse)
 created: 2026-05-21
 ---
 
@@ -72,11 +72,11 @@ plans/YYMMDD-HHmm-sprint-9-03-pipedrive/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Marketplace app review tarda | Media | Bajo | Docs Pipedrive son claras, review suele ser rápido |
-| URL variable: company-specific vs proxy | Baja | Bajo | Almacenar URL completa |
-| Custom fields IDs por cuenta | Alta | Bajo | FieldMapper configurable |
+| Riesgo                                  | Prob  | Impacto | Mitigación                                         |
+| --------------------------------------- | ----- | ------- | -------------------------------------------------- |
+| Marketplace app review tarda            | Media | Bajo    | Docs Pipedrive son claras, review suele ser rápido |
+| URL variable: company-specific vs proxy | Baja  | Bajo    | Almacenar URL completa                             |
+| Custom fields IDs por cuenta            | Alta  | Bajo    | FieldMapper configurable                           |
 
 ## Next Steps
 

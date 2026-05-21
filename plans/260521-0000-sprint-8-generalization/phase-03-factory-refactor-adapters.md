@@ -5,7 +5,7 @@ priority: P3
 estimation: 4-10h
 phase_id: 8-03
 sprint_id: SP-8
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Cada adapter productivo:
   - `class XxxAdapter implements IntegrationAdapter`
   - Usa `FieldMapper` en vez de transformaciones inline
@@ -44,6 +45,7 @@ created: 2026-05-21
   - `getIntegrationAdapters(tenantId)` retorna array
 
 **No funcionales:**
+
 - 0 tests rotos después de cada refactor
 - Commits granulares (uno por adapter)
 - File size <200 líneas cada uno (split si necesario)
@@ -70,6 +72,7 @@ Cada *-adapter.ts:
 ## Related Code Files
 
 **Modificar:**
+
 - `src/lib/integrations/adapter-factory.ts`
 - `src/lib/integrations/hubspot/hubspot-adapter.ts`
 - `src/lib/integrations/zoho/zoho-adapter.ts`
@@ -79,6 +82,7 @@ Cada *-adapter.ts:
 - `src/lib/integrations/activecampaign/ac-adapter.ts`
 
 **Crear:**
+
 - `src/lib/integrations/_default-mappings/hubspot-mapping.ts` (si no estaba aislado)
 - (idem para cada CRM si las defaults estaban inline)
 
@@ -129,11 +133,11 @@ Cada *-adapter.ts:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Refactor introduce regresión sutil | Media | Alto | Tests granulares por adapter + run completo en cada commit |
-| FieldMapper no encaja con custom fields nested de un CRM | Media | Medio | Extender FieldMapper con path-based access o métodos opcionales |
-| AdapterError pierde info original | Baja | Bajo | Preservar `cause` con error original |
+| Riesgo                                                   | Prob  | Impacto | Mitigación                                                      |
+| -------------------------------------------------------- | ----- | ------- | --------------------------------------------------------------- |
+| Refactor introduce regresión sutil                       | Media | Alto    | Tests granulares por adapter + run completo en cada commit      |
+| FieldMapper no encaja con custom fields nested de un CRM | Media | Medio   | Extender FieldMapper con path-based access o métodos opcionales |
+| AdapterError pierde info original                        | Baja  | Bajo    | Preservar `cause` con error original                            |
 
 ## Security Considerations
 

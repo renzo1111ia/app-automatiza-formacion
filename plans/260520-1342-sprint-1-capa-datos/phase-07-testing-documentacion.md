@@ -27,14 +27,17 @@
 ## Requirements
 
 **Funcionales (2-28):**
+
 - Tests de integración para: `leadsRepository`, `tenantsRepository`, `appointmentsRepository`
 - Tests anti-fuga: query con JWT tenant B → 0 filas de tenant A (todos los repositorios)
 - Suite ejecutable con `npm test` o script dedicado
 
 **Funcionales (2-29):**
+
 - `docs/architecture/data-layer.md` actualizado con: stack decisión, estructura de repositories, schemas Zod, convenciones de naming, ejemplos de uso
 
 **No-funcionales:**
+
 - Tests sin mocks de BD — conexión real a instancia Supabase local (Docker)
 - Stack test: **Supabase CLI (`supabase start`)** + Docker Desktop — cada dev corre su BD local aislada
 - Documentación < 200 líneas (si crece, split en subsecciones)
@@ -59,15 +62,18 @@ Docs (2-29):
 ## Related Code Files
 
 **Crear:**
+
 - `src/__tests__/integration/repositories/leads-repository.test.ts`
 - `src/__tests__/integration/repositories/tenants-repository.test.ts`
 - `src/__tests__/integration/repositories/appointments-repository.test.ts`
 - `src/__tests__/integration/rls/tenant-isolation.test.ts`
 
 **Modificar:**
+
 - `docs/architecture/data-layer.md` — refresh completo
 
 **Leer para contexto:**
+
 - `plans/20260519-1200-rls-multitenant-hardening/phase-07-tests-anti-fuga.md`
 - `plans/20260519-1200-rls-multitenant-hardening/phase-08-performance-docs-rollout.md`
 
@@ -154,12 +160,12 @@ Docs (2-29):
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Docker Desktop no instalado en la máquina del dev | Baja | Bloqueante | Documentar en 2-29 como prerrequisito; incluir en onboarding `docs/architecture/data-layer.md` |
-| `supabase start` falla por conflicto de puertos | Baja | Medio | Supabase CLI permite cambiar puertos en `supabase/config.toml`; documentar override |
-| Seed de datos insuficiente para cubrir casos edge | Media | Medio | Diseñar seed con casos: lead sin tenant, tenant sin members, appointment cancelada |
-| Test de fuga detecta vuln no corregida | Media | Alto | Prioridad inmediata — no mergear Sprint 1 hasta que todos los tests anti-fuga pasen |
+| Riesgo                                            | Prob  | Impacto    | Mitigación                                                                                     |
+| ------------------------------------------------- | ----- | ---------- | ---------------------------------------------------------------------------------------------- |
+| Docker Desktop no instalado en la máquina del dev | Baja  | Bloqueante | Documentar en 2-29 como prerrequisito; incluir en onboarding `docs/architecture/data-layer.md` |
+| `supabase start` falla por conflicto de puertos   | Baja  | Medio      | Supabase CLI permite cambiar puertos en `supabase/config.toml`; documentar override            |
+| Seed de datos insuficiente para cubrir casos edge | Media | Medio      | Diseñar seed con casos: lead sin tenant, tenant sin members, appointment cancelada             |
+| Test de fuga detecta vuln no corregida            | Media | Alto       | Prioridad inmediata — no mergear Sprint 1 hasta que todos los tests anti-fuga pasen            |
 
 ## Security Considerations
 
@@ -176,5 +182,5 @@ Docs (2-29):
 
 - Tests pass → PR a `developer`
 - Bump a `v0.2.0`
-- Crear rama `feature/sp-3-crm-adapters` para Sprint 2
+- Crear rama `feature/sprint-02-crm-adapters` para Sprint 2
 - Notificar al manager: Sprint 1 cerrado

@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-10h
 phase_id: 6-05
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -32,12 +32,14 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Unit tests Adapter, FieldMapper, WebhookVerifier, API client
 - Integration tests sandbox: push Contact, push Opp, webhook simulado
 - Contract test extendido con GHLAdapter
 - Coverage ≥80%
 
 **No funcionales:**
+
 - CI skips integration sin secret
 - Cleanup hook
 - 0 flakiness
@@ -60,10 +62,12 @@ src/lib/integrations/ghl/__tests__/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/ghl/__tests__/*.test.ts`
 - `src/lib/integrations/ghl/__tests__/fixtures/*.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/__tests__/adapter-contract.test.ts`
 - `.env.test.example` (`GHL_TEST_*`)
 
@@ -111,10 +115,10 @@ src/lib/integrations/ghl/__tests__/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Sandbox limits hit en CI | Baja | Medio | Throttle local tests |
-| Webhook test simulado no representativo | Media | Bajo | Test integration real con webhook GHL en E2E manual |
+| Riesgo                                  | Prob  | Impacto | Mitigación                                          |
+| --------------------------------------- | ----- | ------- | --------------------------------------------------- |
+| Sandbox limits hit en CI                | Baja  | Medio   | Throttle local tests                                |
+| Webhook test simulado no representativo | Media | Bajo    | Test integration real con webhook GHL en E2E manual |
 
 ## Security Considerations
 

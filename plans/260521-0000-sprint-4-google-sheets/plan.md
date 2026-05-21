@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 4: OAuth2 Google + plantillas Sheets por ten
 status: pending
 priority: P2
 effort: 60-100h
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 sprint_id: SP-4
 version_target: v0.5.0
 tags: [google-sheets, drive-api, oauth2, crm, integrations, sprint-4, post-mvp]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 4 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-4` |
-| Versión objetivo | `v0.5.0` |
-| Estado | Pendiente |
-| Estimación total | ~60-100h |
-| Rama sugerida | `feature/sp-4-google-sheets` |
+| Campo               | Valor                                                                           |
+| ------------------- | ------------------------------------------------------------------------------- |
+| Sprint ID           | `SP-4`                                                                          |
+| Versión objetivo    | `v0.5.0`                                                                        |
+| Estado              | Pendiente                                                                       |
+| Estimación total    | ~60-100h                                                                        |
+| Rama sugerida       | `feature/sprint-04-google-sheets`                                               |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-01-google-sheets-bidireccional.md` |
 
 ## Contexto
@@ -39,16 +39,16 @@ muchas academias usan hojas de cálculo como CRM principal. `googleapis@171.4.0`
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | OAuth2 Google + Drive API setup | 6-10h | Pendiente | [phase-01](phase-01-oauth2-drive-setup.md) |
-| 2 | Template Sheets por tenant + DB migration | 6-10h | Pendiente | [phase-02](phase-02-templates-tenant-migration.md) |
-| 3 | Push leads (Esden → Sheet) bidireccional | 10-16h | Pendiente | [phase-03](phase-03-push-leads-bidireccional.md) |
-| 4 | Pull leads (Sheet → Esden) + conflict resolution R-014 | 10-16h | Pendiente | [phase-04](phase-04-pull-conflict-resolution.md) |
-| 5 | UI admin (formulario conexión + mapping) | 8-12h | Pendiente | [phase-05](phase-05-ui-admin-conexion.md) |
-| 6 | Audit log + canal Drive renovación | 6-10h | Pendiente | [phase-06](phase-06-audit-log-canal-renew.md) |
-| 7 | Tests (unit + integration con spreadsheet real) | 8-14h | Pendiente | [phase-07](phase-07-tests-integration.md) |
-| 8 | Cierre Sprint 4 (typecheck/lint/build + E2E + PR) | 6-12h + bugs | Pendiente | [phase-08](phase-08-cierre-sprint.md) |
+| #   | Fase                                                   | Estimación   | Estado    | Archivo                                            |
+| --- | ------------------------------------------------------ | ------------ | --------- | -------------------------------------------------- |
+| 1   | OAuth2 Google + Drive API setup                        | 6-10h        | Pendiente | [phase-01](phase-01-oauth2-drive-setup.md)         |
+| 2   | Template Sheets por tenant + DB migration              | 6-10h        | Pendiente | [phase-02](phase-02-templates-tenant-migration.md) |
+| 3   | Push leads (Esden → Sheet) bidireccional               | 10-16h       | Pendiente | [phase-03](phase-03-push-leads-bidireccional.md)   |
+| 4   | Pull leads (Sheet → Esden) + conflict resolution R-014 | 10-16h       | Pendiente | [phase-04](phase-04-pull-conflict-resolution.md)   |
+| 5   | UI admin (formulario conexión + mapping)               | 8-12h        | Pendiente | [phase-05](phase-05-ui-admin-conexion.md)          |
+| 6   | Audit log + canal Drive renovación                     | 6-10h        | Pendiente | [phase-06](phase-06-audit-log-canal-renew.md)      |
+| 7   | Tests (unit + integration con spreadsheet real)        | 8-14h        | Pendiente | [phase-07](phase-07-tests-integration.md)          |
+| 8   | Cierre Sprint 4 (typecheck/lint/build + E2E + PR)      | 6-12h + bugs | Pendiente | [phase-08](phase-08-cierre-sprint.md)              |
 
 **Total**: 60-100h (coincide con rango original).
 
@@ -86,11 +86,11 @@ Final                                           │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Bucle push/pull infinito | Media | Alto | Campo `_esden_updated_at` + cooldown 30s |
-| Canal Drive expirado silenciosamente | Alta | Medio | BullMQ cron día 6 + alerta si falla renovación |
-| Cuota 429 Sheets en sync masivo | Baja-Media | Medio | Batch writes + exponential backoff |
+| Riesgo                               | Prob       | Impacto | Mitigación                                     |
+| ------------------------------------ | ---------- | ------- | ---------------------------------------------- |
+| Bucle push/pull infinito             | Media      | Alto    | Campo `_esden_updated_at` + cooldown 30s       |
+| Canal Drive expirado silenciosamente | Alta       | Medio   | BullMQ cron día 6 + alerta si falla renovación |
+| Cuota 429 Sheets en sync masivo      | Baja-Media | Medio   | Batch writes + exponential backoff             |
 
 ## Notas SDKs
 

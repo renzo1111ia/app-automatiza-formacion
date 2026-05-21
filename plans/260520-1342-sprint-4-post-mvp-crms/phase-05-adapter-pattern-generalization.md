@@ -4,7 +4,7 @@ sprint_task: 5-05
 status: pending
 priority: P3
 effort: 20-40h
-branch: feature/sp-5-05-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 version_bump: patch (refactor, no nueva funcionalidad)
 agents: [af-agents:code, af-agents:adr]
 ---
@@ -34,6 +34,7 @@ agents: [af-agents:code, af-agents:adr]
 ## Requirements
 
 **Funcionales:**
+
 - Interfaz `IntegrationAdapter` con métodos: `connect`, `disconnect`, `testConnection`, `upsertContact`, `getContact`, `syncLead` + opcionales `registerWebhook?`, `validateWebhookSignature?`, `parseWebhookPayload?`
 - `FieldMapper` configurable por tenant con `toExternal()` + `fromExternal()`
 - Default mappings declarados por adapter en su propio archivo
@@ -42,6 +43,7 @@ agents: [af-agents:code, af-agents:adr]
 - 1 `adapter.contract.test.ts` que todos los adapters deben pasar
 
 **No funcionales:**
+
 - Zero breaking changes en comportamiento — refactor puro
 - Todos los tests existentes siguen pasando
 - No nuevas dependencias
@@ -49,6 +51,7 @@ agents: [af-agents:code, af-agents:adr]
 ## Architecture
 
 ### Estructura de archivos objetivo
+
 ```
 src/lib/integrations/
 ├── base/
@@ -65,7 +68,9 @@ src/lib/integrations/
 ```
 
 ### Checklist de extracción
+
 Para cada adapter, verificar y homogeneizar:
+
 1. Implementa `IntegrationAdapter` interface (TypeScript `implements`)
 2. Usa `FieldMapper` en vez de transformaciones inline
 3. Usa `applyWritePolicy()` de `write-policy.ts`
@@ -75,6 +80,7 @@ Para cada adapter, verificar y homogeneizar:
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/base/integration-adapter.interface.ts`
 - `src/lib/integrations/base/write-policy.ts`
 - `src/lib/integrations/base/adapter-error.ts`
@@ -82,6 +88,7 @@ Para cada adapter, verificar y homogeneizar:
 - `src/lib/integrations/__tests__/adapter.contract.test.ts`
 
 **Modificar (refactor):**
+
 - `src/lib/integrations/hubspot/hubspot-adapter.ts`
 - `src/lib/integrations/zoho/zoho-adapter.ts`
 - `src/lib/integrations/salesforce/salesforce-adapter.ts`
@@ -131,11 +138,11 @@ Para cada adapter, verificar y homogeneizar:
 
 ## Risk Assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Sobreabstracción — interfaz que no encaja con todos | Media | Alto | Interfaz estrecha (7 métodos max), opcionales para edge cases |
-| Regresión en producción por refactor | Baja | Alto | 0 cambios de comportamiento, solo estructura. Tests antes y después |
-| 5-05 bloqueado porque algún 5-01..5-04 no se completa | Media | Bajo | 5-05 es P3 — se puede diferir sin impacto funcional |
+| Riesgo                                                | Probabilidad | Impacto | Mitigación                                                          |
+| ----------------------------------------------------- | ------------ | ------- | ------------------------------------------------------------------- |
+| Sobreabstracción — interfaz que no encaja con todos   | Media        | Alto    | Interfaz estrecha (7 métodos max), opcionales para edge cases       |
+| Regresión en producción por refactor                  | Baja         | Alto    | 0 cambios de comportamiento, solo estructura. Tests antes y después |
+| 5-05 bloqueado porque algún 5-01..5-04 no se completa | Media        | Bajo    | 5-05 es P3 — se puede diferir sin impacto funcional                 |
 
 ## Security Considerations
 

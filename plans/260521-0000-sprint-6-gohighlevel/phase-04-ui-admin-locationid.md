@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-12h
 phase_id: 6-04
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Página `/admin/integrations/ghl` con wizard:
   1. OAuth consent → callback
   2. Mostrar `locationId` + nombre de location
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Desconectar con revoke
 
 **No funcionales:**
+
 - Mobile responsive
 - A11y
 - Loading states
@@ -61,6 +63,7 @@ Components:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/admin/integrations/ghl/page.tsx`
 - `src/components/integrations/ghl-connection-form.tsx`
 - `src/components/integrations/ghl-pipeline-selector.tsx`
@@ -69,6 +72,7 @@ Components:
 - `src/lib/actions/ghl-connect.ts`
 
 **Modificar:**
+
 - `src/app/admin/integrations/page.tsx` (card GHL)
 
 ## Implementation Steps
@@ -109,11 +113,11 @@ Components:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Pipelines API endpoint distinto | Media | Bajo | Verificar contra GHL sandbox primero |
-| Custom fields IDs cambian | Media | Bajo | Refrescar mapping si tenant lo pide |
-| Mobile overflow con tabla mapping | Baja | Bajo | Responsive cards en mobile |
+| Riesgo                            | Prob  | Impacto | Mitigación                           |
+| --------------------------------- | ----- | ------- | ------------------------------------ |
+| Pipelines API endpoint distinto   | Media | Bajo    | Verificar contra GHL sandbox primero |
+| Custom fields IDs cambian         | Media | Bajo    | Refrescar mapping si tenant lo pide  |
+| Mobile overflow con tabla mapping | Baja  | Bajo    | Responsive cards en mobile           |
 
 ## Security Considerations
 

@@ -142,7 +142,7 @@ Secuencia exacta:
 
 ### 5. Crear rama Sprint 1 (af-agents:git)
 
-- `git checkout -b feature/sp-2-capa-datos` desde `developer` (post-merge).
+- `git checkout -b feature/sprint-01-capa-datos` desde `developer` (post-merge).
 
 ### 6. Actualizar RoadMap (af-agents:roadmap-keeper)
 
@@ -169,10 +169,10 @@ Secuencia exacta:
 - [ ] SP-1-CLOSE-4: Cerrar todas las subtareas antes de continuar
 - [ ] SP-1-CLOSE-5: Verificar todos los gates en 🟢
 - [ ] SP-1-CLOSE-5: Deployment crea/verifica CHANGELOG.md [v0.1.0]
-- [ ] SP-1-CLOSE-5: Git crea PR feature/sp-1 → developer
+- [ ] SP-1-CLOSE-5: Git crea PR `feature/sp-0-sprint-0-hotfixes` → developer
 - [ ] SP-1-CLOSE-5: Dev aprueba el PR
 - [ ] SP-1-CLOSE-5: Git bumps version a v0.1.0 + tag
-- [ ] SP-1-CLOSE-5: Git crea rama feature/sp-2-capa-datos
+- [ ] SP-1-CLOSE-5: Git crea rama feature/sprint-01-capa-datos
 - [ ] SP-1-CLOSE-5: Roadmap-keeper actualiza RoadMap.md a 🟢
 - [ ] SP-1-CLOSE-5: Productivity genera reporte de tiempos
 - [ ] SP-1-CLOSE-5-bis: Crear PR developer → staging (esperar autorización Renzo)
@@ -189,7 +189,7 @@ Secuencia exacta:
 - `CHANGELOG.md` tiene entrada `## [v0.1.0]` con todas las tareas.
 - `package.json` muestra `"version": "0.1.0"`.
 - Tag `v0.1.0` existe en git.
-- Rama `feature/sp-2-capa-datos` creada desde `developer`.
+- Rama `feature/sprint-01-capa-datos` creada desde `developer`.
 - RoadMap.md: Sprint 0 en 🟢, todas las tareas 1-01..1-24 en 🟢.
 
 ## Risk Assessment
@@ -247,6 +247,6 @@ Secuencia exacta:
 
 ## Next Steps
 
-→ Sprint 1 planificado: [feature/sp-2-capa-datos] — ver [RoadMap.md Fase 1](../RoadMap.md)
+→ Sprint 1 planificado: [feature/sprint-01-capa-datos] — ver [RoadMap.md Fase 1](../RoadMap.md)
 → Tarea de arranque de Sprint 1: delegar a `af-agents:planning` para detallar el plan de Fase 1 en `plans/YYMMDD-HHmm-sprint-1-capa-datos/`.
 → SP-1-CLOSE-5-bis se puede iniciar en paralelo con el arranque de Sprint 1 (no bloquea el trabajo de desarrollo en Fase 1).
