@@ -67,7 +67,7 @@ function daysFromNow(d: number): string {
 
 async function clearExistingDemo(tenantId: string) {
     // limpia cualquier rastro previo para que el seed sea idempotente
-    const tables = ["chat_messages", "conversaciones_whatsapp", "llamadas", "intentos_llamadas", "intentos", "notificaciones", "lead_cualificacion", "lead_programas", "appointments", "lead", "campanas", "programas", "advisors", "voice_agents", "ai_agent_variants", "ai_agents"];
+    const tables = ["chat_messages", "conversaciones_whatsapp", "llamadas", "intentos_llamadas", "intentos", "notificaciones", "lead_cualificacion", "lead_programas", "agendamientos", "appointments", "lead", "campanas", "programas", "advisors", "voice_agents", "ai_agent_variants", "ai_agents"];
     for (const t of tables) {
         await admin.from(t).delete().eq("tenant_id", tenantId);
     }
@@ -224,21 +224,19 @@ async function main() {
 
     // ---------- 10. Lead Cualificacion ----------
     console.log("[10] Cualificaciones...");
-    const cualifs = leads.slice(0, 30).map((l) => ({
-        tenant_id: tenantId,
-        id_lead: l.id,
-        score: rand(20, 95),
-        nivel: pick(["A", "B", "C", "D"]),
-        observaciones: pick([
-            "Lead muy interesado, solicita info de financiacion.",
-            "Pidio info de precios y becas.",
-            "Inscripcion pendiente de confirmacion.",
-            "Lead frio, no responde mensajes.",
-            "Interes confirmado en programa.",
-        ]),
-        razones: ["interes_alto", "presupuesto_disponible"],
-        cualificado_por: "Virginia IA",
-    }));
+    const cualifs = leads.slice(0, 30).map((l) => {
+        const cualif = pick(["CUALIFICADO", "NO_CUALIFICADO", "PENDIENTE", "SI", "NO"]);
+        return {
+            tenant_id: tenantId,
+            id_lead: l.id,
+            cualificacion: cualif,
+            motivo_anulacion: cualif === "NO" || cualif === "NO_CUALIFICADO"
+                ? pick(["No interesado", "Sin presupuesto", "Lead duplicado", "No contesta", "Fuera de target"])
+                : null,
+            anios_experiencia: rand(0, 15),
+            nivel_estudios: pick(["secundaria", "bachillerato", "fp", "grado", "master", "doctorado"]),
+        };
+    });
     await admin.from("lead_cualificacion").insert(cualifs);
     console.log(`    -> ${cualifs.length} cualificaciones`);
 
@@ -252,7 +250,15 @@ async function main() {
         nombre_agente: pick(["Virginia IA", ...ADVISORS_NOMBRES]),
         estado_llamada: pick(["completada", "no_contestada", "buzon", "rechazada", "en_curso"]),
         razon_termino: pick(["finalizada_ok", "no_contesta", "rechaza", "buzon_voz", "agendamiento"]),
+        fecha_inicio: daysAgo(rand(0, 30)),
         duracion_segundos: rand(15, 600),
+        url_grabacion: `https://demo-recordings.local/call_${Math.random().toString(36).slice(2, 8)}.mp3`,
+        transcripcion: pick([
+            "Lead: Hola, me interesa el master de IA. Agente: Perfecto, le envio info.",
+            "Lead: No tengo presupuesto. Agente: Tenemos planes de financiacion.",
+            "Lead: Cuando empieza? Agente: La proxima convocatoria es en septiembre.",
+        ]),
+        resumen: pick(["Interesado en master IA", "Pidio info de becas", "Lead frio, no contesta", "Agendamiento confirmado"]),
     })));
     await admin.from("llamadas").insert(llamadas);
     console.log(`    -> ${llamadas.length} llamadas`);
@@ -262,9 +268,10 @@ async function main() {
     const conversaciones = leads.slice(0, 20).map((l) => ({
         tenant_id: tenantId,
         id_lead: l.id,
-        fecha_inicio: daysAgo(rand(0, 30)),
-        fecha_ultimo_mensaje: daysAgo(rand(0, 5)),
+        id_conversacion_chatwoot: `cw_${Math.random().toString(36).slice(2, 10)}`,
+        opt_in_whatsapp: Math.random() > 0.2,
         estado: pick(["ACTIVA", "CERRADA", "PENDIENTE"]),
+        fecha_ultimo_mensaje: daysAgo(rand(0, 5)),
     }));
     await admin.from("conversaciones_whatsapp").insert(conversaciones);
 
@@ -294,20 +301,31 @@ async function main() {
     await admin.from("chat_messages").insert(messages);
     console.log(`    -> ${conversaciones.length} conversaciones, ${messages.length} mensajes`);
 
-    // ---------- 13. Citas (Appointments) ----------
+    // ---------- 13. Citas (agendamientos en es; appointments espejo) ----------
     console.log("[13] Citas...");
-    const appointments = leads.slice(0, 12).map((l, i) => ({
-        tenant_id: tenantId,
-        lead_id: l.id,
-        advisor_id: advisorIds.length > 0 ? pick(advisorIds) : null,
-        scheduled_at: i < 6 ? daysFromNow(rand(1, 14)) : daysAgo(rand(1, 30)),
-        duration_minutes: pick([30, 45, 60]),
-        status: i < 6 ? "SCHEDULED" : pick(["COMPLETED", "NO_SHOW", "CANCELLED"]),
-        meeting_link: `https://meet.google.com/demo-${Math.random().toString(36).slice(2, 8)}`,
-        notes: pick(["Primera llamada de info", "Revision de programa", "Cierre venta", "Followup post-demo"]),
+    const agendamientos = leads.slice(0, 12).map((l, i) => {
+        const fecha = i < 6 ? daysFromNow(rand(1, 14)) : daysAgo(rand(1, 30));
+        return {
+            tenant_id: tenantId,
+            id_lead: l.id,
+            advisor_id: advisorIds.length > 0 ? pick(advisorIds) : null,
+            fecha_agendada_cliente: fecha,
+            fecha_agendada_lead: fecha,
+            confirmado: i < 6 ? Math.random() > 0.3 : true,
+            meeting_link: `https://meet.google.com/demo-${Math.random().toString(36).slice(2, 8)}`,
+            notas: pick(["Primera llamada de info", "Revision de programa", "Cierre venta", "Followup post-demo"]),
+        };
+    });
+    await admin.from("agendamientos").insert(agendamientos);
+    // Espejo en appointments (algunas vistas usan este nombre)
+    const appointments = agendamientos.map((a) => ({
+        tenant_id: a.tenant_id, lead_id: a.id_lead, advisor_id: a.advisor_id,
+        scheduled_at: a.fecha_agendada_cliente, duration_minutes: 30,
+        status: a.confirmado ? "SCHEDULED" : "PENDING",
+        meeting_link: a.meeting_link, notes: a.notas,
     }));
     await admin.from("appointments").insert(appointments);
-    console.log(`    -> ${appointments.length} citas`);
+    console.log(`    -> ${agendamientos.length} citas (agendamientos + appointments)`);
 
     // ---------- 14. Notificaciones ----------
     console.log("[14] Notificaciones...");

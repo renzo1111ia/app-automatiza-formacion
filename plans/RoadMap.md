@@ -3,8 +3,8 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 21-05-2026 00:00
-last_updated_by: roadmap-keeper (Tarea 1+2: sync estimaciones Sprint 2/3 + split Sprint 4 post-MVP en 6 sprints individuales al final)
+last_updated: 21-05-2026 12:00
+last_updated_by: roadmap-keeper (fechas + asignación Javi HP solo + prerequisitos Sprint 0 + Playwright setup 0-00 + métricas éxito por sprint)
 project_version: v0.0.0
 excluded_from: [staging, main]
 ---
@@ -65,9 +65,20 @@ excluded_from: [staging, main]
 | **Estado del sprint**          | 🔘 Pendiente                       |
 | **Estimación total**           | 1-2 sem (40h–80h)                 |
 | **Rama de trabajo sugerida**   | `feature/sp-0-sprint-0-hotfixes`  |
-| **Inicio**                     | —                                 |
-| **Fin Est.**                   | —                                 |
+| **Inicio**                     | 21-05-2026 09:00                  |
+| **Fin Est.**                   | 15-06-2026 18:00                  |
 | **Fin Real**                   | —                                 |
+
+> **Asignado a:** Javi HP (solo). Capacidad: 6h productivas/día, L-V. 18 días lab. **Nota:** no se cuentan vacaciones agosto (usuario ajusta si procede).
+
+### Prerequisitos del sprint
+
+| Item | Estado | Ref |
+|------|--------|-----|
+| ADR auditoría dependencias 20-05-2026 (next 16.2.6, axios 1.16.1, crypto removal) | ✅ Aprobado DONE_WITH_CONCERNS | [plans/reports/adr-auditoria-dependencias-20260520.md](../plans/reports/adr-auditoria-dependencias-20260520.md) |
+| Acceso Supabase del cliente (rotar tras Sprint 0) | 🔘 Pendiente verificar | — |
+| Repo limpio en `developer` sincronizado origin | ✅ OK | commit 42ba022 |
+| Plantilla CHANGELOG.md disponible | 🔘 Pendiente verificar | — |
 
 ### Tareas de desarrollo (Fase 0) — DETALLADAS
 
@@ -77,6 +88,7 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 | ID   | Tarea                                                                                  | Estimación | Estado      | Refs audit      | Notas                                                                |
 | ---- | -------------------------------------------------------------------------------------- | ---------- | ----------- | --------------- | -------------------------------------------------------------------- |
+| 0-00 | Setup Playwright local + baseline tests E2E (devDependency `@playwright/test`)         | 4h         | 🔘 Pendiente | DA-5 pre-requisito | Necesario para SP-X-CLOSE-2 de cada sprint. Vía af-agents:adr     |
 | 1-01 | Fix `worker.js:58` firma incorrecta `executeSequenceStep` — desbloquea flujo multi-día | 4h         | 🔘 Pendiente | F-02-001 / DA-1 | **Crítico #1** — sin esto, el sistema entero está roto en producción |
 | 1-02 | Fix `enqueueLeadStep` — quitar silenciado errores Redis (jobs perdidos sin log)        | 3h         | 🔘 Pendiente | DA-1-005        | Jobs desaparecen sin rastro                                          |
 
@@ -128,7 +140,7 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 | 1-24                               | Update `axios@1.14.0` (15 CVEs: SSRF + Prototype Pollution)                   | 4h              | 🔘 Pendiente | DA-3-CVE-001                          | Pasar por `af-agents:adr` antes                                                                                                |
 | 1-25                               | Reemplazar paquete `crypto@1.0.1` DEPRECATED por built-in `node:crypto`       | 3h              | 🔘 Pendiente | ADR-2026-05-20                        | Imports en todo el src/ y worker.js. Vía af-agents:adr                                                                         |
 | 1-26                               | Update `next@16.1.6` → `next@16.2.6` (cierre 19 CVEs incl. middleware bypass) | 4h              | 🔘 Pendiente | DA-3-CVE-002                          | **MOVIDA DESDE 2-27.** Pre-requisito de 1-07, 1-08, 1-16, 1-17 (sin esto el middleware sigue bypassable). Vía af-agents:adr   |
-| **Subtotal Fase 0 — Desarrollo**   |                                                                               | **~100h 30min** |             | (con paralelismo 2 devs: ~50h reales) |                                                                                                                                   |
+| **Subtotal Fase 0 — Desarrollo**   |                                                                               | **~104h 30min** |             | (incluye 0-00 Playwright setup 4h)    |                                                                                                                                   |
 
 > Aplazados a Fase 1: cifrar Google OAuth tokens (DA-3-006, L).
 > **Nota:** 2-27 (update Next.js, DA-3-CVE-002) MOVIDA a Sprint 0 como **1-26** tras hallazgo en auditoría ADR del 20-05-2026 (el middleware bypass anula efectivamente los hotfixes de auth 1-07, 1-08, 1-16).
@@ -169,9 +181,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente               |
 | **Estimación total**           | 3-4 sem (120h–160h)       |
 | **Rama de trabajo sugerida**   | `feature/sp-2-capa-datos` |
-| **Inicio**                     | —                         |
-| **Fin Est.**                   | —                         |
+| **Inicio**                     | 16-06-2026 09:00          |
+| **Fin Est.**                   | 27-07-2026 18:00          |
 | **Fin Real**                   | —                         |
+
+> **Asignado a:** Javi HP (solo). 30 días lab × 6h/día ≈ 180h.
 
 ### Tareas de desarrollo (Fase 1) — DETALLADAS
 
@@ -274,9 +288,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                         |
 | **Estimación total**           | 2-3 sem (80h–120h)                  |
 | **Rama de trabajo sugerida**   | `feature/sp-3-adapter-hubspot-zoho` |
-| **Inicio**                     | —                                   |
-| **Fin Est.**                   | —                                   |
+| **Inicio**                     | 28-07-2026 09:00                    |
+| **Fin Est.**                   | 01-09-2026 18:00                    |
 | **Fin Real**                   | —                                   |
+
+> **Asignado a:** Javi HP (solo). 26 días lab × 6h/día ≈ 156h. **Nota:** agosto incluido sin contar vacaciones — usuario puede reajustar.
 
 ### Tareas de desarrollo (Fase 2)
 
@@ -315,9 +331,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente               |
 | **Estimación total**           | 2-3 sem (80h–120h)        |
 | **Rama de trabajo sugerida**   | `feature/sp-4-hardening`  |
-| **Inicio**                     | —                         |
-| **Fin Est.**                   | —                         |
+| **Inicio**                     | 02-09-2026 09:00          |
+| **Fin Est.**                   | 29-09-2026 18:00          |
 | **Fin Real**                   | —                         |
+
+> **Asignado a:** Javi HP (solo). 20 días lab × 6h/día = 120h. **Cierre MVP v0.4.0 = 29-09-2026.**
 
 ### Tareas de desarrollo (Fase 3)
 
@@ -356,9 +374,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente (post-MVP, requiere v0.4.0) |
 | **Estimación total**           | 60-100h                                |
 | **Rama de trabajo sugerida**   | `feature/sp-5-01-google-sheets`        |
-| **Inicio**                     | —                                      |
-| **Fin Est.**                   | —                                      |
+| **Inicio**                     | 30-09-2026 09:00                       |
+| **Fin Est.**                   | 19-10-2026 18:00                       |
 | **Fin Real**                   | —                                      |
+
+> **Asignado a:** Javi HP (solo). 14 días lab × 6h/día = 84h.
 
 ### Tareas de desarrollo (Fase 4)
 
@@ -396,9 +416,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                      |
 | **Estimación total**           | 60-100h                          |
 | **Rama de trabajo sugerida**   | `feature/sp-6-salesforce`        |
-| **Inicio**                     | —                                |
-| **Fin Est.**                   | —                                |
+| **Inicio**                     | 20-10-2026 09:00                 |
+| **Fin Est.**                   | 06-11-2026 18:00                 |
 | **Fin Real**                   | —                                |
+
+> **Asignado a:** Javi HP (solo). 14 días lab × 6h/día = 84h.
 
 ### Tareas de desarrollo (Fase 5)
 
@@ -436,9 +458,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                    |
 | **Estimación total**           | 40-80h                         |
 | **Rama de trabajo sugerida**   | `feature/sp-7-gohighlevel`     |
-| **Inicio**                     | —                              |
-| **Fin Est.**                   | —                              |
+| **Inicio**                     | 09-11-2026 09:00               |
+| **Fin Est.**                   | 23-11-2026 18:00               |
 | **Fin Real**                   | —                              |
+
+> **Asignado a:** Javi HP (solo). 11 días lab × 6h/día = 66h.
 
 ### Tareas de desarrollo (Fase 6)
 
@@ -475,9 +499,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                      |
 | **Estimación total**           | 20-50h                           |
 | **Rama de trabajo sugerida**   | `feature/sp-8-activecampaign`    |
-| **Inicio**                     | —                                |
-| **Fin Est.**                   | —                                |
+| **Inicio**                     | 24-11-2026 09:00                 |
+| **Fin Est.**                   | 02-12-2026 18:00                 |
 | **Fin Real**                   | —                                |
+
+> **Asignado a:** Javi HP (solo). 7 días lab × 6h/día = 42h.
 
 ### Tareas de desarrollo (Fase 7)
 
@@ -514,9 +540,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) |
 | **Estimación total**           | 20-40h                               |
 | **Rama de trabajo sugerida**   | `feature/sp-9-adapter-generalization` |
-| **Inicio**                     | —                                    |
-| **Fin Est.**                   | —                                    |
+| **Inicio**                     | 03-12-2026 09:00                     |
+| **Fin Est.**                   | 10-12-2026 18:00                     |
 | **Fin Real**                   | —                                    |
+
+> **Asignado a:** Javi HP (solo). 6 días lab × 6h/día = 36h.
 
 ### Tareas de desarrollo (Fase 8)
 
@@ -552,9 +580,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Backlog (on-demand)              |
 | **Estimación total**           | ~30-50h por CRM (sólo bajo pedido) |
 | **Rama de trabajo sugerida**   | `feature/sp-10-tier2-<crm>` (por CRM) |
-| **Inicio**                     | —                                  |
-| **Fin Est.**                   | —                                  |
+| **Inicio**                     | TBD (on-demand)                    |
+| **Fin Est.**                   | TBD (on-demand)                    |
 | **Fin Real**                   | —                                  |
+
+> **Asignado a:** Javi HP (solo, por defecto). On-demand: sólo bajo pedido cliente.
 
 ### Tareas de desarrollo (Fase 9) — Backlog
 
@@ -587,6 +617,23 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 Aplican los mismos gates que el resto de sprints, además:
 - [ ] Pedido explícito del cliente para ese CRM concreto (registrado en issue / decisión audit).
 - [ ] Sprint 8 (generalización adapter) en 🟢 — para aprovechar la abstracción común.
+
+---
+
+## Métricas de éxito por sprint
+
+| Sprint | Cierre = OK cuando... |
+|---|---|
+| **Sprint 0 (v0.1.0)** | 0 credenciales hardcoded en `src/` · 0 endpoints orquestación sin auth accesibles desde internet · 0 webhooks con firma omitida incondicionalmente · `worker.js:58` firma corregida (flujo multi-día funciona) · RLS `tenants` no devuelve registros ajenos · typecheck+lint+build+tests sin errores · CHANGELOG `[v0.1.0]` completo · todas las tareas en 🔵/🟢 antes de SP-1-CLOSE-5 |
+| **Sprint 1 (v0.2.0)** | typecheck+lint+build sin errores · tests integración BD real (repos principales) pass · 0 queries directas `pg`/`postgres` en `src/app/api/` o `src/lib/actions/` · 0 JWTs `service_role` residuales fuera de admin scripts · `as any` reducidos >80% (426 → <85) · RLS `ai_agents`, `web_widgets`, `programs` corregida · `next@16.2.6` instalado (1-26) · hook `af-productivity-logger.cjs` operativo |
+| **Sprint 2 (v0.3.0)** | typecheck+lint+build sin errores · tenant conecta HubSpot vía OAuth2 desde UI admin · tenant conecta Zoho vía OAuth2 desde UI admin · push HubSpot/Zoho respeta R-014 append-only · webhook HubSpot valida `X-HubSpot-Signature-v3` · webhook Zoho valida token de canal · `crm_write_audit` registra toda sobrescritura `overwrite_with_audit` · RLS tenant-only en integraciones · tests sandbox HubSpot+Zoho pass |
+| **Sprint 3 (v0.4.0 — cierre MVP)** | `npx playwright test` → 0 failed (6+ golden path flows) · coverage `lines ≥ 80%`, `functions ≥ 80%` · Lighthouse a11y ≥ 90 en todas las rutas dashboard · 0 findings Critical DA-5 sin resolver · CSP headers en todas las rutas · rate limiting activo (`/api/auth/*` 5 req/min, `/api/*` 100 req/min) · dashboard costes LLM visible admin · Pino logging activo (API + workers) · CHANGELOG `[v0.4.0]` completo |
+| **Sprint 4 (v0.5.0)** | Tenant conecta Google vía OAuth2 desde UI admin · push Esden→Sheet < 5 min latencia · pull Sheet→Esden < 5 min (vía Drive webhook) · sin duplicados (idempotencia `_esden_updated_at`) · sin bucle push/pull infinito · canal Drive renovado antes de TTL 7 días · `crm_write_audit` registra todo sync · RLS tenant-only en `crm_connections` · typecheck+lint+build+tests sin errores |
+| **Sprint 5 (v0.6.0)** | (pendiente extraer del plan.md cuando se cree) — esperado: tenant conecta Salesforce vía OAuth2 Connected App (prod+sandbox) · CRUD Leads/Contacts/Opportunities funcional · webhooks bidireccionales (Platform Events/Streaming) operativos · tests integración sandbox pass |
+| **Sprint 6 (v0.7.0)** | (pendiente extraer del plan.md cuando se cree) — esperado: app registrada en GHL Marketplace + OAuth2 v2 · adapter Contacts+Opportunities+Calendars funcional · webhooks GHL bidireccionales · tests sandbox GHL pass |
+| **Sprint 7 (v0.8.0)** | (pendiente extraer del plan.md cuando se cree) — esperado: auth API Key multi-cuenta funcional · adapter Contacts+Deals+Tags+Lists · webhooks ActiveCampaign (contact updated, deal stage changed) · tests sandbox pass |
+| **Sprint 8 (v0.9.0)** | (pendiente extraer del plan.md cuando se cree) — esperado: `IntegrationAdapter` base con OAuth flow + field mapper genéricos · webhook handling + signature verification generalizado · rate limiting/retry/circuit breaker por adapter generalizado · refactor sin regresión en 6 adapters existentes |
+| **Sprint 9 (v0.10.x+)** | Plantilla on-demand: por cada CRM Tier 2 activado, cumplir gates estándar de cierre de sprint + pedido explícito cliente registrado |
 
 ---
 
@@ -625,4 +672,4 @@ Reglas clave:
 
 ---
 
-**Última actualización**: 21-05-2026 00:00 por `roadmap-keeper` (Tarea 1: sync estimaciones Sprint 2 [148h, 7 fases] y Sprint 3 [100-132h, 7 fases] desde phase files. Tarea 2: split del Sprint 4 monolítico post-MVP en 6 sprints top-level Sprint 4..9, uno por integración CRM + generalización + backlog Tier 2 on-demand. Total roadmap: 10 fases / 10 sprints).
+**Última actualización**: 21-05-2026 12:00 por `roadmap-keeper` (fechas Inicio/Fin Est. en los 10 sprints calculadas con días laborables L-V × 6h/día; asignación Javi HP solo por defecto; prerequisitos Sprint 0 con ADR aprobado; pre-tarea 0-00 setup Playwright local 4h en Bloque 1.1 — subtotal Sprint 0 ajustado a ~104h 30min; sección "Métricas de éxito por sprint" añadida antes del resumen).

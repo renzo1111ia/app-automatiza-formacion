@@ -126,6 +126,7 @@ CREATE INDEX IF NOT EXISTS idx_lead_tenant ON public.lead(tenant_id);
 -- ============================================================
 -- LLAMADAS
 -- ============================================================
+-- llamadas (columnas segun src/lib/constants/schema.ts)
 CREATE TABLE IF NOT EXISTS public.llamadas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
@@ -135,11 +136,13 @@ CREATE TABLE IF NOT EXISTS public.llamadas (
     nombre_agente TEXT,
     estado_llamada TEXT,
     razon_termino TEXT,
+    fecha_inicio TIMESTAMPTZ DEFAULT now(),
     duracion_segundos INTEGER,
-    grabacion_url TEXT,
+    url_grabacion TEXT,
     transcripcion TEXT,
+    resumen TEXT,
     metadata JSONB DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ DEFAULT now()
+    fecha_creacion TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.llamadas ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_llamadas_tenant ON public.llamadas(tenant_id);
@@ -148,16 +151,17 @@ CREATE INDEX IF NOT EXISTS idx_llamadas_lead ON public.llamadas(id_lead);
 -- ============================================================
 -- LEAD CUALIFICACION
 -- ============================================================
+-- lead_cualificacion (columnas segun src/lib/constants/schema.ts)
 CREATE TABLE IF NOT EXISTS public.lead_cualificacion (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     id_lead UUID NOT NULL REFERENCES public.lead(id) ON DELETE CASCADE,
-    score INTEGER,
-    nivel TEXT,
-    observaciones TEXT,
-    razones JSONB DEFAULT '[]'::jsonb,
-    cualificado_por TEXT,
-    fecha_cualificacion TIMESTAMPTZ DEFAULT now()
+    id_llamada UUID,
+    cualificacion TEXT,
+    motivo_anulacion TEXT,
+    anios_experiencia INTEGER,
+    nivel_estudios TEXT,
+    fecha_creacion TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.lead_cualificacion ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_lead_cual_tenant ON public.lead_cualificacion(tenant_id);
@@ -165,14 +169,16 @@ CREATE INDEX IF NOT EXISTS idx_lead_cual_tenant ON public.lead_cualificacion(ten
 -- ============================================================
 -- CONVERSACIONES WHATSAPP
 -- ============================================================
+-- conversaciones_whatsapp (columnas segun schema.ts)
 CREATE TABLE IF NOT EXISTS public.conversaciones_whatsapp (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     id_lead UUID NOT NULL REFERENCES public.lead(id) ON DELETE CASCADE,
-    fecha_inicio TIMESTAMPTZ DEFAULT now(),
-    fecha_ultimo_mensaje TIMESTAMPTZ DEFAULT now(),
+    id_conversacion_chatwoot TEXT,
+    opt_in_whatsapp BOOLEAN DEFAULT false,
     estado TEXT DEFAULT 'ACTIVA',
-    metadata JSONB DEFAULT '{}'::jsonb
+    fecha_ultimo_mensaje TIMESTAMPTZ DEFAULT now(),
+    fecha_creacion TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.conversaciones_whatsapp ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_conv_whatsapp_tenant ON public.conversaciones_whatsapp(tenant_id);
@@ -198,14 +204,18 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_lead ON public.chat_messages(lead_i
 -- ============================================================
 -- INTENTOS DE LLAMADAS / INTENTOS
 -- ============================================================
+-- intentos_llamadas (columnas segun schema.ts)
 CREATE TABLE IF NOT EXISTS public.intentos_llamadas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     id_lead UUID NOT NULL REFERENCES public.lead(id) ON DELETE CASCADE,
+    id_llamada UUID,
+    tipo_intento TEXT,
     numero_intento INTEGER DEFAULT 1,
+    fecha_reintento TIMESTAMPTZ,
     estado TEXT,
-    fecha_intento TIMESTAMPTZ DEFAULT now(),
-    metadata JSONB DEFAULT '{}'::jsonb
+    fecha_ejecucion TIMESTAMPTZ,
+    fecha_creacion TIMESTAMPTZ DEFAULT now()
 );
 ALTER TABLE public.intentos_llamadas ENABLE ROW LEVEL SECURITY;
 
@@ -283,6 +293,24 @@ ALTER TABLE public.campanas ENABLE ROW LEVEL SECURITY;
 -- ============================================================
 -- APPOINTMENTS + AVAILABILITY SLOTS
 -- ============================================================
+-- agendamientos (columnas segun schema.ts)
+CREATE TABLE IF NOT EXISTS public.agendamientos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+    id_lead UUID REFERENCES public.lead(id) ON DELETE CASCADE,
+    advisor_id UUID REFERENCES public.advisors(id) ON DELETE SET NULL,
+    fecha_agendada_cliente TIMESTAMPTZ,
+    fecha_agendada_lead TIMESTAMPTZ,
+    confirmado BOOLEAN DEFAULT false,
+    meeting_link TEXT,
+    notas TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    fecha_creacion TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.agendamientos ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_agendamientos_tenant ON public.agendamientos(tenant_id);
+
+-- appointments mantenido como alias para compatibilidad
 CREATE TABLE IF NOT EXISTS public.appointments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
@@ -411,7 +439,7 @@ BEGIN
             'voice_agents', 'lead', 'llamadas', 'lead_cualificacion',
             'conversaciones_whatsapp', 'chat_messages', 'intentos_llamadas',
             'intentos', 'notificaciones', 'programas', 'lead_programas',
-            'campanas', 'appointments', 'availability_slots', 'workflows',
+            'campanas', 'agendamientos', 'appointments', 'availability_slots', 'workflows',
             'orchestration_graphs', 'knowledge_base', 'web_widgets',
             'system_logs', 'ai_agent_logs', 'lead_events'
         )
