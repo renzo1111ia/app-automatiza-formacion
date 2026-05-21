@@ -3,10 +3,10 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 21-05-2026 19:30
-last_updated_by: Renzo (sesión 21-05-2026: arranque Sprint 0 — 4 tareas a 🔵, 2 diferidas, 1 en cola)
+last_updated: 21-05-2026 20:45
+last_updated_by: Renzo (sesión 21-05-2026: Sprint 0 — 4 tareas 🔵, 1 código-listo apply-pendiente, 2 diferidas)
 project_version: v0.0.0
-sprint_0_progress: "5 de 24 tareas dev en 🔵 (0-00, 0-01, 1-04, 1-26 + helpers env/lint baseline). 2 diferidas (1-03, 1-05). Resto pendiente."
+sprint_0_progress: "0-00, 0-01, 1-04, 1-26 → 🔵 pushed. 1-06 → 🟠 código listo, apply manual pendiente. 1-03, 1-05 → 🟡 diferidas pre-deploy. Resto 🔘 pendiente."
 excluded_from: [staging, main]
 ---
 
@@ -114,12 +114,12 @@ Origen: Top 25 Critical de [docs/audit/deep/DEEP-FINDINGS-SUMMARY.md](../docs/au
 
 #### Bloque 1.2 — Secretos y credenciales
 
-| ID   | Tarea                                                                   | Estimación | Estado                     | Refs audit      | Notas                                                                                                                               |
-| ---- | ----------------------------------------------------------------------- | ---------- | -------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 1-03 | Rotar JWTs comprometidos en Supabase (anon + service_role)              | 2h         | 🟡 **DIFERIDA pre-deploy** | F-05-SEC-001    | Requiere acceso Easypanel/dashboard cliente. Bloqueada hasta obtención. Se cierra en sesión pre-staging                             |
-| 1-04 | Quitar JWTs hardcodeados de 10 puntos del código fuente                 | 6h         | 🔵 Subida `feature/sp-0`   | F-04-002 / DA-2 | ✅ Commit pendiente — helper `src/lib/env.ts` (requireEnv/requireEnvAny) + refactor 5 archivos. `grep eyJhbGci\|FALLBACK_ src/` = 0 |
-| 1-05 | Cambio password Postgres default `postgres:postgres`                    | 1h         | 🟡 **DIFERIDA pre-deploy** | R-023.a         | Requiere acceso Easypanel cliente. Se cierra en sesión pre-staging. Cerrar puerto 5432 a internet además                            |
-| 1-06 | Crear usuario Postgres `app_user` con permisos limitados (no superuser) | 3h         | 🔘 Pendiente               | R-023.a         | Próxima en cola. SQL script local primero (testable contra `npm run db:up`), aplicación a producción diferida                       |
+| ID   | Tarea                                                                   | Estimación | Estado                     | Refs audit      | Notas                                                                                                                                                                                        |
+| ---- | ----------------------------------------------------------------------- | ---------- | -------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1-03 | Rotar JWTs comprometidos en Supabase (anon + service_role)              | 2h         | 🟡 **DIFERIDA pre-deploy** | F-05-SEC-001    | Requiere acceso Easypanel/dashboard cliente. Bloqueada hasta obtención. Se cierra en sesión pre-staging                                                                                      |
+| 1-04 | Quitar JWTs hardcodeados de 10 puntos del código fuente                 | 6h         | 🔵 Subida `feature/sp-0`   | F-04-002 / DA-2 | ✅ Commit pendiente — helper `src/lib/env.ts` (requireEnv/requireEnvAny) + refactor 5 archivos. `grep eyJhbGci\|FALLBACK_ src/` = 0                                                          |
+| 1-05 | Cambio password Postgres default `postgres:postgres`                    | 1h         | 🟡 **DIFERIDA pre-deploy** | R-023.a         | Requiere acceso Easypanel cliente. Se cierra en sesión pre-staging. Cerrar puerto 5432 a internet además                                                                                     |
+| 1-06 | Crear usuario Postgres `app_user` con permisos limitados (no superuser) | 3h         | 🟠 P. Subir GH             | R-023.a         | ✅ SQL idempotente en `supabase/scripts/create-app-user.sql` + README. 🟡 **Apply pendiente** (psql contra BD = acción manual con password fuerte). Worker.js NO usa pg directo → 3h sin +1h |
 
 #### Bloque 1.3 — Endpoints sin autenticación
 
