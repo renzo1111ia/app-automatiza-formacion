@@ -22,6 +22,7 @@ excluded_from: [staging, main]
 | Item | Política |
 |---|---|
 | Vacaciones / festivos | **Javi HP sin vacaciones programadas en 2026.** Calendario L-V completo. |
+| Capacidad devs | **Javi HP: 10h productivas/día.** Renzo: 8h productivas/día (capacidad disponible — sin sprints asignados aún; el usuario avisará cuando se le asigne). |
 | Deadline MVP | **"Lo antes posible"** — objetivo Lun 10-08-2026 (v0.4.0). Sin compromiso externo de fecha con cliente. |
 | Release a staging | **NO automático por sprint.** El usuario decide manualmente cuándo subir cada sprint a `staging` para review de la cliente. PRs paran en `developer` hasta orden explícita. |
 | Acceso Supabase del cliente (VPS) | **Diferido al pre-deploy.** Trabajamos **local-first** con Supabase self-hosted local. El acceso al VPS de Easypanel se prepara y rota tokens **antes del primer despliegue a staging**, no antes. |
@@ -78,13 +79,13 @@ excluded_from: [staging, main]
 | **Sprint ID**                  | `SP-1`                            |
 | **Versión objetivo al cierre** | `v0.1.0`                          |
 | **Estado del sprint**          | 🔘 Pendiente                       |
-| **Estimación total**           | 1-2 sem (40h–80h)                 |
+| **Estimación total**           | ~107h 30min (11 días lab × 10h)   |
 | **Rama de trabajo sugerida**   | `feature/sp-0-sprint-0-hotfixes`  |
-| **Inicio**                     | 21-05-2026 09:00                  |
-| **Fin Est.**                   | 15-06-2026 18:00                  |
+| **Inicio**                     | Jue 21-05-2026 09:00              |
+| **Fin Est.**                   | Jue 04-06-2026 19:00              |
 | **Fin Real**                   | —                                 |
 
-> **Asignado a:** Javi HP (solo). Capacidad: 6h productivas/día, L-V. 18 días lab (~108h disponibles). Sin vacaciones en 2026.
+> **Asignado a:** Javi HP (solo). Capacidad: 10h productivas/día, L-V. 11 días lab (~110h disponibles). Sin vacaciones en 2026.
 
 ### Prerequisitos del sprint
 
@@ -198,11 +199,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente               |
 | **Estimación total**           | 3-4 sem (120h–160h)       |
 | **Rama de trabajo sugerida**   | `feature/sp-2-capa-datos` |
-| **Inicio**                     | 16-06-2026 09:00          |
-| **Fin Est.**                   | 27-07-2026 18:00          |
+| **Inicio**                     | Vie 05-06-2026 09:00      |
+| **Fin Est.**                   | Mar 30-06-2026 19:00      |
 | **Fin Real**                   | —                         |
 
-> **Asignado a:** Javi HP (solo). 30 días lab × 6h/día ≈ 180h.
+> **Asignado a:** Javi HP (solo). 18 días lab × 10h/día = 180h.
 
 ### Tareas de desarrollo (Fase 1) — DETALLADAS
 
@@ -305,11 +306,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                         |
 | **Estimación total**           | 2-3 sem (80h–120h)                  |
 | **Rama de trabajo sugerida**   | `feature/sp-3-adapter-hubspot-zoho` |
-| **Inicio**                     | 28-07-2026 09:00                    |
-| **Fin Est.**                   | 01-09-2026 18:00                    |
+| **Inicio**                     | Mié 01-07-2026 09:00                |
+| **Fin Est.**                   | Mié 22-07-2026 19:00                |
 | **Fin Real**                   | —                                   |
 
-> **Asignado a:** Javi HP (solo). 26 días lab × 6h/día ≈ 156h. **Nota:** agosto incluido sin contar vacaciones — usuario puede reajustar.
+> **Asignado a:** Javi HP (solo). 16 días lab × 10h/día = 160h. Sin vacaciones, sin descuentos.
 
 ### Tareas de desarrollo (Fase 2)
 
@@ -348,11 +349,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente               |
 | **Estimación total**           | 2-3 sem (80h–120h)        |
 | **Rama de trabajo sugerida**   | `feature/sp-4-hardening`  |
-| **Inicio**                     | 02-09-2026 09:00          |
-| **Fin Est.**                   | 29-09-2026 18:00          |
+| **Inicio**                     | Jue 23-07-2026 09:00      |
+| **Fin Est.**                   | Lun 10-08-2026 19:00      |
 | **Fin Real**                   | —                         |
 
-> **Asignado a:** Javi HP (solo). 20 días lab × 6h/día = 120h. **Cierre MVP v0.4.0 = 29-09-2026.**
+> **Asignado a:** Javi HP (solo). 13 días lab × 10h/día = 130h. **Cierre MVP v0.4.0 = Lun 10-08-2026.**
 
 ### Tareas de desarrollo (Fase 3)
 
@@ -391,11 +392,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente (post-MVP, requiere v0.4.0) |
 | **Estimación total**           | 60-100h                                |
 | **Rama de trabajo sugerida**   | `feature/sp-5-01-google-sheets`        |
-| **Inicio**                     | 30-09-2026 09:00                       |
-| **Fin Est.**                   | 19-10-2026 18:00                       |
+| **Inicio**                     | Mar 11-08-2026 09:00                   |
+| **Fin Est.**                   | Vie 21-08-2026 19:00                   |
 | **Fin Real**                   | —                                      |
 
-> **Asignado a:** Javi HP (solo). 14 días lab × 6h/día = 84h.
+> **Asignado a:** Javi HP (solo). 9 días lab × 10h/día = 90h. Estimación dentro del rango 60-100h.
 
 ### Tareas de desarrollo (Fase 4)
 
@@ -433,11 +434,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                      |
 | **Estimación total**           | 60-100h                          |
 | **Rama de trabajo sugerida**   | `feature/sp-6-salesforce`        |
-| **Inicio**                     | 20-10-2026 09:00                 |
-| **Fin Est.**                   | 06-11-2026 18:00                 |
+| **Inicio**                     | Lun 24-08-2026 09:00             |
+| **Fin Est.**                   | Jue 03-09-2026 19:00             |
 | **Fin Real**                   | —                                |
 
-> **Asignado a:** Javi HP (solo). 14 días lab × 6h/día = 84h.
+> **Asignado a:** Javi HP (solo). 9 días lab × 10h/día = 90h. Estimación dentro del rango 60-100h.
 
 ### Tareas de desarrollo (Fase 5)
 
@@ -475,11 +476,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                    |
 | **Estimación total**           | 40-80h                         |
 | **Rama de trabajo sugerida**   | `feature/sp-7-gohighlevel`     |
-| **Inicio**                     | 09-11-2026 09:00               |
-| **Fin Est.**                   | 23-11-2026 18:00               |
+| **Inicio**                     | Vie 04-09-2026 09:00           |
+| **Fin Est.**                   | Lun 14-09-2026 19:00           |
 | **Fin Real**                   | —                              |
 
-> **Asignado a:** Javi HP (solo). 11 días lab × 6h/día = 66h.
+> **Asignado a:** Javi HP (solo). 7 días lab × 10h/día = 70h. Estimación dentro del rango 40-80h.
 
 ### Tareas de desarrollo (Fase 6)
 
@@ -516,11 +517,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente                      |
 | **Estimación total**           | 20-50h                           |
 | **Rama de trabajo sugerida**   | `feature/sp-8-activecampaign`    |
-| **Inicio**                     | 24-11-2026 09:00                 |
-| **Fin Est.**                   | 02-12-2026 18:00                 |
+| **Inicio**                     | Mar 15-09-2026 09:00             |
+| **Fin Est.**                   | Vie 18-09-2026 19:00             |
 | **Fin Real**                   | —                                |
 
-> **Asignado a:** Javi HP (solo). 7 días lab × 6h/día = 42h.
+> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-50h.
 
 ### Tareas de desarrollo (Fase 7)
 
@@ -557,11 +558,11 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 | **Estado del sprint**          | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) |
 | **Estimación total**           | 20-40h                               |
 | **Rama de trabajo sugerida**   | `feature/sp-9-adapter-generalization` |
-| **Inicio**                     | 03-12-2026 09:00                     |
-| **Fin Est.**                   | 10-12-2026 18:00                     |
+| **Inicio**                     | Lun 21-09-2026 09:00                 |
+| **Fin Est.**                   | Jue 24-09-2026 19:00                 |
 | **Fin Real**                   | —                                    |
 
-> **Asignado a:** Javi HP (solo). 6 días lab × 6h/día = 36h.
+> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-40h.
 
 ### Tareas de desarrollo (Fase 8)
 
@@ -689,4 +690,4 @@ Reglas clave:
 
 ---
 
-**Última actualización**: 21-05-2026 12:00 por `roadmap-keeper` (fechas Inicio/Fin Est. en los 10 sprints calculadas con días laborables L-V × 6h/día; asignación Javi HP solo por defecto; prerequisitos Sprint 0 con ADR aprobado; pre-tarea 0-00 setup Playwright local 4h en Bloque 1.1 — subtotal Sprint 0 ajustado a ~104h 30min; sección "Métricas de éxito por sprint" añadida antes del resumen).
+**Última actualización**: 21-05-2026 14:30 por `roadmap-keeper` (políticas operativas sesión 21-05: sin vacaciones, Javi HP 10h/día, Renzo 8h/día disponible sin asignar, MVP ASAP, staging on-demand del usuario, local-first Supabase, sistema log propio, minimizar GitHub Actions; tarea 0-01 pre-push hooks añadida; fechas recalculadas con 10h/día → MVP v0.4.0 cierre Lun 10-08-2026 (adelantado ~7 semanas vs cálculo anterior)).
