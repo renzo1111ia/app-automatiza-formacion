@@ -40,10 +40,33 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 ```
 
 - Trabajo activo: feature branches partiendo de `developer` (o `auditoria` durante el audit inicial).
+- **Naming de ramas por sprint** (decisión 21-05-2026):
+  - Sprint 0 (excepción legacy): `feature/sp-0-sprint-0-hotfixes` — ya creada, NO renombrar.
+  - **A partir del Sprint 1**: `feature/sprint-N-<slug>` (ej. `feature/sprint-1-capa-datos`, `feature/sprint-2-adapter-hubspot-zoho`). El prefijo `sp-` queda deprecated.
 - **`developer`** versiona TODO el scaffold de Claude Code (`.claude/`, `.claude-plugin/`, `docs/`, `plans/`, `.env.example`).
 - **`staging`** y **`main`** son ramas protegidas — **NO se tocan sin orden explícita del usuario**.
-- Versionado SemVer: `v0.0.0` inicial. Sprint cerrado → `v0.x.0`. Patch en sprint → `v0.0.x`. MVP completo → `v0.3.0`.
+- Versionado SemVer: `v0.0.0` inicial. Sprint cerrado → `v0.x.0`. Patch en sprint → `v0.0.x`. MVP completo → `v0.4.0`.
 - `.env` real NUNCA va a git. Sólo `.env.example` con placeholders. Secretos por canal seguro (Easypanel env vars / vault).
+
+## Tracking de tiempos reales (política RoadMap)
+
+Cada tarea del RoadMap tiene **Estimación** (columna fija) y **Tiempo real** (anotado en la columna `Notas` al cerrar):
+
+- Al pasar a 🔵 **Subida rama** (tras push): anotar `⏱ Real (a push): XXh YYmin` con el tiempo invertido hasta el push. Es un valor provisional — puede haber fixes posteriores en SP-X-CLOSE-4.
+- Al pasar a 🟢 **COMPLETADA** (tras merge a `developer`): ajustar a `⏱ Real (final): XXh YYmin` incluyendo cualquier fix post-push.
+- Si una tarea se difiere o se cancela, anotar `⏱ Real (parcial): XXh YYmin` con lo invertido hasta el corte.
+
+Formato siempre: **horas y minutos**, nunca decimales (`2h 30min`, no `2.5h`). Coherente con la política global de productividad.
+
+## Tareas diferidas: distinguir "local-aplicable" vs "pre-deploy"
+
+Si una tarea no se puede cerrar al 100% por dependencia externa (acceso VPS, credenciales del cliente, etc.):
+
+1. **Identificar la parte local-aplicable** y cerrarla en el sprint actual. Ejemplo: SQL script + apply contra Supabase local — se hace YA aunque el apply contra VPS se difiera.
+2. **Sólo la parte que requiere acceso externo se difiere** a la sesión pre-deploy del sprint en el que toque promoción a staging/main.
+3. **Anotar explícitamente** en Notas: `🟢 Local OK | 🟡 Pre-deploy pendiente: <razón>`.
+
+Esto evita acumular trabajo bloqueado y permite probar el comportamiento de la app en local cuanto antes.
 
 ## Reglas de equipo (top-level)
 
