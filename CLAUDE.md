@@ -71,6 +71,83 @@ Cada tarea del RoadMap tiene **Estimación** (columna fija) y **Tiempo real** (e
 
 Formato siempre: **horas y minutos**, nunca decimales (`2h 30min`, no `2.5h`). Coherente con la política global de productividad.
 
+## GitHub Releases y tags — descripción profesional OBLIGATORIA
+
+**Regla absoluta**: NINGÚN tag SemVer ni GitHub Release del proyecto se publica con solo título + assets autogenerados. Cada release público es parte de la imagen del producto frente a la clienta y al equipo. Sin excepciones.
+
+### Estructura mínima de body de release
+
+Cuando se crea un release (`gh release create`, fin de sprint con bump SemVer, promoción `staging → main`), el cuerpo en markdown DEBE incluir:
+
+```markdown
+## Resumen
+
+Una frase clara del valor entregado.
+
+## Highlights
+
+- 3-7 bullets con los logros más visibles.
+
+## Detalle por área
+
+### Seguridad / Capa de datos / Frontend / Infra (según aplique)
+
+- Cambios concretos por área.
+
+## Breaking changes
+
+- NINGUNO | o lista con migración recomendada.
+
+## Migraciones SQL
+
+- Lista de `supabase/migrations/YYYYMMDD_*.sql` aplicadas.
+
+## Variables de entorno nuevas
+
+- `NEW_VAR` — propósito + dónde configurar.
+
+## Tareas RoadMap cerradas
+
+- SP-N-XX, SP-N-YY... con link.
+
+## Tareas diferidas
+
+- Lista con razón breve.
+
+## ADRs aprobados
+
+- ADR-NNN título — link.
+
+## Contribuidores
+
+- @user (rol). NUNCA Claude/Anthropic/IA.
+
+## Commits incluidos
+
+- Lista de `git log v(anterior)..v(actual) --oneline`.
+
+## Próximos pasos
+
+- Qué sprint sigue, qué se promueve, ventana estimada.
+```
+
+### Flujo
+
+1. Antes de publicar: redactar el cuerpo completo en un archivo `plans/<sprint>/RELEASE-NOTES-vX.Y.Z.md`.
+2. **Confirmación humana obligatoria**: presentar preview al usuario y esperar OK antes de `gh release create`.
+3. Publicar con `gh release create vX.Y.Z --title "vX.Y.Z - <slug>" --notes-file plans/<sprint>/RELEASE-NOTES-vX.Y.Z.md`.
+4. Si se detecta un release ya publicado sin cuerpo profesional → arreglar INMEDIATAMENTE con `gh release edit vX.Y.Z --notes-file <path>` sin esperar a que el usuario lo pida. Avisar al usuario del fix aplicado.
+
+### Aplicabilidad
+
+- Todos los tags SemVer del proyecto (v0.1.0, v0.2.0... v1.0.0+).
+- Pre-releases (rc, beta) admiten cuerpo más breve pero NUNCA vacío.
+- Tags internos sin release público (ej. snapshots de auditoría) están exentos pero deben llevar mensaje de tag descriptivo (`git tag -a -m`).
+
+### Enforcement
+
+Los subagentes `af-agents:deployment` y `af-agents:git` deben verificar la presencia del cuerpo profesional antes de aceptar `gh release create`. Si falta: BLOCKED + redactar borrador + pedir validación al usuario.
+
 ## Tareas diferidas: distinguir "local-aplicable" vs "pre-deploy"
 
 Si una tarea no se puede cerrar al 100% por dependencia externa (acceso VPS, credenciales del cliente, etc.):
