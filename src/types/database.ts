@@ -21,8 +21,16 @@ export interface Lead {
   fecha_creacion?: string | null;
   fecha_actualizacion?: string | null;
 
-  // v2.0 Memory Fields
-  current_stage?: "QUALIFICATION" | "SCHEDULING" | "COMPLETED" | "DROPPED" | string | null;
+  // v2.0 Memory Fields — NEW-02: enum unificado (ver src/lib/schemas/_base.ts LeadStageEnum).
+  // UNREACHABLE añadido en NEW-13 (ADR-014). Tipo origen de verdad: `import type { LeadStage } from "@/lib/schemas/_base"`.
+  current_stage?:
+    | "QUALIFICATION"
+    | "SCHEDULING"
+    | "COMPLETED"
+    | "DROPPED"
+    | "UNREACHABLE"
+    | string
+    | null;
   metadata?: Record<string, unknown> | null;
   last_interaction_at?: string | null;
   is_ai_paused?: boolean;

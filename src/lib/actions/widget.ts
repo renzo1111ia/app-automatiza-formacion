@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { createLogger } from "@/lib/utils/logger";
 import { WebWidget, AIAgentVariant } from "@/types/database";
 import OpenAI from "openai";
 import { ChatMemoryService } from "@/lib/services/chat-memory";
@@ -25,13 +26,16 @@ interface ChatbotRequest {
   knownVariables?: Record<string, string>;
 }
 
+const widgetLogger = createLogger("widget-ai");
+
 export async function getChatbotResponse({
   widgetId,
   leadId,
   message,
   knownVariables,
 }: ChatbotRequest) {
-  console.log(`[WIDGET AI] 🤖 Message from widget ${widgetId} for lead ${leadId}`);
+  // 2-37: logger estructurado debug nivel (no production noise) + scrubbing PII.
+  widgetLogger.debug("Message received", { widgetId, leadId, messageLength: message?.length });
 
   try {
     const supabase = await getAdminSupabaseClient();
@@ -196,9 +200,9 @@ ${chatSummary || "New interaction."}
 `;
 
     // 4. Call LLM
-    let modelName = activeVariant.model_name || "gpt-4o";
-    if (modelName === "gpt-4.1") modelName = "gpt-4o";
-    if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
+    // 2-35: la whitelist ModelNameSchema garantiza que `model_name` es válido en
+    // el boundary (saveAgentVariant). Ya no hace falta parchear gpt-4.1 → gpt-4o.
+    const modelName = activeVariant.model_name || "gpt-4o";
 
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
@@ -256,7 +260,11 @@ ${chatSummary || "New interaction."}
 
     return { success: false, error: "Empty AI response" };
   } catch (err: unknown) {
-    console.error("[WIDGET AI] Error:", err);
+    widgetLogger.error("getChatbotResponse failed", {
+      widgetId,
+      leadId,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
