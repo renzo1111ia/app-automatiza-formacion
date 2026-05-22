@@ -43,17 +43,18 @@ Dashboard usuario
 
 Expone tres funciones:
 
-| Función | Key usada | Uso |
-|---------|-----------|-----|
-| `getActiveTenantId()` | — | Lee cookie `af-tenant-id` |
-| `getSupabaseServerClient()` | `service_role` (o anon fallback) | Server actions generales |
-| `getAdminSupabaseClient()` | `service_role` explícito | Operaciones administrativas |
+| Función                     | Key usada                        | Uso                         |
+| --------------------------- | -------------------------------- | --------------------------- |
+| `getActiveTenantId()`       | —                                | Lee cookie `af-tenant-id`   |
+| `getSupabaseServerClient()` | `service_role` (o anon fallback) | Server actions generales    |
+| `getAdminSupabaseClient()`  | `service_role` explícito         | Operaciones administrativas |
 
 Ambos clientes crean instancias con `persistSession: false, autoRefreshToken: false` — son clientes sin sesión propia, requieren filtros manuales de tenant.
 
 ### 2.3 `src/lib/supabase/tenant-client.ts` — Clientes externos
 
 Para tenants con su propio Supabase (mode "external"):
+
 - Cache en Map en memoria con TTL 5min por `tenantId`
 - Crea cliente con service_role del Supabase del cliente
 - Header custom `x-af-tenant` para trazabilidad
@@ -73,6 +74,7 @@ Cache en memoria (5min) del modo de cada tenant. Resolución inicial consultando
 ### 2.5 `src/middleware.ts` — Auth middleware
 
 Usa `@supabase/ssr` (`createServerClient`) con anon key para validar sesión en SSR:
+
 - Verifica `supabase.auth.getUser()` en cada request
 - Redirige `/login` si no hay sesión en rutas `/dashboard`
 - Restricción admin en `/dashboard/settings` via `user_metadata.is_admin`
@@ -228,10 +230,10 @@ notificaciones, system_logs, ai_agent_logs, lead_events
 
 Existen **dos tablas de citas** en producción:
 
-| Tabla | Migration | Campo fecha | Estado |
-|-------|-----------|-------------|--------|
+| Tabla           | Migration              | Campo fecha                                     | Estado        |
+| --------------- | ---------------------- | ----------------------------------------------- | ------------- |
 | `agendamientos` | multitenant_schema.sql | `fecha_agendada_cliente`, `fecha_agendada_lead` | Schema legacy |
-| `appointments` | orchestrator_v3.sql | `scheduled_at` | Schema activo |
+| `appointments`  | orchestrator_v3.sql    | `scheduled_at`                                  | Schema activo |
 
 El código usa `appointments` en la mayoría de casos (calendar.ts, orchestrator.ts) pero `agendamientos` sigue presente y algunos server actions la referencian. Requiere consolidación.
 
@@ -330,33 +332,151 @@ PostAnalysisService.processInteraction()
 
 ## 6. Migraciones aplicadas (orden cronológico)
 
-| Archivo | Descripción | Notas |
-|---------|-------------|-------|
-| `20260403200000_orchestration_system.sql` | workflows, graphs, rules | RLS con auth.jwt() tenant_id |
-| `20260404_ai_agents.sql` | ai_agents, ai_agent_variants | RLS tautológica |
-| `20260404_chat_messages.sql` | chat_messages | tenant_id como TEXT |
-| `20260404_create_multitenant_schema.sql` | lead y tablas centrales | 12 tablas + RLS service_role |
-| `20260404_multitenant_v2.sql` | Añade tenant_id a tablas existentes | Migración retrocompatible |
-| `20260404_orchestrator_v3.sql` | advisors, availability_slots, appointments | RLS `USING(true)` genérico |
-| `20260406_add_flow_config.sql` | config de flujos | — |
-| `20260410_scaling_and_deduplication.sql` | índices deduplicación lead | idx_lead_tenant_phone, idx_lead_tenant_email |
-| `20260410_worker_specialization.sql` | status a appointments | — |
-| `20260413_*` (múltiples) | lead photo, segmentation, model, retell config, flow graph, ai toggle | — |
-| `20260417_dynamic_inactivity_fields.sql` | campos de inactividad | — |
-| `20260417_orchestrator_v2_schema.sql` | current_stage, metadata en lead; client_configs | — |
-| `20260417_system_logs_table.sql` | system_logs | RLS service_role correcto |
-| `20260421_*` | fix variants upsert, rename columns | — |
-| `20260423_*` | tracked_variables, agent variables, model_name | — |
-| `20260424_knowledge_and_billing.sql` | knowledge_base, spend limits | RLS con app.current_tenant (roto) |
-| `20260427_web_widgets.sql` | web_widgets | RLS sin aislamiento real |
-| `20260429_appointment_reminders_and_pacing.sql` | advisors, appointments reminders | — |
-| `20260504_add_advisor_filters.sql` | advisors filtros | — |
-| `20260512_fix_appointments_schema.sql` | columnas faltantes en appointments | — |
-| `20260513_add_metadata_to_lead.sql` | lead.metadata JSONB | Duplica lo de orchestrator_v2 |
+| Archivo                                         | Descripción                                                           | Notas                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------- |
+| `20260403200000_orchestration_system.sql`       | workflows, graphs, rules                                              | RLS con auth.jwt() tenant_id                 |
+| `20260404_ai_agents.sql`                        | ai_agents, ai_agent_variants                                          | RLS tautológica                              |
+| `20260404_chat_messages.sql`                    | chat_messages                                                         | tenant_id como TEXT                          |
+| `20260404_create_multitenant_schema.sql`        | lead y tablas centrales                                               | 12 tablas + RLS service_role                 |
+| `20260404_multitenant_v2.sql`                   | Añade tenant_id a tablas existentes                                   | Migración retrocompatible                    |
+| `20260404_orchestrator_v3.sql`                  | advisors, availability_slots, appointments                            | RLS `USING(true)` genérico                   |
+| `20260406_add_flow_config.sql`                  | config de flujos                                                      | —                                            |
+| `20260410_scaling_and_deduplication.sql`        | índices deduplicación lead                                            | idx_lead_tenant_phone, idx_lead_tenant_email |
+| `20260410_worker_specialization.sql`            | status a appointments                                                 | —                                            |
+| `20260413_*` (múltiples)                        | lead photo, segmentation, model, retell config, flow graph, ai toggle | —                                            |
+| `20260417_dynamic_inactivity_fields.sql`        | campos de inactividad                                                 | —                                            |
+| `20260417_orchestrator_v2_schema.sql`           | current_stage, metadata en lead; client_configs                       | —                                            |
+| `20260417_system_logs_table.sql`                | system_logs                                                           | RLS service_role correcto                    |
+| `20260421_*`                                    | fix variants upsert, rename columns                                   | —                                            |
+| `20260423_*`                                    | tracked_variables, agent variables, model_name                        | —                                            |
+| `20260424_knowledge_and_billing.sql`            | knowledge_base, spend limits                                          | RLS con app.current_tenant (roto)            |
+| `20260427_web_widgets.sql`                      | web_widgets                                                           | RLS sin aislamiento real                     |
+| `20260429_appointment_reminders_and_pacing.sql` | advisors, appointments reminders                                      | —                                            |
+| `20260504_add_advisor_filters.sql`              | advisors filtros                                                      | —                                            |
+| `20260512_fix_appointments_schema.sql`          | columnas faltantes en appointments                                    | —                                            |
+| `20260513_add_metadata_to_lead.sql`             | lead.metadata JSONB                                                   | Duplica lo de orchestrator_v2                |
 
 **Archivos SQL sueltos no en migrations/:**
+
 - `tenants.sql` — schema inicial de tenants
 - `knowledge_base.sql` — schema KB con funciones pgvector
 - `schema.sql` — stub vacío (legacy)
 - `MASTER_RESTORE.sql` — script de recuperación con datos de tenant hardcodeados
 - `repair_and_setup.sql`, `restore_all_data.sql`, etc. — scripts de mantenimiento ad-hoc
+
+---
+
+## 6. Sprint 1 (v0.2.0) — Capa Zod + Repository pattern
+
+> **Refresh 22-05-2026** — Sprint 1 introduce la capa de validación Zod + abstracción Repository sobre `@supabase/ssr`. Sin ORM nuevo (R-019). Las secciones anteriores describen el estado **antes** del Sprint 1 (audit).
+
+### 6.1 `src/lib/schemas/` — Zod schemas
+
+Single source of truth para validar + tipar entidades. Tipos via `z.infer<typeof Schema>`. Nomenclatura validada contra `docs/Docs-entrega-clienta/Estructura/VARIABLES DEFINIDAS- TODO EL PROCESO ok.docx`.
+
+```
+src/lib/schemas/
+├── _base.ts              # uuid/email/phone helpers + enums comunes (LeadStage, HandoffReason, AppointmentStatus, etc.)
+├── leads.ts              # LeadSchema + CreateLeadSchema + UpdateLeadSchema + LeadWebhookSchema + LeadCualificacionSchema
+├── tenants.ts            # TenantSchema + TenantOrchestratorConfig + ClientConfigSchema
+├── programs.ts           # ProgramaSchema + LeadProgramaSchema + AdvisorProgramaSchema + CampanaSchema
+├── appointments.ts       # AppointmentSchema + AgendamientoSchema + LlamadaSchema + IntentoLlamadaSchema + AvailabilitySlotSchema
+├── ai-agents.ts          # AiAgentSchema + AiAgentVariantSchema + VoiceAgentSchema + ModelNameSchema (whitelist 2-35)
+├── knowledge-base.ts     # KnowledgeItem + KnowledgeEmbedding + ChatMessage
+├── integrations.ts       # IntegrationSchema (con credentials_cipher AES-256) + WebhookSchema + CrmFieldMappingSchema + CrmWriteAuditSchema
+├── opportunities.ts      # LeadOpportunitySchema + OpportunityStatusEnum (NEW-06)
+└── index.ts              # barrel
+```
+
+**Enums centralizados** (`_base.ts`):
+
+- `LeadStageEnum`: `QUALIFICATION | SCHEDULING | COMPLETED | DROPPED | UNREACHABLE`
+- `HandoffReasonEnum`: `invalid_phone | max_attempts_exceeded | user_requested_stop` (ADR-014)
+- `CallStatusEnum`, `AppointmentStatusEnum`, `CampaignStatusEnum`, `LlmProviderEnum`, etc.
+
+**Whitelist modelos LLM** (`ai-agents.ts ModelNameSchema`):
+
+- 15 modelos: OpenAI gpt-4o/4o-mini/4-turbo/4.1/4.1-mini/4.5-preview, Anthropic claude-3-5-sonnet/haiku, claude-3-haiku/opus, Google gemini-1.5-pro/flash/2.0-flash.
+- Enforced en `saveAgentVariant` Server Action.
+
+### 6.2 `src/lib/repositories/` — Repository pattern
+
+Abstracción tenant-scoped sobre `@supabase/ssr`. Sin ORM. Patrón `IRepository<T,Create,Update>`. Todas las queries tenant-scoped via `withTenantFilter`.
+
+```
+src/lib/repositories/
+├── _base-repository.ts            # IRepository, RepoResult, paginate, handleSupabaseError, withTenantFilter
+├── leads-repository.ts            # findByTenant(filters), findByExternalId, softDelete -> DROPPED
+├── tenants-repository.ts          # findByApiKey, findByAuthUserId
+├── appointments-repository.ts     # AppointmentsRepository + CallsRepository + AttemptsRepository
+├── ai-agents-repository.ts        # AiAgentsRepository + AiAgentVariantsRepository (con upsert+findActiveVariant) + VoiceAgentsRepository
+├── knowledge-base-repository.ts   # KnowledgeBaseRepository + KnowledgeEmbeddingsRepository + ChatMessagesRepository
+├── integrations-repository.ts     # IntegrationsRepository (findByCrmType prep Fase 2) + CrmFieldMappingRepository + CrmWriteAuditRepository (append-only R-014) + WebhooksRepository
+├── lead-opportunities-repository.ts # createWithDedup ventana 48h (NEW-06)
+└── index.ts
+```
+
+**Patrón estándar** de método:
+
+```ts
+async findByTenant(tenantId: string, params?: PaginationParams): Promise<RepoListResult<T>> {
+  const supabase = await getAdminSupabaseClient();
+  const { from, to } = paginate(params);
+  const { data, error, count } = await supabase
+    .from(TABLE)
+    .select("*", { count: "exact" })
+    .eq("tenant_id", tenantId)
+    .range(from, to);
+  if (error) return { data: [], error: handleSupabaseError(error) };
+  return { data: data as T[], error: null, count };
+}
+```
+
+### 6.3 RLS hardening (Sprint 1 Bloque 2.6)
+
+Cerradas 3 vulnerabilidades del audit (F-04-005/006/008) — patrón `owner_or_admin`:
+
+```sql
+USING (
+  tenant_id IN (SELECT id FROM public.tenants WHERE auth_user_id = auth.uid())
+  OR COALESCE(auth.jwt() -> 'app_metadata' ->> 'is_admin', 'false') = 'true'
+)
+```
+
+Aplicado a: `ai_agents`, `ai_agent_variants` (via subquery agent_id), `web_widgets`, `programas`, `integrations` (nueva), `lead_opportunities` (nueva).
+
+`service_role` mantiene bypass para webhooks / cron / workers.
+
+### 6.4 Cifrado AES-256-GCM tokens OAuth (Sprint 1 tarea 2-26 + ADR-017)
+
+`src/lib/crypto/token-crypto.ts` — wrappers `encryptToken/decryptToken/encryptJson/decryptJson`. Clave 32 bytes hex en `ENCRYPTION_KEY` env. Formato persistido: `iv_hex:ciphertext_hex:authTag_hex`. Aplicado a `integrations.credentials_cipher`.
+
+### 6.5 Nuevas tablas Sprint 1
+
+- `public.integrations` (Sprint 1 2-26) — credenciales OAuth cifradas. RLS owner_or_admin.
+- `public.lead_opportunities` (Sprint 1 NEW-06) — un lead puede tener N solicitudes; dedup 48h por lead+programa.
+
+### 6.6 Política de migración incremental (ADR-019)
+
+- TODO código nuevo: usa repos + schemas. Prohibido `supabase.from()` directo y `as any` salvo justificación.
+- Código existente migra cuando se toca por bug fix / feature adyacente.
+- Sprint v0.5.4 candidate si la migración orgánica no completa antes de MVP.
+- Métricas auditoría documentadas en ADR-019.
+
+### 6.7 Tests Sprint 1 (Vitest)
+
+- 58 unit tests pasando (`tests/unit/schemas/`, `tests/unit/crypto/`, `tests/unit/utils/`, `tests/unit/repositories/`).
+- 4 integration tests skip-by-env (`lead-opportunities.integration.test.ts`).
+- Comandos: `npm test` (run), `npm run test:watch`, `npm run test:coverage`.
+- Coverage incluye `src/lib/schemas/**`, `src/lib/repositories/**`, `src/lib/crypto/**`, `src/lib/utils/logger.ts`.
+
+### 6.8 ADRs Sprint 1
+
+| ADR | Tema                                                                             |
+| --- | -------------------------------------------------------------------------------- |
+| 014 | Política unificada handoff humano                                                |
+| 015 | Orquestador doble personalidad + consolidación diferida (NEW-01 paso 3 → v0.5.3) |
+| 016 | Upgrade Supabase ssr 0.10.3 + supabase-js 2.106.1                                |
+| 017 | Cifrado AES-256-GCM tokens OAuth                                                 |
+| 018 | Hardening deps deferred post-MVP (lucide-react/shadcn/eslint)                    |
+| 019 | Refactor queries + as any migración incremental                                  |
