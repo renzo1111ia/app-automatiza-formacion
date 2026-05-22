@@ -138,6 +138,22 @@ Al cerrar fase, ejecutar SIN preguntar:
 2. Si hay UI nueva: browser tests con Playwright.
 3. Informe al usuario con: tests passed/failed/fixed + lo implementado + invitación a probar manual (si aplica).
 
+### Hand-off al Sprint Validación Pre-MVP (SP-4B) — obligatorio en `SP-N-CLOSE-5`
+
+Al cerrar **cualquier Sprint N** del MVP (Sprints 0, 1, 2, 3 — NO los post-MVP), su `SP-N-CLOSE-5` lleva una subtarea obligatoria **"Hand-off a SP-4B phase-NN"** que actualiza el archivo `plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md` correspondiente con:
+
+- Comandos exactos de test automático del sprint cerrado (`npm run …`).
+- Specs Playwright E2C añadidas en este sprint, con rutas que cubren.
+- Specs Playwright listas para ejecutar contra VPS (E2E).
+- Checklist manual derivado de `docs/testeos-manual.md` (sección del sprint).
+- BUG-XXX ya detectados y corregidos durante el cierre (referencia commit) — para verificar no-regresión en VPS.
+- Variables de entorno NUEVAS que necesita el VPS de Renzo para que los tests pasen.
+- Notas de despliegue: migraciones SQL pendientes, vars nuevas, dependencias añadidas, comandos de seed/migración.
+
+El agente `roadmap-keeper` enforza esta regla al detectar `SP-N-CLOSE-5` cerrando: si la plantilla `phase-NN-validacion-sprint-N.md` sigue marcada como `🔘 Plantilla vacía`, el cierre del sprint queda 🟡 hasta rellenarla.
+
+**Excepciones**: los sprints post-MVP (Sheets, Costes-LLM, Salesforce, etc.) NO hacen hand-off a SP-4B — cierran directamente con su `CLOSE-5` y promueven a `developer`.
+
 ## Screenshots
 
 **Ubicación única**: `docs/screenshots/`. NUNCA guardar `.png`/`.jpg` sueltos en la raíz del proyecto ni en `src/`.
