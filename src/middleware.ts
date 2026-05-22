@@ -62,7 +62,9 @@ export async function middleware(request: NextRequest) {
     user?.app_metadata?.admin === true ||
     user?.app_metadata?.admin === "true";
 
-  if (user && pathname.includes("/settings")) {
+  // Admin-only paths: /settings and /admin (including /dashboard/admin)
+  const isAdminOnlyPath = pathname.includes("/settings") || pathname.includes("/admin");
+  if (user && isAdminOnlyPath) {
     if (!isAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";

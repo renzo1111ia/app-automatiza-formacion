@@ -108,7 +108,7 @@ export async function logoutAction() {
   cookieStore.delete("esden-tenant-key");
   cookieStore.delete("esden-tenant-name");
 
-  return { success: true };
+  redirect("/login");
 }
 
 export async function getAdminStatus(): Promise<boolean> {
