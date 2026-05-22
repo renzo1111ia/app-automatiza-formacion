@@ -25,7 +25,16 @@ Cuatro tareas que cierran bugs críticos del informe Renzo V1 y satisfacen requi
 | NEW-06 | Modelo oportunidades múltiples (un lead, N solicitudes con fechas) + dedup mismo día / días sucesivos                                          | 10h   | 🔘 Pendiente | Requiere 2.3 Repository pattern (día 10+) |
 | NEW-13 | Política handoff unificada — número inválido → tipificar "ilocalizable" + reintentos configurables + NO pasar a CRM cliente                    | 4h    | 🔘 Pendiente | Independiente (puede arrancar día 1)      |
 
-## NEW-01 — Fix `saveOrchestratorConfig` + consolidación tablas (8h)
+## NEW-01 — Fix `saveOrchestratorConfig` + consolidación tablas (8h → 3h Sprint 1 + diferido)
+
+**Estado tras Sprint 1**:
+
+- ✅ **Paso 1-2 (diagnóstico + fix inmediato)** — Cerrados en commit `837e12f`. El bug crítico de "config perdida" está resuelto.
+- ⚠️ **Paso 3 (consolidación tablas legacy → workflows + orchestration_rules)** — **DIFERIDO** a sprint dedicado post-MVP. Documentado en `docs/adr/ADR-015-orchestrator-doble-personalidad.md` con plan completo de 5 fases (~24h reales, no las 4h estim originales).
+
+Razón del diferimiento: la "doble personalidad" identificada por Renzo NO es "tabla vieja vs tabla nueva" sino dos motores coexistiendo (Motor 1 legacy single-config para auto-trigger de leads, Motor 2 multi-workflow para trigger explícito). Consolidar requiere refactor arquitectónico mayor (16-24h) que toca webhooks de ingesta + UI builder + migración datos. NO es viable en Sprint 1 sin riesgo alto de regresión.
+
+Sprint 1 absorbe solo 3h de las 8h estim originales (paso 1+2). 5h liberadas → no se pierden, simplemente el paso 3 va a su sprint dedicado v0.5.3 post-MVP.
 
 **Origen**: Renzo V1 sección "Módulo del Orquestador" — error crítico identificado.
 
