@@ -196,9 +196,9 @@ ${chatSummary || "New interaction."}
 `;
 
     // 4. Call LLM
-    let modelName = activeVariant.model_name || "gpt-4o";
-    if (modelName === "gpt-4.1") modelName = "gpt-4o";
-    if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
+    // 2-35: la whitelist ModelNameSchema garantiza que `model_name` es válido en
+    // el boundary (saveAgentVariant). Ya no hace falta parchear gpt-4.1 → gpt-4o.
+    const modelName = activeVariant.model_name || "gpt-4o";
 
     const openai = new OpenAI({ apiKey });
     const completion = await openai.chat.completions.create({
