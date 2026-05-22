@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { createLogger } from "@/lib/utils/logger";
 import { WebWidget, AIAgentVariant } from "@/types/database";
 import OpenAI from "openai";
 import { ChatMemoryService } from "@/lib/services/chat-memory";
@@ -25,13 +26,16 @@ interface ChatbotRequest {
   knownVariables?: Record<string, string>;
 }
 
+const widgetLogger = createLogger("widget-ai");
+
 export async function getChatbotResponse({
   widgetId,
   leadId,
   message,
   knownVariables,
 }: ChatbotRequest) {
-  console.log(`[WIDGET AI] 🤖 Message from widget ${widgetId} for lead ${leadId}`);
+  // 2-37: logger estructurado debug nivel (no production noise) + scrubbing PII.
+  widgetLogger.debug("Message received", { widgetId, leadId, messageLength: message?.length });
 
   try {
     const supabase = await getAdminSupabaseClient();
@@ -256,7 +260,11 @@ ${chatSummary || "New interaction."}
 
     return { success: false, error: "Empty AI response" };
   } catch (err: unknown) {
-    console.error("[WIDGET AI] Error:", err);
+    widgetLogger.error("getChatbotResponse failed", {
+      widgetId,
+      leadId,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { success: false, error: err instanceof Error ? err.message : String(err) };
   }
 }
