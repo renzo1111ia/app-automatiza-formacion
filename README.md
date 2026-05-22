@@ -4,11 +4,11 @@
 
 | Campo           | Valor                                                                                                                                                                      |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.1.0` (Sprint 0 cerrado 22-05-2026 — hotfixes seguridad)                                                                                                                |
-| Estado          | 🟡 En desarrollo activo — Sprint 1 (capa de datos) por arrancar                                                                                                            |
+| Versión         | `v0.1.0` (Sprint 0 cerrado 22-05-2026). Sprint 1 listo para promocionar a `v0.2.0` (PR a `developer` pendiente)                                                            |
+| Estado          | 🔵 Sprint 1 (capa de datos) cerrado en rama 22-05-2026 — capa Zod + 7 repositorios + RLS hardening + AES-256-GCM tokens OAuth + 58 tests Vitest + 6 ADRs (014-019)         |
 | Target MVP      | `v0.4.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)            |
 | Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox |
-| Rama de trabajo | [`developer`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/developer) (activa)                                                               |
+| Rama de trabajo | [`feature/sprint-01-capa-datos`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-01-capa-datos) (cerrado, esperando PR)          |
 
 > ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
 
