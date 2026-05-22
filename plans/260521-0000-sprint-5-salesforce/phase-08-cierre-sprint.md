@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-10h + bugs
 phase_id: SP-5-CLOSE
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -55,7 +55,7 @@ npm run test
 
 ### SP-5-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-5-salesforce-adapter` → `developer`
+- [ ] PR `feature/sprint-05-salesforce-adapter` → `developer`
 - [ ] Bump `package.json` → `v0.5.1`
 - [ ] Update `RoadMap.md` (5-02 / Sprint 5 done)
 - [ ] Update `docs/project-changelog.md`
@@ -74,14 +74,14 @@ npm run test
 
 ## Estimación
 
-| Tarea | Estimación |
-|-------|-----------|
-| SP-5-CLOSE-1 | 1h |
-| SP-5-CLOSE-2 | 2-3h |
-| SP-5-CLOSE-3 | 1-2h |
-| SP-5-CLOSE-4 | variable |
-| SP-5-CLOSE-5 | 30min |
-| **Total** | **4-7h + bugs** |
+| Tarea        | Estimación      |
+| ------------ | --------------- |
+| SP-5-CLOSE-1 | 1h              |
+| SP-5-CLOSE-2 | 2-3h            |
+| SP-5-CLOSE-3 | 1-2h            |
+| SP-5-CLOSE-4 | variable        |
+| SP-5-CLOSE-5 | 30min           |
+| **Total**    | **4-7h + bugs** |
 
 ## Success Criteria
 
@@ -93,10 +93,10 @@ npm run test
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Bugs E2E descubren regresiones tarde | Media | Medio | Reservar buffer en estimación |
-| Dev Edition limit hit en E2E | Baja | Medio | Usar account dedicada con cuota fresca |
+| Riesgo                               | Prob  | Impacto | Mitigación                             |
+| ------------------------------------ | ----- | ------- | -------------------------------------- |
+| Bugs E2E descubren regresiones tarde | Media | Medio   | Reservar buffer en estimación          |
+| Dev Edition limit hit en E2E         | Baja  | Medio   | Usar account dedicada con cuota fresca |
 
 ## Security Considerations
 

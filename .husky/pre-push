@@ -1,0 +1,60 @@
+#!/usr/bin/env sh
+# Pre-push hook — dashboard-af
+# Política: local-first, minimizar GitHub Actions (tier gratis 2000 min/mes).
+# Bloquea el push si typecheck, build o lint (de archivos cambiados) fallan.
+#
+# Nota deuda técnica:
+#   El repo tiene ~327 errores de lint pre-existentes en src/scratch/, src/scripts/
+#   y src/types/database.ts. Limpieza completa = objetivo de SP-X-CLOSE-1.
+#   Por eso aquí solo linteamos archivos cambiados respecto a developer.
+
+set -e
+
+echo ""
+echo "[pre-push] Verificando branch protegida..."
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$branch" = "main" ] || [ "$branch" = "staging" ]; then
+  echo ""
+  echo "ERROR: push directo a '$branch' bloqueado por política del proyecto."
+  echo "  - main y staging son ramas protegidas."
+  echo "  - Mergea via PR con autorización explícita del usuario."
+  echo ""
+  exit 1
+fi
+
+echo "[pre-push] Branch OK: $branch"
+
+echo ""
+echo "[pre-push] 1/3 typecheck (tsc --noEmit)..."
+npm run typecheck
+
+echo ""
+echo "[pre-push] 2/3 build (next build)..."
+npm run build
+
+echo ""
+echo "[pre-push] 3/3 lint en archivos cambiados vs developer..."
+
+# Determinar archivos JS/TS/JSX/TSX cambiados desde la divergencia con developer.
+base="origin/developer"
+if ! git rev-parse --verify --quiet "$base" >/dev/null; then
+  base="developer"
+  if ! git rev-parse --verify --quiet "$base" >/dev/null; then
+    echo "[pre-push] No se encontró branch 'developer' — salto lint diff."
+    base=""
+  fi
+fi
+
+if [ -n "$base" ]; then
+  changed_files="$(git diff --name-only --diff-filter=ACMR "$base"...HEAD -- '*.ts' '*.tsx' '*.js' '*.jsx' 2>/dev/null || true)"
+  if [ -z "$changed_files" ]; then
+    echo "[pre-push] Sin archivos JS/TS cambiados respecto a $base — lint saltado."
+  else
+    echo "[pre-push] Linteando archivos cambiados:"
+    echo "$changed_files" | sed 's/^/  - /'
+    echo "$changed_files" | tr '\n' '\0' | xargs -0 npx eslint --max-warnings=0 --no-warn-ignored
+  fi
+fi
+
+echo ""
+echo "[pre-push] OK — push autorizado."

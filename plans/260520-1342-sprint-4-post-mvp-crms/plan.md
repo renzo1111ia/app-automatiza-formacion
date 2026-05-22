@@ -4,7 +4,7 @@ description: "Google Sheets bidireccional, Salesforce, GoHighLevel, ActiveCampai
 status: pending
 priority: P2
 effort: 200h-370h (desglosado por fase)
-branch: feature/sp-5-fase-5-post-release
+branch: feature/sprint-05-fase-5-post-release
 sprint_id: SP-5
 version_target: v0.5.0+ (incremental por integración)
 tags: [crm, integrations, sheets, salesforce, ghl, activecampaign, adapter-pattern]
@@ -27,15 +27,15 @@ A diferencia de Sprints 1-4 (bloques monolíticos con PR único de cierre), **Sp
 
 ## Fases
 
-| # | Archivo | Tarea RoadMap | Est. | Estado |
-|---|---------|---------------|------|--------|
-| 1 | [phase-01-google-sheets-bidireccional.md](phase-01-google-sheets-bidireccional.md) | 5-01 | 60-100h | Pendiente |
-| 2 | [phase-02-salesforce-adapter.md](phase-02-salesforce-adapter.md) | 5-02 | 60-100h | Pendiente |
-| 3 | [phase-03-gohighlevel-adapter.md](phase-03-gohighlevel-adapter.md) | 5-03 | 40-80h | Pendiente |
-| 4 | [phase-04-activecampaign-adapter.md](phase-04-activecampaign-adapter.md) | 5-04 | 20-50h | Pendiente |
-| 5 | [phase-05-adapter-pattern-generalization.md](phase-05-adapter-pattern-generalization.md) | 5-05 | 20-40h | Pendiente (bloqueado hasta 5-01..5-04) |
-| 6 | [phase-06-tier2-on-demand.md](phase-06-tier2-on-demand.md) | 5-06 | ~30-50h cada CRM | Backlog on-demand |
-| 7 | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md) | SP-5-CLOSE-1..5 | 9-12h + bugs | Pendiente |
+| #   | Archivo                                                                                  | Tarea RoadMap   | Est.             | Estado                                 |
+| --- | ---------------------------------------------------------------------------------------- | --------------- | ---------------- | -------------------------------------- |
+| 1   | [phase-01-google-sheets-bidireccional.md](phase-01-google-sheets-bidireccional.md)       | 5-01            | 60-100h          | Pendiente                              |
+| 2   | [phase-02-salesforce-adapter.md](phase-02-salesforce-adapter.md)                         | 5-02            | 60-100h          | Pendiente                              |
+| 3   | [phase-03-gohighlevel-adapter.md](phase-03-gohighlevel-adapter.md)                       | 5-03            | 40-80h           | Pendiente                              |
+| 4   | [phase-04-activecampaign-adapter.md](phase-04-activecampaign-adapter.md)                 | 5-04            | 20-50h           | Pendiente                              |
+| 5   | [phase-05-adapter-pattern-generalization.md](phase-05-adapter-pattern-generalization.md) | 5-05            | 20-40h           | Pendiente (bloqueado hasta 5-01..5-04) |
+| 6   | [phase-06-tier2-on-demand.md](phase-06-tier2-on-demand.md)                               | 5-06            | ~30-50h cada CRM | Backlog on-demand                      |
+| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                   | SP-5-CLOSE-1..5 | 9-12h + bugs     | Pendiente                              |
 
 **Total Sprint 4 estimado**: 209-382h (excluyendo Tier 2 on-demand)
 

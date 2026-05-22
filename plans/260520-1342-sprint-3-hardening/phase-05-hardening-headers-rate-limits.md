@@ -345,3 +345,46 @@ jobs:
 - Lighthouse test de CSP headers como parte de Ph1 Playwright
 - Sprint 4 puede migrar CSP a `strict-dynamic` eliminando `unsafe-inline` si se configura Tailwind para no generar inline styles
 - Budget alerts (basado en llm_usage_logs de Ph3) pueden añadirse como endpoint protegido en Sprint 4
+
+---
+
+## Tarea adicional 4-08 — Rate limit wrapper `withRateLimit()` para Server Actions críticas (informe Renzo)
+
+**Origen:** [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) §3 🔴 (generalización del fix puntual de 1-27 Sprint 0).
+
+**Problema:** El rate limiting de 4-06 (esta fase) se aplica en `middleware.ts` y cubre `/api/*`. Pero los Server Actions de Next.js viajan por POST a la ruta de la página con cabecera `Next-Action` y el middleware NO los intercepta. Quedan sin cubrir todas las Server Actions de `src/lib/actions/*` que llaman a LLMs o hacen escrituras costosas. 1-27 cubre puntualmente el widget; 4-08 generaliza a todas las críticas.
+
+**Server Actions a cubrir (mínimo identificado):**
+
+- `getChatbotResponse` (widget) — ya cubierto por 1-27, migrar al wrapper genérico.
+- Server actions del **simulator/playground** que llaman OpenAI directamente.
+- Server actions del **knowledge base** que generan embeddings (`text-embedding-3-small` cuesta dinero por request).
+- Server actions de **agent variant testing** (A/B testing manual del Agent Builder).
+- Otros consumidores de `openai.chat.completions.create()` / `openai.embeddings.create()` que NO sean BullMQ workers (los workers ya tienen su propia cadencia).
+
+**Implementación:**
+
+1. Crear `src/lib/api/with-rate-limit.ts` con HOF `withRateLimit(actionFn, { key, perMinute, identify })`:
+
+   ```ts
+   export function withRateLimit<TArgs extends unknown[], TResult>(
+     actionFn: (...args: TArgs) => Promise<TResult>,
+     opts: {
+       key: string;                              // ej: 'widget', 'simulator', 'kb-embed'
+       perMinute: number;                        // límite
+       identify: (...args: TArgs) => Promise<string>;  // returns 'tenantId:ip' o 'widgetId:ip'
+     }
+   ): (...args: TArgs) => Promise<TResult | { success: false; error: string }>;
+   ```
+
+2. Reutiliza el helper `rateLimitWidget()` creado en 1-27 (renombrar a `rateLimitGeneric()` y parametrizar el prefijo de key).
+3. Aplicar wrap a las server actions críticas identificadas. Cada una tiene su propia `perMinute` configurable (tabla en `docs/architecture/rate-limits.md`).
+4. Documentar en `docs/architecture/server-actions-rate-limits.md`: por qué el middleware no las cubre + lista de actions con su límite + cómo añadir una nueva.
+5. Tests: cada action wrapped tiene un test que verifica el rate limit (mismo patrón que 1-27).
+
+**Estimación:** 6h (incluida en subtotal Sprint 3).
+
+**Cross-refs:**
+- 1-27 Sprint 0 (widget hardening): es el caso de uso piloto; 4-08 lo eleva a infraestructura reutilizable.
+- 4-06 (esta fase, `/api/*` rate limit): comparten el `rate-limiter.ts` y el cliente Redis.
+- 4-09 (E2E widget): los tests de rate limit del widget se reutilizan para validar `withRateLimit` con otros consumidores.

@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-12h + bugs
 phase_id: SP-4-CLOSE
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -38,6 +38,7 @@ Todos los tests verdes antes de continuar. Incluye contract test, unit y skip de
 ### SP-4-CLOSE-2 — Test E2E Playwright (3-4h)
 
 Recorrido completo en navegador:
+
 - [ ] Activar integración Sheets en UI admin → OAuth consent → callback OK
 - [ ] Crear spreadsheet desde plantilla → verificar headers
 - [ ] Configurar mapping de columnas → guardar
@@ -61,7 +62,7 @@ Bugs detectados en CLOSE-2 o CLOSE-3 → corregir → re-ejecutar CLOSE-1.
 
 ### SP-4-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-4-google-sheets` → `developer`
+- [ ] PR `feature/sprint-04-google-sheets` → `developer`
 - [ ] Bump versión `package.json` → `v0.5.0`
 - [ ] Actualizar `RoadMap.md` (marcar 5-01 / Sprint 4 como completado)
 - [ ] Update `docs/project-changelog.md`
@@ -84,14 +85,14 @@ Bugs detectados en CLOSE-2 o CLOSE-3 → corregir → re-ejecutar CLOSE-1.
 
 ## Estimación
 
-| Tarea | Estimación |
-|-------|-----------|
-| SP-4-CLOSE-1 Auto test | 1h 30min |
-| SP-4-CLOSE-2 E2E Playwright | 3-4h |
-| SP-4-CLOSE-3 Test manual | 2h |
-| SP-4-CLOSE-4 Bugs | variable |
-| SP-4-CLOSE-5 PR + cierre | 30min |
-| **Total** | **7-8h + bugs** |
+| Tarea                       | Estimación      |
+| --------------------------- | --------------- |
+| SP-4-CLOSE-1 Auto test      | 1h 30min        |
+| SP-4-CLOSE-2 E2E Playwright | 3-4h            |
+| SP-4-CLOSE-3 Test manual    | 2h              |
+| SP-4-CLOSE-4 Bugs           | variable        |
+| SP-4-CLOSE-5 PR + cierre    | 30min           |
+| **Total**                   | **7-8h + bugs** |
 
 ## Success Criteria
 
@@ -103,10 +104,10 @@ Bugs detectados en CLOSE-2 o CLOSE-3 → corregir → re-ejecutar CLOSE-1.
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Bugs E2E descubren regresiones tarde | Media | Medio | Reservar buffer de bugs en estimación |
-| OAuth refresh token de test expirado en CI | Media | Bajo | Doc para regenerar + alerta visible |
+| Riesgo                                     | Prob  | Impacto | Mitigación                            |
+| ------------------------------------------ | ----- | ------- | ------------------------------------- |
+| Bugs E2E descubren regresiones tarde       | Media | Medio   | Reservar buffer de bugs en estimación |
+| OAuth refresh token de test expirado en CI | Media | Bajo    | Doc para regenerar + alerta visible   |
 
 ## Security Considerations
 

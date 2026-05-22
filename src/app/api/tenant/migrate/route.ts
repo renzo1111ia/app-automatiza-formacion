@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { requireApiAdmin } from "@/lib/api-auth";
+import { getAdminSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/tenant/migrate
@@ -242,74 +244,171 @@ CREATE POLICY IF NOT EXISTS "service_role_all_chat_messages" ON chat_messages FO
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(req: NextRequest) {
-    try {
-        const cookieStore = await cookies();
-        const tenantUrl = cookieStore.get("esden-tenant-url")?.value;
-        const tenantKey = cookieStore.get("esden-tenant-key")?.value;
-        const tenantName = cookieStore.get("esden-tenant-name")?.value;
+  try {
+    // Sprint 0 tarea 1-22: cierre SSRF — antes el endpoint leía la URL del
+    // Supabase del tenant desde cookie `esden-tenant-url` (editable por JS),
+    // permitiendo a un atacante apuntar el fetch a cualquier host interno.
+    // Ahora:
+    //   1. Solo admins pueden invocar (gate de 1-11/1-17 endurecido).
+    //   2. La URL y la key se resuelven desde la fila `public.tenants` del
+    //      `esden-tenant-id` activo (DB es la única fuente de verdad).
+    //   3. Allowlist defensiva: la URL resuelta DEBE empezar por http(s)://
+    //      y no apuntar a localhost/127/0.0.0.0/169.254 (SSRF a redes locales).
+    const ctx = await requireApiAdmin();
+    if (ctx instanceof NextResponse) return ctx;
 
-        if (!tenantUrl || !tenantKey) {
-            return NextResponse.json({
-                success: false,
-                error: "No hay un tenant activo seleccionado. Por favor selecciona un cliente primero."
-            }, { status: 400 });
-        }
-
-        // Connect to the TENANT's own Supabase using their service role key
-        const supabase = createClient(tenantUrl, tenantKey);
-
-        // Execute the migration via RPC or direct SQL
-        // Supabase JS doesn't support raw SQL directly — but we can use the REST API
-        const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
-            method: "POST",
-            headers: {
-                "apikey": tenantKey,
-                "Authorization": `Bearer ${tenantKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sql: MIGRATION_SQL }),
-        });
-
-        // If exec_sql doesn't exist, try using pg_dump alternative via supabase management API
-        if (!response.ok) {
-            // Fallback: run table creation one by one using the JS client
-            // We'll test with a simple table check
-            const { error: testError } = await supabase
-                .from("tenant_orchestrator_config")
-                .select("id")
-                .limit(1);
-
-            if (testError && testError.message.includes("does not exist")) {
-                return NextResponse.json({
-                    success: false,
-                    needsManualMigration: true,
-                    sql: MIGRATION_SQL,
-                    error: "Las tablas no existen aún. Ejecuta el SQL proporcionado en el editor SQL de Supabase de este cliente.",
-                    tenant: tenantName
-                });
-            }
-
-            // Tables already exist
-            return NextResponse.json({
-                success: true,
-                message: `Tablas verificadas correctamente en ${tenantName || tenantUrl}.`,
-                alreadyExists: true
-            });
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: `✅ Migración completada en Supabase de "${tenantName}". Todas las tablas del orquestador fueron creadas.`,
-            tenant: tenantName
-        });
-
-    } catch (error: unknown) {
-        const msg = error instanceof Error ? error.message : "Error desconocido";
-        return NextResponse.json({ success: false, error: msg }, { status: 500 });
+    const cookieStore = await cookies();
+    const tenantId = cookieStore.get("esden-tenant-id")?.value;
+    if (!tenantId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No hay un tenant activo seleccionado.",
+        },
+        { status: 400 }
+      );
     }
+
+    const adminDb = await getAdminSupabaseClient();
+    const { data: tenant, error: tenantErr } = await adminDb
+      .from("tenants")
+      .select("name, supabase_url, supabase_anon_key")
+      .eq("id", tenantId)
+      .single();
+
+    if (tenantErr || !tenant) {
+      return NextResponse.json({ success: false, error: "Tenant no encontrado." }, { status: 404 });
+    }
+
+    const tenantRow = tenant as { name: string; supabase_url: string; supabase_anon_key: string };
+    const tenantUrl = (tenantRow.supabase_url || "").trim();
+    const tenantKey = (tenantRow.supabase_anon_key || "").trim();
+    const tenantName = tenantRow.name;
+
+    if (!tenantUrl || !tenantKey) {
+      return NextResponse.json(
+        { success: false, error: "Tenant sin Supabase URL/key configurados." },
+        { status: 400 }
+      );
+    }
+
+    // SSRF allowlist defensiva: rechaza esquemas no http(s) y rangos privados/loopback.
+    const urlBlockGuard = isAllowedTenantUrl(tenantUrl);
+    if (!urlBlockGuard.ok) {
+      return NextResponse.json(
+        { success: false, error: `Supabase URL inválida: ${urlBlockGuard.reason}` },
+        { status: 400 }
+      );
+    }
+
+    // Connect to the TENANT's own Supabase using their service role key
+    const supabase = createClient(tenantUrl, tenantKey);
+
+    // Execute the migration via RPC or direct SQL
+    // Supabase JS doesn't support raw SQL directly — but we can use the REST API
+    const response = await fetch(`${tenantUrl}/rest/v1/rpc/exec_sql`, {
+      method: "POST",
+      headers: {
+        apikey: tenantKey,
+        Authorization: `Bearer ${tenantKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sql: MIGRATION_SQL }),
+    });
+
+    // If exec_sql doesn't exist, try using pg_dump alternative via supabase management API
+    if (!response.ok) {
+      // Fallback: run table creation one by one using the JS client
+      // We'll test with a simple table check
+      const { error: testError } = await supabase
+        .from("tenant_orchestrator_config")
+        .select("id")
+        .limit(1);
+
+      if (testError && testError.message.includes("does not exist")) {
+        return NextResponse.json({
+          success: false,
+          needsManualMigration: true,
+          sql: MIGRATION_SQL,
+          error:
+            "Las tablas no existen aún. Ejecuta el SQL proporcionado en el editor SQL de Supabase de este cliente.",
+          tenant: tenantName,
+        });
+      }
+
+      // Tables already exist
+      return NextResponse.json({
+        success: true,
+        message: `Tablas verificadas correctamente en ${tenantName || tenantUrl}.`,
+        alreadyExists: true,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `✅ Migración completada en Supabase de "${tenantName}". Todas las tablas del orquestador fueron creadas.`,
+      tenant: tenantName,
+    });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
 }
 
 export async function GET() {
-    // Return migration SQL for manual execution
-    return NextResponse.json({ sql: MIGRATION_SQL });
+  // Sprint 0 tarea 1-11: el GET devolvía el MIGRATION_SQL completo a cualquier
+  // anónimo (info disclosure DA-2-003). Ahora exige rol admin.
+  const ctx = await requireApiAdmin();
+  if (ctx instanceof NextResponse) return ctx;
+  return NextResponse.json({ sql: MIGRATION_SQL });
+}
+
+/**
+ * Sprint 0 tarea 1-22: allowlist defensiva contra SSRF.
+ *
+ * Reglas:
+ *   - Protocolo permitido: http o https.
+ *   - Bloqueados: localhost, 127.0.0.0/8, 0.0.0.0, 169.254.0.0/16 (link-local),
+ *     10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC1918, salvo cuando
+ *     `ALLOW_INTERNAL_TENANT_URLS=true` está set — útil en desarrollo local).
+ */
+function isAllowedTenantUrl(url: string): { ok: true } | { ok: false; reason: string } {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { ok: false, reason: "URL malformada" };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { ok: false, reason: `protocolo no permitido (${parsed.protocol})` };
+  }
+  const host = parsed.hostname.toLowerCase();
+  const allowInternal = process.env.ALLOW_INTERNAL_TENANT_URLS === "true";
+
+  if (host === "localhost" || host === "0.0.0.0") {
+    if (allowInternal) return { ok: true };
+    return { ok: false, reason: `host bloqueado (${host})` };
+  }
+  if (/^127\./.test(host)) {
+    if (allowInternal) return { ok: true };
+    return { ok: false, reason: `loopback bloqueado (${host})` };
+  }
+  if (/^169\.254\./.test(host)) {
+    return { ok: false, reason: `link-local bloqueado (${host})` };
+  }
+  // RFC1918 (privadas)
+  if (/^10\./.test(host) || /^192\.168\./.test(host)) {
+    if (allowInternal) return { ok: true };
+    return { ok: false, reason: `red privada bloqueada (${host})` };
+  }
+  // 172.16.0.0/12
+  const m = host.match(/^172\.(\d{1,3})\./);
+  if (m) {
+    const second = parseInt(m[1], 10);
+    if (second >= 16 && second <= 31) {
+      if (allowInternal) return { ok: true };
+      return { ok: false, reason: `red privada bloqueada (${host})` };
+    }
+  }
+  return { ok: true };
 }

@@ -141,3 +141,25 @@ src/lib/schemas/
 
 - Completar antes de iniciar Fase 2 (Repository pattern depende de los tipos Zod)
 - Los tipos de `integrations.ts` los usará Fase 2 (adapter layer HubSpot/Zoho)
+
+---
+
+## Tarea adicional 2-35 — Zod whitelist `ai_agent_variants.model_name` (informe Renzo)
+
+**Origen:** [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) §3 💡
+
+**Problema:** El Agent Builder permite guardar `model_name = "gpt-4.1"` (modelo inexistente en OpenAI). El widget aplica un parche en runtime (`src/lib/actions/widget.ts:150`: `if (modelName === "gpt-4.1") modelName = "gpt-4o";`) pero el resto de consumidores (`WhatsAppAIProcessor`, `RescueWorker`, `FactExtractor`) NO lo aplican → silenciosamente fallan o caen a fallback distinto.
+
+**Fix correcto en boundary (Zod):**
+
+1. Definir `ModelNameSchema = z.enum(['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', ...])` en `src/lib/schemas/ai-agent-variants.ts` (junto con 2-09). Lista debe coincidir con los modelos realmente soportados por `AgentFactory` (LangChain) + `openai` directo. **Coordinar con `af-agents:adr`** para mantener la lista actualizada (cada vez que OpenAI/Anthropic publican un modelo, ADR + update de la whitelist).
+2. Aplicar el schema al guardar `ai_agent_variants` (Server Action o API route que crea/actualiza variantes).
+3. Migración de limpieza SQL: `UPDATE ai_agent_variants SET model_name = 'gpt-4o' WHERE model_name = 'gpt-4.1';` (o el modelo más cercano según política producto).
+4. **Eliminar el parche manual** de `src/lib/actions/widget.ts:150` — el guard Zod ya garantiza que no entran modelos inválidos.
+5. Tests: intento de guardar `model_name = 'gpt-99'` → Zod error 400.
+
+**Estimación:** 2h (incluida en subtotal Sprint 1).
+
+**Cross-refs:**
+- 2-09 (Zod schemas `ai_agents` / `ai_agent_variants`) — la whitelist va aquí.
+- 2-36 (token_usage, phase-04) y 2-37 (logger, phase-05): complementan el cleanup del widget.

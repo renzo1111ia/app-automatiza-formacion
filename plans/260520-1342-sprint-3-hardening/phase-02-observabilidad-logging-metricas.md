@@ -1,9 +1,9 @@
 ---
-title: "Phase 02 — Observabilidad: Logging estructurado + Métricas BullMQ (4-03)"
+title: "Phase 02 — Observabilidad: Logging estructurado + Métricas BullMQ (4-03 reducido)"
 sprint: 4
 phase: 2
 tasks: [4-03]
-effort: 12-16h
+effort: 7-9h
 status: pending
 agents: [af-agents:code, af-agents:deployment]
 ---
@@ -17,12 +17,15 @@ agents: [af-agents:code, af-agents:deployment]
 - Researcher report: [researcher-observability-d-20260520.md](../reports/researcher-observability-d-20260520.md)
 - ADR deps: [adr-auditoria-dependencias-20260520.md](../reports/adr-auditoria-dependencias-20260520.md) — línea 417 (Pino + OpenTelemetry recomendados)
 - DA-1: `docs/audit/deep/DA-1-concurrency-orchestrator.md` — DA-1-005 silenciado Redis (logging fix)
+- **Sprint Costes-LLM** (post-MVP, `v0.5.1`): [plans/260522-1430-sprint-costes-llm-post-mvp/](../260522-1430-sprint-costes-llm-post-mvp/) — recibe la parte de `llm_usage_logs` + `llm-cost-tracker.ts` que originalmente vivía en esta fase.
+
+> **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`. Se extrajeron de esta fase la **migración SQL `llm_usage_logs`** y el helper **`src/lib/llm-cost-tracker.ts`** (LangChain CallbackHandler). Ambos se han movido al [Sprint Costes-LLM Ph1](../260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md). Esta fase queda reducida a Pino + métricas BullMQ + Sentry (7-9h en vez de 12-16h).
 
 ## Overview
 
 - **Priority:** P2
 - **Status:** Pendiente
-- **Descripción:** Implementar logging estructurado JSON con Pino en todos los puntos críticos (API Routes, Server Actions, BullMQ Workers), métricas de colas BullMQ vía bull-board y `getJobCounts()`, e integración con Easypanel para observabilidad básica.
+- **Descripción:** Implementar logging estructurado JSON con Pino en todos los puntos críticos (API Routes, Server Actions, BullMQ Workers), métricas de colas BullMQ vía bull-board y `getJobCounts()`, e integración con Easypanel para observabilidad básica. **NO incluye tracking de costes LLM** (movido a Sprint Costes-LLM post-MVP).
 
 ## Key Insights
 
@@ -31,7 +34,7 @@ agents: [af-agents:code, af-agents:deployment]
 - DA-1-005 (enqueueLeadStep silencia errores Redis) se resuelve directamente añadiendo logging Pino en el catch handler
 - OpenTelemetry completo (trazas distribuidas) aplazado a Sprint 4 — MVP usa Pino únicamente
 - Sentry para error tracking: plan free, 5K errores/mes, suficiente para MVP
-- Tabla `llm_usage_logs` se crea en ESTA fase (Ph2) para que Ph3 pueda usarla
+- ~~Tabla `llm_usage_logs` se crea en ESTA fase (Ph2) para que Ph3 pueda usarla~~ **MOVIDO a Sprint Costes-LLM Ph1 (post-MVP)**.
 
 ## Requirements
 
@@ -39,8 +42,8 @@ agents: [af-agents:code, af-agents:deployment]
 - Logging estructurado JSON en todos los API Routes críticos (`/api/webhooks/*`, `/api/orchestration/*`, `/api/auth/*`)
 - Logging en BullMQ Workers: job started, job completed, job failed con `tenant_id`, `lead_id`, `duration_ms`
 - Métricas BullMQ: `waiting`, `active`, `completed`, `failed` disponibles via bull-board UI
-- Tabla `llm_usage_logs` en PostgreSQL con RLS multi-tenant (usada por Ph3)
 - Sentry setup básico para captura de errores en Server Actions y API Routes
+- ~~Tabla `llm_usage_logs` en PostgreSQL con RLS multi-tenant (usada por Ph3)~~ **MOVIDO a Sprint Costes-LLM Ph1 (post-MVP)**
 
 ### No funcionales
 - Logs en `stdout` únicamente (sin archivos de log en disco) — Easypanel los captura
@@ -58,15 +61,14 @@ Flujo de logging:
   { level, time, service, tenant_id, user_id?, trace_id?, action, duration_ms, msg }
 
 Métricas BullMQ:
-  BullMQ Queue → getJobCounts() → PostgreSQL (cron cada 5min) → Ph3 dashboard
+  BullMQ Queue → getJobCounts() → PostgreSQL (cron cada 5min)
 
   bull-board UI:
   /admin/queues → bull-board → BullMQ Redis → UI visual
   (protegido por auth middleware — solo admin)
 
-Tabla llm_usage_logs:
-  LangChain CallbackHandler → INSERT llm_usage_logs → Ph3 dashboard Recharts
-  RLS: tenant_id = jwt.tenant_id (mismo patrón Sprint 0)
+# Tabla llm_usage_logs + LangChain CallbackHandler MOVIDOS al Sprint Costes-LLM (post-Sheets v0.5.1).
+# Ver: plans/260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md
 ```
 
 ## Related Code Files
@@ -75,8 +77,8 @@ Tabla llm_usage_logs:
 - `src/lib/logger.ts` — singleton Pino logger
 - `src/lib/bullmq-metrics.ts` — helper getJobCounts + persistencia PostgreSQL
 - `src/app/api/admin/queues/[[...slug]]/route.ts` — bull-board Next.js route
-- `migrations/YYYYMMDD_llm_usage_logs.sql` — tabla + RLS + índices
-- `src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (preparación Ph3)
+- ~~`migrations/YYYYMMDD_llm_usage_logs.sql` — tabla + RLS + índices~~ **MOVIDO a Sprint Costes-LLM Ph1**
+- ~~`src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (preparación Ph3)~~ **MOVIDO a Sprint Costes-LLM Ph1**
 
 ### Modificar
 - `src/app/api/webhooks/retell/route.ts` — añadir logging structured
@@ -160,30 +162,11 @@ npm install @bull-board/api@^6.x @bull-board/nextjs@^6.x
 ```
 Crear `/admin/queues` route protegida con verificación de rol admin.
 
-### Paso 7: Migración SQL llm_usage_logs
-```sql
-CREATE TABLE llm_usage_logs (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  tenant_id UUID NOT NULL REFERENCES tenants(id),
-  provider TEXT NOT NULL,
-  model TEXT NOT NULL,
-  prompt_tokens INTEGER NOT NULL DEFAULT 0,
-  completion_tokens INTEGER NOT NULL DEFAULT 0,
-  cost_usd NUMERIC(10,6),
-  session_id UUID,
-  lead_id UUID REFERENCES leads(id),
-  action TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+### ~~Paso 7: Migración SQL llm_usage_logs~~ — **MOVIDO a Sprint Costes-LLM Ph1**
 
-ALTER TABLE llm_usage_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_isolation" ON llm_usage_logs
-  USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
-CREATE INDEX ON llm_usage_logs(tenant_id, created_at DESC);
-CREATE INDEX ON llm_usage_logs(tenant_id, provider, created_at DESC);
-```
+La tabla `llm_usage_logs` y todas sus políticas RLS se crean en [Sprint Costes-LLM Ph1](../260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md) (post-Sheets `v0.5.1`). Esta fase NO la crea.
 
-### Paso 8: Sentry setup básico
+### Paso 7 (antes Paso 8): Sentry setup básico
 ```bash
 npm install @sentry/nextjs@^8.x  # Pasar por ADR
 npx @sentry/wizard@latest -i nextjs
@@ -199,8 +182,8 @@ Configurar SENTRY_DSN en .env. Captura de errores en API Routes y Server Actions
 - [ ] Logging structured en webhooks/retell, webhooks/crm, orchestration/*
 - [ ] Logging en BullMQ Worker (completed, failed, stalled)
 - [ ] Instalar bull-board + crear ruta /admin/queues protegida
-- [ ] Migración SQL `llm_usage_logs` + RLS
-- [ ] `src/lib/llm-cost-tracker.ts` — LangChain callback (usada en Ph3)
+- [ ] ~~Migración SQL `llm_usage_logs` + RLS~~ **MOVIDO a Sprint Costes-LLM Ph1**
+- [ ] ~~`src/lib/llm-cost-tracker.ts` — LangChain callback (usada en Ph3)~~ **MOVIDO a Sprint Costes-LLM Ph1**
 - [ ] Sentry setup básico (errors only)
 - [ ] .env.example actualizado con LOG_LEVEL, SENTRY_DSN
 - [ ] Verificar logs en stdout con `npm run dev` + Easypanel docs
@@ -211,7 +194,7 @@ Configurar SENTRY_DSN en .env. Captura de errores en API Routes y Server Actions
 - `logger.info()` visible en stdout de `npm run dev` con campos `tenant_id`, `action`, `duration_ms`
 - DA-1-005 resuelto: error Redis en enqueueLeadStep lanza excepción + log error visible
 - `/admin/queues` accesible solo para admin, muestra estado de colas BullMQ
-- Tabla `llm_usage_logs` creada con RLS funcional (test: INSERT como tenant A no visible por tenant B)
+- ~~Tabla `llm_usage_logs` creada con RLS funcional~~ **MOVIDO a Sprint Costes-LLM Ph1 (post-MVP)**
 - Sentry captura primer error de prueba
 
 ## Risk Assessment
@@ -231,5 +214,6 @@ Configurar SENTRY_DSN en .env. Captura de errores en API Routes y Server Actions
 
 ## Next Steps
 
-- Ph3 (Dashboard costes LLM) consume `llm_usage_logs` creada en este phase
+- ~~Ph3 (Dashboard costes LLM) consume `llm_usage_logs` creada en este phase~~ → Movido al Sprint Costes-LLM (post-Sheets `v0.5.1`). Esta phase ya no crea `llm_usage_logs`.
 - Ph5 (Hardening) puede añadir logging de rate limit events (`logger.warn({ ip, endpoint }, 'Rate limit exceeded')`)
+- **Sprint Costes-LLM Ph1** (post-MVP) reusa el `logger` Pino creado aquí para sus propios logs del callback de tracking.

@@ -8,44 +8,44 @@ import IORedis from "ioredis";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 function createRedisConnection(): IORedis {
-    const isTLS = REDIS_URL.startsWith("rediss://");
-    
-    try {
-        const url = new URL(REDIS_URL);
-        const client = new IORedis({
-            host: url.hostname,
-            port: parseInt(url.port) || 6379,
-            password: url.password ? decodeURIComponent(url.password) : undefined,
-            username: url.username ? decodeURIComponent(url.username) : undefined,
-            maxRetriesPerRequest: null,
-            ...(isTLS && { tls: {} }),
-            enableReadyCheck: false,
-            retryStrategy(times) {
-                const delay = Math.min(times * 100, 3000);
-                return delay;
-            }
-        });
+  const isTLS = REDIS_URL.startsWith("rediss://");
 
-        // 🟢 CONFIRMATION LOG: This will show in Dokploy logs
-        client.on('ready', () => {
-            console.log(`[REDIS] ✅ READY - Connection established to ${url.hostname}`);
-        });
+  try {
+    const url = new URL(REDIS_URL);
+    const client = new IORedis({
+      host: url.hostname,
+      port: parseInt(url.port) || 6379,
+      password: url.password ? decodeURIComponent(url.password) : undefined,
+      username: url.username ? decodeURIComponent(url.username) : undefined,
+      maxRetriesPerRequest: null,
+      ...(isTLS && { tls: {} }),
+      enableReadyCheck: false,
+      retryStrategy(times) {
+        const delay = Math.min(times * 100, 3000);
+        return delay;
+      },
+    });
 
-        client.on('error', (err) => {
-            console.warn(`[REDIS_QUEUE] Connection Issue: ${err.message}`);
-        });
+    // 🟢 CONFIRMATION LOG: This will show in Dokploy logs
+    client.on("ready", () => {
+      console.log(`[REDIS] ✅ READY - Connection established to ${url.hostname}`);
+    });
 
-        return client;
-    } catch {
-        const fallback = new IORedis({
-            host: "localhost",
-            port: 6379,
-            maxRetriesPerRequest: null,
-            lazyConnect: true 
-        });
-        fallback.on('error', () => {}); 
-        return fallback;
-    }
+    client.on("error", (err) => {
+      console.warn(`[REDIS_QUEUE] Connection Issue: ${err.message}`);
+    });
+
+    return client;
+  } catch {
+    const fallback = new IORedis({
+      host: "localhost",
+      port: 6379,
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+    });
+    fallback.on("error", () => {});
+    return fallback;
+  }
 }
 
 export const connection = createRedisConnection();
@@ -55,134 +55,166 @@ export const connection = createRedisConnection();
 export const LEAD_QUEUE_NAME = "lead_sequence_queue";
 
 export interface LeadSequenceJob {
-    leadId: string;
-    tenantId: string;
-    workflowId?: string;
-    step?: number;
-    action: "call" | "whatsapp" | "ai_agent" | "zoho" | "CRM_SYNC" | "ZOHO_POLLING" | "QUALIFY_ANALYSIS" | "WATCHDOG_SCAN" | "APPOINTMENT_REMINDER" | "RETRY_SEQUENCE"; 
-    appointmentId?: string;
-    agentId?: string;
-    template?: string;
-    abVariant?: "A" | "B";
-    transcript?: string;
-    callId?: string;
+  leadId: string;
+  tenantId: string;
+  workflowId?: string;
+  step?: number;
+  action:
+    | "call"
+    | "whatsapp"
+    | "ai_agent"
+    | "zoho"
+    | "CRM_SYNC"
+    | "ZOHO_POLLING"
+    | "QUALIFY_ANALYSIS"
+    | "WATCHDOG_SCAN"
+    | "APPOINTMENT_REMINDER"
+    | "RETRY_SEQUENCE";
+  appointmentId?: string;
+  agentId?: string;
+  template?: string;
+  abVariant?: "A" | "B";
+  transcript?: string;
+  callId?: string;
 }
 
 let leadQueue: Queue<LeadSequenceJob> | null = null;
 
 export function getLeadQueue(): Queue<LeadSequenceJob> {
-    if (!leadQueue) {
-        leadQueue = new Queue<LeadSequenceJob>(LEAD_QUEUE_NAME, {
-            connection,
-            defaultJobOptions: {
-                attempts: 3,
-                backoff: { type: "exponential", delay: 5000 },
-                removeOnComplete: { count: 1000 },
-                removeOnFail: { count: 500 },
-            },
-        });
-    }
-    return leadQueue;
+  if (!leadQueue) {
+    leadQueue = new Queue<LeadSequenceJob>(LEAD_QUEUE_NAME, {
+      connection,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 500 },
+      },
+    });
+  }
+  return leadQueue;
 }
 
 /**
  * Enqueues a lead sequence step with optional delay.
+ *
+ * Sprint 0 tarea 1-02 (DA-1-005): los errores Redis se PROPAGAN al caller.
+ * Antes había un catch silencioso que retornaba un ID ficticio (`fallback-${Date.now()}`)
+ * y el caller creía que el job estaba encolado. Resultado: jobs perdidos sin ningún
+ * rastro en logs, leads atascados en producción.
+ *
+ * Política actual:
+ *   - log estructurado con contexto (leadId, tenantId, stepIndex, action, jobName)
+ *     pero SIN PII del lead (sin nombre, teléfono, email).
+ *   - re-throw para que el caller decida (worker re-queue, webhook retry, etc.).
+ *   - NO retornar ID ficticio. El tipo de retorno garantiza un jobId real.
  */
-export async function enqueueLeadStep(
-    data: LeadSequenceJob,
-    delayMs = 0
-): Promise<string> {
-    try {
-        const queue = getLeadQueue();
-        const jobName = `lead-${data.leadId}-step-${data.step}`;
-        
-        const job = await queue.add(jobName, data, {
-            delay: delayMs,
-            jobId: jobName,
-        });
+export async function enqueueLeadStep(data: LeadSequenceJob, delayMs = 0): Promise<string> {
+  const queue = getLeadQueue();
+  const jobName = `lead-${data.leadId}-step-${data.step}`;
 
-        console.log(`[QUEUE] Enqueued ${jobName} with delay ${Math.round(delayMs / 1000 / 60)}min`);
-        return job.id || jobName;
-    } catch (error: unknown) {
-        const errMsg = error instanceof Error ? error.message : String(error);
-        console.warn(`[QUEUE_BYPASS] Redis down/error: ${errMsg}`);
-        return `fallback-${Date.now()}`;
-    }
+  try {
+    const job = await queue.add(jobName, data, {
+      delay: delayMs,
+      jobId: jobName,
+    });
+
+    console.log(`[QUEUE] Enqueued ${jobName} with delay ${Math.round(delayMs / 1000 / 60)}min`);
+    return job.id || jobName;
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[QUEUE_ENQUEUE_FAILED] jobName=${jobName} leadId=${data.leadId} ` +
+        `tenantId=${data.tenantId} step=${data.step ?? "n/a"} action=${data.action} ` +
+        `delayMs=${delayMs} error=${errMsg}`
+    );
+    throw error instanceof Error
+      ? error
+      : new Error(`enqueueLeadStep failed for ${jobName}: ${errMsg}`);
+  }
 }
 
 export async function enqueueQualificationAnalysis(data: {
-    leadId: string;
-    tenantId: string;
-    transcript: string;
-    callId: string;
+  leadId: string;
+  tenantId: string;
+  transcript: string;
+  callId: string;
 }) {
-    try {
-        const queue = getLeadQueue();
-        await queue.add(`qual-${data.leadId}-${data.callId}`, {
-            ...data,
-            action: "QUALIFY_ANALYSIS"
-        }, {
-            jobId: `qual-${data.leadId}-${data.callId}`
-        });
-    } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.error(`[QUEUE_ERROR] Analysis could not be queued: ${errMsg}`);
-    }
+  try {
+    const queue = getLeadQueue();
+    await queue.add(
+      `qual-${data.leadId}-${data.callId}`,
+      {
+        ...data,
+        action: "QUALIFY_ANALYSIS",
+      },
+      {
+        jobId: `qual-${data.leadId}-${data.callId}`,
+      }
+    );
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[QUEUE_ERROR] Analysis could not be queued: ${errMsg}`);
+  }
 }
 
 export async function setupWatchdogCron() {
-    try {
-        const queue = getLeadQueue();
-        await queue.add("watchdog_scan", { 
-            action: "WATCHDOG_SCAN", 
-            leadId: "system", 
-            tenantId: "system" 
-        }, {
-            repeat: { pattern: "*/15 * * * *" },
-            jobId: "watchdog_cron"
-        });
-    } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.warn("[QUEUE] Could not setup watchdog cron:", errMsg);
-    }
+  try {
+    const queue = getLeadQueue();
+    await queue.add(
+      "watchdog_scan",
+      {
+        action: "WATCHDOG_SCAN",
+        leadId: "system",
+        tenantId: "system",
+      },
+      {
+        repeat: { pattern: "*/15 * * * *" },
+        jobId: "watchdog_cron",
+      }
+    );
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.warn("[QUEUE] Could not setup watchdog cron:", errMsg);
+  }
 }
 
 export async function setupZohoCron() {
-    try {
-        const queue = getLeadQueue();
-        await queue.add("zoho_polling", { 
-            action: "ZOHO_POLLING", 
-            leadId: "system", 
-            tenantId: "system" 
-        }, {
-            repeat: { pattern: "*/10 * * * *" },
-            jobId: "zoho_cron"
-        });
-    } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        console.warn("[QUEUE] Could not setup Zoho cron:", errMsg);
-    }
+  try {
+    const queue = getLeadQueue();
+    await queue.add(
+      "zoho_polling",
+      {
+        action: "ZOHO_POLLING",
+        leadId: "system",
+        tenantId: "system",
+      },
+      {
+        repeat: { pattern: "*/10 * * * *" },
+        jobId: "zoho_cron",
+      }
+    );
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.warn("[QUEUE] Could not setup Zoho cron:", errMsg);
+  }
 }
 
 export function createLeadWorker(
-    processor: (job: Job<LeadSequenceJob>) => Promise<void>
+  processor: (job: Job<LeadSequenceJob>) => Promise<void>
 ): Worker<LeadSequenceJob> {
-    const worker = new Worker<LeadSequenceJob>(
-        LEAD_QUEUE_NAME,
-        processor,
-        {
-            connection,
-            concurrency: 5,
-        }
-    );
+  const worker = new Worker<LeadSequenceJob>(LEAD_QUEUE_NAME, processor, {
+    connection,
+    concurrency: 5,
+  });
 
-    worker.on("completed", (job) => {
-        console.log(`[WORKER] ✅ Job ${job.id} completed: ${job.data.leadId}`);
-    });
+  worker.on("completed", (job) => {
+    console.log(`[WORKER] ✅ Job ${job.id} completed: ${job.data.leadId}`);
+  });
 
-    worker.on("failed", (job, err) => {
-        console.error(`[WORKER] ❌ Job ${job?.id} failed:`, err.message);
-    });
+  worker.on("failed", (job, err) => {
+    console.error(`[WORKER] ❌ Job ${job?.id} failed:`, err.message);
+  });
 
-    return worker;
+  return worker;
 }

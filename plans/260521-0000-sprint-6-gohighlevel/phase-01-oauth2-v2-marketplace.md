@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-12h
 phase_id: 6-01
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -34,12 +34,14 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - App registrada en GHL Marketplace (doc paso a paso)
 - Endpoint `GET /api/oauth/ghl/start` redirige a chooselocation
 - Endpoint `GET /api/oauth/ghl/callback` intercambia code → tokens
 - Persistencia: `access_token`, `refresh_token`, `ghl_location_id`, `expiry_date` cifrados
 
 **No funcionales:**
+
 - State CSRF
 - Tokens cifrados
 - RLS multi-tenant
@@ -67,12 +69,14 @@ src/app/api/oauth/ghl/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/ghl/ghl-oauth.ts`
 - `src/app/api/oauth/ghl/start/route.ts`
 - `src/app/api/oauth/ghl/callback/route.ts`
 - `docs/integrations/ghl-marketplace-app.md`
 
 **Modificar:**
+
 - `.env.example` (`GHL_CLIENT_ID`, `GHL_CLIENT_SECRET`)
 
 ## Implementation Steps
@@ -111,11 +115,11 @@ src/app/api/oauth/ghl/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Marketplace rechaza app | Media | Alto | Cumplir docs GHL al detalle; tener plan B con app "private" si existe |
-| Tiempo de review > 5 días | Alta | Medio | Iniciar antes del sprint |
-| `location_id` no devuelto en token | Baja | Alto | Test sandbox primero; fallback API GET `/locations/me` |
+| Riesgo                             | Prob  | Impacto | Mitigación                                                            |
+| ---------------------------------- | ----- | ------- | --------------------------------------------------------------------- |
+| Marketplace rechaza app            | Media | Alto    | Cumplir docs GHL al detalle; tener plan B con app "private" si existe |
+| Tiempo de review > 5 días          | Alta  | Medio   | Iniciar antes del sprint                                              |
+| `location_id` no devuelto en token | Baja  | Alto    | Test sandbox primero; fallback API GET `/locations/me`                |
 
 ## Security Considerations
 

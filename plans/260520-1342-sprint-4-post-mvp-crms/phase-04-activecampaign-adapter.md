@@ -4,7 +4,7 @@ sprint_task: 5-04
 status: pending
 priority: P2
 effort: 20-50h
-branch: feature/sp-5-04-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 version_bump: v0.5.3
 agents: [af-agents:code, af-agents:api]
 ---
@@ -37,6 +37,7 @@ agents: [af-agents:code, af-agents:api]
 ## Requirements
 
 **Funcionales:**
+
 - Push: lead actualizado en Esden → Contact sync en AC (upsert por email)
 - Deal básico: si lead en etapa matrícula → crear/actualizar deal en pipeline AC
 - Automation trigger: añadir contact a automation si está configurado
@@ -44,6 +45,7 @@ agents: [af-agents:code, af-agents:api]
 - UI admin: API Key input, Account URL, pipeline mapping, automation mapping, test connection
 
 **No funcionales:**
+
 - Rate limiting: max 4 req/s por tenant-AC (margen de seguridad)
 - Idempotente: `contact/sync` ya maneja upsert; deals verificar antes de crear
 - Auditable: cada sync en `crm_write_audit`
@@ -53,6 +55,7 @@ agents: [af-agents:code, af-agents:api]
 ### Data flows
 
 **Push (Esden → ActiveCampaign):**
+
 ```
 lead.updated
   → BullMQ job: ac-push (throttle: 4 req/s per tenant)
@@ -64,6 +67,7 @@ lead.updated
 ```
 
 **Pull (AC → Esden):**
+
 ```
 AC webhook → POST /api/webhooks/activecampaign
   → Idempotency check: event_id en tabla sync_events
@@ -72,6 +76,7 @@ AC webhook → POST /api/webhooks/activecampaign
 ```
 
 **Setup tenant:**
+
 ```
 Admin configura: API Key + Account URL
   → GET /users/me para verificar credenciales
@@ -80,6 +85,7 @@ Admin configura: API Key + Account URL
 ```
 
 ### Componentes nuevos
+
 - `src/lib/integrations/activecampaign/ac-adapter.ts`
 - `src/lib/integrations/activecampaign/ac-field-mapper.ts`
 - `src/app/api/webhooks/activecampaign/route.ts`
@@ -89,6 +95,7 @@ Admin configura: API Key + Account URL
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/activecampaign/ac-adapter.ts`
 - `src/lib/integrations/activecampaign/ac-field-mapper.ts`
 - `src/app/api/webhooks/activecampaign/route.ts`
@@ -96,6 +103,7 @@ Admin configura: API Key + Account URL
 - `src/components/integrations/ac-connection-form.tsx`
 
 **Modificar:**
+
 - `src/lib/integrations/adapter-factory.ts`
 - `src/db/migrations/` (columnas AC en crm_connections: `ac_account_url`, `ac_webhook_id`)
 
@@ -138,13 +146,13 @@ Admin configura: API Key + Account URL
 
 ## Risk Assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Rate limit 5 req/s excedido con muchos leads | Alta | Medio | BullMQ throttle 4 req/s estricto + queue per-tenant |
-| Webhook duplicados "at least once" | Alta | Bajo | Tabla `sync_events` con idempotency key (event_id) |
-| `ac_account_url` variable por tenant | Media | Bajo | Validar formato URL al guardar (regex) |
-| Custom fields ID numérico cambia entre cuentas | Alta | Bajo | FieldMapper configurable, no hardcodear field IDs |
-| AC API puede cambiar formato de URL (au1, us1, eu1) | Baja | Medio | Almacenar URL completa, no derivar |
+| Riesgo                                              | Probabilidad | Impacto | Mitigación                                          |
+| --------------------------------------------------- | ------------ | ------- | --------------------------------------------------- |
+| Rate limit 5 req/s excedido con muchos leads        | Alta         | Medio   | BullMQ throttle 4 req/s estricto + queue per-tenant |
+| Webhook duplicados "at least once"                  | Alta         | Bajo    | Tabla `sync_events` con idempotency key (event_id)  |
+| `ac_account_url` variable por tenant                | Media        | Bajo    | Validar formato URL al guardar (regex)              |
+| Custom fields ID numérico cambia entre cuentas      | Alta         | Bajo    | FieldMapper configurable, no hardcodear field IDs   |
+| AC API puede cambiar formato de URL (au1, us1, eu1) | Baja         | Medio   | Almacenar URL completa, no derivar                  |
 
 ## Security Considerations
 

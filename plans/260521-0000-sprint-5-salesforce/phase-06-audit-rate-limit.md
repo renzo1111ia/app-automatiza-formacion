@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-8h
 phase_id: 5-06
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Helper `writeSalesforceAuditEntry()` reusable desde push y pull
 - Cron BullMQ que consulta `limits` endpoint diariamente y persiste % cuota
 - Manejo de `REQUEST_LIMIT_EXCEEDED`:
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Métricas en log: `sf.push.success`, `sf.push.failed`, `sf.pull.success`
 
 **No funcionales:**
+
 - Cron diario sin sobrecargar API
 - Logs sin payloads completos
 - Alerts no spammear (1 por hora máx)
@@ -70,11 +72,13 @@ Rate limit:
 ## Related Code Files
 
 **Crear:**
+
 - `src/jobs/salesforce-limits-check.job.ts`
 - `src/lib/integrations/salesforce/salesforce-audit-helper.ts`
 - `src/db/migrations/2026XXXX_crm_connections_sf_api_usage.sql`
 
 **Modificar:**
+
 - `src/lib/integrations/salesforce/salesforce-adapter.ts` (catch REQUEST_LIMIT_EXCEEDED)
 - `src/jobs/salesforce-push.job.ts` (pause queue on rate limit)
 
@@ -115,11 +119,11 @@ Rate limit:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Cron limits-check falla silenciosamente | Baja | Medio | Health check endpoint que valida ultima ejecución |
-| Pause queue no se reanuda | Baja | Alto | Timer absoluto 5 min + healthcheck |
-| Audit overflow en bulk syncs | Media | Bajo | Batch insert si >100 entries por job |
+| Riesgo                                  | Prob  | Impacto | Mitigación                                        |
+| --------------------------------------- | ----- | ------- | ------------------------------------------------- |
+| Cron limits-check falla silenciosamente | Baja  | Medio   | Health check endpoint que valida ultima ejecución |
+| Pause queue no se reanuda               | Baja  | Alto    | Timer absoluto 5 min + healthcheck                |
+| Audit overflow en bulk syncs            | Media | Bajo    | Batch insert si >100 entries por job              |
 
 ## Security Considerations
 

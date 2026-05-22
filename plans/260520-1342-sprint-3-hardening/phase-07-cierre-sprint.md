@@ -46,6 +46,7 @@ Criterio de éxito: TODOS los comandos terminan con exit code 0.
 Si alguno falla: corregir inmediatamente (no pasar a CLOSE-2).
 
 **Checklist:**
+
 - [ ] `npm run typecheck` — 0 errores
 - [ ] `npm run lint` — 0 errores bloqueantes
 - [ ] `npm run build` — success, sin warnings de producción
@@ -62,35 +63,42 @@ Recorrido completo del MVP en browser local. Es el test más extenso del sprint 
 **Flujos a verificar (checklist):**
 
 **Auth:**
+
 - [ ] Login con credenciales válidas → dashboard
 - [ ] Login con credenciales inválidas → mensaje error accesible (no alert())
 - [ ] Logout → cookie eliminada, redirige a login
 - [ ] Reset password flow completo
 
 **Leads / Historial:**
+
 - [ ] Crear nuevo lead desde formulario → aparece en tabla
 - [ ] Buscar lead en historial → resultados correctos
 - [ ] Abrir modal detalle de lead → foco va al modal, Escape cierra
 - [ ] Eliminar lead → modal de confirmación (no confirm()), acción ejecutada
 
 **Agents / Inbox:**
+
 - [ ] Seleccionar agente de la lista (con teclado y mouse)
 - [ ] Ver conversación en inbox
 - [ ] Abrir template selector → focus trap activo
 
 **Calendario:**
+
 - [ ] Ver citas del día
 - [ ] Confirmar/cancelar cita → modal de confirmación accesible
 
 **Settings / CRM (Sprint 2):**
+
 - [ ] Panel de integraciones accesible
 - [ ] (Si sandbox disponible) OAuth HubSpot/Zoho flow
 
 **Dashboard Costes LLM (Sprint 3):**
+
 - [ ] Gráfica costes por proveedor visible para admin
 - [ ] Vista tenant muestra solo sus propios costes
 
 **WCAG 2.2 AA keyboard check:**
+
 - [ ] Tab desde inicio de página → navega por skip link, sidebar, contenido
 - [ ] Skip link funcional (Tab → Enter → salta a #main-content)
 - [ ] Modal crear lead: Tab navega por todos los campos, Escape cierra
@@ -98,6 +106,7 @@ Recorrido completo del MVP en browser local. Es el test más extenso del sprint 
 - [ ] Lighthouse a11y score ≥90 en `/dashboard` (captura screenshot)
 
 **Security headers (con DevTools o curl):**
+
 - [ ] CSP presente en response headers
 - [ ] X-Frame-Options: DENY
 - [ ] Sentry captura error de prueba (opcional)
@@ -127,7 +136,7 @@ Tras cada corrección: re-ejecutar CLOSE-1 (auto tests) para confirmar no regres
 ### SP-4-CLOSE-5 — Cierre Sprint → PR a developer + bump v0.4.0 (30min)
 
 ```bash
-# 1. Asegurarse en rama feature/sp-4-hardening
+# 1. Asegurarse en rama feature/sprint-03-hardening
 git status  # limpio, todo committed
 
 # 2. Bump de versión
@@ -144,7 +153,7 @@ git tag -a v0.4.0 -m "v0.4.0 — MVP completo: E2E, WCAG 2.2 AA, observabilidad,
 # 5. PR a developer (NO a staging ni main — requieren autorización explícita)
 gh pr create \
   --base developer \
-  --head feature/sp-4-hardening \
+  --head feature/sprint-03-hardening \
   --title "feat: Sprint 3 — Hardening v0.4.0 MVP completo" \
   --body "Sprint 3 completado. Ver plans/260520-1342-sprint-3-hardening/plan.md para detalle."
 ```
@@ -152,6 +161,7 @@ gh pr create \
 **ATENCIÓN:** `staging` y `main` son ramas protegidas. NO hacer push ni PR a estas ramas sin autorización explícita del usuario/cliente.
 
 **Checklist CLOSE-5:**
+
 - [ ] `package.json` version = "1.0.0"
 - [ ] `CHANGELOG.md` entrada [v0.4.0] con fecha
 - [ ] Commit con mensaje convencional
@@ -186,11 +196,11 @@ gh pr create \
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| CLOSE-4 desborda tiempo por bugs inesperados | Alta | Variable | Posponer bugs Medium/Low a hotfix; no bloquear v0.4.0 por cosmética |
-| Playwright tests flaky en CI (CLOSE-1) | Media | Bajo | Retry 2 configurado; flakyness localizado antes de CLOSE |
-| Lighthouse score < 90 por DA-5-012 no resuelto | Media | Medio | Aceptar score entre 85-89 si DA-5-012 fue cortado; documentar en PR |
+| Riesgo                                         | Prob  | Impacto  | Mitigación                                                          |
+| ---------------------------------------------- | ----- | -------- | ------------------------------------------------------------------- |
+| CLOSE-4 desborda tiempo por bugs inesperados   | Alta  | Variable | Posponer bugs Medium/Low a hotfix; no bloquear v0.4.0 por cosmética |
+| Playwright tests flaky en CI (CLOSE-1)         | Media | Bajo     | Retry 2 configurado; flakyness localizado antes de CLOSE            |
+| Lighthouse score < 90 por DA-5-012 no resuelto | Media | Medio    | Aceptar score entre 85-89 si DA-5-012 fue cortado; documentar en PR |
 
 ## Security Considerations
 

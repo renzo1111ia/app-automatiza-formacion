@@ -54,7 +54,7 @@ async function main() {
 
     // ---------- Resumen ----------
     console.log("\n========================================================");
-    console.log("CREDENCIALES DE ACCESO — http://localhost:8050");
+    console.log("CREDENCIALES DE ACCESO — http://localhost:8500");
     console.log("========================================================\n");
 
     console.log("[1] ADMIN — acceso completo al dashboard");

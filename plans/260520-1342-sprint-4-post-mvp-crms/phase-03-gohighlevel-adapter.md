@@ -4,7 +4,7 @@ sprint_task: 5-03
 status: pending
 priority: P2
 effort: 40-80h
-branch: feature/sp-5-03-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 version_bump: v0.5.2
 agents: [af-agents:code, af-agents:api]
 ---
@@ -37,12 +37,14 @@ agents: [af-agents:code, af-agents:api]
 ## Requirements
 
 **Funcionales:**
+
 - Push: lead actualizado en Esden → Contact upsert en GHL (buscar por email)
 - Opportunity básico: si lead en etapa matrícula → crear/actualizar opportunity en pipeline GHL
 - UI admin: OAuth consent, locationId, pipeline mapping, test connection
 - Webhook pull: ContactUpdate en GHL → update lead en Esden (con verificación HMAC)
 
 **No funcionales:**
+
 - Multi-tenant: locationId diferente por tenant
 - Rate limiting: BullMQ throttle ≤ 90 req/10s (margen seguridad)
 - Idempotente: buscar contact por email antes de crear
@@ -52,6 +54,7 @@ agents: [af-agents:code, af-agents:api]
 ### Data flows
 
 **Push (Esden → GHL):**
+
 ```
 lead.updated
   → BullMQ job: ghl-push
@@ -64,6 +67,7 @@ lead.updated
 ```
 
 **Pull (GHL → Esden):**
+
 ```
 GHL webhook → POST /api/webhooks/ghl
   → Verify HMAC-SHA256 (x-webhook-signature header)
@@ -73,6 +77,7 @@ GHL webhook → POST /api/webhooks/ghl
 ```
 
 **OAuth2 flow:**
+
 ```
 Admin "Conectar GHL"
   → Redirect: marketplace.gohighlevel.com/oauth/chooselocation?...
@@ -81,6 +86,7 @@ Admin "Conectar GHL"
 ```
 
 ### Componentes nuevos
+
 - `src/lib/integrations/ghl/ghl-adapter.ts`
 - `src/lib/integrations/ghl/ghl-oauth.ts`
 - `src/lib/integrations/ghl/ghl-field-mapper.ts`
@@ -92,6 +98,7 @@ Admin "Conectar GHL"
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/ghl/ghl-adapter.ts`
 - `src/lib/integrations/ghl/ghl-oauth.ts`
 - `src/lib/integrations/ghl/ghl-field-mapper.ts`
@@ -101,6 +108,7 @@ Admin "Conectar GHL"
 - `src/components/integrations/ghl-connection-form.tsx`
 
 **Modificar:**
+
 - `src/lib/integrations/adapter-factory.ts`
 - `src/db/migrations/` (columna `ghl_location_id` en crm_connections)
 
@@ -141,13 +149,13 @@ Admin "Conectar GHL"
 
 ## Risk Assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Registro en GHL Marketplace tarda o falla | Alta | Alto | Iniciar proceso burocrático antes de escribir código |
-| locationId confuso para el tenant | Media | Medio | Mostrar locationId automáticamente tras OAuth consent |
-| Custom fields varían por location | Alta | Bajo | FieldMapper configurable por tenant en UI |
-| API v2 docs incompletas | Media | Medio | Testear contra GHL sandbox antes de implementar |
-| HMAC webhook key no documentada claramente | Media | Medio | Verificar en GHL Marketplace → App Settings |
+| Riesgo                                     | Probabilidad | Impacto | Mitigación                                            |
+| ------------------------------------------ | ------------ | ------- | ----------------------------------------------------- |
+| Registro en GHL Marketplace tarda o falla  | Alta         | Alto    | Iniciar proceso burocrático antes de escribir código  |
+| locationId confuso para el tenant          | Media        | Medio   | Mostrar locationId automáticamente tras OAuth consent |
+| Custom fields varían por location          | Alta         | Bajo    | FieldMapper configurable por tenant en UI             |
+| API v2 docs incompletas                    | Media        | Medio   | Testear contra GHL sandbox antes de implementar       |
+| HMAC webhook key no documentada claramente | Media        | Medio   | Verificar en GHL Marketplace → App Settings           |
 
 ## Security Considerations
 

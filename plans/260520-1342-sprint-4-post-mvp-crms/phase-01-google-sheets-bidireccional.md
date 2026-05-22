@@ -4,7 +4,7 @@ sprint_task: 5-01
 status: pending
 priority: P2
 effort: 60-100h
-branch: feature/sp-5-01-google-sheets
+branch: feature/sprint-04-google-sheets
 version_bump: v0.5.0
 agents: [af-agents:code, af-agents:api]
 ---
@@ -36,6 +36,7 @@ agents: [af-agents:code, af-agents:api]
 ## Requirements
 
 **Funcionales:**
+
 - Push: lead actualizado en Esden → fila actualizada/creada en Sheet (< 5 min latencia)
 - Pull: fila editada manualmente en Sheet → lead actualizado en Esden (< 5 min via webhook)
 - Template: copia de plantilla maestra al activar integración por tenant
@@ -43,6 +44,7 @@ agents: [af-agents:code, af-agents:api]
 - UI admin: activar/desactivar, elegir spreadsheetId, ver estado de sincronización
 
 **No funcionales:**
+
 - Multi-tenant: cada academia con sus propias credenciales OAuth y su propio spreadsheet
 - Idempotente: mismo lead no crea duplicados en Sheet
 - Resiliente: 429 → exponential backoff; token expirado → auto-refresh
@@ -53,6 +55,7 @@ agents: [af-agents:code, af-agents:api]
 ### Data flows
 
 **Push (Esden → Sheet):**
+
 ```
 lead.updated event
   → BullMQ job: sheets-push
@@ -65,6 +68,7 @@ lead.updated event
 ```
 
 **Pull (Sheet → Esden):**
+
 ```
 Drive push notification → POST /api/webhooks/google-sheets
   → Verificar token de canal en header X-Goog-Channel-Token
@@ -75,6 +79,7 @@ Drive push notification → POST /api/webhooks/google-sheets
 ```
 
 **Renovación canal Drive:**
+
 ```
 BullMQ cron (cada 6 días)
   → Para cada tenant con Sheets activo:
@@ -83,6 +88,7 @@ BullMQ cron (cada 6 días)
 ```
 
 ### Componentes nuevos
+
 - `src/lib/integrations/sheets/sheets-adapter.ts`
 - `src/lib/integrations/sheets/sheets-oauth.ts`
 - `src/lib/integrations/sheets/sheets-field-mapper.ts`
@@ -92,6 +98,7 @@ BullMQ cron (cada 6 días)
 - `src/jobs/sheets-channel-renew.job.ts`
 
 ### Componentes reutilizados (Sprint 2)
+
 - `IntegrationAdapter` base interface
 - `crm_connections` tabla (agregar columnas Sheets-específicas)
 - `crm_write_audit` tabla
@@ -101,6 +108,7 @@ BullMQ cron (cada 6 días)
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/sheets/sheets-adapter.ts`
 - `src/lib/integrations/sheets/sheets-oauth.ts`
 - `src/lib/integrations/sheets/sheets-field-mapper.ts`
@@ -112,6 +120,7 @@ BullMQ cron (cada 6 días)
 - `src/components/integrations/sheets-connection-form.tsx`
 
 **Modificar:**
+
 - `src/lib/integrations/adapter-factory.ts` (registrar sheets adapter)
 - `src/db/migrations/` (columnas Sheets en crm_connections: `spreadsheet_id`, `channel_id`, `channel_expiry`)
 
@@ -137,7 +146,7 @@ BullMQ cron (cada 6 días)
 - [ ] Template copy al activar integración
 - [ ] BullMQ job sheets-push (lead.updated → push)
 - [ ] Webhook pull /api/webhooks/google-sheets
-- [ ] Idempotency: _esden_updated_at check
+- [ ] Idempotency: \_esden_updated_at check
 - [ ] Canal Drive watch + renovación cron
 - [ ] FieldMapper Sheets (columnas configurables)
 - [ ] UI admin: formulario conexión Sheets
@@ -156,13 +165,13 @@ BullMQ cron (cada 6 días)
 
 ## Risk Assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Bucle push/pull infinito | Media | Alto | Campo `_esden_updated_at` + cooldown 30s obligatorio |
-| Canal Drive expirado silenciosamente | Alta | Medio | BullMQ cron día 6 + alerta si renovación falla |
-| Cuota 429 Sheets | Baja-Media | Medio | Batch writes + exponential backoff en BullMQ retry |
-| OAuth revocado por usuario | Media | Medio | Detección 403 → marcar `status='revoked'` + notificar admin |
-| Template mal configurado por tenant | Media | Bajo | Validar columnas requeridas al activar integración |
+| Riesgo                               | Probabilidad | Impacto | Mitigación                                                  |
+| ------------------------------------ | ------------ | ------- | ----------------------------------------------------------- |
+| Bucle push/pull infinito             | Media        | Alto    | Campo `_esden_updated_at` + cooldown 30s obligatorio        |
+| Canal Drive expirado silenciosamente | Alta         | Medio   | BullMQ cron día 6 + alerta si renovación falla              |
+| Cuota 429 Sheets                     | Baja-Media   | Medio   | Batch writes + exponential backoff en BullMQ retry          |
+| OAuth revocado por usuario           | Media        | Medio   | Detección 403 → marcar `status='revoked'` + notificar admin |
+| Template mal configurado por tenant  | Media        | Bajo    | Validar columnas requeridas al activar integración          |
 
 ## Security Considerations
 

@@ -2,30 +2,33 @@
 
 ## Context Links
 - [plan.md](plan.md) — overview Sprint 0
-- [RoadMap Bloque 1.6](../RoadMap.md) — tareas 1-22..1-26
+- [RoadMap Bloque 1.6](../RoadMap.md) — tareas 1-22..1-27
 - [DEEP-FINDINGS-SUMMARY.md](../../docs/audit/deep/DEEP-FINDINGS-SUMMARY.md) — DA-3-002, DA-3-004, DA-3-CVE-001, DA-3-CVE-002
 - [docs/audit/deep/DA-3-security-deep.md](../../docs/audit/deep/DA-3-security-deep.md)
 - [DECISIONES-AUDITOR-JAVIER-HP.md](../../docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md) — R-023.a (Easypanel)
 - [Auditoría dependencias ADR 20-05-2026](../reports/adr-auditoria-dependencias-20260520.md) — findings DEP-001, CVE-002
+- [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) — fuente de la tarea 1-27
 
 ## Overview
 
 **Prioridad:** P1 — Crítico.
-**Estado:** 🔘 Pendiente
-**Estimación:** 23h (1-22: 8h + 1-23: 4h + 1-24: 4h + 1-25: 3h + 1-26: 4h)
-**Agentes:** `af-agents:code` (1-22, 1-23, 1-25) + `af-agents:adr` (1-24, 1-26, Dependency Guard obligatorio) + `af-agents:security` (verificación post-1-26)
+**Estado:** 🟡 En Desarrollo (5/6 a 🔵, 1-27 pendiente)
+**Estimación:** 31h (1-22: 8h + 1-23: 4h + 1-24: 4h + 1-25: 3h + 1-26: 4h + **1-27: 8h**)
+**Agentes:** `af-agents:code` (1-22, 1-23, 1-25, 1-27) + `af-agents:adr` (1-24, 1-26, Dependency Guard obligatorio) + `af-agents:security` (verificación post-1-26, post-1-27) + `af-agents:database` (migración SQL 1-27)
 
-Este bloque contiene cinco vectores:
+Este bloque contiene seis vectores:
 - **1-22**: SSRF confirmado vía cookie editable por JS — cualquier usuario puede hacer que el servidor haga peticiones a URLs arbitrarias.
 - **1-23**: XSS en widget embed servido a sitios de terceros — inyectable desde URL pública.
 - **1-24**: `axios@1.14.0` con 15 CVEs activos (SSRF CVSS 7.2 + Prototype Pollution CVSS 7.4).
 - **1-25**: `crypto@1.0.1` DEPRECATED — paquete fantasma npm, reemplazar por `node:crypto` built-in.
 - **1-26**: `next@16.1.6` con 19 CVEs activos (SSRF CVSS 8.6 + middleware bypass CVSS 8.1). **BLOQUEANTE** para Ph3 y Ph5 — debe ejecutarse primero.
+- **1-27**: Server Action `getChatbotResponse` del widget chatbot — endpoint público sin auth, sin CORS, sin rate limit. Cualquier atacante con el `widgetId` (visible en el código fuente del sitio del cliente) puede vaciar el saldo OpenAI del tenant + flood de leads basura. **Patrón análogo a 1-22**.
 
 **Orden de ejecución en esta fase:**
 1. **1-26 PRIMERO** (bloquea Ph3/Ph5; ADR obligatorio)
 2. 1-24 + 1-25 en paralelo (solo package.json + imports, día 1 junto con Ph2)
 3. 1-22 + 1-23 tras confirmar 1-26 sin regresiones
+4. **1-27** independiente (no depende de 1-26 — sólo toca `widget.ts` Server Action + nueva migración + helpers). Puede ejecutarse en paralelo con 1-22/1-23.
 
 ## Key Insights
 
@@ -34,6 +37,7 @@ Este bloque contiene cinco vectores:
 - **DA-3-CVE-001**: `axios@1.14.0` tiene 15 CVEs conocidos. El más grave (SSRF CVSS 7.2) permite a un atacante que controla la URL redirigir peticiones axios a targets arbitrarios, incluyendo servicios internos. El upgrade debe pasar por `af-agents:adr` (Dependency Guard) antes de instalarse.
 - **DEP-001**: `crypto@1.0.1` es un paquete npm vacío que ocupa el nombre para prevenir typosquatting. La descripción oficial del paquete dice: *"This package is no longer supported. It's now a built-in Node module."* En auditorías de terceros este paquete levanta banderas rojas inmediatas. Node.js incluye `crypto` como built-in desde v0.x — no hay funcionalidad real que perder.
 - **DA-3-CVE-002**: `next@16.1.6` tiene 19 CVEs activos. Los más graves: SSRF via WebSocket upgrades (CVSS 8.6, GHSA-c4j6-fc7j-m34r) y middleware/proxy bypass via dynamic route param injection (CVSS 8.1, GHSA-492v-c6pp-mqqv). El middleware bypass anula directamente las protecciones de auth añadidas por 1-07, 1-08, 1-16 y 1-17 — sin este fix esas tareas son inefectivas. Movida de Sprint 1 (2-27) a Sprint 0 por impacto crítico en seguridad real.
+- **Informe Renzo §3 🔴 (1-27)**: La Server Action `getChatbotResponse` en `src/lib/actions/widget.ts` es un endpoint público que cualquiera puede invocar conociendo el `widgetId` (visible en el código fuente del sitio del cliente). NO valida `Origin`/`Referer` (sin CORS/whitelisting por dominio), NO tiene rate limit (a diferencia del `middleware.ts` que sólo cubre `/api/*` — los Server Actions van por POST con cabecera `Next-Action` y NO los intercepta). Impacto: un atacante con un script puede enviar miles de mensajes/segundo → (a) vaciar el saldo OpenAI del tenant (cada mensaje genera 1 embedding `text-embedding-3-small` + 1 completion `gpt-4o`), (b) llenar `lead` y `chat_messages` de basura. **Fix de mismo patrón que 1-22**: nueva columna `web_widgets.allowed_domains text[]` + helper `validateWidgetOrigin()` + rate limit por `widgetId:ip` con sliding window Redis (5 req/min por defecto, configurable por widget vía `web_widgets.rate_limit_per_minute integer`). Comportamiento allowlist: si `allowed_domains` está vacío → modo legacy (permite todo, log warning); si está poblado → enforce estricto. Esto evita romper widgets ya desplegados; en una tarea de Sprint 1 se podrá forzar la migración a allowlists pobladas.
 
 ## Requirements
 
@@ -44,6 +48,7 @@ Este bloque contiene cinco vectores:
 
 - 1-25: Eliminar `crypto@1.0.1` de `dependencies`. Reemplazar todos los `import ... from 'crypto'` / `require('crypto')` por `import ... from 'node:crypto'` en `src/` y `worker.js`.
 - 1-26: Actualizar `next` a `16.2.6` + `eslint-config-next` a `16.2.6` (peer dep ligada). Pasar por `af-agents:adr` primero. Smoke test de rutas críticas. Rollback inmediato si hay regresión. Marcar 2-27 en Sprint 1 como "movida a 1-26".
+- **1-27**: Añadir migración SQL `web_widgets.allowed_domains text[] DEFAULT '{}'` + `web_widgets.rate_limit_per_minute integer DEFAULT 5`. Crear helper `src/lib/api/validate-widget-origin.ts` que extrae `Origin`/`Referer` desde `headers()` (Next.js `next/headers`) y valida contra `allowed_domains` del widget. Crear helper `src/lib/api/rate-limit-widget.ts` con sliding window Redis (reusa `ioredis` ya en stack vía BullMQ). Aplicar ambos al inicio de `getChatbotResponse` en `widget.ts`. Comportamiento backwards-compatible: `allowed_domains=[]` → permitir (con log warning); `allowed_domains=['ejemplo.com']` → enforce.
 
 ### No funcionales
 - 1-22: La allowlist es dinámica por tenant en columna `tenants.allowed_migrate_hosts text[]`. NO env var estática (los dominios no son conocidos al crear el sistema). Deny by default si la lista está vacía.
@@ -51,6 +56,7 @@ Este bloque contiene cinco vectores:
 - 1-24: Si el upgrade de axios introduce breaking changes en la API, documentarlos y actualizar los call sites antes de cerrar la tarea.
 - 1-25: El reemplazo de imports debe ser exhaustivo — usar grep antes y después de la migración para verificar 0 referencias al paquete npm `crypto`.
 - 1-26: Upgrade minor (16.1.6 → 16.2.6) — no se esperan breaking changes pero el middleware es código crítico. Testing obligatorio antes de cerrar la tarea. Si cualquier ruta protegida devuelve 500 tras el upgrade → rollback y reportar.
+- **1-27**: Política `allowed_domains=[]` → ALLOW por compatibilidad hacia atrás (los widgets actuales en producción seguirán funcionando). Esto NO es deny-by-default como en 1-22 porque las consecuencias son distintas: 1-22 (SSRF) es admin-only y diferir su uso es viable; 1-27 (widget público) rompería instantáneamente todos los widgets ya integrados en sitios de clientes. En una tarea de Sprint 1 se forzará la migración. El rate limit por defecto (5 req/min/widget/ip) sí aplica desde el inicio — es la primera capa contra abuso. Comparable con políticas de WhatsApp/Telegram bots.
 
 ## Architecture
 
@@ -165,6 +171,53 @@ Proceso:
   7. Marcar 2-27 en plan Sprint 1 como "MOVIDA A 1-26 (completada en Sprint 0)"
 ```
 
+### 1-27 — Widget Server Action: allowed_domains + rate limit + Origin/Referer check
+
+```
+ANTES (src/lib/actions/widget.ts):
+  export async function getChatbotResponse({ widgetId, leadId, message, knownVariables }) {
+    // SIN headers() — no comprueba Origin/Referer
+    // SIN rate limit — middleware.ts no intercepta Server Actions
+    // Cualquier IP, desde cualquier dominio, sin límite
+    const widget = await supabase.from("web_widgets").select("*").eq("id", widgetId).single();
+    // ... llama OpenAI embeddings + completion → coste real
+  }
+
+DESPUÉS:
+  export async function getChatbotResponse({ widgetId, leadId, message, knownVariables }) {
+    const widget = await loadWidget(widgetId);
+    // 1) Origin/Referer check (si allowed_domains poblado)
+    const reqHeaders = await headers();           // next/headers
+    const originCheck = validateWidgetOrigin(reqHeaders, widget.allowed_domains);
+    if (!originCheck.ok) return { success: false, error: 'Origin not allowed', code: 403 };
+    // 2) Rate limit (siempre activo, configurable per-widget)
+    const clientIp = reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const limit = widget.rate_limit_per_minute ?? 5;
+    const allowed = await rateLimitWidget(widgetId, clientIp, limit);
+    if (!allowed) return { success: false, error: 'Rate limit exceeded', code: 429 };
+    // ... resto del flujo igual
+  }
+
+Migración SQL:
+  ALTER TABLE web_widgets
+    ADD COLUMN allowed_domains text[] DEFAULT '{}',
+    ADD COLUMN rate_limit_per_minute integer DEFAULT 5;
+
+Comportamiento de la allowlist:
+  - allowed_domains = []          → ALLOW (modo legacy, log warning una vez por widget/proceso)
+  - allowed_domains = ['x.com']   → enforce: rechaza Origin/Referer fuera de la lista
+  - Origin === null (curl/bot)    → rechaza si lista poblada; permite si lista vacía
+
+Rate limit:
+  - Sliding window Redis (ioredis ya en stack vía BullMQ)
+  - Key: `rl:widget:${widgetId}:${clientIp}` — TTL 60s
+  - Operación INCR + EXPIRE (atómica con MULTI o EVAL)
+  - Si > rate_limit_per_minute → 429
+  - Por defecto 5 req/min/IP/widget (configurable por widget)
+
+⚠️ NOTA: este fix NO requiere 1-26 (next upgrade) — toca solamente Server Action + nuevos helpers.
+```
+
 ## Related Code Files
 
 **Modificar (1-22):**
@@ -191,9 +244,15 @@ Proceso:
 - `package.json` — bump `next` a `16.2.6` y `eslint-config-next` a `16.2.6`
 - `package-lock.json` — actualizado por npm
 
+**Modificar (1-27):**
+- `src/lib/actions/widget.ts` — añadir Origin/Referer check + rate limit al inicio de `getChatbotResponse` (líneas ~28-30)
+
 **Crear:**
 - `src/lib/api/validate-tenant-url.ts` — helper allowlist SSRF (1-22)
 - `src/lib/api/sanitize-widget-id.ts` — helper sanitización XSS (1-23)
+- `src/lib/api/validate-widget-origin.ts` — helper allowlist Origin/Referer per-widget (1-27)
+- `src/lib/api/rate-limit-widget.ts` — helper sliding window Redis (1-27)
+- `supabase/migrations/20260522000000_add_widget_hardening_columns.sql` — migración `allowed_domains text[]` + `rate_limit_per_minute integer` en `web_widgets` (1-27)
 - `docs/adr/ADR-001-axios-upgrade.md` — decisión de arquitectura (generado por af-agents:adr, 1-24)
 - `docs/adr/ADR-002-next-upgrade-16-2-6.md` — decisión de arquitectura (generado por af-agents:adr, 1-26)
 
@@ -286,6 +345,62 @@ Proceso:
 6. Si cualquier smoke test falla → rollback inmediato: `npm install next@16.1.6 eslint-config-next@16.1.6`, reportar regresión.
 7. Actualizar nota en plan Sprint 1: marcar 2-27 como "MOVIDA A 1-26 — completada en Sprint 0".
 
+### 1-27 — Widget Server Action hardening (8h)
+
+> **Independiente de 1-26.** Sólo toca `widget.ts` Server Action + nuevos helpers + nueva migración. Puede ejecutarse en paralelo con 1-22/1-23/1-24/1-25.
+> **Decisión clave:** allowlist `allowed_domains=[]` → ALLOW (legacy) para no romper widgets ya integrados en sitios de clientes. Rate limit (5 req/min por defecto) sí aplica desde el inicio.
+
+1. **Migración SQL** (`af-agents:database` o directo):
+   - Crear `supabase/migrations/20260522000000_add_widget_hardening_columns.sql`.
+   - `ALTER TABLE web_widgets ADD COLUMN allowed_domains text[] DEFAULT '{}', ADD COLUMN rate_limit_per_minute integer DEFAULT 5;`
+   - Comentarios SQL en la migración explicando el porqué de cada columna y la política legacy.
+   - Aplicar contra Supabase local (`docker exec postgres psql -U postgres -d postgres -f /migration.sql`) — apply VPS diferido a pre-deploy según la política de Sprint 0.
+
+2. **Helper de validación de origen** (`src/lib/api/validate-widget-origin.ts`):
+   - Función `validateWidgetOrigin(headers: Headers, allowedDomains: string[]): { ok: boolean; reason?: string }`.
+   - Si `allowedDomains.length === 0` → `{ ok: true }` (modo legacy + log warning una vez por widget en la sesión, no por cada request).
+   - Si poblado: extraer host de `Origin` (preferente) o `Referer`. Si ambos null → rechaza.
+   - Comparar host vs cada elemento de `allowedDomains` (case-insensitive, sin path, sin protocolo). Soportar wildcards de subdominio (`*.ejemplo.com`).
+
+3. **Helper de rate limit** (`src/lib/api/rate-limit-widget.ts`):
+   - Cliente `ioredis` ya inicializado en `src/lib/queue/redis.ts` o similar (reusar el de BullMQ; verificar path real).
+   - Función `rateLimitWidget(widgetId: string, clientIp: string, perMinute: number): Promise<{ allowed: boolean; remaining: number }>`.
+   - Implementación sliding window simple: `INCR rl:widget:${widgetId}:${clientIp}` + `EXPIRE key 60` (MULTI/EXEC para atomicidad).
+   - Si valor INCR > `perMinute` → `{ allowed: false }`.
+   - **Fallback en caso de error Redis**: log error + `{ allowed: true }` (no bloquear el chat por fallo de infra; el rate limit es defense-in-depth, no la única capa).
+
+4. **Aplicar en `src/lib/actions/widget.ts:getChatbotResponse`**:
+   - Importar `headers` de `next/headers`.
+   - Tras leer `widget` desde DB y antes del context assembly:
+
+     ```ts
+     const reqHeaders = await headers();
+     const originCheck = validateWidgetOrigin(reqHeaders, widget.allowed_domains ?? []);
+     if (!originCheck.ok) {
+       return { success: false, error: `Origin not allowed: ${originCheck.reason}` };
+     }
+     const clientIp = (reqHeaders.get('x-forwarded-for') ?? '').split(',')[0]?.trim() || 'unknown';
+     const { allowed } = await rateLimitWidget(widgetId, clientIp, widget.rate_limit_per_minute ?? 5);
+     if (!allowed) {
+       return { success: false, error: 'Rate limit exceeded' };
+     }
+     ```
+
+   - El `console.log` actual de la línea 30 NO se elimina aquí (eso es 2-37 en Sprint 1). Sólo se añade el guard al inicio.
+
+5. **Tests** (en `tests/e2e/sprint-0-close/` o equivalente del estilo del Sprint 0):
+   - Widget con `allowed_domains=[]` → respuesta normal (legacy mode).
+   - Widget con `allowed_domains=['site.example.com']` + request sin `Origin`/`Referer` → 403.
+   - Widget con `allowed_domains=['site.example.com']` + request con `Origin: https://other.com` → 403.
+   - Widget con `allowed_domains=['site.example.com']` + request con `Origin: https://site.example.com` → 200.
+   - Rate limit: 6 requests en <60s con `rate_limit_per_minute=5` → la 6ª devuelve `Rate limit exceeded`.
+   - Tests unitarios para `validateWidgetOrigin()` con wildcards (`*.ejemplo.com`) y edge cases (Origin con puerto, http vs https).
+
+6. **Documentación** (mínimo, una nota en `docs/architecture/widget-security.md` nuevo o en `dev-onboarding.md`):
+   - Explicar el modo legacy vs enforce y cómo poblar `allowed_domains` desde la UI admin (la UI admin per se se hará en una tarea posterior — 2-XX o Fase 4, según prioridad).
+
+7. **Verificación**: typecheck + lint + build limpios. Smoke manual: hacer una request al widget desde el navegador (Origin `localhost:8500`) y confirmar que sigue funcionando.
+
 ## Todo List
 
 - [ ] 1-22: Crear migración SQL `tenants.allowed_migrate_hosts text[] DEFAULT '{}'`
@@ -320,6 +435,15 @@ Proceso:
 - [ ] 1-26: Confirmar `/api/orchestration/deploy` sin auth → 401 (middleware no bypasseable)
 - [ ] 1-26: Si regresión → rollback next@16.1.6 + reportar bloqueante
 - [ ] 1-26: Marcar 2-27 en Sprint 1 como "MOVIDA A 1-26"
+- [ ] **1-27: Crear migración SQL `web_widgets.allowed_domains text[] DEFAULT '{}'` + `rate_limit_per_minute integer DEFAULT 5`**
+- [ ] 1-27: Aplicar migración contra Supabase local (`docker exec postgres psql ...`)
+- [ ] 1-27: Crear `src/lib/api/validate-widget-origin.ts` con soporte wildcards y modo legacy
+- [ ] 1-27: Crear `src/lib/api/rate-limit-widget.ts` con sliding window Redis + fallback ALLOW si Redis caído
+- [ ] 1-27: Aplicar `validateWidgetOrigin` + `rateLimitWidget` al inicio de `getChatbotResponse` en `widget.ts`
+- [ ] 1-27: Tests E2E — legacy ALLOW, enforce DENY/ALLOW, rate limit 429 al 6º request
+- [ ] 1-27: Tests unitarios `validateWidgetOrigin` con wildcards + edge cases
+- [ ] 1-27: Documentar modo legacy vs enforce en `docs/architecture/widget-security.md` (o similar)
+- [ ] 1-27: Smoke manual — widget desde `localhost:8500` sigue funcionando (modo legacy)
 - [ ] Typecheck global: `npm run typecheck` → 0 errores
 
 ## Success Criteria
@@ -334,6 +458,11 @@ Proceso:
 - `npm list next` muestra `next@16.2.6` (1-26).
 - Smoke test de ruta protegida sin sesión → redirect a login, NO bypass (1-26).
 - `npm audit` sin CVEs relacionados con `next@16.1.6` tras el upgrade (1-26).
+- **1-27**: `web_widgets` con `allowed_domains=[]` → flujo widget normal (legacy ALLOW).
+- **1-27**: `web_widgets` con `allowed_domains=['x.com']` + request sin Origin/Referer → `success:false, error:'Origin not allowed: ...'`.
+- **1-27**: `web_widgets` con `allowed_domains=['x.com']` + request con `Origin: https://x.com` → respuesta normal.
+- **1-27**: 6 requests al mismo widget desde la misma IP en <60s con `rate_limit_per_minute=5` → 6ª devuelve `error:'Rate limit exceeded'`.
+- **1-27**: Redis caído → flujo widget no se rompe (fallback ALLOW + log).
 
 ## Risk Assessment
 

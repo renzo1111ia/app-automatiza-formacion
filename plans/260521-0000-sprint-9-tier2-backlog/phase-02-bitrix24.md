@@ -5,7 +5,7 @@ priority: P3
 estimation: 35-50h (con SP-8) / 60-80h (sin SP-8)
 phase_id: 9-02
 sprint_id: SP-9
-branch: feature/sp-9-bitrix24-adapter (al activarse)
+branch: feature/sprint-09-bitrix24-adapter (al activarse)
 created: 2026-05-21
 ---
 
@@ -71,11 +71,11 @@ plans/YYMMDD-HHmm-sprint-9-02-bitrix24/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Rate limit 2 req/s muy bajo | Alta | Medio | Throttle 1.5 req/s + queue |
-| API muy verbosa, payloads complejos | Media | Medio | FieldMapper robusto con custom fields |
-| Subdomain variable por tenant | Alta | Bajo | Almacenar URL completa en `crm_connections` |
+| Riesgo                              | Prob  | Impacto | Mitigación                                  |
+| ----------------------------------- | ----- | ------- | ------------------------------------------- |
+| Rate limit 2 req/s muy bajo         | Alta  | Medio   | Throttle 1.5 req/s + queue                  |
+| API muy verbosa, payloads complejos | Media | Medio   | FieldMapper robusto con custom fields       |
+| Subdomain variable por tenant       | Alta  | Bajo    | Almacenar URL completa en `crm_connections` |
 
 ## Next Steps
 

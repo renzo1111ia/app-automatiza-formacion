@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-10h
 phase_id: 5-02
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `npm install jsforce@^3.10.15` tras ADR aprobado
 - Migration: columnas `sf_instance_url`, `sf_environment`, `sf_api_version` en `crm_connections`
 - Helper `getJsforceConnection(tenantId)`:
@@ -42,6 +43,7 @@ created: 2026-05-21
 - `testConnection()`: `conn.query('SELECT Id FROM User LIMIT 1')`
 
 **No funcionales:**
+
 - Pool de conexiones NO necesario (jsforce stateless por instancia)
 - Logging mínimo (no payload SOQL completo)
 
@@ -64,10 +66,12 @@ DB migration 2026XXXX:
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/salesforce/salesforce-connection.ts`
 - `src/db/migrations/2026XXXX_crm_connections_salesforce_columns.sql`
 
 **Modificar:**
+
 - `package.json` — añadir `jsforce@^3.10.15`
 - `package-lock.json` actualizado
 - `src/lib/schemas/integrations-schema.ts` (campos SF)
@@ -109,11 +113,11 @@ DB migration 2026XXXX:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| jsforce ESM incompatible con Next server | Baja | Alto | Si falla, usar `import * as jsforce from 'jsforce/lib/...'` o dynamic import |
-| `on('refresh')` no se dispara como esperado | Media | Medio | Test integration que fuerza expiración |
-| Migration no idempotente | Baja | Bajo | `ADD COLUMN IF NOT EXISTS` |
+| Riesgo                                      | Prob  | Impacto | Mitigación                                                                   |
+| ------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------- |
+| jsforce ESM incompatible con Next server    | Baja  | Alto    | Si falla, usar `import * as jsforce from 'jsforce/lib/...'` o dynamic import |
+| `on('refresh')` no se dispara como esperado | Media | Medio   | Test integration que fuerza expiración                                       |
+| Migration no idempotente                    | Baja  | Bajo    | `ADD COLUMN IF NOT EXISTS`                                                   |
 
 ## Security Considerations
 

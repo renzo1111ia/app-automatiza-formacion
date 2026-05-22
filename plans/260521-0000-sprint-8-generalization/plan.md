@@ -4,7 +4,7 @@ description: "Plan operativo Sprint 8: análisis de duplicaciones tras 4+ adapte
 status: pending
 priority: P3
 effort: 20-40h
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 sprint_id: SP-8
 version_target: v0.5.4 (patch refactor)
 tags: [refactor, adapter-pattern, generalization, sprint-8, yagni]
@@ -13,13 +13,13 @@ created: 2026-05-21
 
 # Sprint 8 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-8` |
-| Versión objetivo | `v0.5.4` (patch — refactor sin nueva funcionalidad) |
-| Estado | Pendiente |
-| Estimación total | ~20-40h |
-| Rama sugerida | `feature/sp-8-adapter-generalization` |
+| Campo               | Valor                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| Sprint ID           | `SP-8`                                                                             |
+| Versión objetivo    | `v0.5.4` (patch — refactor sin nueva funcionalidad)                                |
+| Estado              | Pendiente                                                                          |
+| Estimación total    | ~20-40h                                                                            |
+| Rama sugerida       | `feature/sprint-08-adapter-generalization`                                         |
 | Source phase legacy | `../260520-1342-sprint-4-post-mvp-crms/phase-05-adapter-pattern-generalization.md` |
 
 ## Contexto
@@ -39,13 +39,13 @@ no lo asumido. Hasta tener 4 adapters productivos no se ejecuta.
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | Análisis de duplicaciones reales en N adapters | 3-6h | Pendiente | [phase-01](phase-01-analisis-duplicaciones.md) |
-| 2 | Refactor IntegrationAdapter base + FieldMapper + WritePolicy + AdapterError | 8-14h | Pendiente | [phase-02](phase-02-refactor-base.md) |
-| 3 | CRM factory dinámico + refactor de cada adapter existente | 4-10h | Pendiente | [phase-03](phase-03-factory-refactor-adapters.md) |
-| 4 | Docs (ADR) + contract.test.ts + verificar 0 regresiones | 3-6h | Pendiente | [phase-04](phase-04-docs-contract-test.md) |
-| 5 | Cierre Sprint 8 (typecheck/lint/build + 0 regresiones + PR) | 2-4h + bugs | Pendiente | [phase-05](phase-05-cierre-sprint.md) |
+| #   | Fase                                                                        | Estimación  | Estado    | Archivo                                           |
+| --- | --------------------------------------------------------------------------- | ----------- | --------- | ------------------------------------------------- |
+| 1   | Análisis de duplicaciones reales en N adapters                              | 3-6h        | Pendiente | [phase-01](phase-01-analisis-duplicaciones.md)    |
+| 2   | Refactor IntegrationAdapter base + FieldMapper + WritePolicy + AdapterError | 8-14h       | Pendiente | [phase-02](phase-02-refactor-base.md)             |
+| 3   | CRM factory dinámico + refactor de cada adapter existente                   | 4-10h       | Pendiente | [phase-03](phase-03-factory-refactor-adapters.md) |
+| 4   | Docs (ADR) + contract.test.ts + verificar 0 regresiones                     | 3-6h        | Pendiente | [phase-04](phase-04-docs-contract-test.md)        |
+| 5   | Cierre Sprint 8 (typecheck/lint/build + 0 regresiones + PR)                 | 2-4h + bugs | Pendiente | [phase-05](phase-05-cierre-sprint.md)             |
 
 **Total**: 20-40h (coincide con rango original).
 
@@ -82,11 +82,11 @@ Final                                     │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Sobreabstracción → interfaz que no encaja con todos | Media | Alto | Interfaz estrecha (7 métodos max), opcionales |
-| Regresión en producción por refactor | Baja | Alto | 0 cambios de comportamiento, tests antes/después |
-| Sprint bloqueado si <4 adapters listos | Media | Bajo | Sprint 8 es P3 — diferible sin impacto funcional |
+| Riesgo                                              | Prob  | Impacto | Mitigación                                       |
+| --------------------------------------------------- | ----- | ------- | ------------------------------------------------ |
+| Sobreabstracción → interfaz que no encaja con todos | Media | Alto    | Interfaz estrecha (7 métodos max), opcionales    |
+| Regresión en producción por refactor                | Baja  | Alto    | 0 cambios de comportamiento, tests antes/después |
+| Sprint bloqueado si <4 adapters listos              | Media | Bajo    | Sprint 8 es P3 — diferible sin impacto funcional |
 
 ## Notas SDKs
 

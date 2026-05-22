@@ -5,7 +5,7 @@ priority: P2
 estimation: 4-12h + bugs
 phase_id: SP-6-CLOSE
 sprint_id: SP-6
-branch: feature/sp-6-ghl-adapter
+branch: feature/sprint-06-ghl-adapter
 created: 2026-05-21
 ---
 
@@ -55,7 +55,7 @@ npm run test
 
 ### SP-6-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-6-ghl-adapter` → `developer`
+- [ ] PR `feature/sprint-06-ghl-adapter` → `developer`
 - [ ] Bump `v0.5.2`
 - [ ] Update RoadMap + changelog
 - [ ] Tag `v0.5.2`
@@ -71,13 +71,13 @@ npm run test
 
 ## Estimación
 
-| Tarea | Estimación |
-|-------|-----------|
-| CLOSE-1 | 1h |
-| CLOSE-2 | 2-3h |
-| CLOSE-3 | 1-2h |
-| CLOSE-4 | variable |
-| CLOSE-5 | 30min |
+| Tarea     | Estimación      |
+| --------- | --------------- |
+| CLOSE-1   | 1h              |
+| CLOSE-2   | 2-3h            |
+| CLOSE-3   | 1-2h            |
+| CLOSE-4   | variable        |
+| CLOSE-5   | 30min           |
 | **Total** | **4-7h + bugs** |
 
 ## Success Criteria
@@ -90,10 +90,10 @@ npm run test
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Sandbox GHL limits hit | Baja | Bajo | Account dedicada |
-| Bug late discovery | Media | Medio | Buffer en estimación |
+| Riesgo                 | Prob  | Impacto | Mitigación           |
+| ---------------------- | ----- | ------- | -------------------- |
+| Sandbox GHL limits hit | Baja  | Bajo    | Account dedicada     |
+| Bug late discovery     | Media | Medio   | Buffer en estimación |
 
 ## Security Considerations
 

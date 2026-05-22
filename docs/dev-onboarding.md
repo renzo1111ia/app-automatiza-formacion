@@ -62,11 +62,55 @@ npm install
 npm run dev
 ```
 
-App en `http://localhost:3000`. Worker BullMQ en proceso aparte:
+App en `http://localhost:8500` (puerto fijo del proyecto). Worker BullMQ en proceso aparte:
 
 ```powershell
 node worker.js
 ```
+
+### 2.6 Puertos del proyecto (fijos)
+
+**Política**: los puertos del proyecto están **fijados de forma permanente** en `package.json` y configs. Si el `npm run dev` se queja de "port in use", **NO dejes que Next salte a otro puerto** — mata el proceso que ocupa el 8500 y vuelve a intentar. Cualquier URL hardcoded del proyecto (OAuth callbacks, Supabase `site_url`, redirects, tests) asume estos puertos.
+
+| Puerto | Servicio                           | Definido en                                                                                    |
+| ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `8500` | **Next.js dev server (dashboard)** | `package.json` (`next dev -p 8500` / `next start -p 8500`), `Dockerfile`, `docker-compose.yml` |
+| `8100` | Supabase API gateway (Kong)        | Docker container `supabase_kong_*`                                                             |
+| `8200` | Supabase Postgres                  | Docker container `supabase_db_*`                                                               |
+| `8300` | Supabase Studio (UI)               | Docker container `supabase_studio_*`                                                           |
+| `8350` | Supabase Analytics (Logflare)      | Docker container `supabase_analytics_*`                                                        |
+| `8400` | Inbucket / Mailpit (mail local)    | Docker container `supabase_inbucket_*`                                                         |
+| `6379` | Redis (BullMQ queues)              | `docker-compose.dev.yml`                                                                       |
+
+**Para cambiar el puerto del dashboard** (no debería hacer falta nunca, pero por si acaso), hay que tocar en bloque:
+
+- `package.json` scripts `dev` y `start` (`-p XXXX`)
+- `.env.local` → `NEXTAUTH_URL`, `HUBSPOT_REDIRECT_URI`, `ZOHO_REDIRECT_URI`, `NEXT_PUBLIC_APP_URL`
+- `.env.example` (mismo conjunto)
+- `Dockerfile` → `EXPOSE` + `ENV PORT`
+- `docker-compose.yml` → mapping `ports:` + `PORT=`
+- `playwright.config.ts` + `tests/e2e/core/sprint-0-security.spec.ts` → `baseURL` fallback
+- `supabase/config.toml` → `site_url`, `additional_redirect_urls`, `rp_origins`
+- `src/lib/actions/auth.ts` → fallback origin
+- `src/lib/services/google-sheets-service.ts`, `src/app/api/integrations/google/{auth,callback}/route.ts` → fallbacks `NEXT_PUBLIC_APP_URL`
+- `docs/testeos-manual.md`, `docs/dev-local-setup.md`, `README.md` y este mismo doc
+- Re-registrar OAuth redirect URIs en HubSpot / Zoho / Google developer consoles
+
+### 2.7 Credenciales de producción del cliente — política de aislamiento
+
+El equipo de desarrollo del cliente (Automatiza Formación) entregó (22-05-2026) un bundle de credenciales reales de producción en [docs/Docs-entrega-clienta/Estructura/app data doc/env_local_setup.md](./Docs-entrega-clienta/Estructura/app data doc/env_local_setup.md) (folder ignorado por git, regla `.gitignore:64`).
+
+**Política**: estas credenciales **NO** son el entorno local del dev. El local sigue siendo el Supabase Docker self-hosted en `localhost:8100/8200/8300`. La razón:
+
+- Su `SUPABASE_SERVICE_ROLE_KEY` bypassa toda RLS — control total sobre la BD del cliente.
+- Los scripts `npm run db:reset`, `npm run db:seed-demo`, `scripts/seed*.ts`, `scripts/migrate-*.ts`, `npm run test:e2e` están diseñados para BD local y **destruirían/contaminarían producción** si el `.env.local` apuntara allí.
+- El audit identificó 4 vulnerabilidades RLS activas en producción (Sprint 0 las arregla). No es momento de mezclar entornos.
+
+**Lo que sí aplicamos a `.env.local`**: únicamente la `OPENAI_API_KEY` del bundle, porque es independiente de la BD (sólo inferencia). Coste por uso va a la cuenta del cliente — evita bucles de tests E2E que invoquen LLM.
+
+**Lo que NO aplicamos**: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `NODE_TLS_REJECT_UNAUTHORIZED=0` del bundle. Esas variables se guardan en [`.env.production-readonly`](../.env.production-readonly) con prefijo `PROD_` para que ningún script las lea por accidente. Sólo para consultas read-only puntuales con cliente SQL externo (DBeaver, Supabase Studio del cliente con cuenta delegada).
+
+**Si necesitas mirar datos reales de producción**: pide al cliente acceso delegado IAM al Supabase Studio (Sección 5.2 del `roadmap_status_handover.md`). Mejor que compartir service_role_key.
 
 ## 3. Trabajo con Claude Code
 
@@ -98,7 +142,7 @@ Asegúrate de tener instalados los plugins oficiales referenciados en `.claude/s
 ### 3.3 Cómo trabajar (resumen)
 
 1. **Lee el plan activo**: `plans/YYMMDD-HHmm-slug/` más reciente.
-2. **Lanza el orquestador**: pídele al manager que coordine. Ejemplo: *"@manager arranca Fase 1"*.
+2. **Lanza el orquestador**: pídele al manager que coordine. Ejemplo: _"@manager arranca Fase 1"_.
 3. El manager delega a especialistas (`af-agents:database`, `:api`, `:code`, `:testing`...) en paralelo cuando puede.
 4. **NUNCA implementes código directamente desde el orquestador** — siempre vía Task tool al especialista.
 5. Al cerrar fase, el Phase Completion Protocol corre automático: typecheck + lint + build + tests + browser tests si UI.
@@ -121,6 +165,7 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 - Un CI guard (`.github/workflows/staging-main-purity-check.yml`) bloquea cualquier intento de meter docs/plans/.claude en `staging` o `main`.
 
 **Versionado**:
+
 - `v0.0.0` ahora.
 - Patch durante sprint en curso → `v0.0.x`.
 - Sprint cerrado → bump a `v0.x.0`.
@@ -141,20 +186,20 @@ Tags los crea el script `promote.ps1` automáticamente al promocionar a `main`.
 
 ## 6. Recursos clave
 
-| Recurso | Dónde |
-| --- | --- |
-| Spec autoritaria cliente | `docs/Docs-entrega-clienta/` |
-| Audit completo | `docs/audit/findings-summary.md` |
-| Decisiones del Auditor | `docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md` |
-| Stack confirmado | `docs/audit/STACK-TECNOLOGICO.md` |
-| Plan rearmado (5 fases) | Ver R-020-refinement-v2 en DECISIONES |
-| Backlog | `docs/roadmap/deep-improvement-backlog.md` |
-| Plans activos | `plans/YYMMDD-HHmm-slug/` |
-| Reports de subagentes | `plans/*/reports/` |
+| Recurso                  | Dónde                                        |
+| ------------------------ | -------------------------------------------- |
+| Spec autoritaria cliente | `docs/Docs-entrega-clienta/`                 |
+| Audit completo           | `docs/audit/findings-summary.md`             |
+| Decisiones del Auditor   | `docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md` |
+| Stack confirmado         | `docs/audit/STACK-TECNOLOGICO.md`            |
+| Plan rearmado (5 fases)  | Ver R-020-refinement-v2 en DECISIONES        |
+| Backlog                  | `docs/roadmap/deep-improvement-backlog.md`   |
+| Plans activos            | `plans/YYMMDD-HHmm-slug/`                    |
+| Reports de subagentes    | `plans/*/reports/`                           |
 
 ## 7. Si te atascas
 
-1. Pregunta al manager: *"@manager status"*.
+1. Pregunta al manager: _"@manager status"_.
 2. Activa skill `blocker` para registrar el bloqueo con impacto.
 3. Si es bug: lanza subagente `debugger` para root cause analysis.
 4. Si nada de lo anterior: escala al lead o a Javier (Auditor).
@@ -163,16 +208,16 @@ Tags los crea el script `promote.ps1` automáticamente al promocionar a `main`.
 
 Cada dev puede tener su propia política, pero el proyecto recomienda:
 
-| Modelo | Cuándo |
-| --- | --- |
-| Haiku | Docs, listados, sync, informes con datos ya investigados |
-| Sonnet | Código CRUD, tests, refactor sencillo, librerías mainstream |
-| Opus | Concurrencia, seguridad cripto, decisiones arquitectónicas, research profundo |
+| Modelo | Cuándo                                                                        |
+| ------ | ----------------------------------------------------------------------------- |
+| Haiku  | Docs, listados, sync, informes con datos ya investigados                      |
+| Sonnet | Código CRUD, tests, refactor sencillo, librerías mainstream                   |
+| Opus   | Concurrencia, seguridad cripto, decisiones arquitectónicas, research profundo |
 
 **Nunca Opus por defecto.** Quota Fallback al 80% según política global.
 
 ---
 
-**Última actualización**: 20-05-2026.
+**Última actualización**: 21-05-2026 (sección 2.6 — puertos fijos del proyecto).
 **Mantenedor**: Javier HP (Auditor).
 **Contacto**: admin@2you.ai.

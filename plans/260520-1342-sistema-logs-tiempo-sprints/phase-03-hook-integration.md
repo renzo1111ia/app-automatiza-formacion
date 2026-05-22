@@ -39,12 +39,12 @@ El hook es un **PostToolUse** (Edit|Write|MultiEdit). Funciona así:
 
 ### Lo que el hook NO hace (gaps detectados)
 
-| Gap | Impacto para productivity |
-|-----|--------------------------|
-| No detecta cambios de estado (🔘→🟡 etc.) — solo detecta ediciones de archivos de código | Productivity NO se dispara automáticamente en transiciones de estado |
-| No invoca agentes directamente — solo hints de texto | La invocación de productivity es 100% manual (vía manager) |
-| No extrae task_id del contexto — el assistant lo infiere del hint | El contrato de datos hacia productivity requiere que el manager lo pase explícitamente |
-| Solo cubre ediciones a `src/` — no detecta transiciones que no implican edición de código | Transiciones 🟠→🔵→🟢 (push/merge) no tienen hook |
+| Gap                                                                                       | Impacto para productivity                                                              |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| No detecta cambios de estado (🔘→🟡 etc.) — solo detecta ediciones de archivos de código  | Productivity NO se dispara automáticamente en transiciones de estado                   |
+| No invoca agentes directamente — solo hints de texto                                      | La invocación de productivity es 100% manual (vía manager)                             |
+| No extrae task_id del contexto — el assistant lo infiere del hint                         | El contrato de datos hacia productivity requiere que el manager lo pase explícitamente |
+| Solo cubre ediciones a `src/` — no detecta transiciones que no implican edición de código | Transiciones 🟠→🔵→🟢 (push/merge) no tienen hook                                      |
 
 ## Contrato actual de invocación (manager → productivity)
 
@@ -66,7 +66,7 @@ event:        "🟡|🟠|🔵|🟢"            # Nuevo estado tras la transició
 timestamp:    "20-05-2026 09:15"         # Formato DD-MM-YYYY HH:MM
 dev_name:     "javier"                   # Quien hace la transición
 tiempo_real?  "3h 30min"                 # Solo para evento 🟠 (cuando aplica)
-branch?:      "feature/sp-1-fix-worker"  # Solo para evento 🔵
+branch?:      "feature/sprint-01-fix-worker"  # Solo para evento 🔵
 ```
 
 ## Cambio necesario en el hook (documentado, NO implementado aún)
@@ -99,16 +99,17 @@ Parámetros que el hint debe incluir:
 ### Alcance para Sprint 0
 
 Para Sprint 0, el flujo **manual** (sin nuevo hook) es suficiente:
+
 - El manager invoca `roadmap-keeper` + `productivity` en paralelo en cada transición.
 - No bloquea el arranque del sprint.
 - El nuevo hook `af-productivity-logger.cjs` puede implementarse en Sprint 1 como mejora.
 
 ## Decisión de implementación
 
-| Opción | Esfuerzo | Cuando |
-|--------|---------|--------|
-| Flujo manual: manager invoca ambos agentes | 0h extra | Sprint 0 (ahora) |
-| Nuevo hook `af-productivity-logger.cjs` | ~2h | Sprint 1 (mejora) |
+| Opción                                     | Esfuerzo | Cuando            |
+| ------------------------------------------ | -------- | ----------------- |
+| Flujo manual: manager invoca ambos agentes | 0h extra | Sprint 0 (ahora)  |
+| Nuevo hook `af-productivity-logger.cjs`    | ~2h      | Sprint 1 (mejora) |
 
 **Decisión: flujo manual para Sprint 0. Hook automático en Sprint 1.**
 
@@ -121,7 +122,7 @@ Para Sprint 0, el flujo **manual** (sin nuevo hook) es suficiente:
 
 ## Risk assessment
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|--------|-------------|---------|------------|
-| Manager olvida invocar productivity al hacer transiciones | Media | Medio | roadmap-keeper puede emitir DONE_WITH_CONCERNS recordando al manager invocar productivity |
-| Timestamp desincronizado entre roadmap-keeper y productivity | Baja | Bajo | Manager pasa el mismo timestamp a ambos agentes en la misma invocación |
+| Riesgo                                                       | Probabilidad | Impacto | Mitigación                                                                                |
+| ------------------------------------------------------------ | ------------ | ------- | ----------------------------------------------------------------------------------------- |
+| Manager olvida invocar productivity al hacer transiciones    | Media        | Medio   | roadmap-keeper puede emitir DONE_WITH_CONCERNS recordando al manager invocar productivity |
+| Timestamp desincronizado entre roadmap-keeper y productivity | Baja         | Bajo    | Manager pasa el mismo timestamp a ambos agentes en la misma invocación                    |

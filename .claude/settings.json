@@ -72,6 +72,6 @@
       "Read(./.env.staging)"
     ]
   },
-  "model": "inherit",
+
   "effortLevel": "high"
 }

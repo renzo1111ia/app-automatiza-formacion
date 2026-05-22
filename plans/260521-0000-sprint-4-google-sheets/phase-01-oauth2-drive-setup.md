@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-10h
 phase_id: 4-01
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -35,6 +35,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Endpoint `GET /api/oauth/google-sheets/start` → redirige a consent screen Google
 - Endpoint `GET /api/oauth/google-sheets/callback` → intercambia code → tokens y persiste
 - Función `getAuthenticatedClient(tenantId)` reutilizable por SheetsAdapter
@@ -42,6 +43,7 @@ created: 2026-05-21
 - Persistencia de `access_token`, `refresh_token`, `expiry_date` cifrados
 
 **No funcionales:**
+
 - Scope mínimo: `drive.file` (NO `drive` completo)
 - Tokens en `crm_connections.encrypted_credentials` (AES-256 ya implementado en Sprint 1)
 - RLS multi-tenant: cada tenant solo accede a sus tokens
@@ -65,11 +67,13 @@ src/app/api/oauth/google-sheets/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/sheets/sheets-oauth.ts`
 - `src/app/api/oauth/google-sheets/start/route.ts`
 - `src/app/api/oauth/google-sheets/callback/route.ts`
 
 **Depende de (Sprint 1, lectura):**
+
 - `src/lib/repositories/integrations-repository.ts`
 - `src/lib/crypto/encrypt.ts` (cifrado AES-256 tokens)
 
@@ -107,11 +111,11 @@ src/app/api/oauth/google-sheets/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Consent screen no aprobado en GCP | Media | Alto | Iniciar verificación GCP antes del sprint |
-| Scope `drive` solicitado por error | Baja | Alto | Lint check en CI sobre scopes |
-| Refresh token no devuelto (Google solo lo da en primer consent) | Media | Alto | `access_type=offline` + `prompt=consent` forzado |
+| Riesgo                                                          | Prob  | Impacto | Mitigación                                       |
+| --------------------------------------------------------------- | ----- | ------- | ------------------------------------------------ |
+| Consent screen no aprobado en GCP                               | Media | Alto    | Iniciar verificación GCP antes del sprint        |
+| Scope `drive` solicitado por error                              | Baja  | Alto    | Lint check en CI sobre scopes                    |
+| Refresh token no devuelto (Google solo lo da en primer consent) | Media | Alto    | `access_type=offline` + `prompt=consent` forzado |
 
 ## Security Considerations
 

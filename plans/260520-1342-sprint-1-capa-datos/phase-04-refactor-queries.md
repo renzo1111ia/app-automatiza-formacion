@@ -119,3 +119,13 @@ Mismo patrón para server actions y workers.
 
 - Paralelizable con Fase 4 (type safety) — tocan archivos distintos
 - Fase 7 (testing) verifica los endpoints refactorizados
+
+---
+
+## ~~Tarea adicional 2-36~~ — **MOVIDA al Sprint Costes-LLM (post-Sheets `v0.5.1`) como C-03**
+
+**Decisión 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`. Como 2-36 (`token_usage` en `chat_messages`) sólo aporta valor cuando hay dashboard de costes que lo consuma, se traslada al Sprint Costes-LLM post-MVP junto con el dashboard (era 4-04 Sprint 3) y la tabla `llm_usage_logs` + tracker LangChain (era parte de 4-03 Sprint 3).
+
+**Ver detalle en:** [plans/260522-1430-sprint-costes-llm-post-mvp/phase-03-token-usage-chat-messages.md](../260522-1430-sprint-costes-llm-post-mvp/phase-03-token-usage-chat-messages.md)
+
+**Impacto en Sprint 1:** Bloque 2.4 (Refactor queries) vuelve de 20h → 18h (3 tareas: 2-19, 2-20, 2-21). Subtotal Sprint 1 vuelve de 179h → 177h.

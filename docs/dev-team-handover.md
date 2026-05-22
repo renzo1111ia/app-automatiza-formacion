@@ -35,7 +35,7 @@ Todo lo que el equipo de desarrollo necesita saber para trabajar en este proyect
 14. [MCP servers activos](#14-mcp-servers-activos)
 15. [Manejo de secretos](#15-manejo-de-secretos)
 16. [Páginas de ayuda al admin](#16-páginas-de-ayuda-al-admin)
-16.bis. [RoadMap y máquina de estados de tareas](#16bis-roadmap-y-máquina-de-estados-de-tareas)
+    16.bis. [RoadMap y máquina de estados de tareas](#16bis-roadmap-y-máquina-de-estados-de-tareas)
 17. [Glosario](#17-glosario)
 
 ---
@@ -66,6 +66,7 @@ node worker.js                             # worker BullMQ en paralelo
 ```
 
 Plugins Claude Code:
+
 ```
 /plugin install context7@claude-plugins-official
 /plugin install playwright@claude-plugins-official
@@ -81,14 +82,15 @@ Ver [docs/release-process.md](release-process.md) para el detalle. Resumen:
 feature/* → PR → developer → /staging X.Y.Z → staging → /staging-main X.Y.Z → main
 ```
 
-| Rama | Qué versiona | Quién mueve |
-| --- | --- | --- |
-| `feature/*` | Todo lo del repo | Cualquier dev |
-| `developer` | TODO el scaffold (`.claude/`, `docs/`, `plans/`, código, `.env.example`) | Vía PR aprobado por lead |
-| `staging` | **SÓLO código** + `.env.example` + `.github/` | Sólo con `/staging X.Y.Z` o promote.ps1, orden explícita del usuario |
-| `main` | **SÓLO código** + `.env.example` + `.github/` | Sólo con `/staging-main X.Y.Z`, validación previa del cliente, orden explícita |
+| Rama        | Qué versiona                                                             | Quién mueve                                                                    |
+| ----------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `feature/*` | Todo lo del repo                                                         | Cualquier dev                                                                  |
+| `developer` | TODO el scaffold (`.claude/`, `docs/`, `plans/`, código, `.env.example`) | Vía PR aprobado por lead                                                       |
+| `staging`   | **SÓLO código** + `.env.example` + `.github/`                            | Sólo con `/staging X.Y.Z` o promote.ps1, orden explícita del usuario           |
+| `main`      | **SÓLO código** + `.env.example` + `.github/`                            | Sólo con `/staging-main X.Y.Z`, validación previa del cliente, orden explícita |
 
 Versionado SemVer:
+
 - `v0.0.x` patches dentro de sprint.
 - `v0.x.0` cierre de sprint.
 - `v1.0.0` MVP completo (post Fase 3, pre Fase 4).
@@ -99,17 +101,17 @@ Versionado SemVer:
 
 Documento autoritativo: [docs/audit/STACK-TECNOLOGICO.md](audit/STACK-TECNOLOGICO.md).
 
-| Capa | Tecnología |
-| --- | --- |
-| **Frontend** | Next.js 16, React 19, Tailwind, shadcn/ui (probable) |
-| **Backend** | Next.js App Router, BullMQ, `worker.js` separado |
-| **BD** | PostgreSQL via **Supabase self-hosted** en **Easypanel** (R-023). `@supabase/ssr` + **Zod** + **Repository pattern** + RLS multi-tenant. **SIN ORM nuevo** (decisión confirmada — ver `project_stack_data_layer.md` + `plans/20260519-1200-rls-multitenant-hardening/research/stack-decision-no-orm.md`). |
-| **LLM** | LangChain + Anthropic + OpenAI + Google Genai + AWS Bedrock |
-| **Voz** | Retell + Ultravox (abstracción `VoiceProvider` — R-016) |
-| **CRM MVP (Fase 2)** | HubSpot + Zoho |
-| **CRM Fase 4** | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign |
-| **Tests** | Vitest (unit) + Playwright (E2E) |
-| **Deploy** | Easypanel self-hosted |
+| Capa                 | Tecnología                                                                                                                                                                                                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**         | Next.js 16, React 19, Tailwind, shadcn/ui (probable)                                                                                                                                                                                                                                                      |
+| **Backend**          | Next.js App Router, BullMQ, `worker.js` separado                                                                                                                                                                                                                                                          |
+| **BD**               | PostgreSQL via **Supabase self-hosted** en **Easypanel** (R-023). `@supabase/ssr` + **Zod** + **Repository pattern** + RLS multi-tenant. **SIN ORM nuevo** (decisión confirmada — ver `project_stack_data_layer.md` + `plans/20260519-1200-rls-multitenant-hardening/research/stack-decision-no-orm.md`). |
+| **LLM**              | LangChain + Anthropic + OpenAI + Google Genai + AWS Bedrock                                                                                                                                                                                                                                               |
+| **Voz**              | Retell + Ultravox (abstracción `VoiceProvider` — R-016)                                                                                                                                                                                                                                                   |
+| **CRM MVP (Fase 2)** | HubSpot + Zoho                                                                                                                                                                                                                                                                                            |
+| **CRM Fase 4**       | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign                                                                                                                                                                                                                                   |
+| **Tests**            | Vitest (unit) + Playwright (E2E)                                                                                                                                                                                                                                                                          |
+| **Deploy**           | Easypanel self-hosted                                                                                                                                                                                                                                                                                     |
 
 **Excluido del stack** (no introducir): Prisma, Dokploy, Airtable.
 
@@ -119,13 +121,13 @@ Documento autoritativo: [docs/audit/STACK-TECNOLOGICO.md](audit/STACK-TECNOLOGIC
 
 Decisión vigente: [R-020-refinement-v2](audit/DECISIONES-AUDITOR-JAVIER-HP.md#r-020-refinement-v2).
 
-| Fase | Contenido | Semanas | Status |
-| --- | --- | --- | --- |
-| **0 — Sprint 0** | Hotfixes seguridad (4 vulnerabilidades RLS + tokens OAuth + Kong EOL) | 1-2 sem | Pendiente |
-| **1 — Capa de datos** | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | 3-4 sem | Pendiente |
-| **2 — Adapter layer + 2 CRMs (MVP)** | HubSpot + Zoho adapters + UI admin de conexión | 2-3 sem | Pendiente |
-| **3 — Hardening** | Tests E2E, observabilidad, dashboards costes | 2-3 sem | Pendiente |
-| **4 — Post-release** | Sheets bidireccional + Salesforce + GHL + ActiveCampaign | 4-7 sem | Futuro |
+| Fase                                 | Contenido                                                                         | Semanas | Status    |
+| ------------------------------------ | --------------------------------------------------------------------------------- | ------- | --------- |
+| **0 — Sprint 0**                     | Hotfixes seguridad (4 vulnerabilidades RLS + tokens OAuth + Kong EOL)             | 1-2 sem | Pendiente |
+| **1 — Capa de datos**                | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | 3-4 sem | Pendiente |
+| **2 — Adapter layer + 2 CRMs (MVP)** | HubSpot + Zoho adapters + UI admin de conexión                                    | 2-3 sem | Pendiente |
+| **3 — Hardening**                    | Tests E2E, observabilidad, dashboards costes                                      | 2-3 sem | Pendiente |
+| **4 — Post-release**                 | Sheets bidireccional + Salesforce + GHL + ActiveCampaign                          | 4-7 sem | Futuro    |
 
 ---
 
@@ -135,17 +137,17 @@ Documento autoritativo (todas firmadas y fechadas): [docs/audit/DECISIONES-AUDIT
 
 Resumen de las más críticas:
 
-| ID | Decisión | Implicación |
-| --- | --- | --- |
-| R-013 | Cadencia 09-21h hora lead + 3 días + festivos país lead | Timezone-aware scheduler obligatorio |
-| R-014 | **Sync CRM = append-only por defecto**, sobrescritura sólo con `crm_write_audit` | Tabla `crm_field_mapping.write_policy` |
-| R-016 | Ultravox equiparado a Retell (análisis transcripción post-llamada) | Interfaz común `VoiceProvider` |
-| R-020 + v2 | Top 5 CRMs identificados. **MVP Fase 2 = HubSpot + Zoho. Sheets a Fase 4.** | Adapter pattern desde Fase 2 |
-| R-021 | Migrar Airtable → Supabase | Sub-proyecto en Sprint 2-3 |
-| R-022 | Equipo dev mantiene KB | Panel admin + carga operativa |
-| R-023 | **Supabase self-hosted en Easypanel** (NO Coolify) | Plan deploy + Kong EOL |
-| R-024 | Mismo equipo + 3 condiciones método | Tests + revisión externa + greps pre-merge |
-| R-025 | Pausa de ventas 6-8 semanas | Sprint 0+1+2 sin clientes nuevos |
+| ID         | Decisión                                                                         | Implicación                                |
+| ---------- | -------------------------------------------------------------------------------- | ------------------------------------------ |
+| R-013      | Cadencia 09-21h hora lead + 3 días + festivos país lead                          | Timezone-aware scheduler obligatorio       |
+| R-014      | **Sync CRM = append-only por defecto**, sobrescritura sólo con `crm_write_audit` | Tabla `crm_field_mapping.write_policy`     |
+| R-016      | Ultravox equiparado a Retell (análisis transcripción post-llamada)               | Interfaz común `VoiceProvider`             |
+| R-020 + v2 | Top 5 CRMs identificados. **MVP Fase 2 = HubSpot + Zoho. Sheets a Fase 4.**      | Adapter pattern desde Fase 2               |
+| R-021      | Migrar Airtable → Supabase                                                       | Sub-proyecto en Sprint 2-3                 |
+| R-022      | Equipo dev mantiene KB                                                           | Panel admin + carga operativa              |
+| R-023      | **Supabase self-hosted en Easypanel** (NO Coolify)                               | Plan deploy + Kong EOL                     |
+| R-024      | Mismo equipo + 3 condiciones método                                              | Tests + revisión externa + greps pre-merge |
+| R-025      | Pausa de ventas 6-8 semanas                                                      | Sprint 0+1+2 sin clientes nuevos           |
 
 ---
 
@@ -224,57 +226,57 @@ Todos viven en [.claude/agents/](../.claude/agents/). Namespace `af-agents:*` pa
 
 ### Orquestador
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `af-agents:manager` | Opus | Único orquestador. Delega todo el trabajo, valida resultados, coordina sprints. |
+| Subagente           | Modelo | Función                                                                         |
+| ------------------- | ------ | ------------------------------------------------------------------------------- |
+| `af-agents:manager` | Opus   | Único orquestador. Delega todo el trabajo, valida resultados, coordina sprints. |
 
 ### Especialistas de desarrollo
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `af-agents:planning` | Sonnet | Desglose de fases en tareas + arquitectura + estimaciones |
-| `af-agents:adr` | Sonnet | ADRs + Dependency Guard (bloqueo install sin autorización) |
+| Subagente            | Modelo | Función                                                                              |
+| -------------------- | ------ | ------------------------------------------------------------------------------------ |
+| `af-agents:planning` | Sonnet | Desglose de fases en tareas + arquitectura + estimaciones                            |
+| `af-agents:adr`      | Sonnet | ADRs + Dependency Guard (bloqueo install sin autorización)                           |
 | `af-agents:database` | Sonnet | SQL migrations Supabase, schemas Zod, Repository pattern, RLS multi-tenant (sin ORM) |
-| `af-agents:api` | Sonnet | Endpoints REST, middleware, validación Zod |
-| `af-agents:code` | Sonnet | Implementación de features y fixes |
-| `af-agents:uxui` | Sonnet | Componentes React, accesibilidad, responsive |
+| `af-agents:api`      | Sonnet | Endpoints REST, middleware, validación Zod                                           |
+| `af-agents:code`     | Sonnet | Implementación de features y fixes                                                   |
+| `af-agents:uxui`     | Sonnet | Componentes React, accesibilidad, responsive                                         |
 
 ### Especialistas de calidad
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `af-agents:testing` | Sonnet | Vitest unit + integration, Playwright E2E, coverage |
-| `af-agents:review` | Sonnet | Code review pre-merge, pattern adherence |
-| `af-agents:security` | Sonnet | RLS verify, OWASP, auth review, secrets scan |
-| `af-agents:performance` | Sonnet | Lighthouse, bundle size, query optimization |
+| Subagente               | Modelo | Función                                             |
+| ----------------------- | ------ | --------------------------------------------------- |
+| `af-agents:testing`     | Sonnet | Vitest unit + integration, Playwright E2E, coverage |
+| `af-agents:review`      | Sonnet | Code review pre-merge, pattern adherence            |
+| `af-agents:security`    | Sonnet | RLS verify, OWASP, auth review, secrets scan        |
+| `af-agents:performance` | Sonnet | Lighthouse, bundle size, query optimization         |
 
 ### Especialistas de operaciones
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `af-agents:git` | Sonnet | Branches, commits, PRs, tags. **Obliga a changelog completo por commit/PR** |
-| `af-agents:deployment` | Sonnet | Easypanel deploys, CI/CD, env vars. **No autoriza release sin documentación profesional completa** |
-| `af-agents:productivity` | Sonnet | Time tracking, sprint reports, deviation analysis |
+| Subagente                | Modelo | Función                                                                                            |
+| ------------------------ | ------ | -------------------------------------------------------------------------------------------------- |
+| `af-agents:git`          | Sonnet | Branches, commits, PRs, tags. **Obliga a changelog completo por commit/PR**                        |
+| `af-agents:deployment`   | Sonnet | Easypanel deploys, CI/CD, env vars. **No autoriza release sin documentación profesional completa** |
+| `af-agents:productivity` | Sonnet | Time tracking, sprint reports, deviation analysis                                                  |
 
 ### Especialistas de documentación
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `af-agents:documentation` | Sonnet | README, API docs, CONTRIBUTING, release notes |
-| `af-agents:team-knowledge-keeper` | Sonnet | **PROACTIVO**. Mantiene este `dev-team-handover.md` cada vez que hay info nueva relevante para el equipo |
-| `af-agents:help-docs-keeper` | Sonnet | **PROACTIVO**. Crea y mantiene la página "Ayuda al admin" del producto. Auto-trigger al cierre de sprint y tras bug fix |
-| `af-agents:roadmap-keeper` | Sonnet | **PROACTIVO**. Mantiene `plans/RoadMap.md`. Enforza la máquina de estados 🔘→🟡→🟠→🔵→🟢 de cada tarea. Recalcula estimaciones y reporta desviaciones |
+| Subagente                         | Modelo | Función                                                                                                                                               |
+| --------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `af-agents:documentation`         | Sonnet | README, API docs, CONTRIBUTING, release notes                                                                                                         |
+| `af-agents:team-knowledge-keeper` | Sonnet | **PROACTIVO**. Mantiene este `dev-team-handover.md` cada vez que hay info nueva relevante para el equipo                                              |
+| `af-agents:help-docs-keeper`      | Sonnet | **PROACTIVO**. Crea y mantiene la página "Ayuda al admin" del producto. Auto-trigger al cierre de sprint y tras bug fix                               |
+| `af-agents:roadmap-keeper`        | Sonnet | **PROACTIVO**. Mantiene `plans/RoadMap.md`. Enforza la máquina de estados 🔘→🟡→🟠→🔵→🟢 de cada tarea. Recalcula estimaciones y reporta desviaciones |
 
 ### Meta / soporte (heredados de la config global)
 
-| Subagente | Modelo | Función |
-| --- | --- | --- |
-| `debugger` | Sonnet | Root cause analysis de incidentes |
-| `journal-writer` | Haiku | Registra lecciones aprendidas e incidentes críticos |
-| `mcp-manager` | Haiku | Discovery/uso de MCP servers sin polucionar contexto principal |
-| `code-simplifier` | Sonnet | Refactor post-edit para clarity |
-| `researcher` | Haiku | Research estructurado con ranking de opciones |
-| `brainstormer` | (inherit) | Brainstorm y debate técnico cuando hay trade-offs |
+| Subagente         | Modelo    | Función                                                        |
+| ----------------- | --------- | -------------------------------------------------------------- |
+| `debugger`        | Sonnet    | Root cause analysis de incidentes                              |
+| `journal-writer`  | Haiku     | Registra lecciones aprendidas e incidentes críticos            |
+| `mcp-manager`     | Haiku     | Discovery/uso de MCP servers sin polucionar contexto principal |
+| `code-simplifier` | Sonnet    | Refactor post-edit para clarity                                |
+| `researcher`      | Haiku     | Research estructurado con ranking de opciones                  |
+| `brainstormer`    | (inherit) | Brainstorm y debate técnico cuando hay trade-offs              |
 
 ---
 
@@ -284,61 +286,61 @@ Total: **28 skills** en [.claude/skills/](../.claude/skills/).
 
 ### Gestión de sprint (8 — heredadas del patrón saas-agents)
 
-| Skill | Función |
-| --- | --- |
-| `blocker` | Registrar bloqueo con impacto y soluciones |
+| Skill        | Función                                     |
+| ------------ | ------------------------------------------- |
+| `blocker`    | Registrar bloqueo con impacto y soluciones  |
 | `checkpoint` | Guardar progreso parcial sin completar fase |
-| `delegate` | Delegar tareas a agentes especializados |
-| `estimate` | Re-estimar tarea/fase con nuevo tiempo |
+| `delegate`   | Delegar tareas a agentes especializados     |
+| `estimate`   | Re-estimar tarea/fase con nuevo tiempo      |
 | `init-phase` | Inicializar nueva fase con setup automático |
-| `sprint` | Iniciar/revisar/completar fases |
-| `status` | Estado general del proyecto |
-| `sync` | Verificar coherencia entre docs de tracking |
+| `sprint`     | Iniciar/revisar/completar fases             |
+| `status`     | Estado general del proyecto                 |
+| `sync`       | Verificar coherencia entre docs de tracking |
 
 ### Workflow (5)
 
-| Skill | Función |
-| --- | --- |
-| `ck-plan` | Planning con fases + tareas |
-| `ck-debug` | Debug sistemático con root cause |
-| `ck-security` | Security audit STRIDE + OWASP |
-| `code-review` | Review con red-team analysis |
-| `fix` | Fix bugs sistemático con root cause |
+| Skill         | Función                             |
+| ------------- | ----------------------------------- |
+| `ck-plan`     | Planning con fases + tareas         |
+| `ck-debug`    | Debug sistemático con root cause    |
+| `ck-security` | Security audit STRIDE + OWASP       |
+| `code-review` | Review con red-team analysis        |
+| `fix`         | Fix bugs sistemático con root cause |
 
 ### Release / quality (3)
 
-| Skill | Función |
-| --- | --- |
-| `ship` | Pipeline ship: merge, test, review, PR |
-| `watzup` | Wrap up de session |
-| `retro` | Retrospectiva data-driven |
+| Skill    | Función                                |
+| -------- | -------------------------------------- |
+| `ship`   | Pipeline ship: merge, test, review, PR |
+| `watzup` | Wrap up de session                     |
+| `retro`  | Retrospectiva data-driven              |
 
 ### Desarrollo (4)
 
-| Skill | Función |
-| --- | --- |
-| `backend-development` | Node/TS, APIs, DB, security |
+| Skill                  | Función                               |
+| ---------------------- | ------------------------------------- |
+| `backend-development`  | Node/TS, APIs, DB, security           |
 | `frontend-development` | React/TS, MUI v7 (o shadcn), Suspense |
-| `databases` | MongoDB + PostgreSQL, queries, RLS |
-| `web-testing` | Playwright + Vitest + k6 |
+| `databases`            | MongoDB + PostgreSQL, queries, RLS    |
+| `web-testing`          | Playwright + Vitest + k6              |
 
 ### Knowledge / docs (4)
 
-| Skill | Función |
-| --- | --- |
-| `docs` | Manage project documentation |
+| Skill         | Función                                                         |
+| ------------- | --------------------------------------------------------------- |
+| `docs`        | Manage project documentation                                    |
 | `docs-seeker` | Search docs vía context7 (Next/React/Supabase/Zod/HubSpot/Zoho) |
-| `research` | Research técnico estructurado |
-| `brainstorm` | Brainstorming con trade-offs |
+| `research`    | Research técnico estructurado                                   |
+| `brainstorm`  | Brainstorming con trade-offs                                    |
 
 ### Meta (4)
 
-| Skill | Función |
-| --- | --- |
-| `find-skills` | Descubrir skills relevantes |
-| `mcp-management` | Gestión MCP servers |
-| `skill-creator` | Crear/actualizar skills (eval-driven) |
-| `security-scan` | Scan seguridad codebase |
+| Skill            | Función                               |
+| ---------------- | ------------------------------------- |
+| `find-skills`    | Descubrir skills relevantes           |
+| `mcp-management` | Gestión MCP servers                   |
+| `skill-creator`  | Crear/actualizar skills (eval-driven) |
+| `security-scan`  | Scan seguridad codebase               |
 
 **Skills excluidas del proyecto** (por decisión del Auditor): `payment-integration`, `pinokio`, `gepeto`.
 
@@ -350,36 +352,36 @@ Total: **19 hooks `.cjs`** + helpers en [.claude/hooks/lib/](../.claude/hooks/li
 
 ### Heredados de ClaudeKit Engineer (14)
 
-| Hook | Evento | Función |
-| --- | --- | --- |
-| `session-init.cjs` | SessionStart | Carga config + project detect + escribe env vars |
-| `subagent-init.cjs` | SubagentStart | Inicializa contexto subagente |
-| `team-context-inject.cjs` | SessionStart | Inyecta contexto del team config |
-| `dev-rules-reminder.cjs` | UserPromptSubmit | Recordatorio reglas desarrollo |
-| `usage-context-awareness.cjs` | UserPromptSubmit | Inyecta `Usage Limits 5h/7d` (Quota Fallback) |
-| `descriptive-name.cjs` | UserPromptSubmit | Nombres descriptivos en plans/files |
-| `cook-after-plan-reminder.cjs` | UserPromptSubmit | Recuerda skill `cook` post-plan |
-| `scout-block.cjs` | PreToolUse | Bloquea scout en contextos donde no aplica |
-| `privacy-block.cjs` | PreToolUse | Bloquea datos sensibles |
-| `post-edit-simplify-reminder.cjs` | PostToolUse | Sugiere `simplify` tras edits |
-| `task-completed-handler.cjs` | TaskCompleted | Manejo task completed |
-| `teammate-idle-handler.cjs` | SubagentStop | Notifica idle teammates |
-| `session-state.cjs` | Stop | Persiste session state |
-| `plan-format-kanban.cjs` | (manual) | Render plans estilo kanban |
+| Hook                              | Evento           | Función                                          |
+| --------------------------------- | ---------------- | ------------------------------------------------ |
+| `session-init.cjs`                | SessionStart     | Carga config + project detect + escribe env vars |
+| `subagent-init.cjs`               | SubagentStart    | Inicializa contexto subagente                    |
+| `team-context-inject.cjs`         | SessionStart     | Inyecta contexto del team config                 |
+| `dev-rules-reminder.cjs`          | UserPromptSubmit | Recordatorio reglas desarrollo                   |
+| `usage-context-awareness.cjs`     | UserPromptSubmit | Inyecta `Usage Limits 5h/7d` (Quota Fallback)    |
+| `descriptive-name.cjs`            | UserPromptSubmit | Nombres descriptivos en plans/files              |
+| `cook-after-plan-reminder.cjs`    | UserPromptSubmit | Recuerda skill `cook` post-plan                  |
+| `scout-block.cjs`                 | PreToolUse       | Bloquea scout en contextos donde no aplica       |
+| `privacy-block.cjs`               | PreToolUse       | Bloquea datos sensibles                          |
+| `post-edit-simplify-reminder.cjs` | PostToolUse      | Sugiere `simplify` tras edits                    |
+| `task-completed-handler.cjs`      | TaskCompleted    | Manejo task completed                            |
+| `teammate-idle-handler.cjs`       | SubagentStop     | Notifica idle teammates                          |
+| `session-state.cjs`               | Stop             | Persiste session state                           |
+| `plan-format-kanban.cjs`          | (manual)         | Render plans estilo kanban                       |
 
 ### Específicos AF (4)
 
-| Hook | Evento | Función |
-| --- | --- | --- |
-| `af-roadmap-check.cjs` | SessionStart | Inyecta resumen audit + decisiones + plan vigente |
-| `af-stop-checkpoint.cjs` | Stop | Avisa de uncommitted + bloquea sugerencias en staging/main |
-| `af-task-tracker.cjs` | PostToolUse (Edit/Write) | Sugiere actualizar plans + RLS/voice/deps reminders |
-| `af-deps-guard.cjs` | PreToolUse (Bash) | **Bloquea `npm install <pkg>` sin pasar por @adr** |
+| Hook                     | Evento                   | Función                                                    |
+| ------------------------ | ------------------------ | ---------------------------------------------------------- |
+| `af-roadmap-check.cjs`   | SessionStart             | Inyecta resumen audit + decisiones + plan vigente          |
+| `af-stop-checkpoint.cjs` | Stop                     | Avisa de uncommitted + bloquea sugerencias en staging/main |
+| `af-task-tracker.cjs`    | PostToolUse (Edit/Write) | Sugiere actualizar plans + RLS/voice/deps reminders        |
+| `af-deps-guard.cjs`      | PreToolUse (Bash)        | **Bloquea `npm install <pkg>` sin pasar por @adr**         |
 
 ### Soporte (1)
 
-| Hook | Evento | Función |
-| --- | --- | --- |
+| Hook              | Evento    | Función                               |
+| ----------------- | --------- | ------------------------------------- |
 | `skill-dedup.cjs` | (interno) | Evita duplicar invocaciones de skills |
 
 ---
@@ -388,13 +390,13 @@ Total: **19 hooks `.cjs`** + helpers en [.claude/hooks/lib/](../.claude/hooks/li
 
 5 ficheros en [.claude/rules/](../.claude/rules/):
 
-| Regla | Resumen |
-| --- | --- |
-| `development-rules.md` | YAGNI/KISS/DRY, kebab-case, archivos <200 líneas, no mocks, code-reviewer post implementación |
-| `documentation-management.md` | Roadmap + changelog + system-architecture en `docs/`, plans en `plans/YYMMDD-HHmm-slug/` |
-| `orchestration-protocol.md` | Delegation context obligatorio, Subagent Status Protocol, context isolation |
-| `primary-workflow.md` | planner → research paralelo → code → simplify → test → review → docs |
-| `team-coordination-rules.md` | File ownership en teams, worktrees, SendMessage protocols |
+| Regla                         | Resumen                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------- |
+| `development-rules.md`        | YAGNI/KISS/DRY, kebab-case, archivos <200 líneas, no mocks, code-reviewer post implementación |
+| `documentation-management.md` | Roadmap + changelog + system-architecture en `docs/`, plans en `plans/YYMMDD-HHmm-slug/`      |
+| `orchestration-protocol.md`   | Delegation context obligatorio, Subagent Status Protocol, context isolation                   |
+| `primary-workflow.md`         | planner → research paralelo → code → simplify → test → review → docs                          |
+| `team-coordination-rules.md`  | File ownership en teams, worktrees, SendMessage protocols                                     |
 
 Adicionalmente, [CLAUDE.md](../CLAUDE.md) del repo raíz tiene las reglas top-level específicas AF (co-authorship, branch protection, no Prisma/Dokploy/Airtable, RLS obligatorio, append-only CRM, tests con BD real, etc).
 
@@ -402,10 +404,10 @@ Adicionalmente, [CLAUDE.md](../CLAUDE.md) del repo raíz tiene las reglas top-le
 
 ## 13. Comandos slash del proyecto
 
-| Comando | Función |
-| --- | --- |
-| `/staging X.Y.Z` | Promociona `developer → staging` ejecutando `promote.ps1`. Limpia automáticamente docs/plans/.claude. Requiere confirmación "YES". |
-| `/staging-main X.Y.Z` | Promociona `staging → main` (producción) + tag SemVer. Requiere validación cliente previa + confirmación "YES". |
+| Comando               | Función                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `/staging X.Y.Z`      | Promociona `developer → staging` ejecutando `promote.ps1`. Limpia automáticamente docs/plans/.claude. Requiere confirmación "YES". |
+| `/staging-main X.Y.Z` | Promociona `staging → main` (producción) + tag SemVer. Requiere validación cliente previa + confirmación "YES".                    |
 
 Definidos en [.claude/commands/](../.claude/commands/). Sólo disponibles en este proyecto (no globales).
 
@@ -413,10 +415,10 @@ Definidos en [.claude/commands/](../.claude/commands/). Sólo disponibles en est
 
 ## 14. MCP servers activos
 
-| MCP | Origen | Uso |
-| --- | --- | --- |
-| `plugin:context7:context7` | Plugin oficial `context7@claude-plugins-official` | Docs de Next/React/Supabase/Zod/HubSpot/Zoho — vía skill `docs-seeker` |
-| `plugin:playwright:playwright` | Plugin oficial `playwright@claude-plugins-official` | Browser tests Fase 3, screenshots para `help-docs-keeper` |
+| MCP                            | Origen                                              | Uso                                                                    |
+| ------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------- |
+| `plugin:context7:context7`     | Plugin oficial `context7@claude-plugins-official`   | Docs de Next/React/Supabase/Zod/HubSpot/Zoho — vía skill `docs-seeker` |
+| `plugin:playwright:playwright` | Plugin oficial `playwright@claude-plugins-official` | Browser tests Fase 3, screenshots para `help-docs-keeper`              |
 
 **MCPs NO incluidos** (decisión del Auditor): Gmail, Calendar, Drive, Gamma, pencil — son MCPs personales del Auditor, no del proyecto.
 
@@ -426,11 +428,11 @@ Definidos en [.claude/commands/](../.claude/commands/). Sólo disponibles en est
 
 ## 15. Manejo de secretos
 
-| Cosa | Dónde |
-| --- | --- |
-| `.env.example` (placeholders) | ✅ Commiteado en repo, llega a `developer`, `staging`, `main` |
-| `.env`, `.env.local`, `.env.production` (reales) | ❌ Gitignored. Compartir por canal seguro |
-| Canal seguro recomendado | 1Password / Bitwarden / Vault / Easypanel env vars directas |
+| Cosa                                             | Dónde                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| `.env.example` (placeholders)                    | ✅ Commiteado en repo, llega a `developer`, `staging`, `main` |
+| `.env`, `.env.local`, `.env.production` (reales) | ❌ Gitignored. Compartir por canal seguro                     |
+| Canal seguro recomendado                         | 1Password / Bitwarden / Vault / Easypanel env vars directas   |
 
 **Variables críticas** (ver [.env.example](../.env.example) para la lista completa):
 
@@ -449,10 +451,10 @@ Gestionadas por el agente `af-agents:help-docs-keeper`. La página "Ayuda al adm
 
 Cada subsección de la ayuda tiene un **estado**:
 
-| Estado | Significado |
-| --- | --- |
-| 🟡 **Provisional** | Sección en desarrollo, en pruebas o con tareas pendientes. Contenido puede estar incompleto. |
-| 🟢 **Completada** | Sprint cerrado sobre la sección + tests pasados + revisión visual + screenshots finales actualizados. |
+| Estado             | Significado                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| 🟡 **Provisional** | Sección en desarrollo, en pruebas o con tareas pendientes. Contenido puede estar incompleto.          |
+| 🟢 **Completada**  | Sprint cerrado sobre la sección + tests pasados + revisión visual + screenshots finales actualizados. |
 
 Cuando el equipo cierre una sección con éxito, el agente `help-docs-keeper` se activa automáticamente para hacer la revisión final + último screenshot + cambiar estado a Completada. Igual tras un bug fix en una sección ya Completada (re-evalúa y mantiene o degrada a Provisional según el alcance).
 
@@ -468,13 +470,13 @@ Documento autoritativo: [`plans/RoadMap.md`](../plans/RoadMap.md). Mantenido pro
 
 Toda tarea/fase/sprint transita SECUENCIALMENTE:
 
-| Icono | Estado | Cuándo |
-| --- | --- | --- |
-| 🔘 | **Pendiente** | Estado inicial |
-| 🟡 | **En Desarrollo** | Un dev arrancó el trabajo (aunque sea en paralelo a otras tareas) |
-| 🟠 | **P. Subir GH** | Trabajo local terminado, sin push aún |
-| 🔵 | **Subida rama `<nombre>`** | Pusheada a su `feature/*`, esperando PR / review / merge |
-| 🟢 | **COMPLETADA** | Mergeada a `developer` |
+| Icono | Estado                     | Cuándo                                                            |
+| ----- | -------------------------- | ----------------------------------------------------------------- |
+| 🔘    | **Pendiente**              | Estado inicial                                                    |
+| 🟡    | **En Desarrollo**          | Un dev arrancó el trabajo (aunque sea en paralelo a otras tareas) |
+| 🟠    | **P. Subir GH**            | Trabajo local terminado, sin push aún                             |
+| 🔵    | **Subida rama `<nombre>`** | Pusheada a su `feature/*`, esperando PR / review / merge          |
+| 🟢    | **COMPLETADA**             | Mergeada a `developer`                                            |
 
 **Prohibido saltarse pasos.** El agente `roadmap-keeper` bloquea cualquier transición ilegal.
 
@@ -490,13 +492,13 @@ Toda tarea/fase/sprint transita SECUENCIALMENTE:
 
 Todo sprint termina con estas 5 tareas en orden (no se pueden saltar):
 
-| # | Tarea | Quién |
-| --- | --- | --- |
-| 1 | **Auto test** — typecheck + lint + build + tests (unit + integration). Coverage report. | `af-agents:testing` |
-| 2 | **Test E2C Local** — Playwright en browser: recorrer flujos implementados + visual + diseño + **WCAG 2.2 AA**. Reporte con screenshots de pasos clave + findings accesibilidad. | `af-agents:testing` + `af-agents:uxui` |
-| 3 | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales si necesario. Guía paso-a-paso clara: qué probar, cómo, qué esperar. Esperar feedback. | `af-agents:manager` (interactúa con humano) |
-| 4 | **Corrección de Bugs detectados** — Por cada bug que reporte el dev, crear subtarea con su propio estado. La tarea padre queda 🟡 hasta que TODAS las subtareas estén 🟢. | `af-agents:code` + `af-agents:debugger` |
-| 5 | **Cierre de Sprint** — PR `feature/sp-X-*` → `developer`. Tras merge: bump SemVer + invitar al dev a tomar siguiente sprint + crear rama del siguiente sprint. | `af-agents:git` (verifica estados) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
+| #   | Tarea                                                                                                                                                                                                                           | Quién                                                                                                                           |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Auto test** — typecheck + lint + build + tests (unit + integration). Coverage report.                                                                                                                                         | `af-agents:testing`                                                                                                             |
+| 2   | **Test E2C Local** — Playwright en browser: recorrer flujos implementados + visual + diseño + **WCAG 2.2 AA**. Reporte con screenshots de pasos clave + findings accesibilidad.                                                 | `af-agents:testing` + `af-agents:uxui`                                                                                          |
+| 3   | **Test Manual del Dev** — Abrir browser para el dev. Proveer credenciales si necesario. Guía paso-a-paso clara: qué probar, cómo, qué esperar. Esperar feedback.                                                                | `af-agents:manager` (interactúa con humano)                                                                                     |
+| 4   | **Corrección de Bugs detectados** — Por cada bug que reporte el dev, crear subtarea con su propio estado. La tarea padre queda 🟡 hasta que TODAS las subtareas estén 🟢.                                                       | `af-agents:code` + `af-agents:debugger`                                                                                         |
+| 5   | **Cierre de Sprint** — PR `feature/sprint-NN-*` → `developer` (Sprint 0 mantiene `feature/sp-0-sprint-0-hotfixes` legacy). Tras merge: bump SemVer + invitar al dev a tomar siguiente sprint + crear rama del siguiente sprint. | `af-agents:git` (verifica estados) + `af-agents:deployment` (gatekeeper changelog) + `af-agents:productivity` (cierre tracking) |
 
 Pre-requisitos del cierre — gates obligatorios:
 
@@ -524,18 +526,18 @@ El manager te resume el estado actual sin necesidad de leer el doc entero.
 
 ## 17. Glosario
 
-| Término | Significado |
-| --- | --- |
-| Auditor | Javier HP — responsable del audit técnico inicial y mantenimiento del scaffold |
-| Cliente | La empresa contratante del SaaS (Esden) |
-| Cliente final / Tenant | Cada academia formativa que usa el SaaS |
-| MVP | Producto en estado mínimo viable: Fase 0 + 1 + 2 + 3 completadas, antes de 4 |
-| RLS | Row Level Security en PostgreSQL/Supabase para isolation multi-tenant |
-| ADR | Architecture Decision Record |
+| Término                   | Significado                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| Auditor                   | Javier HP — responsable del audit técnico inicial y mantenimiento del scaffold         |
+| Cliente                   | La empresa contratante del SaaS (Esden)                                                |
+| Cliente final / Tenant    | Cada academia formativa que usa el SaaS                                                |
+| MVP                       | Producto en estado mínimo viable: Fase 0 + 1 + 2 + 3 completadas, antes de 4           |
+| RLS                       | Row Level Security en PostgreSQL/Supabase para isolation multi-tenant                  |
+| ADR                       | Architecture Decision Record                                                           |
 | Phase Completion Protocol | typecheck + lint + build + tests + browser tests + informe — automático al cerrar fase |
-| Quota Fallback | Política de cambio de modelo (Opus↔Sonnet) cuando una cuota se acerca al 80% |
-| `developer` purity | Que `developer` puede tener todo (.claude, docs, plans). |
-| `staging`/`main` purity | Que SOLO tengan código, validado por CI guard |
+| Quota Fallback            | Política de cambio de modelo (Opus↔Sonnet) cuando una cuota se acerca al 80%           |
+| `developer` purity        | Que `developer` puede tener todo (.claude, docs, plans).                               |
+| `staging`/`main` purity   | Que SOLO tengan código, validado por CI guard                                          |
 
 ---
 

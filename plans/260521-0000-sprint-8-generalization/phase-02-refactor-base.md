@@ -5,7 +5,7 @@ priority: P3
 estimation: 8-14h
 phase_id: 8-02
 sprint_id: SP-8
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `IntegrationAdapter` interface en `base/integration-adapter.interface.ts`
 - Métodos core: `connect`, `disconnect`, `testConnection`, `upsertContact`, `getContact`, `syncLead`
 - Opcionales: `registerWebhook?`, `validateWebhookSignature?`, `parseWebhookPayload?`
@@ -41,6 +42,7 @@ created: 2026-05-21
 - `AdapterError` jerarquía en `base/adapter-error.ts`
 
 **No funcionales:**
+
 - Tests unit para FieldMapper, WritePolicy, AdapterError
 - Zero deps nuevas
 - Files <200 líneas cada uno
@@ -94,6 +96,7 @@ class NetworkError extends AdapterError {}
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/base/integration-adapter.interface.ts`
 - `src/lib/integrations/base/write-policy.ts`
 - `src/lib/integrations/base/adapter-error.ts`
@@ -103,6 +106,7 @@ class NetworkError extends AdapterError {}
 - `src/lib/integrations/base/__tests__/adapter-error.unit.test.ts`
 
 **NO modificar (todavía):**
+
 - Los adapters existentes — fase 8-03 los refactoriza
 
 ## Implementation Steps
@@ -142,11 +146,11 @@ class NetworkError extends AdapterError {}
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Interfaz no cubre algún edge case CRM-específico | Media | Alto | Métodos opcionales + `unknown` en customFields |
-| FieldMapper limitado con nested fields | Media | Medio | Soporte path-based via dot notation (`address.city`) |
-| AdapterError pierde stack original | Baja | Bajo | Preservar `cause` field |
+| Riesgo                                           | Prob  | Impacto | Mitigación                                           |
+| ------------------------------------------------ | ----- | ------- | ---------------------------------------------------- |
+| Interfaz no cubre algún edge case CRM-específico | Media | Alto    | Métodos opcionales + `unknown` en customFields       |
+| FieldMapper limitado con nested fields           | Media | Medio   | Soporte path-based via dot notation (`address.city`) |
+| AdapterError pierde stack original               | Baja  | Bajo    | Preservar `cause` field                              |
 
 ## Security Considerations
 

@@ -5,7 +5,7 @@ priority: P2
 estimation: 3-8h
 phase_id: 7-04
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -34,6 +34,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Endpoint `POST /api/webhooks/activecampaign?token=<per-tenant>` valida token
 - Auto-registro de webhook en AC al activar integración
 - Idempotency via `sync_events`
@@ -41,6 +42,7 @@ created: 2026-05-21
 - Handler para `contact_update` y `deal_update`
 
 **No funcionales:**
+
 - Response 200 inmediato + procesamiento async BullMQ
 - Audit log
 - Token único por tenant (HMAC firmado con secret server)
@@ -74,11 +76,13 @@ BullMQ worker ac-pull:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/api/webhooks/activecampaign/route.ts`
 - `src/jobs/ac-pull.job.ts`
 - `src/lib/integrations/activecampaign/ac-webhook-registrar.ts`
 
 **Modificar:**
+
 - `src/lib/actions/ac-connect.ts` (call register tras conexión)
 
 ## Implementation Steps
@@ -122,11 +126,11 @@ BullMQ worker ac-pull:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Token expone tenant_id en URL | Media | Bajo | HMAC opaco — no es legible |
-| AC API cambia formato webhook payload | Baja | Medio | Tests integration verifican payload schema |
-| Webhook duplicado masivo | Alta | Bajo | sync_events idempotency robusto |
+| Riesgo                                | Prob  | Impacto | Mitigación                                 |
+| ------------------------------------- | ----- | ------- | ------------------------------------------ |
+| Token expone tenant_id en URL         | Media | Bajo    | HMAC opaco — no es legible                 |
+| AC API cambia formato webhook payload | Baja  | Medio   | Tests integration verifican payload schema |
+| Webhook duplicado masivo              | Alta  | Bajo    | sync_events idempotency robusto            |
 
 ## Security Considerations
 

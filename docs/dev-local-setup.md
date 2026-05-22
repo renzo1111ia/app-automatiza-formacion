@@ -16,7 +16,6 @@ Levanta el dashboard en local con Supabase self-hosted (Docker) + Redis + datos 
 - **Docker Desktop** corriendo
 - ~3 GB libres en disco (imagenes Supabase)
 - Puertos libres del rango **8050-8500** (todo el proyecto vive en ese rango):
-  - `8050` Next.js dev server
   - `8100` Supabase API + Storage S3
   - `8200` Supabase Postgres
   - `8290` shadow DB
@@ -24,7 +23,8 @@ Levanta el dashboard en local con Supabase self-hosted (Docker) + Redis + datos 
   - `8300` Supabase Studio
   - `8350` Analytics (logflare)
   - `8400` Mailpit (inbucket / mail server local)
-  - `8500` Redis (BullMQ)
+  - `8500` Next.js dev server (puerto fijo del proyecto)
+  - `6379` Redis (BullMQ)
 
 ## 2. Primer arranque
 
@@ -43,6 +43,7 @@ npm run db:status
 ```
 
 `db:status` imprime algo como:
+
 ```
 API URL:        http://localhost:54321
 DB URL:         postgresql://postgres:postgres@localhost:54322/postgres
@@ -58,12 +59,13 @@ cp .env.example .env.local
 ```
 
 Edita `.env.local` y rellena estos campos con los valores de `db:status`:
+
 - `NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key del status>`
 - `SUPABASE_SERVICE_ROLE_KEY=<service_role key del status>`
 - `DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres`
 - `NEXTAUTH_SECRET=<genera con: openssl rand -base64 32>`
-- `NEXTAUTH_URL=http://localhost:3000`
+- `NEXTAUTH_URL=http://localhost:8500`
 - `REDIS_URL=redis://localhost:6379`
 
 Las claves LLM (ANTHROPIC_API_KEY, OPENAI_API_KEY) y de proveedores (Retell, Ultravox, HubSpot, Zoho) se rellenan cuando vayas a usar esas features. No son necesarias para arranque inicial.
@@ -75,6 +77,7 @@ npm run db:seed-demo
 ```
 
 Crea:
+
 - 1 tenant `Academia AF Demo`
 - 1 admin user `demo@af.local` / `DemoPassword123!`
 - 3 programas formativos
@@ -88,15 +91,16 @@ Crea:
 
 ```powershell
 npm run local:setup    # db:up + redis:up + seed (idempotente)
-npm run dev            # Next.js dev server en :3000
+npm run dev            # Next.js dev server en :8500 (puerto fijo)
 ```
 
 En otra terminal, si necesitas el worker BullMQ:
+
 ```powershell
 node worker.js
 ```
 
-Visita http://localhost:3000 y login con `demo@af.local` / `DemoPassword123!`.
+Visita http://localhost:8500 y login con `demo@af.local` / `DemoPassword123!`.
 
 ## 4. Apagar / limpiar
 
@@ -105,6 +109,7 @@ npm run local:teardown     # db:down + redis:down
 ```
 
 Para reset completo de la BD (BORRA TODO Y REAPLICA MIGRACIONES):
+
 ```powershell
 npm run db:reset
 npm run db:seed-demo
@@ -117,20 +122,26 @@ http://localhost:54323 — interfaz web de Supabase para inspeccionar tablas, ej
 ## 6. Troubleshooting
 
 ### Puerto ocupado al arrancar
+
 Si `db:up` falla por puerto ocupado, verifica qué tienes corriendo:
+
 ```powershell
 docker ps
 ```
+
 Apaga lo que use 54321-54324 y reintenta.
 
 ### Falla una migracion
+
 Las migraciones del proyecto tienen RLS y FK entre tablas que requieren orden estricto. Si una falla:
+
 ```powershell
 npm run db:reset    # borra todo y reaplica desde cero
 ```
 
 ### Reset cookie / sesion perdida
-Borra cookies del browser para `localhost:3000` y vuelve a login.
+
+Borra cookies del browser para `localhost:8500` y vuelve a login.
 
 ## 7. Lo que NO funciona en local sin keys reales
 

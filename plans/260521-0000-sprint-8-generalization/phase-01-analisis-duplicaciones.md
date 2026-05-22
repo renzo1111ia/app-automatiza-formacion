@@ -5,7 +5,7 @@ priority: P3
 estimation: 3-6h
 phase_id: 8-01
 sprint_id: SP-8
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 created: 2026-05-21
 ---
 
@@ -32,6 +32,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Documento markdown con auditoría completa
 - Tabla de patrones duplicados con frecuencia
 - Tabla de patrones NO generalizables con motivación
@@ -39,6 +40,7 @@ created: 2026-05-21
 - Propuesta de FieldMapper estructura
 
 **No funcionales:**
+
 - 0 cambios de código en esta fase (puro análisis)
 - Documento revisable por humano antes de fase 8-02
 
@@ -62,9 +64,11 @@ Tabla esperada:
 ## Related Code Files
 
 **Crear:**
+
 - `plans/260521-0000-sprint-8-generalization/reports/analisis-duplicaciones-{YYYYMMDD}.md`
 
 **Leer (read-only):**
+
 - `src/lib/integrations/hubspot/*`
 - `src/lib/integrations/zoho/*`
 - `src/lib/integrations/sheets/*`
@@ -119,11 +123,11 @@ Tabla esperada:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Análisis tardío descubre que no había suficiente duplicación | Baja | Medio | Si pasa: abortar Sprint 8 y diferir |
-| Interfaz propuesta demasiado amplia | Media | Alto | Iterar con feedback antes de implementar |
-| Algunos adapters no productivos | Media | Bajo | Hacer análisis solo con los disponibles, mínimo 4 |
+| Riesgo                                                       | Prob  | Impacto | Mitigación                                        |
+| ------------------------------------------------------------ | ----- | ------- | ------------------------------------------------- |
+| Análisis tardío descubre que no había suficiente duplicación | Baja  | Medio   | Si pasa: abortar Sprint 8 y diferir               |
+| Interfaz propuesta demasiado amplia                          | Media | Alto    | Iterar con feedback antes de implementar          |
+| Algunos adapters no productivos                              | Media | Bajo    | Hacer análisis solo con los disponibles, mínimo 4 |
 
 ## Security Considerations
 

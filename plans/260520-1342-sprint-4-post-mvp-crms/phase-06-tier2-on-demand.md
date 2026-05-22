@@ -4,7 +4,7 @@ sprint_task: 5-06
 status: backlog
 priority: P3
 effort: 30-50h cada CRM (NO en estimación total del sprint)
-branch: feature/sp-5-06-{crm}-adapter (por CRM, cuando se pida)
+branch: feature/sprint-09-{crm}-adapter (por CRM, cuando se pida)
 version_bump: v0.5.x (por CRM)
 agents: [af-agents:code, af-agents:api]
 ---
@@ -26,6 +26,7 @@ agents: [af-agents:code, af-agents:api]
 ## Modelo de ejecución
 
 **NO se implementan en batch.** Cada CRM se planifica de forma individual cuando:
+
 1. Un cliente (academia) pide el conector específico
 2. Se estima el ROI (¿cuántos tenants lo usarán?)
 3. Se aprueba el mini-sprint con el usuario (Renzo)
@@ -37,30 +38,35 @@ Con 5-05 completado (interfaz genérica), cada Tier 2 debería tardar ~30-50h en
 ## CRMs Tier 2
 
 ### Clientify
+
 - **Audiencia**: PYME española. CRM + WhatsApp + IA en español. Casos en academias ES.
 - **API**: REST + API Key. Webhooks limitados (no documentados públicamente).
 - **Complejidad**: Media-baja. Docs pobres (riesgo principal).
 - **Cuándo implementar**: Si 2+ tenants españoles lo piden.
 
 ### Bitrix24
+
 - **Audiencia**: Latam (Argentina, México, Colombia) — plan free atrae academias pequeñas.
 - **API**: REST (OAuth2 o webhook-based token). Webhooks soportados.
 - **Complejidad**: Media. La API de Bitrix24 es amplia pero verbosa.
 - **Cuándo implementar**: Si 2+ tenants Latam lo piden.
 
 ### Pipedrive
+
 - **Audiencia**: genérica. Penetración baja en formación pero base instalada legacy.
 - **API**: REST + OAuth2. Docs excelentes. Webhooks bien documentados.
 - **Complejidad**: Baja-media. API limpia, similar a HubSpot.
 - **Cuándo implementar**: Si tenants con Pipedrive legacy lo piden.
 
 ### Monday CRM
+
 - **Audiencia**: equipos de gestión de proyectos. Fit bajo con formación. Solo si academia tiene Monday como CRM corporativo.
 - **API**: GraphQL (diferente al resto — no REST). Requiere adaptación del FieldMapper.
 - **Complejidad**: Media-alta (GraphQL).
 - **Cuándo implementar**: Solo si cliente específico lo pide y hay ROI claro.
 
 ### Holded
+
 - **Audiencia**: PYME española. ERP + CRM. Integración diferente — no es solo CRM.
 - **API**: REST + API Key. Docs razonables.
 - **Complejidad**: Media. Modelo de datos mezcla ERP (facturas, productos) con CRM.
@@ -80,6 +86,7 @@ plans/YYMMDD-HHmm-sprint-5-{crm}-adapter/
 ```
 
 Pasos mínimos de cada mini-sprint:
+
 1. Research rápido (2-4h): leer docs API, auth method, endpoints clave, rate limits
 2. ADR si hay nueva dep (ej. si se decide instalar SDK)
 3. Implementar adapter siguiendo `IntegrationAdapter` interface (5-05 ya hecho)
@@ -91,13 +98,13 @@ Pasos mínimos de cada mini-sprint:
 
 ## Estimaciones Tier 2 (con 5-05 completo)
 
-| CRM | Auth | Docs | Est. con 5-05 | Sin 5-05 |
-|-----|------|------|----------------|---------|
-| Pipedrive | OAuth2 | Excelentes | 25-35h | 50-70h |
-| Clientify | API Key | Pobres | 30-50h | 60-80h |
-| Bitrix24 | OAuth2/webhook | Medias | 35-50h | 60-80h |
-| Monday | OAuth2 + GraphQL | Buenas | 40-60h | 70-100h |
-| Holded | API Key | Razonables | 30-40h | 50-70h |
+| CRM       | Auth             | Docs       | Est. con 5-05 | Sin 5-05 |
+| --------- | ---------------- | ---------- | ------------- | -------- |
+| Pipedrive | OAuth2           | Excelentes | 25-35h        | 50-70h   |
+| Clientify | API Key          | Pobres     | 30-50h        | 60-80h   |
+| Bitrix24  | OAuth2/webhook   | Medias     | 35-50h        | 60-80h   |
+| Monday    | OAuth2 + GraphQL | Buenas     | 40-60h        | 70-100h  |
+| Holded    | API Key          | Razonables | 30-40h        | 50-70h   |
 
 ---
 
@@ -110,11 +117,11 @@ Pasos mínimos de cada mini-sprint:
 
 ## Risk Assessment
 
-| Riesgo | Impacto | Mitigación |
-|--------|---------|------------|
-| Docs Clientify pobres | Medio | Spike de 4h de exploración antes de comprometerse |
-| Monday GraphQL no encaja con interfaz REST | Medio | `parseWebhookPayload?` y métodos opcionales de la interfaz |
-| Bitrix24 API verbose y cambiante | Bajo | Test integration con Bitrix24 trial antes de implementar |
+| Riesgo                                     | Impacto | Mitigación                                                 |
+| ------------------------------------------ | ------- | ---------------------------------------------------------- |
+| Docs Clientify pobres                      | Medio   | Spike de 4h de exploración antes de comprometerse          |
+| Monday GraphQL no encaja con interfaz REST | Medio   | `parseWebhookPayload?` y métodos opcionales de la interfaz |
+| Bitrix24 API verbose y cambiante           | Bajo    | Test integration con Bitrix24 trial antes de implementar   |
 
 ## Next Steps
 

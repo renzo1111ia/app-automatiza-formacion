@@ -23,13 +23,13 @@ Cuando haya cualquier duda de comportamiento esperado, consultar en este orden:
 
 ## Plan vigente (5 fases — ver `DECISIONES R-020-refinement-v2`)
 
-| Fase | Contenido | Status |
-| --- | --- | --- |
-| **0 — Sprint 0** | Hotfixes de seguridad (4 vulnerabilidades RLS multi-tenant + tokens OAuth + Kong EOL) | Pendiente |
-| **1 — Capa de datos** | Consolidación capa Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
-| **2 — Adapter layer + 2 CRMs** | HubSpot adapter + Zoho adapter + UI admin de conexión (**MVP**) | Pendiente |
-| **3 — Hardening** | Tests E2E, observabilidad, dashboards de costes | Pendiente |
-| **4 — Post-release** | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign | Futuro |
+| Fase                           | Contenido                                                                              | Status    |
+| ------------------------------ | -------------------------------------------------------------------------------------- | --------- |
+| **0 — Sprint 0**               | Hotfixes de seguridad (4 vulnerabilidades RLS multi-tenant + tokens OAuth + Kong EOL)  | Pendiente |
+| **1 — Capa de datos**          | Consolidación capa Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
+| **2 — Adapter layer + 2 CRMs** | HubSpot adapter + Zoho adapter + UI admin de conexión (**MVP**)                        | Pendiente |
+| **3 — Hardening**              | Tests E2E, observabilidad, dashboards de costes                                        | Pendiente |
+| **4 — Post-release**           | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign                | Futuro    |
 
 **MVP Fase 2 = HubSpot + Zoho.** Sheets NO entra en MVP — está aplazado a Fase 4.
 
@@ -40,10 +40,33 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 ```
 
 - Trabajo activo: feature branches partiendo de `developer` (o `auditoria` durante el audit inicial).
+- **Naming de ramas por sprint** (decisión 21-05-2026, refinada 22-05-2026):
+  - Sprint 0 (excepción legacy): `feature/sp-0-sprint-0-hotfixes` — ya creada, NO renombrar.
+  - **A partir del Sprint 1**: `feature/sprint-NN-<slug>` con **dos dígitos** (ej. `feature/sprint-01-capa-datos`, `feature/sprint-02-adapter-hubspot-zoho`, `feature/sprint-03-hardening`). El prefijo `sp-` queda deprecated. NN coincide con el número de sprint (no con el sprint_id `SP-X` del RoadMap, que va offset +1).
 - **`developer`** versiona TODO el scaffold de Claude Code (`.claude/`, `.claude-plugin/`, `docs/`, `plans/`, `.env.example`).
 - **`staging`** y **`main`** son ramas protegidas — **NO se tocan sin orden explícita del usuario**.
-- Versionado SemVer: `v0.0.0` inicial. Sprint cerrado → `v0.x.0`. Patch en sprint → `v0.0.x`. MVP completo → `v0.3.0`.
+- Versionado SemVer: `v0.0.0` inicial. Sprint cerrado → `v0.x.0`. Patch en sprint → `v0.0.x`. MVP completo → `v0.4.0`.
 - `.env` real NUNCA va a git. Sólo `.env.example` con placeholders. Secretos por canal seguro (Easypanel env vars / vault).
+
+## Tracking de tiempos reales (política RoadMap)
+
+Cada tarea del RoadMap tiene **Estimación** (columna fija) y **Tiempo real** (anotado en la columna `Notas` al cerrar):
+
+- Al pasar a 🔵 **Subida rama** (tras push): anotar `⏱ Real (a push): XXh YYmin` con el tiempo invertido hasta el push. Es un valor provisional — puede haber fixes posteriores en SP-X-CLOSE-4.
+- Al pasar a 🟢 **COMPLETADA** (tras merge a `developer`): ajustar a `⏱ Real (final): XXh YYmin` incluyendo cualquier fix post-push.
+- Si una tarea se difiere o se cancela, anotar `⏱ Real (parcial): XXh YYmin` con lo invertido hasta el corte.
+
+Formato siempre: **horas y minutos**, nunca decimales (`2h 30min`, no `2.5h`). Coherente con la política global de productividad.
+
+## Tareas diferidas: distinguir "local-aplicable" vs "pre-deploy"
+
+Si una tarea no se puede cerrar al 100% por dependencia externa (acceso VPS, credenciales del cliente, etc.):
+
+1. **Identificar la parte local-aplicable** y cerrarla en el sprint actual. Ejemplo: SQL script + apply contra Supabase local — se hace YA aunque el apply contra VPS se difiera.
+2. **Sólo la parte que requiere acceso externo se difiere** a la sesión pre-deploy del sprint en el que toque promoción a staging/main.
+3. **Anotar explícitamente** en Notas: `🟢 Local OK | 🟡 Pre-deploy pendiente: <razón>`.
+
+Esto evita acumular trabajo bloqueado y permite probar el comportamiento de la app en local cuanto antes.
 
 ## Reglas de equipo (top-level)
 
@@ -59,13 +82,47 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 
 ## Model Tier Policy (heredada del global, recordatorio)
 
-| Modelo | Cuándo |
-| --- | --- |
-| Haiku | Docs, traducciones, listados, sync, informes con datos ya investigados |
-| Sonnet | Código CRUD, tests, refactor sencillo, análisis de tecnologías habituales (Next/React/Supabase/Zod) |
-| Opus | Concurrencia, seguridad cripto, decisiones arquitectónicas con trade-offs, research multi-fuente profundo |
+| Modelo | Cuándo                                                                                                    |
+| ------ | --------------------------------------------------------------------------------------------------------- |
+| Haiku  | Docs, traducciones, listados, sync, informes con datos ya investigados                                    |
+| Sonnet | Código CRUD, tests, refactor sencillo, análisis de tecnologías habituales (Next/React/Supabase/Zod)       |
+| Opus   | Concurrencia, seguridad cripto, decisiones arquitectónicas con trade-offs, research multi-fuente profundo |
 
 Quota Fallback al 80% según política global. **NUNCA Opus por defecto.**
+
+### Escalado proactivo por contexto/dificultad (anticipar, no esperar a que falle)
+
+Filosofía base (idéntica a la global `~/.claude/CLAUDE.md`):
+
+- **Haiku** para editar archivos y acciones sencillas con poco contexto. Si hay mucho contexto o le cuesta → **subir a Sonnet**.
+- **Sonnet** para la mayoría de tareas y codificación. Si hay mucho contexto o le cuesta → **subir a Opus**.
+- **Opus** reservado para investigación, mucho contexto y programación compleja donde Sonnet puede fallar.
+
+Triggers de escalado **preventivo** (antes de empezar la tarea, sin esperar a fallar):
+
+| Trigger                                                                                                   | Acción                                             |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Haiku necesita >5 archivos de contexto, o el archivo objetivo >300 líneas                                 | Subir a Sonnet desde el inicio                     |
+| Haiku tarea con lógica condicional no trivial (>1 if/else anidado o branching no lineal)                  | Subir a Sonnet desde el inicio                     |
+| Sonnet necesita >15 archivos de contexto cross-package o cross-stack                                      | Subir a Opus desde el inicio                       |
+| Sonnet tarea con concurrencia, criptografía, RLS multi-tenant, OAuth multi-DC, transacciones distribuidas | Subir a Opus desde el inicio                       |
+| Sonnet tarea de research multi-fuente (3+ docs/webs/repos a sintetizar) o trade-offs arquitectónicos      | Subir a Opus desde el inicio                       |
+| Cualquier modelo: bucle de >2 reintentos sobre el mismo error/test                                        | Escalar al siguiente tier y reintentar UNA vez más |
+
+**Aplicación en `dashboard-af`:**
+
+- Sprint 0 (hotfixes RLS, JWT, crypto, next bump): orquestación en **Sonnet**, escalada puntual a **Opus** para decisiones de RLS multi-tenant y firma de webhooks.
+- Sprint 1 (capa de datos, Zod, Repository): **Sonnet** por defecto. **Opus** sólo para diseño del Repository pattern multi-tenant y cifrado AES-256 de tokens OAuth (tarea 2-26).
+- Sprint 2 (adapter HubSpot + Zoho): **Sonnet** para adapters y OAuth flow estándar. **Opus** para Zoho multi-DC y diseño del `IntegrationAdapter` interface.
+- Tareas de docs/READMEs/logs/traducciones/listados: **Haiku** salvo que el contexto pase de 5 archivos.
+
+**Diferencia con regla global #6:**
+
+- Regla #6 es reactiva (escalar tras fallo confirmado).
+- Esta regla es preventiva (escalar antes de empezar si pinta complejo).
+- Quota Fallback al 80% es ortogonal (escala/desciende por cuota, no por dificultad).
+
+**Aplicación al abrir chat nuevo:** si el prompt del usuario contiene una tarea claramente compleja (research multi-fuente, refactor cross-package, decisión arquitectónica, debug no trivial), arrancar directamente en el tier adecuado sin esperar a fallar en uno inferior.
 
 ## Execution Autonomy
 
@@ -80,6 +137,32 @@ Al cerrar fase, ejecutar SIN preguntar:
 1. `npm run typecheck` + `npm run lint` + `npm run build` + tests (vía subagente `af-agents:testing`).
 2. Si hay UI nueva: browser tests con Playwright.
 3. Informe al usuario con: tests passed/failed/fixed + lo implementado + invitación a probar manual (si aplica).
+
+### Hand-off al Sprint Validación Pre-MVP (SP-4B) — obligatorio en `SP-N-CLOSE-5`
+
+Al cerrar **cualquier Sprint N** del MVP (Sprints 0, 1, 2, 3 — NO los post-MVP), su `SP-N-CLOSE-5` lleva una subtarea obligatoria **"Hand-off a SP-4B phase-NN"** que actualiza el archivo `plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md` correspondiente con:
+
+- Comandos exactos de test automático del sprint cerrado (`npm run …`).
+- Specs Playwright E2C añadidas en este sprint, con rutas que cubren.
+- Specs Playwright listas para ejecutar contra VPS (E2E).
+- Checklist manual derivado de `docs/testeos-manual.md` (sección del sprint).
+- BUG-XXX ya detectados y corregidos durante el cierre (referencia commit) — para verificar no-regresión en VPS.
+- Variables de entorno NUEVAS que necesita el VPS de Renzo para que los tests pasen.
+- Notas de despliegue: migraciones SQL pendientes, vars nuevas, dependencias añadidas, comandos de seed/migración.
+
+El agente `roadmap-keeper` enforza esta regla al detectar `SP-N-CLOSE-5` cerrando: si la plantilla `phase-NN-validacion-sprint-N.md` sigue marcada como `🔘 Plantilla vacía`, el cierre del sprint queda 🟡 hasta rellenarla.
+
+**Excepciones**: los sprints post-MVP (Sheets, Costes-LLM, Salesforce, etc.) NO hacen hand-off a SP-4B — cierran directamente con su `CLOSE-5` y promueven a `developer`.
+
+## Screenshots
+
+**Ubicación única**: `docs/screenshots/`. NUNCA guardar `.png`/`.jpg` sueltos en la raíz del proyecto ni en `src/`.
+
+- Screenshots manuales (capturas para docs, debugging, onboarding): `docs/screenshots/<descriptive-name>.png`.
+- Screenshots vía Playwright MCP (`browser_take_screenshot`): pasar siempre `filename: "docs/screenshots/<name>.png"` (o ruta absoluta equivalente).
+- Excepciones permitidas (NO mover): `playwright-report/**` y `test-results/**` (los genera Playwright en sus paths fijos), `public/`, `src/app/icon.png`, `node_modules/**`, `.next/**`.
+
+Si encuentras screenshots fuera de `docs/screenshots/` que no caigan en las excepciones, muévelos sin preguntar.
 
 ## Productivity Time Format
 

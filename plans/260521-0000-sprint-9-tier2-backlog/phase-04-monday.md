@@ -5,7 +5,7 @@ priority: P3
 estimation: 40-60h (con SP-8) / 70-100h (sin SP-8)
 phase_id: 9-04
 sprint_id: SP-9
-branch: feature/sp-9-monday-adapter (al activarse)
+branch: feature/sprint-09-monday-adapter (al activarse)
 created: 2026-05-21
 ---
 
@@ -79,11 +79,11 @@ plans/YYMMDD-HHmm-sprint-9-04-monday/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| GraphQL incompatible con IntegrationAdapter REST-oriented | Media | Alto | Métodos opcionales en interfaz (Sprint 8) + adapter encapsula GraphQL internamente |
-| Column types complejos (status, dropdown) | Alta | Medio | FieldMapper específico por column type |
-| Rate limit basado en complejidad de query | Media | Medio | Optimizar queries + cache resultados |
+| Riesgo                                                    | Prob  | Impacto | Mitigación                                                                         |
+| --------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------- |
+| GraphQL incompatible con IntegrationAdapter REST-oriented | Media | Alto    | Métodos opcionales en interfaz (Sprint 8) + adapter encapsula GraphQL internamente |
+| Column types complejos (status, dropdown)                 | Alta  | Medio   | FieldMapper específico por column type                                             |
+| Rate limit basado en complejidad de query                 | Media | Medio   | Optimizar queries + cache resultados                                               |
 
 ## Next Steps
 

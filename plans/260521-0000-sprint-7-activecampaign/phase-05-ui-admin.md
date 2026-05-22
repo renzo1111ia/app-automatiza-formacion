@@ -5,7 +5,7 @@ priority: P2
 estimation: 3-8h
 phase_id: 7-05
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Página `/admin/integrations/activecampaign` con form:
   1. API Key + Account URL inputs + Test connection button
   2. Pipeline selector (dropdown via `GET /dealGroups`)
@@ -43,6 +44,7 @@ created: 2026-05-21
 - Botón "Desconectar" elimina webhook en AC
 
 **No funcionales:**
+
 - Mobile responsive
 - A11y
 - Validación on-blur
@@ -62,6 +64,7 @@ Components:
 ## Related Code Files
 
 **Crear:**
+
 - `src/app/admin/integrations/activecampaign/page.tsx`
 - `src/components/integrations/ac-connection-form.tsx`
 - `src/components/integrations/ac-pipeline-selector.tsx`
@@ -70,6 +73,7 @@ Components:
 - `src/lib/actions/ac-connect.ts`
 
 **Modificar:**
+
 - `src/app/admin/integrations/page.tsx` (card AC)
 
 ## Implementation Steps
@@ -113,11 +117,11 @@ Components:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Account URL formato incorrecto | Alta | Bajo | Regex validación al on-blur |
-| Test connection lento (timeout) | Baja | Bajo | Timeout 10s + retry button |
-| Webhook registro falla pero config OK | Media | Medio | Mostrar warning + retry manual |
+| Riesgo                                | Prob  | Impacto | Mitigación                     |
+| ------------------------------------- | ----- | ------- | ------------------------------ |
+| Account URL formato incorrecto        | Alta  | Bajo    | Regex validación al on-blur    |
+| Test connection lento (timeout)       | Baja  | Bajo    | Timeout 10s + retry button     |
+| Webhook registro falla pero config OK | Media | Medio   | Mostrar warning + retry manual |
 
 ## Security Considerations
 

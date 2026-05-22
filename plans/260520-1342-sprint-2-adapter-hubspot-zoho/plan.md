@@ -4,24 +4,25 @@ description: "Plan operativo Sprint 2: IntegrationAdapter interface, HubSpot OAu
 status: pending
 priority: P1
 effort: 104h
-branch: feature/sp-3-adapter-hubspot-zoho
+branch: feature/sprint-02-adapter-hubspot-zoho
 tags: [hubspot, zoho, crm, adapter-pattern, oauth2, multi-tenant, sprint-3]
 created: 2026-05-20
 ---
 
 # Sprint 2 — Plan Operativo
 
-| Campo | Valor |
-|-------|-------|
-| Sprint ID | `SP-3` |
-| Versión objetivo | `v0.3.0` |
-| Estado | Pendiente |
+| Campo            | Valor                                          |
+| ---------------- | ---------------------------------------------- |
+| Sprint ID        | `SP-3`                                         |
+| Versión objetivo | `v0.3.0`                                       |
+| Estado           | Pendiente                                      |
 | Estimación total | ~104h (rango: 96h–112h según sandbox blockers) |
-| Rama sugerida | `feature/sp-3-adapter-hubspot-zoho` |
+| Rama sugerida    | `feature/sprint-02-adapter-hubspot-zoho`       |
 
 ## Dependencias críticas de Sprint 1
 
 Sprint 2 **no puede iniciar** hasta que estén completas:
+
 - **2-18** `integrations-repository.ts` — el adapter lee/escribe tokens desde este repo
 - **2-11** Zod schemas de `integrations` — los tipos del adapter se derivan de estos schemas
 - **2-26** Cifrado AES-256 de OAuth tokens en BD — prerequisito de seguridad para 3-02 y 3-03
@@ -29,16 +30,16 @@ Sprint 2 **no puede iniciar** hasta que estén completas:
 
 ## Fases
 
-| # | Fase | Estimación | Estado | Archivo |
-|---|------|-----------|--------|---------|
-| 1 | IntegrationAdapter interface + factory | 12h | Pendiente | [phase-01](phase-01-integration-adapter-interface.md) |
-| 2 | Adapter HubSpot (OAuth2, contacts, deals, webhooks) | 44h | Pendiente | [phase-02](phase-02-adapter-hubspot.md) |
-| 3 | Adapter Zoho (OAuth2 multi-DC, leads, deals, webhooks) | 28h | Pendiente | [phase-03](phase-03-adapter-zoho.md) |
-| 4 | crm_field_mapping + write_policy (R-014) | 14h | Pendiente | [phase-04](phase-04-field-mapping-write-policy.md) |
-| 5 | UI admin panel — conectar CRM del tenant | 20h | Pendiente | [phase-05](phase-05-ui-admin-conexion-crm.md) |
-| 6 | crm_write_audit log + visualización | 10h | Pendiente | [phase-06](phase-06-write-audit-y-visualizacion.md) |
-| 7 | Tests de integración sandbox HubSpot + Zoho | 20h | Pendiente | [phase-07](phase-07-tests-sandbox.md) |
-| 8 | Cierre Sprint 2 | ~10h | Pendiente | [phase-08](phase-08-cierre-sprint.md) |
+| #   | Fase                                                   | Estimación | Estado    | Archivo                                               |
+| --- | ------------------------------------------------------ | ---------- | --------- | ----------------------------------------------------- |
+| 1   | IntegrationAdapter interface + factory                 | 12h        | Pendiente | [phase-01](phase-01-integration-adapter-interface.md) |
+| 2   | Adapter HubSpot (OAuth2, contacts, deals, webhooks)    | 44h        | Pendiente | [phase-02](phase-02-adapter-hubspot.md)               |
+| 3   | Adapter Zoho (OAuth2 multi-DC, leads, deals, webhooks) | 28h        | Pendiente | [phase-03](phase-03-adapter-zoho.md)                  |
+| 4   | crm_field_mapping + write_policy (R-014)               | 14h        | Pendiente | [phase-04](phase-04-field-mapping-write-policy.md)    |
+| 5   | UI admin panel — conectar CRM del tenant               | 20h        | Pendiente | [phase-05](phase-05-ui-admin-conexion-crm.md)         |
+| 6   | crm_write_audit log + visualización                    | 10h        | Pendiente | [phase-06](phase-06-write-audit-y-visualizacion.md)   |
+| 7   | Tests de integración sandbox HubSpot + Zoho            | 20h        | Pendiente | [phase-07](phase-07-tests-sandbox.md)                 |
+| 8   | Cierre Sprint 2                                        | ~10h       | Pendiente | [phase-08](phase-08-cierre-sprint.md)                 |
 
 ## Diagrama de dependencias
 
@@ -78,11 +79,11 @@ Final (requiere 3.2..3.6)                               │
 
 ## Riesgos top-3
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Sprint 1 incompleto (2-18/2-26) bloquea inicio Sprint 2 | Media | Alto | Verificar estado Sprint 1 antes de iniciar Sprint 2; tareas 3.1+3.4 schema pueden avanzar sin 2.3 completo |
-| Zoho multi-DC: tenant en DC inesperado rompe calls | Media | Alto | Test obligatorio con tenant EU + tenant US; guardar api_domain en OAuth callback |
-| HubSpot webhook loop infinito sin anti-loop | Alta | Medio | Anti-loop property-based desde día 1 de 3-02, no retroactivo |
+| Riesgo                                                  | Prob  | Impacto | Mitigación                                                                                                 |
+| ------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| Sprint 1 incompleto (2-18/2-26) bloquea inicio Sprint 2 | Media | Alto    | Verificar estado Sprint 1 antes de iniciar Sprint 2; tareas 3.1+3.4 schema pueden avanzar sin 2.3 completo |
+| Zoho multi-DC: tenant en DC inesperado rompe calls      | Media | Alto    | Test obligatorio con tenant EU + tenant US; guardar api_domain en OAuth callback                           |
+| HubSpot webhook loop infinito sin anti-loop             | Alta  | Medio   | Anti-loop property-based desde día 1 de 3-02, no retroactivo                                               |
 
 ## Notas SDKs
 

@@ -5,7 +5,7 @@ priority: P3
 estimation: 2-4h + bugs
 phase_id: SP-8-CLOSE
 sprint_id: SP-8
-branch: feature/sp-8-adapter-generalization
+branch: feature/sprint-08-adapter-generalization
 created: 2026-05-21
 ---
 
@@ -37,6 +37,7 @@ npm run test:contract  # adapter.contract.test.ts
 ### SP-8-CLOSE-2 — Smoke E2E (1-2h)
 
 Como Sprint 8 es refactor puro, el smoke test E2E es ligero:
+
 - [ ] HubSpot: push 1 lead → verificar Contact en HubSpot
 - [ ] Zoho: push 1 lead → verificar Lead en Zoho
 - [ ] Sheets (si productivo): push 1 lead → verificar fila
@@ -54,7 +55,7 @@ Como Sprint 8 es refactor puro, el smoke test E2E es ligero:
 
 ### SP-8-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-8-adapter-generalization` → `developer`
+- [ ] PR `feature/sprint-08-adapter-generalization` → `developer`
 - [ ] Bump `package.json` → `v0.5.4` (patch refactor)
 - [ ] Update `RoadMap.md` (Sprint 8 done)
 - [ ] Update `docs/project-changelog.md` con sección "Refactor"
@@ -74,14 +75,14 @@ Como Sprint 8 es refactor puro, el smoke test E2E es ligero:
 
 ## Estimación
 
-| Tarea | Estimación |
-|-------|-----------|
-| CLOSE-1 Auto test | 1h |
-| CLOSE-2 Smoke E2E | 1-2h |
-| CLOSE-3 Verif regresiones | 30min-1h |
-| CLOSE-4 Bugs | variable |
-| CLOSE-5 PR + cierre | 30min |
-| **Total** | **3-5h + bugs** |
+| Tarea                     | Estimación      |
+| ------------------------- | --------------- |
+| CLOSE-1 Auto test         | 1h              |
+| CLOSE-2 Smoke E2E         | 1-2h            |
+| CLOSE-3 Verif regresiones | 30min-1h        |
+| CLOSE-4 Bugs              | variable        |
+| CLOSE-5 PR + cierre       | 30min           |
+| **Total**                 | **3-5h + bugs** |
 
 ## Success Criteria
 
@@ -93,10 +94,10 @@ Como Sprint 8 es refactor puro, el smoke test E2E es ligero:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Smoke E2E descubre regresión sutil | Baja | Alto | Tests granulares en 8-03 deberían haber pillado antes |
-| Algún adapter productivo perdió tests | Baja | Medio | Verificar coverage no decrece >2pp |
+| Riesgo                                | Prob | Impacto | Mitigación                                            |
+| ------------------------------------- | ---- | ------- | ----------------------------------------------------- |
+| Smoke E2E descubre regresión sutil    | Baja | Alto    | Tests granulares en 8-03 deberían haber pillado antes |
+| Algún adapter productivo perdió tests | Baja | Medio   | Verificar coverage no decrece >2pp                    |
 
 ## Security Considerations
 

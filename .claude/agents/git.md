@@ -4,7 +4,7 @@ description: Use this agent for git operations including branch management, comm
 
 <example>
 Context: Manager delegates branch creation for new sprint
-user: "Create the branch feature/sp-3-adapter-hubspot-zoho from developer"
+user: "Create the branch feature/sprint-02-adapter-hubspot-zoho from developer"
 assistant: "I'll use the git agent to create and push the new branch."
 <commentary>
 Branch creation - git agent creates branch following naming conventions + sets upstream.
@@ -13,7 +13,7 @@ Branch creation - git agent creates branch following naming conventions + sets u
 
 <example>
 Context: Need to create a PR for review
-user: "Create a PR from feature/sp-1-sprint-0-hotfixes to developer"
+user: "Create a PR from feature/sp-0-sprint-0-hotfixes to developer"
 assistant: "I'll use the git agent to create the pull request."
 <commentary>
 PR creation - git agent verifies task states + uses gh CLI to create the PR.
@@ -35,16 +35,18 @@ Eres el **Git Agent** del proyecto **dashboard-af**. Gestionas el repositorio Gi
 main             ← Producción (PROTEGIDA — promoción sólo vía /staging-main)
  └── staging     ← Pruebas cliente (PROTEGIDA — promoción sólo vía /staging)
        └── developer    ← Integración del equipo (versiona TODO: .claude, docs, plans, código)
-             └── feature/sp-{1|2|3|4|5}-<descripcion>    ← Trabajo activo
-             └── feature/<otra-cosa>                       ← Features no asociadas a sprint principal
-             └── hotfix/<descripcion>                       ← Correcciones urgentes (sólo Auditor)
+             └── feature/sprint-{01..09}-<descripcion>      ← Trabajo activo (Sprint 1+)
+             └── feature/sp-0-sprint-0-hotfixes              ← Legacy Sprint 0 (NO renombrar)
+             └── feature/<otra-cosa>                         ← Features no asociadas a sprint principal
+             └── hotfix/<descripcion>                        ← Correcciones urgentes (sólo Auditor)
 ```
 
-Naming convention de ramas:
+Naming convention de ramas (decisión 22-05-2026, refinada desde 21-05-2026):
 
-- Sprint principal: `feature/sp-<numero>-<descripcion-kebab>` (ej: `feature/sp-3-adapter-hubspot-zoho`)
-- Tarea aislada: `feature/<task-id>-<descripcion-kebab>` (ej: `feature/1-03-fix-worker-signature`)
-- Hotfix: `hotfix/<descripcion-kebab>`
+- **Sprint 1+**: `feature/sprint-NN-<descripcion-kebab>` con NN = 2 dígitos (ej: `feature/sprint-02-adapter-hubspot-zoho`, `feature/sprint-03-hardening`). NN coincide con el número de sprint (0..9), NO con el sprint_id `SP-X` del RoadMap (que va offset +1).
+- **Sprint 0**: `feature/sp-0-sprint-0-hotfixes` — excepción legacy, NO renombrar (rama ya pusheada en origin).
+- **Tarea aislada**: `feature/<task-id>-<descripcion-kebab>` (ej: `feature/1-03-fix-worker-signature`)
+- **Hotfix**: `hotfix/<descripcion-kebab>`
 
 ## Convención de commits
 
@@ -55,6 +57,7 @@ Tipos: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, `bui
 Scopes habituales: `db`, `api`, `ui`, `auth`, `crm`, `voice`, `worker`, `infra`, `tests`, `deps`.
 
 Mensaje completo (cuerpo del commit) DEBE incluir:
+
 - **Qué** cambia (1 frase).
 - **Por qué** (motivación / problema resuelto).
 - **Cómo se prueba** (test asociado, comando, sección de la app).

@@ -5,7 +5,7 @@ priority: P2
 estimation: 8-14h
 phase_id: 4-07
 sprint_id: SP-4
-branch: feature/sp-4-google-sheets
+branch: feature/sprint-04-google-sheets
 created: 2026-05-21
 ---
 
@@ -34,12 +34,14 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Unit tests: SheetsAdapter, FieldMapper, ConflictResolver, OAuth, Template (con mocks googleapis)
 - Integration tests con spreadsheet real: push, pull, batch, idempotency, canal renew
 - Contract test verificando que `SheetsAdapter implements IntegrationAdapter`
 - Coverage mínimo 80% en `src/lib/integrations/sheets/`
 
 **No funcionales:**
+
 - Tests integration se saltan en CI si no hay `GOOGLE_TEST_REFRESH_TOKEN`
 - Cleanup automático de spreadsheets de test (delete on teardown)
 - No comprometer cuota de producción
@@ -62,6 +64,7 @@ src/lib/integrations/__tests__/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/sheets/__tests__/sheets-adapter.unit.test.ts`
 - `src/lib/integrations/sheets/__tests__/sheets-field-mapper.unit.test.ts`
 - `src/lib/integrations/sheets/__tests__/sheets-conflict-resolver.unit.test.ts`
@@ -71,6 +74,7 @@ src/lib/integrations/__tests__/
 - `src/lib/integrations/sheets/__tests__/fixtures/leads.fixture.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/__tests__/adapter-contract.test.ts`
 - `.env.test.example` (añadir `GOOGLE_TEST_REFRESH_TOKEN`, `GOOGLE_TEST_SPREADSHEET_TEMPLATE_ID`)
 
@@ -120,12 +124,12 @@ src/lib/integrations/__tests__/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Refresh token de test expira | Media | Medio | Doc en README cómo regenerar; alerta si test integration falla con 401 |
-| Tests flaky por latencia Drive | Media | Medio | Polling con timeout 30s + retries 3 |
-| Spreadsheets de test acumulándose | Alta | Bajo | Cleanup hook obligatorio + script `npm run cleanup:test-sheets` semanal |
-| Cuota Drive del test account agotada | Baja | Medio | Throttle local tests + monitoring uso |
+| Riesgo                               | Prob  | Impacto | Mitigación                                                              |
+| ------------------------------------ | ----- | ------- | ----------------------------------------------------------------------- |
+| Refresh token de test expira         | Media | Medio   | Doc en README cómo regenerar; alerta si test integration falla con 401  |
+| Tests flaky por latencia Drive       | Media | Medio   | Polling con timeout 30s + retries 3                                     |
+| Spreadsheets de test acumulándose    | Alta  | Bajo    | Cleanup hook obligatorio + script `npm run cleanup:test-sheets` semanal |
+| Cuota Drive del test account agotada | Baja  | Medio   | Throttle local tests + monitoring uso                                   |
 
 ## Security Considerations
 

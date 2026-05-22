@@ -5,7 +5,7 @@ priority: P2
 estimation: 6-12h
 phase_id: 5-07
 sprint_id: SP-5
-branch: feature/sp-5-salesforce-adapter
+branch: feature/sprint-05-salesforce-adapter
 created: 2026-05-21
 ---
 
@@ -33,12 +33,14 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - Unit tests Adapter, FieldMapper, ConflictResolver, Connection helper
 - Integration tests contra Dev Edition: push Lead, push Contact, push Opp, pull via Outbound Message (simulada), rate limit
 - Contract test extendido con SalesforceAdapter
 - Coverage ≥80%
 
 **No funcionales:**
+
 - CI skips integration sin secret
 - Cleanup automático en teardown
 - Idempotent: tests re-ejecutables sin conflicto
@@ -61,6 +63,7 @@ src/lib/integrations/salesforce/__tests__/
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/salesforce/__tests__/salesforce-adapter.unit.test.ts`
 - `src/lib/integrations/salesforce/__tests__/salesforce-field-mapper.unit.test.ts`
 - `src/lib/integrations/salesforce/__tests__/salesforce-connection.unit.test.ts`
@@ -70,6 +73,7 @@ src/lib/integrations/salesforce/__tests__/
 - `src/lib/integrations/salesforce/__tests__/fixtures/*.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/__tests__/adapter-contract.test.ts`
 - `.env.test.example` (`SF_TEST_*`)
 
@@ -120,11 +124,11 @@ src/lib/integrations/salesforce/__tests__/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Dev Edition account suspendida | Baja | Alto | Doc setup + backup account |
-| Tests crean datos huérfanos | Alta | Bajo | Cleanup hook obligatorio + script semanal |
-| jsforce mock library outdated | Media | Bajo | Usar `vi.mock` nativo Vitest |
+| Riesgo                         | Prob  | Impacto | Mitigación                                |
+| ------------------------------ | ----- | ------- | ----------------------------------------- |
+| Dev Edition account suspendida | Baja  | Alto    | Doc setup + backup account                |
+| Tests crean datos huérfanos    | Alta  | Bajo    | Cleanup hook obligatorio + script semanal |
+| jsforce mock library outdated  | Media | Bajo    | Usar `vi.mock` nativo Vitest              |
 
 ## Security Considerations
 

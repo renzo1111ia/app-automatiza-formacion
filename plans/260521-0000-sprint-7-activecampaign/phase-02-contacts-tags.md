@@ -5,7 +5,7 @@ priority: P2
 estimation: 5-10h
 phase_id: 7-02
 sprint_id: SP-7
-branch: feature/sp-7-activecampaign-adapter
+branch: feature/sprint-07-activecampaign-adapter
 created: 2026-05-21
 ---
 
@@ -33,6 +33,7 @@ created: 2026-05-21
 ## Requirements
 
 **Funcionales:**
+
 - `ACAdapter implements IntegrationAdapter`
 - `upsertContact(contact, fieldMappings)`: POST `contact/sync`
 - Soporte tags: `applyTags(contactId, tags[])`
@@ -40,6 +41,7 @@ created: 2026-05-21
 - FieldMapper con defaults + custom fields
 
 **No funcionales:**
+
 - Append-only R-014 por defecto
 - Audit log por operación
 - Retry exponencial en 429
@@ -64,11 +66,13 @@ src/jobs/ac-push.job.ts
 ## Related Code Files
 
 **Crear:**
+
 - `src/lib/integrations/activecampaign/ac-adapter.ts`
 - `src/lib/integrations/activecampaign/ac-field-mapper.ts`
 - `src/jobs/ac-push.job.ts`
 
 **Modificar:**
+
 - `src/lib/integrations/_integration-adapter-factory.ts` (registrar ac)
 - `src/lib/events/lead-events.ts` (suscriptor ac-push)
 
@@ -107,11 +111,11 @@ src/jobs/ac-push.job.ts
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| 5 req/s excedido | Alta | Medio | Throttle 4 req/s + queue per-tenant |
-| Custom fields IDs distintos por cuenta | Alta | Bajo | Mapping configurable por tenant |
-| Tag ID vs Tag Name confusion | Media | Bajo | UI muestra ambos al configurar |
+| Riesgo                                 | Prob  | Impacto | Mitigación                          |
+| -------------------------------------- | ----- | ------- | ----------------------------------- |
+| 5 req/s excedido                       | Alta  | Medio   | Throttle 4 req/s + queue per-tenant |
+| Custom fields IDs distintos por cuenta | Alta  | Bajo    | Mapping configurable por tenant     |
+| Tag ID vs Tag Name confusion           | Media | Bajo    | UI muestra ambos al configurar      |
 
 ## Security Considerations
 

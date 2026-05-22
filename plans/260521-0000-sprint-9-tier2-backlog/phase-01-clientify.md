@@ -5,7 +5,7 @@ priority: P3
 estimation: 30-50h (con SP-8) / 60-80h (sin SP-8)
 phase_id: 9-01
 sprint_id: SP-9
-branch: feature/sp-9-clientify-adapter (al activarse)
+branch: feature/sprint-09-clientify-adapter (al activarse)
 created: 2026-05-21
 ---
 
@@ -88,11 +88,11 @@ plans/YYMMDD-HHmm-sprint-9-01-clientify/
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Docs pobres bloquean implementación | Alta | Medio | Spike obligatorio antes de comprometer |
-| Sin webhooks → solo push (pull con polling) | Alta | Bajo | Implementar polling job como fallback |
-| API Key Clientify revocable sin warning | Media | Bajo | Detectar 401 → marcar `status='revoked'` |
+| Riesgo                                      | Prob  | Impacto | Mitigación                               |
+| ------------------------------------------- | ----- | ------- | ---------------------------------------- |
+| Docs pobres bloquean implementación         | Alta  | Medio   | Spike obligatorio antes de comprometer   |
+| Sin webhooks → solo push (pull con polling) | Alta  | Bajo    | Implementar polling job como fallback    |
+| API Key Clientify revocable sin warning     | Media | Bajo    | Detectar 401 → marcar `status='revoked'` |
 
 ## Next Steps
 

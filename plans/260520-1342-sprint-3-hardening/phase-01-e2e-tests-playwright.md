@@ -36,6 +36,7 @@ agent: af-agents:testing
 ## Requirements
 
 ### Funcionales
+
 - Suite E2E Playwright con 6+ golden path flows cubriendo el MVP completo
 - Test de aislamiento multi-tenant (RLS post Sprint 0): cookie tampering no accede datos ajenos
 - Tests keyboard accessibility (post Ph4 WCAG fixes)
@@ -43,6 +44,7 @@ agent: af-agents:testing
 - CI integration: GitHub Actions ejecuta tests en cada PR
 
 ### No funcionales
+
 - Tests deben ser deterministas (no flaky): usar `waitForResponse` y timeouts explícitos
 - Tiempo ejecución CI: E2E < 5min, unit/integration < 3min
 - Test data isolation: factories + cleanup post-test, tenants de test separados
@@ -66,7 +68,7 @@ Capa de tests:
   Vitest unit/integration ──── Unit + integration tests
        │
        └─ src/**/__tests__/ o tests/
-            ├── unit/            (Zod schemas, utils, cost calculator)
+            ├── unit/            (Zod schemas, utils)
             ├── integration/     (Repositories BD real, BullMQ workers, Server Actions)
             └── fixtures/
 
@@ -77,6 +79,7 @@ Data flow tests:
 ## Related Code Files
 
 ### Crear
+
 - `e2e/` — directorio raíz E2E
 - `e2e/auth/login.spec.ts`
 - `e2e/auth/logout.spec.ts`
@@ -97,15 +100,17 @@ Data flow tests:
 - `vitest.config.ts`
 - `tests/integration/worker-lead-sequence.test.ts`
 - `tests/unit/zod-schemas.test.ts`
-- `tests/unit/llm-cost-calculator.test.ts`
+- ~~`tests/unit/llm-cost-calculator.test.ts`~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 
 ### Modificar
+
 - `package.json` — añadir scripts `test`, `test:e2e`, `test:coverage`, `test:integration`
 - `.github/workflows/ci.yml` — añadir jobs E2E + coverage
 
 ## Implementation Steps
 
 ### Paso 1: Instalar dependencias (pasar por ADR primero)
+
 ```bash
 # ADR: @playwright/test ya aprobado en adr-auditoria-dependencias-20260520.md
 npm install -D @playwright/test@^1.60.0
@@ -115,28 +120,27 @@ npx playwright install --with-deps chromium
 ```
 
 ### Paso 2: Configurar playwright.config.ts
+
 ```typescript
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
+  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:8500",
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
+    command: "npm run dev",
+    url: "http://localhost:8500",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
@@ -144,10 +148,12 @@ export default defineConfig({
 ```
 
 ### Paso 3: Configurar vitest.config.ts
+
 Ver configuración completa en researcher-playwright-coverage-d-20260520.md.
 Threshold: lines 80%, functions 80%, branches 70%.
 
 ### Paso 4: Scripts package.json
+
 ```json
 {
   "scripts": {
@@ -162,12 +168,15 @@ Threshold: lines 80%, functions 80%, branches 70%.
 ```
 
 ### Paso 5: Fixtures de auth y tenants
+
 Crear `e2e/fixtures/auth.ts` con `loginAs()` function.
 Crear `e2e/fixtures/tenants.ts` con constantes TENANT_A_UUID, TENANT_B_UUID (de .env.test).
 Crear `e2e/fixtures/leads.ts` con `createTestLead()` + `cleanupTestData()`.
 
 ### Paso 6: Golden path flows E2E (4-01)
+
 Implementar en orden de prioridad:
+
 1. `auth/login.spec.ts` — login válido → dashboard, login inválido → error
 2. `leads/create-lead.spec.ts` — crear lead desde historial → aparece en tabla
 3. `leads/historial-table.spec.ts` — listado, búsqueda, paginación
@@ -176,17 +185,20 @@ Implementar en orden de prioridad:
 6. `security/rls-cross-tenant.spec.ts` — cookie tampering bloqueado por RLS
 
 ### Paso 7: Tests accesibilidad E2E (post Ph4 fixes)
+
 - `accessibility/wcag-keyboard.spec.ts` — Tab order completo, skip link funcional
 - `accessibility/wcag-modals.spec.ts` — focus trap modales, Escape cierra
 - Usar `@axe-core/playwright` para `checkA11y()` en páginas principales
 
 ### Paso 8: Integration tests (4-02 coverage)
+
 - `tests/integration/worker-lead-sequence.test.ts` — BullMQ worker con Redis real
 - `tests/unit/zod-schemas.test.ts` — validación de schemas de Sprint 1
-- `tests/unit/llm-cost-calculator.test.ts` — cálculo costes por proveedor/modelo
+- ~~`tests/unit/llm-cost-calculator.test.ts` — cálculo costes por proveedor/modelo~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 - Repositories: test unit de cada repository de Sprint 1 contra BD real
 
 ### Paso 9: GitHub Actions CI
+
 ```yaml
 # .github/workflows/ci.yml — añadir jobs
 jobs:
@@ -195,7 +207,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24' }
+        with: { node-version: "24" }
       - run: npm ci
       - run: npm run test:coverage
       - uses: actions/upload-artifact@v4
@@ -206,11 +218,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24' }
+        with: { node-version: "24" }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-        env: { E2E_BASE_URL: http://localhost:3000 }
+        env: { E2E_BASE_URL: http://localhost:8500 }
 ```
 
 ## Todo List
@@ -232,7 +244,7 @@ jobs:
 - [ ] Tests WCAG modales (depende Ph4)
 - [ ] Integration tests Workers BullMQ
 - [ ] Unit tests Zod schemas
-- [ ] Unit tests LLM cost calculator
+- [ ] ~~Unit tests LLM cost calculator~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 - [ ] Coverage report ≥ 80%
 - [ ] GitHub Actions CI jobs
 - [ ] Lighthouse score ≥ 90 en rutas principales
@@ -247,12 +259,12 @@ jobs:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Tests E2E flaky por timing async (BullMQ, LLM) | Alta | Medio | `waitForResponse` explícito; retry 2 en CI; mock LLM en E2E |
-| Coverage 80% difícil por código legacy sin tests | Media | Alto | Priorizar repositorios nuevos de Sprint 1; excluir archivos legacy del threshold |
-| `@axe-core/playwright` genera falsos positivos | Baja | Bajo | Whitelistear issues conocidos pre-Ph4; solo fallar por Critical |
-| Setup Supabase local para BD de test | Media | Alto | Usar `supabase start` en CI; docs onboarding actualizados |
+| Riesgo                                           | Prob  | Impacto | Mitigación                                                                       |
+| ------------------------------------------------ | ----- | ------- | -------------------------------------------------------------------------------- |
+| Tests E2E flaky por timing async (BullMQ, LLM)   | Alta  | Medio   | `waitForResponse` explícito; retry 2 en CI; mock LLM en E2E                      |
+| Coverage 80% difícil por código legacy sin tests | Media | Alto    | Priorizar repositorios nuevos de Sprint 1; excluir archivos legacy del threshold |
+| `@axe-core/playwright` genera falsos positivos   | Baja  | Bajo    | Whitelistear issues conocidos pre-Ph4; solo fallar por Critical                  |
+| Setup Supabase local para BD de test             | Media | Alto    | Usar `supabase start` en CI; docs onboarding actualizados                        |
 
 ## Security Considerations
 
@@ -266,3 +278,28 @@ jobs:
 - Ph4 (WCAG fixes) debe completarse para que los tests de accesibilidad E2E sean meaningful
 - Ph5 (CSP headers) debe verificarse que no rompe los tests E2E (headers CORS, etc.)
 - Este phase establece el pipeline de CI que bloquea PRs futuros si los tests fallan
+
+---
+
+## Tarea adicional 4-09 — Test E2E Playwright completo del módulo Widget Chatbot (informe Renzo)
+
+**Origen:** [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) §3 📄 (falta cobertura E2E del módulo widget).
+
+**Problema:** El módulo de Chatbot Web (`/widget/[id]`, `/api/widget/embed.js`, server action `widget.ts:getChatbotResponse`) atraviesa 3 capas (script injector → iframe React → server action) con lead capture desde URL params, context assembly con ChatMemoryService + ChatSummaryService + KnowledgeBaseService, llamada OpenAI y persistencia en `chat_messages`. **No hay tests E2E** que verifiquen el flujo completo. Cualquier refactor futuro (Sprint 1 capa de datos, Sprint 2 adapters, …) puede romperlo silenciosamente.
+
+**Cobertura mínima (Playwright):**
+
+1. **Golden path**: cargar `embed.js?id=WIDGET_ID` desde un HTML test → verifica que se inyecta la burbuja + iframe → escribir mensaje → recibir respuesta del bot → verificar en DB que `chat_messages` tiene el mensaje y la respuesta + un `lead` nuevo creado con `origen='WEB_WIDGET'`.
+2. **Captura de lead vía URL params**: cargar embed con `?email=test%2Bauto@example.com` → escribir mensaje → verificar que el `lead` creado tiene `email = test+auto@example.com`.
+3. **Pre-identificación**: cargar embed con `?email=existing@example.com` para un lead ya existente → escribir mensaje → verificar que NO se crea un lead duplicado, se actualiza el existente.
+4. **Rechazo desde dominio no whitelistado** (depende de 1-27 Sprint 0): configurar `web_widgets.allowed_domains=['allowed.example.com']` → llamada desde origin `https://other.example.com` → respuesta `success:false, error:'Origin not allowed: ...'`.
+5. **Rate limit** (depende de 1-27 Sprint 0): 6 requests en <60s con `rate_limit_per_minute=5` → 6ª devuelve `error:'Rate limit exceeded'`.
+6. **Modelo gpt-4.1 → fallback** (depende de 2-35 Sprint 1): si la whitelist Zod NO está aún, el widget aplica el parche en runtime — comprobar respuesta válida. Tras 2-35, el test debe pasar sin necesidad del parche.
+
+**Estimación:** 4h (incluida en subtotal Sprint 3).
+
+**Cross-refs:**
+- 1-27 Sprint 0 (allowed_domains + rate limit): requisitos para tests 4 y 5.
+- 2-35 Sprint 1 (Zod model_name): test 6 cambia de comportamiento tras 2-35.
+- 4-01/4-02 (este phase): la infraestructura Playwright/coverage se reutiliza.
+- 4-08 (rate limit Server Actions genérico, ph05): los tests también validan la cobertura genérica si llega a tiempo.

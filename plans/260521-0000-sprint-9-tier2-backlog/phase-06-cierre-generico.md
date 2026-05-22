@@ -5,7 +5,7 @@ priority: P3
 estimation: 4-8h por CRM al activarse
 phase_id: 9-06
 sprint_id: SP-9
-branch: feature/sp-9-{crm}-adapter (por CRM)
+branch: feature/sprint-09-{crm}-adapter (por CRM)
 created: 2026-05-21
 ---
 
@@ -64,7 +64,7 @@ npm run test:contract  # debe incluir el nuevo adapter
 
 ### SP-9-{crm}-CLOSE-5 — PR + cierre (30min)
 
-- [ ] PR `feature/sp-9-{crm}-adapter` → `developer`
+- [ ] PR `feature/sprint-09-{crm}-adapter` → `developer`
 - [ ] Bump `package.json` → `v0.5.{X}` (siguiente patch disponible)
 - [ ] Update `RoadMap.md` (marcar Tier 2 {crm} done)
 - [ ] Update `docs/project-changelog.md` con sección "Tier 2 {crm}"
@@ -85,14 +85,14 @@ npm run test:contract  # debe incluir el nuevo adapter
 
 ## Estimación template
 
-| Tarea | Estimación |
-|-------|-----------|
-| CLOSE-1 Auto test | 1h |
-| CLOSE-2 E2E Playwright | 1-2h |
-| CLOSE-3 Test manual | 30min-1h |
-| CLOSE-4 Bugs | variable |
-| CLOSE-5 PR + cierre | 30min |
-| **Total** | **3-5h + bugs** |
+| Tarea                  | Estimación      |
+| ---------------------- | --------------- |
+| CLOSE-1 Auto test      | 1h              |
+| CLOSE-2 E2E Playwright | 1-2h            |
+| CLOSE-3 Test manual    | 30min-1h        |
+| CLOSE-4 Bugs           | variable        |
+| CLOSE-5 PR + cierre    | 30min           |
+| **Total**              | **3-5h + bugs** |
 
 ## Success Criteria (template)
 
@@ -104,10 +104,10 @@ npm run test:contract  # debe incluir el nuevo adapter
 
 ## Risk Assessment (template)
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Documentación Tier 2 incompleta | Media | Bajo | Doc tenant obligatoria antes de cierre |
-| Test sandbox limitado | Baja | Bajo | Usar account dedicado del CRM |
+| Riesgo                          | Prob  | Impacto | Mitigación                             |
+| ------------------------------- | ----- | ------- | -------------------------------------- |
+| Documentación Tier 2 incompleta | Media | Bajo    | Doc tenant obligatoria antes de cierre |
+| Test sandbox limitado           | Baja  | Bajo    | Usar account dedicado del CRM          |
 
 ## Security Considerations
 
