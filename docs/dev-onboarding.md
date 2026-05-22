@@ -96,6 +96,22 @@ node worker.js
 - `docs/testeos-manual.md`, `docs/dev-local-setup.md`, `README.md` y este mismo doc
 - Re-registrar OAuth redirect URIs en HubSpot / Zoho / Google developer consoles
 
+### 2.7 Credenciales de producción del cliente — política de aislamiento
+
+El equipo de desarrollo del cliente (Automatiza Formación) entregó (22-05-2026) un bundle de credenciales reales de producción en [docs/Docs-entrega-clienta/Estructura/app data doc/env_local_setup.md](./Docs-entrega-clienta/Estructura/app data doc/env_local_setup.md) (folder ignorado por git, regla `.gitignore:64`).
+
+**Política**: estas credenciales **NO** son el entorno local del dev. El local sigue siendo el Supabase Docker self-hosted en `localhost:8100/8200/8300`. La razón:
+
+- Su `SUPABASE_SERVICE_ROLE_KEY` bypassa toda RLS — control total sobre la BD del cliente.
+- Los scripts `npm run db:reset`, `npm run db:seed-demo`, `scripts/seed*.ts`, `scripts/migrate-*.ts`, `npm run test:e2e` están diseñados para BD local y **destruirían/contaminarían producción** si el `.env.local` apuntara allí.
+- El audit identificó 4 vulnerabilidades RLS activas en producción (Sprint 0 las arregla). No es momento de mezclar entornos.
+
+**Lo que sí aplicamos a `.env.local`**: únicamente la `OPENAI_API_KEY` del bundle, porque es independiente de la BD (sólo inferencia). Coste por uso va a la cuenta del cliente — evita bucles de tests E2E que invoquen LLM.
+
+**Lo que NO aplicamos**: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `NODE_TLS_REJECT_UNAUTHORIZED=0` del bundle. Esas variables se guardan en [`.env.production-readonly`](../.env.production-readonly) con prefijo `PROD_` para que ningún script las lea por accidente. Sólo para consultas read-only puntuales con cliente SQL externo (DBeaver, Supabase Studio del cliente con cuenta delegada).
+
+**Si necesitas mirar datos reales de producción**: pide al cliente acceso delegado IAM al Supabase Studio (Sección 5.2 del `roadmap_status_handover.md`). Mejor que compartir service_role_key.
+
 ## 3. Trabajo con Claude Code
 
 ### 3.1 Lo que ya tienes al clonar
