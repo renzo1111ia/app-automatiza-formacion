@@ -43,7 +43,11 @@ async function fillReactInput(page: Page, selector: string, value: string) {
  * Intenta login y devuelve el error si lo hubo (en lugar de lanzar excepción).
  * Detecta si hay error de Supabase/red para clasificarlo.
  */
-async function attemptLogin(page: Page, email: string, pass: string): Promise<{
+async function attemptLogin(
+  page: Page,
+  email: string,
+  pass: string
+): Promise<{
   success: boolean;
   url: string;
   errorText: string | null;
@@ -51,18 +55,18 @@ async function attemptLogin(page: Page, email: string, pass: string): Promise<{
   await page.goto("/login", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(500); // esperar hidratación React
 
-  await fillReactInput(page, '#email', email);
-  await fillReactInput(page, '#password', pass);
+  await fillReactInput(page, "#email", email);
+  await fillReactInput(page, "#password", pass);
 
   // Verificar que los campos tienen valor
-  const emailVal = await page.locator('#email').inputValue();
-  const passVal = await page.locator('#password').inputValue();
+  const emailVal = await page.locator("#email").inputValue();
+  const passVal = await page.locator("#password").inputValue();
 
   if (!emailVal || !passVal) {
     // Fallback: usar keyboard
-    await page.locator('#email').click({ clickCount: 3 });
+    await page.locator("#email").click({ clickCount: 3 });
     await page.keyboard.type(email);
-    await page.locator('#password').click({ clickCount: 3 });
+    await page.locator("#password").click({ clickCount: 3 });
     await page.keyboard.type(pass);
   }
 
@@ -73,8 +77,12 @@ async function attemptLogin(page: Page, email: string, pass: string): Promise<{
   // La llamada a Supabase remoto puede tardar >3s — esperar hasta 20s
   await Promise.race([
     page.waitForURL(/dashboard/, { timeout: 20_000 }).catch(() => null),
-    page.waitForSelector('button[type="submit"]:not([disabled])', { timeout: 20_000 }).catch(() => null),
-    page.waitForSelector('.rounded-xl.border.border-red-200', { timeout: 20_000 }).catch(() => null),
+    page
+      .waitForSelector('button[type="submit"]:not([disabled])', { timeout: 20_000 })
+      .catch(() => null),
+    page
+      .waitForSelector(".rounded-xl.border.border-red-200", { timeout: 20_000 })
+      .catch(() => null),
   ]);
 
   const url = page.url();
@@ -135,8 +143,8 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
       if (isNetworkError) {
         console.warn(
           "FINDING SF-02-CONN: Login falla por conectividad Supabase remoto. " +
-          `Error: ${result.errorText?.substring(0, 100)}. ` +
-          "ACCIÓN: verificar VPN/firewall puerto 8000 Hostinger desde máquina dev."
+            `Error: ${result.errorText?.substring(0, 100)}. ` +
+            "ACCIÓN: verificar VPN/firewall puerto 8000 Hostinger desde máquina dev."
         );
         // Skip sin bloquear — es un finding de entorno, no de código
         test.skip(true, "Supabase remoto no accesible desde test runner local");
@@ -144,7 +152,10 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
       }
     }
 
-    expect(result.success, `Login admin falló. URL=${result.url}, Error=${result.errorText}`).toBeTruthy();
+    expect(
+      result.success,
+      `Login admin falló. URL=${result.url}, Error=${result.errorText}`
+    ).toBeTruthy();
     expect(result.url).toContain("dashboard");
   });
 
@@ -175,8 +186,8 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
     // Usar page.url() después de la navegación completa
     const currentUrl = page.url();
     // Verificar contenido visible usando locators específicos
-    const hasNav = await page.locator('nav, [role="navigation"], aside').count() > 0;
-    const hasMainContent = await page.locator('main, [role="main"]').count() > 0;
+    const hasNav = (await page.locator('nav, [role="navigation"], aside').count()) > 0;
+    const hasMainContent = (await page.locator('main, [role="main"]').count()) > 0;
     const hasContent = hasNav || hasMainContent;
 
     expect(currentUrl, "Debe estar en /dashboard").toMatch(/dashboard/);
@@ -205,9 +216,6 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
     });
 
     const status = settingsResponse?.status() ?? 0;
-
-    // Verificar el título/h1 visible en la página — no usar textContent() que incluye RSC payload
-    const pageHeading = await page.locator('h1, h2, [data-testid="page-title"]').first().textContent().catch(() => "");
     const pageUrl = page.url();
 
     // Settings existe en src/app/dashboard/settings/ y es visible en sidebar nav
@@ -271,8 +279,8 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
     if (!sessionInvalidated) {
       console.warn(
         "BUG SF-05-BUG-001 CONFIRMADO: Tras logoutAction() + navigate a /dashboard, " +
-        `la sesión no fue invalidada (URL=${urlAfterLogout}). ` +
-        "Ver src/lib/actions/auth.ts:logoutAction() — falta redirect('/login')."
+          `la sesión no fue invalidada (URL=${urlAfterLogout}). ` +
+          "Ver src/lib/actions/auth.ts:logoutAction() — falta redirect('/login')."
       );
     } else {
       console.log("SF-05: Session invalidada correctamente tras logout.");
@@ -303,14 +311,16 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
       // Viewer credentials may not be seeded — document finding
       console.warn(
         "FINDING SF-06: viewer@af.local no autenticó. " +
-        `Error: ${result.errorText ?? "sin mensaje de error"}. ` +
-        "Ejecutar scripts/show-demo-credentials.ts para verificar estado."
+          `Error: ${result.errorText ?? "sin mensaje de error"}. ` +
+          "Ejecutar scripts/show-demo-credentials.ts para verificar estado."
       );
     }
 
     if (currentUrl.includes("dashboard")) {
       // Verificar que viewer no puede acceder a rutas admin
-      const adminRes = await page.goto("/dashboard/admin", { waitUntil: "domcontentloaded" }).catch(() => null);
+      const adminRes = await page
+        .goto("/dashboard/admin", { waitUntil: "domcontentloaded" })
+        .catch(() => null);
       const adminUrl = page.url();
 
       await page.screenshot({
@@ -318,7 +328,9 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
         fullPage: true,
       });
 
-      console.log(`Viewer acceso /dashboard/admin → URL: ${adminUrl}, status: ${adminRes?.status()}`);
+      console.log(
+        `Viewer acceso /dashboard/admin → URL: ${adminUrl}, status: ${adminRes?.status()}`
+      );
     }
 
     // Soft assertion: documentamos comportamiento
