@@ -87,13 +87,16 @@ export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
   // Clean up variant data to remove metadata fields that shouldn't be upserted
   // but keep fields like api_key, knowledge_base_id and model info
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     id: _id,
-    created_at,
-    updated_at,
-    metrics,
+    created_at: _created_at,
+    updated_at: _updated_at,
+    metrics: _metrics,
     ...cleanVariant
   } = variant;
+  void _id;
+  void _created_at;
+  void _updated_at;
+  void _metrics;
 
   // We explicitly include the ID if it exists, otherwise use onConflict
   const dataToUpsert = variant.id
