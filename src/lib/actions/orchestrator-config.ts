@@ -258,9 +258,10 @@ function deepMerge<T extends Record<string, any>>(base: T, override: Partial<T>)
   for (const key in override) {
     const val = override[key];
     if (val && typeof val === "object" && !Array.isArray(val)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       result[key] = deepMerge(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         base[key] as Record<string, any>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         val as Record<string, any>
       ) as T[typeof key];
     } else if (val !== undefined) {
