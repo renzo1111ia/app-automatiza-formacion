@@ -50,11 +50,24 @@ feature/* → PR → developer → (orden explícita) → staging → (orden exp
 
 ## Tracking de tiempos reales (política RoadMap)
 
-Cada tarea del RoadMap tiene **Estimación** (columna fija) y **Tiempo real** (anotado en la columna `Notas` al cerrar):
+Cada tarea del RoadMap tiene **Estimación** (columna fija) y **Tiempo real** (en columnas dedicadas `⏱ Push` y `⏱ Cierre`):
 
-- Al pasar a 🔵 **Subida rama** (tras push): anotar `⏱ Real (a push): XXh YYmin` con el tiempo invertido hasta el push. Es un valor provisional — puede haber fixes posteriores en SP-X-CLOSE-4.
-- Al pasar a 🟢 **COMPLETADA** (tras merge a `developer`): ajustar a `⏱ Real (final): XXh YYmin` incluyendo cualquier fix post-push.
-- Si una tarea se difiere o se cancela, anotar `⏱ Real (parcial): XXh YYmin` con lo invertido hasta el corte.
+- Al pasar a 🔵 **Subida rama** (tras push): anotar `⏱ Push: XXh YYmin` con el tiempo invertido hasta el push. Es un valor provisional — puede haber fixes posteriores en SP-X-CLOSE-4.
+- Al pasar a 🟢 **COMPLETADA** (tras merge a `developer`): anotar `⏱ Cierre: XXh YYmin` con el **TOTAL FINAL** incluyendo cualquier fix post-push (Push + cierre).
+- Si una tarea se difiere o se cancela, anotar `⏱ Real (parcial): XXh YYmin` con lo invertido hasta el corte (en columna Notas si no hay columna dedicada).
+
+### Granularidad obligatoria desde Sprint 2 (decisión 22-05-2026)
+
+| Nivel                | Sprint 0/1 (legacy)                | Sprint 2 en adelante (OBLIGATORIO)                                    |
+| -------------------- | ---------------------------------- | --------------------------------------------------------------------- |
+| **Sprint padre**     | OK Push + Cierre en tabla resumen  | OK Push + Cierre en tabla resumen                                     |
+| **Bloque** (2.X)     | Solo Estimación, sin tracking real | Añadir columnas Push + Cierre a tabla resumen del sprint              |
+| **Tarea individual** | Algunas en prosa en columna Notas  | Añadir columnas Push + Cierre a tabla detallada de cada bloque        |
+| **Subtareas CLOSE**  | Algunas en prosa                   | Añadir columnas Push + Cierre a tabla "Tareas de cierre obligatorias" |
+
+**Sprint 0 y Sprint 1 quedan congelados como legacy** — no se retro-calcula tracking fino. El `SP-2-CLOSE-summary.md` cubre el resumen agregado de Sprint 1; Sprint 0 tiene su agregado en RoadMap.md frontmatter (`sprint_0_progress` histórico).
+
+**Sprint 2 (SP-3) inaugura tablas con tracking fino** — el `roadmap-keeper` enforza la presencia de columnas `⏱ Push` y `⏱ Cierre` en cada bloque/tarea al crear las tablas, y el hook `af-productivity-logger.cjs` (tarea 2-30) las rellena automáticamente al detectar cambios de estado en RoadMap.md.
 
 Formato siempre: **horas y minutos**, nunca decimales (`2h 30min`, no `2.5h`). Coherente con la política global de productividad.
 
@@ -132,11 +145,39 @@ Triggers de escalado **preventivo** (antes de empezar la tarea, sin esperar a fa
 
 ## Phase/Sprint Completion Protocol (automático)
 
-Al cerrar fase, ejecutar SIN preguntar:
+Al cerrar fase/sprint, ejecutar SIN preguntar y EN ESTE ORDEN ESTRICTO. Cada paso solo arranca si el anterior cerró en verde. Si algo falla, se itera fix + re-run del paso fallido (no se salta):
 
-1. `npm run typecheck` + `npm run lint` + `npm run build` + tests (vía subagente `af-agents:testing`).
-2. Si hay UI nueva: browser tests con Playwright.
-3. Informe al usuario con: tests passed/failed/fixed + lo implementado + invitación a probar manual (si aplica).
+1. **Auto test (CLOSE-1)** — `npm run typecheck` + `npm run lint` + `npm run build` + `npm test` (unit + integration). Delegado a `af-agents:testing`. Verde obligatorio para seguir.
+2. **E2C local (CLOSE-2)** — Claude abre navegador con Playwright contra `localhost:8500` y recorre los flujos implementados en el sprint + WCAG 2.2 AA en rutas clave. Capturas en `docs/screenshots/`. Verde obligatorio para seguir.
+3. **Corrección de bugs (CLOSE-4)** — Cualquier bug detectado en CLOSE-1 o CLOSE-2 se corrige aquí y se re-corre el paso afectado hasta verde.
+4. **Push a GitHub (parte de CLOSE-5)** — `git push` de la rama `feature/sprint-NN-<slug>`. Solo después de que CLOSE-1/2/4 estén 🟢.
+5. **PR a `developer` (parte de CLOSE-5)** — Crear PR. NO mergear sin orden explícita del usuario (regla absoluta del proyecto). El merge a `developer` lo confirma el usuario manualmente.
+6. **CONDICIONAL — E2E VPS (parte de CLOSE-5)** — **SOLO si el proyecto ya está desplegado en el VPS Easypanel del cliente**: Claude ejecuta los specs Playwright contra la URL del VPS (no localhost). Si NO hay despliegue VPS todavía (estado actual: local-first), este paso se omite y se difiere su contenido al hand-off a `SP-4B phase-NN`.
+7. **Informe al usuario** — Resumen: tests passed/failed/fixed + diff de lo implementado + invitación a probar manualmente si aplica (UI visible o flujo de cara al usuario).
+
+### Detector "VPS desplegado" (cuándo activar paso 6)
+
+El paso 6 (E2E VPS) se activa SOLO si se cumplen TODAS estas condiciones:
+
+- Existe variable `NEXT_PUBLIC_VPS_URL` en `.env.example` con valor distinto a placeholder.
+- El staging branch ha sido promovido al menos una vez (verificable con `git log staging`).
+- El usuario ha confirmado explícitamente que el VPS está en marcha (memoria persistente o nota en RoadMap).
+
+Si cualquier condición falla → paso 6 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E VPS diferido — pre-deploy VPS no realizado todavía". El `roadmap-keeper` no bloquea el cierre por esto.
+
+### Mapping protocolo → subtareas CLOSE-1..5
+
+| Paso protocolo | Subtarea RoadMap                                  | Ejecutor                         |
+| -------------- | ------------------------------------------------- | -------------------------------- |
+| 1              | `SP-N-CLOSE-1` Auto test                          | `af-agents:testing`              |
+| 2              | `SP-N-CLOSE-2` E2C Local + WCAG 2.2 AA            | `af-agents:testing` + Playwright |
+| 3              | `SP-N-CLOSE-4` Corrección de bugs                 | Claude orquestador               |
+| 4              | `SP-N-CLOSE-5` paso 1 (push)                      | `af-agents:git`                  |
+| 5              | `SP-N-CLOSE-5` paso 2 (PR a developer, sin merge) | `af-agents:git`                  |
+| 6 (condic.)    | `SP-N-CLOSE-5` paso 3 E2E VPS                     | `af-agents:testing` contra VPS   |
+| 7              | Informe final al usuario                          | Claude orquestador               |
+
+`SP-N-CLOSE-3` (test manual del dev) NO entra en este protocolo automático — está diferido a SP-4B para sprints MVP (ver sección siguiente).
 
 ### `SP-N-CLOSE-3` (test manual del dev) DIFERIDO a SP-4B (regla 22-05-2026)
 

@@ -1,6 +1,6 @@
 ---
 name: roadmap-keeper
-description: Use this agent PROACTIVELY to maintain `plans/RoadMap.md` in real time. The agent enforces task state transitions, updates estimations, monitors progress, and reports deviations. Auto-triggers on: task start, task complete, sprint close, PR merge, deviation detection. Trigger when someone says "arranco con la tarea X", "completé X", "cerramos sprint Y", "estado del proyecto", "actualiza el roadmap", or when the orchestrator detects via hook that work has started/finished.
+description: Use this agent PROACTIVELY to maintain `plans/RoadMap.md` in real time AND regenerate the 3 branch-specific README.md files (developer, staging, main) after any RoadMap change. The agent enforces task state transitions, updates estimations, monitors progress, reports deviations, and enforces the per-level time tracking columns (⏱ Push + ⏱ Cierre) from Sprint 2 onwards at sprint/bloque/tarea/CLOSE granularity. Auto-triggers on: task start, task complete, sprint close, PR merge, deviation detection. Trigger when someone says "arranco con la tarea X", "completé X", "cerramos sprint Y", "estado del proyecto", "actualiza el roadmap", or when the orchestrator detects via hook that work has started/finished.
 
 <example>
 Context: Dev anuncia que empieza con 1-03 (fix worker.js:58).
@@ -132,14 +132,34 @@ No propagar = BLOCKED.
 
 ### Reglas de las columnas ⏱ Push y ⏱ Cierre
 
-| Columna      | Cuándo se rellena                                                           | En qué nivel del Cuadro                                       |
-| ------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **⏱ Push**   | Cuando alguna tarea hija pasa a 🔵 (push hecho)                             | Bloque (suma de tareas hijas a 🔵) · Sprint (suma de bloques) |
-| **⏱ Cierre** | Cuando un sprint completa `SP-X-CLOSE-5` (probado + mergeado a `developer`) | **SÓLO** en la fila Sprint. NUNCA en filas Bloque             |
+**Política nueva (decisión 22-05-2026): granularidad obligatoria desde Sprint 2.**
 
-- El detalle de tiempo por tarea individual vive en su Notas/celda de la sección detallada `## Fase X — Sprint Y`. El Cuadro sólo agrega a nivel Bloque y Sprint.
-- Tras una corrección post-push (bug en CLOSE-4) que añade tiempo a una tarea ya pusheada: en la sección detallada cambia el tiempo de la tarea a `Xh Ymin (+Zmin fix)` y nota el commit del fix; en el Cuadro suma el delta al ⏱ Push del bloque y del sprint.
-- ⏱ Cierre del Sprint = suma total de tiempos reales de todas las tareas + tiempo de las CLOSE-1..5 + tiempo de bugs.
+| Sprint                           | Niveles que llevan columnas Push + Cierre                                          | Notas                                                                                                     |
+| -------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Sprint 0/1 (legacy)**          | Solo Sprint padre (en Cuadro de mando)                                             | NO retro-calcular. Bloques/tareas/CLOSE legacy quedan con tracking parcial en columna Notas. Congelado.   |
+| **Sprint 2 en adelante (SP-3+)** | TODOS los niveles: Sprint padre + Bloque + Tarea individual + Subtareas CLOSE-1..5 | Obligatorio. Si una tabla nueva creada por planning no lleva esas columnas, devuelves BLOCKED al manager. |
+
+**Reglas de relleno (idénticas en todos los niveles):**
+
+| Columna | Cuándo se rellena                                                                     |
+| ------- | ------------------------------------------------------------------------------------- |
+| Push    | Cuando la tarea/bloque/sprint llega a Subida rama (push hecho) — tiempo hasta el push |
+| Cierre  | Cuando la tarea/bloque/sprint llega a Completada (merge a developer) — TOTAL FINAL    |
+
+**Reglas de agregación (Sprint 2+):**
+
+- **⏱ Push del Bloque** = suma de ⏱ Push de tareas hijas a 🔵/🟢 (tareas 🟡 DIFERIDA cuentan 0).
+- **⏱ Cierre del Bloque** = suma de ⏱ Cierre de tareas hijas a 🟢.
+- **⏱ Push del Sprint** = suma de ⏱ Push de bloques + ⏱ Push de subtareas CLOSE a 🔵.
+- **⏱ Cierre del Sprint** = suma de ⏱ Cierre de todas las tareas (dev + CLOSE-1..5 + bugs).
+- Tras corrección post-push (bug en CLOSE-4) que añade tiempo a una tarea ya pusheada: en la celda de la tarea suma al ⏱ Cierre (NO al ⏱ Push); en el bloque/sprint propaga el delta al ⏱ Cierre.
+
+**Validación de tablas:**
+
+Cuando recibes una tabla NUEVA del agente `planning` (sprint nuevo, bloque nuevo, tareas nuevas):
+
+- Si el sprint es Sprint 2 o posterior: verifica que la tabla incluye columnas `⏱ Push` y `⏱ Cierre`. Si faltan: añádelas tú mismo con valor `—` y reporta DONE_WITH_CONCERNS al manager indicando que se autocompletó.
+- Si el sprint es Sprint 0 o Sprint 1 (legacy): respeta el formato actual, NO añadas columnas.
 
 ### Estado del Bloque (agregado)
 
@@ -225,13 +245,34 @@ Caso 1-26/2-27 ya documentado: si una tarea se reasigna a otro sprint:
 2. Verifica que TODAS las tareas del sprint (dev + cierre obligatorio SP-X-CLOSE-1..5) están en 🟢.
 3. Verifica que `CHANGELOG.md` tiene entrada de la versión target.
 4. Verifica que `help-docs-keeper` cerró secciones.
-5. Si todo OK:
+5. **Verifica el Protocolo estándar de cierre** ([RoadMap §"Protocolo estándar de cierre"](../../plans/RoadMap.md)):
+   - Paso 1 CLOSE-1 (Auto test) 🟢.
+   - Paso 2 CLOSE-2 (E2C local) 🟢.
+   - Paso 3 CLOSE-3 — MVP: 🟢 Diferida a SP-4B. Post-MVP: 🟢 Completada por dev.
+   - Paso 4 CLOSE-4 (bugs) 🟢.
+   - Paso 5 CLOSE-5 paso 1 (push) 🟢.
+   - Paso 6 CLOSE-5 paso 2 (PR a developer) 🟢 — NO requiere merge para cerrar sprint si el usuario aún no ha dado orden de merge.
+   - **Paso 7 CLOSE-5 paso 3 (E2E VPS condicional)**: ejecutar el detector "VPS desplegado". Si todas condiciones 🟢 → exigir paso 7 ejecutado. Si alguna falla → OMITIDO + nota "E2E VPS diferido — pre-deploy VPS no realizado". NO bloquea el cierre.
+   - Paso 8 CLOSE-5 paso 4 (hand-off SP-4B) — solo sprints MVP: la plantilla `plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md` debe estar rellenada (no `🔘 Plantilla vacía`).
+6. Si todo OK:
    - Bumpea `project_version` en frontmatter.
    - Marca sprint 🟢 en AMBAS tablas (sección detallada + Cuadro de mando).
    - Registra `Fin Real` en sección detallada.
    - **Rellena ⏱ Cierre en la fila Sprint del Cuadro de mando** con el total del sprint (suma de ⏱ Push de todas las tareas + tiempo de las CLOSE-1..5 + bugs).
-6. Genera celda placeholder del siguiente sprint si no existe + añade filas correspondientes al Cuadro de mando.
-7. Reporta DONE al manager con resumen ejecutivo.
+   - Si Sprint 2 o posterior: rellena también `⏱ Cierre` en cada fila Bloque y en cada subtarea CLOSE.
+7. Genera celda placeholder del siguiente sprint si no existe + añade filas correspondientes al Cuadro de mando (con columnas Push + Cierre desde Sprint 2).
+8. **Regenera los 3 READMEs** (`node scripts/generate-readmes.cjs`) si el script está disponible en la rama actual.
+9. Reporta DONE al manager con resumen ejecutivo.
+
+### Detector "VPS desplegado" (usado en paso 5.7)
+
+Activa el paso 7 (E2E VPS) SOLO si TODAS estas condiciones se cumplen:
+
+- `NEXT_PUBLIC_VPS_URL` en `.env.example` con valor distinto a placeholder.
+- Branch `staging` promovido al menos una vez (`git log staging` con commits).
+- Usuario confirmó VPS en marcha (memoria persistente o nota en RoadMap).
+
+Si alguna falla → paso 7 OMITIDO. Estado actual (22-05-2026): VPS NO desplegado → paso 7 omitido en todos los sprints hasta primer despliegue.
 
 ### Trigger 6: Replanificación de sprint (cuando se detalla con `planning` agent)
 
@@ -265,6 +306,57 @@ Caso 1-26/2-27 ya documentado: si una tarea se reasigna a otro sprint:
 ```
 
 Mantén las notas en una sola línea por tarea. Cada evento añade su segmento `[...]`. Sólo elimina segmentos si haces rollback explícito.
+
+## Mantenimiento de READMEs por rama
+
+A partir del merge de `feature/sistema-readmes` a `developer`, el proyecto mantiene **tres README distintos** (uno por rama) con niveles de detalle adaptados a su audiencia. **Tras CUALQUIER cambio en `plans/RoadMap.md`** (estado de tarea, cierre de sprint, replanificación, bump de versión, edición de tabla), regeneras los 3 READMEs ejecutando:
+
+```bash
+node scripts/generate-readmes.cjs
+```
+
+### Qué produce el script
+
+| Archivo             | Rama destino                                    | Nivel de detalle                                              |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------------- |
+| `README.md`         | `developer`                                     | Full — todas las tareas con estado, estimación, Push y Cierre |
+| `README.staging.md` | `staging` (se renombra a README.md al promover) | Resumen por fases + sprints, sin tareas individuales          |
+| `README.main.md`    | `main` (se renombra a README.md al promover)    | Solo tabla de sprints + versión + fecha de release            |
+
+### Regla de atomicidad (CRÍTICA)
+
+Los 3 archivos `README*.md` se **commitean en el mismo commit** que el cambio al RoadMap. **No hay commits parciales**. Si el script falla: reporta BLOCKED al manager. NO commitees el RoadMap sin los READMEs actualizados.
+
+Flujo estándar tras actualizar RoadMap:
+
+1. Editar `plans/RoadMap.md` (cambio de estado, estimación, columnas Push/Cierre, etc.).
+2. Ejecutar `node scripts/generate-readmes.cjs`.
+3. Verificar que no hay errores en la salida del script.
+4. `git add plans/RoadMap.md README.md README.staging.md README.main.md`.
+5. `git commit -m "docs(roadmap): update task X-YY status + regenerate READMEs"`.
+
+### Errores y diagnóstico
+
+- `ERROR: plans/RoadMap.md not found` → estás en rama staging/main en vez de developer. Cambia de rama.
+- `ERROR: unresolved markers` → la plantilla tiene un marcador que el script no conoce — reportar como bug al lead.
+- `ERROR: template not found` → falta archivo en `scripts/readme-templates/` — reportar al lead.
+- Cualquier otro error: BLOCKED + mensaje al manager con el stderr completo.
+
+### Estado actual del sistema (22-05-2026)
+
+El script `scripts/generate-readmes.cjs` vive en la rama `feature/sistema-readmes` (validado, 4 checks OK) pero NO está mergeado todavía a `developer`. Hasta que se mergee:
+
+- En ramas que no tienen el script (incluida `feature/sprint-01-capa-datos` actual): **NO bloqueas el commit**. Reportas DONE_WITH_CONCERNS al manager indicando "script de READMEs aún no disponible en esta rama — actualización manual del README raíz si procede".
+- Tras merge de `feature/sistema-readmes` a `developer`: la regla de atomicidad pasa a ser estricta.
+
+### Promoción a staging/main (interacción con `staging` y `staging-main` skills)
+
+Las skills `staging` y `staging-main` (en `.claude/skills/`) ejecutan `scripts/promote.ps1` que limpia artefactos internos (docs/, plans/, .claude/, .claude-plugin/, CLAUDE.md) antes del merge. El README correcto para cada rama destino lo prepara `generate-readmes.cjs` antes del promote:
+
+- Promote `developer → staging`: el script renombra `README.staging.md` → `README.md` en la rama staging.
+- Promote `staging → main`: el script renombra `README.main.md` → `README.md` en la rama main.
+
+Si la promoción falla por README desincronizado: BLOCKED + recomendación de regenerar READMEs antes de reintentar.
 
 ## Si detectas inconsistencias
 
