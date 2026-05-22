@@ -29,107 +29,111 @@ Checklist de pruebas manuales que el equipo de desarrollo debe ejecutar antes de
 
 ## Sprint 0 — Hotfixes seguridad
 
-> Versión objetivo: `v0.1.0` · Rama: `feature/sp-0-sprint-0-hotfixes` · Bloque cubierto: tareas 1-07..1-25.
+> Versión objetivo: `v0.1.0` · Rama: `feature/sp-0-sprint-0-hotfixes` · Cubre: tareas 1-07..1-26 + 2 bugfixes detectados en E2C (BUG-001 logout, BUG-002 viewer→admin).
+
+### Cobertura automatizada vs manual
+
+**Filosofía**: lo que la máquina puede testear, la máquina lo testea. El test manual del dev se enfoca en **UX**, **navegación percibida**, **edge cases visuales** y **verificación de fixes recientes**.
+
+| Capa | Cobertura | Dónde |
+| --- | --- | --- |
+| 16 gates seguridad Sprint 0 (1-07..1-23) | ✅ Automatizado | [`tests/e2e/core/sprint-0-security.spec.ts`](../tests/e2e/core/sprint-0-security.spec.ts) |
+| Smoke flows golden path (login admin/viewer, dashboard, settings, logout) | ✅ Automatizado | [`tests/e2e/sprint-0-close/smoke-flows.spec.ts`](../tests/e2e/sprint-0-close/smoke-flows.spec.ts) |
+| BUG-002 (viewer→/admin bloqueado) | ✅ Automatizado | smoke-flows.spec.ts SF-06 |
+| BUG-001 (logout redirige a /login) | ✅ Automatizado | smoke-flows.spec.ts SF-05 |
+| UX subjetiva, navegación percibida, accesibilidad visual, edge cases | 🟡 Manual | Esta guía (bloques A-D) |
+
+**Antes de pasar al manual**: `npm run test:e2e` debe estar 24/24 en verde. Si rojo, fix primero — no tiene sentido test manual sobre app rota.
 
 ### Pre-requisitos del entorno
 
-Antes de empezar, asegúrate de tener en `.env.local` las nuevas vars añadidas en este sprint:
+- `.env.local` con `CRON_SECRET`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `ALLOW_INTERNAL_TENANT_URLS=true` (dev local), `OPENAI_API_KEY` real.
+- Supabase local Docker corriendo (`npm run db:status` → todos los servicios `Up (healthy)`).
+- Dev server en `http://localhost:8500` (`npm run dev`).
+- Credenciales test (ver `npx tsx scripts/show-demo-credentials.ts`):
+  - **Admin**: `demo@af.local` / `<password en .env.local DEMO_USER_PASSWORD>`
+  - **Viewer**: `viewer@af.local` / `<regenerable, ver script>`
+- Migraciones SQL Sprint 0 ya aplicadas (si vienes de `db:reset` están al día).
+
+### Bloque A — Smoke golden path (≤10 min)
+
+> Validar que el flujo principal de la app funciona con datos reales. Es lo que el cliente va a tocar primero.
+
+| #    | Estado | Acción                                                                            | Esperado                                                                                  |
+| ---- | :----: | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| A-01 | `[ ]`  | Abrir [http://localhost:8500/](http://localhost:8500/) sin sesión                 | Redirect a `/login`                                                                       |
+| A-02 | `[ ]`  | Login con admin (`demo@af.local`)                                                 | Llega a `/dashboard`; charts cargan (Citas, Llamadas, Cualificación, Razón, Anulación)    |
+| A-03 | `[ ]`  | Click en cada chart / KPI                                                         | Tooltips funcionan, hover responde, no hay errores en consola DevTools                    |
+| A-04 | `[ ]`  | Navegar a [/dashboard/settings](http://localhost:8500/dashboard/settings)         | Renderiza sección Settings completa sin errores                                           |
+| A-05 | `[ ]`  | Navegar a [/dashboard/admin](http://localhost:8500/dashboard/admin) (admin)       | Renderiza panel admin (lista de tenants, datos internos)                                  |
+| A-06 | `[ ]`  | Logout desde Topbar                                                               | Redirect a `/login`, cookie `sb-*-auth-token` borrada (DevTools → Application → Cookies)  |
+| A-07 | `[ ]`  | Re-login con viewer (`viewer@af.local`)                                           | Llega a `/dashboard`, ve datos del tenant pero secciones admin/settings restringidas      |
+
+### Bloque B — Spot check anti-regresión seguridad (≤15 min)
+
+> Los 16 gates ya están cubiertos por E2E automatizados. Aquí solo se valida que **el navegador real** se comporta igual que Playwright, y que los curl-tests siguen devolviendo los códigos esperados (por si hubiera diferencias de runtime entre tests headless y browser real).
+
+#### B.1 — Spot check clickable (5 min)
+
+Abre estos 5 enlaces como **admin logueado** o **anónimo** según se indique. Si alguno devuelve un código distinto al esperado, fail.
+
+| #    | Estado | URL                                                                                                                                                                | Sesión   | Esperado                                            |
+| ---- | :----: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | --------------------------------------------------- |
+| B-01 | `[ ]`  | [/api/orchestration/workflows?tenantId=...](http://localhost:8500/api/orchestration/workflows?tenantId=00000000-0000-0000-0000-000000000000)                       | anónimo  | `401 Unauthorized`                                  |
+| B-02 | `[ ]`  | [/api/tenant/migrate](http://localhost:8500/api/tenant/migrate)                                                                                                    | anónimo  | `401 Unauthorized`                                  |
+| B-03 | `[ ]`  | [/api/widget/embed.js](http://localhost:8500/api/widget/embed.js) (sin id)                                                                                         | anónimo  | `400 Missing widget ID`                             |
+| B-04 | `[ ]`  | [/api/widget/embed.js?id=hacker';alert(1);//](http://localhost:8500/api/widget/embed.js?id=hacker%27;alert%281%29;//)                                              | anónimo  | `400 Invalid widget ID format` (no ejecuta XSS)     |
+| B-05 | `[ ]`  | [/api/admin/tenants/.../client-sql](http://localhost:8500/api/admin/tenants/00000000-0000-0000-0000-000000000000/client-sql)                                       | viewer   | `401` o `403` (no admin → no accede)                |
+
+#### B.2 — Webhooks via curl (10 min)
+
+Copiar y pegar en terminal. Si recibes `401`/`403`/`503` está OK (el server rechaza correctamente). Si recibes `200` o `500` con stack trace, fail.
 
 ```bash
-CRON_SECRET=<openssl rand -base64 48>
-WHATSAPP_APP_SECRET=<el real desde Meta App Dashboard, o un valor de test>
-WHATSAPP_VERIFY_TOKEN=<random string para webhook verify>
-ALLOW_INTERNAL_TENANT_URLS=true   # solo dev local; bypassa SSRF allowlist para Supabase local
-```
-
-Migraciones SQL aplicadas en local (deberían estarlo ya tras tirar `db:reset`):
-
-```powershell
-docker exec -i supabase_db_automatiza-formacion-dashboard psql -U postgres -d postgres < supabase/migrations/20260521000000_rls_tenants_hardening.sql
-docker exec -i supabase_db_automatiza-formacion-dashboard psql -U postgres -d postgres < supabase/migrations/20260521000001_rls_knowledge_base_hardening.sql
-docker exec -i supabase_db_automatiza-formacion-dashboard psql -U postgres -d postgres < supabase/scripts/migrate-is-admin-to-app-metadata.sql
-```
-
-### A) Quick checks clickables (smoke ~10 min)
-
-> Si solo dispones de 10 minutos, ejecuta esta lista. Cubre los gates más visibles sin necesidad de preparar usuarios, calcular firmas, ni manipular DB. Para el cierre formal `SP-1-CLOSE-3` hay que pasar también la tabla completa más abajo (sección B).
-
-| #    | Estado | URL / Acción                                                                                                                                                                      | Esperado                                                    |
-| ---- | :----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Q-01 | `[ ]`  | [GET /login](http://localhost:8500/login)                                                                                                                                         | `200` página de login renderiza                             |
-| Q-02 | `[ ]`  | [GET /dashboard](http://localhost:8500/dashboard) (sin sesión)                                                                                                                    | Redirect a `/login`                                         |
-| Q-03 | `[ ]`  | [GET /api/orchestration/workflows?tenantId=00000000-0000-0000-0000-000000000000](http://localhost:8500/api/orchestration/workflows?tenantId=00000000-0000-0000-0000-000000000000) | `401 Unauthorized`                                          |
-| Q-04 | `[ ]`  | [GET /api/orchestration/sweep](http://localhost:8500/api/orchestration/sweep)                                                                                                     | `401` o `503`                                               |
-| Q-05 | `[ ]`  | [GET /api/cron/appointments/reminders](http://localhost:8500/api/cron/appointments/reminders)                                                                                     | `401` o `503`                                               |
-| Q-06 | `[ ]`  | [GET /api/admin/tenants/00000000-0000-0000-0000-000000000000/client-sql](http://localhost:8500/api/admin/tenants/00000000-0000-0000-0000-000000000000/client-sql)                 | `401`                                                       |
-| Q-07 | `[ ]`  | [GET /api/tenant/migrate](http://localhost:8500/api/tenant/migrate)                                                                                                               | `401`                                                       |
-| Q-08 | `[ ]`  | [GET /api/widget/embed.js](http://localhost:8500/api/widget/embed.js) (sin id)                                                                                                    | `400 Missing widget ID`                                     |
-| Q-09 | `[ ]`  | [GET /api/widget/embed.js?id=hacker';alert(1);//](http://localhost:8500/api/widget/embed.js?id=hacker%27;alert%281%29;//)                                                         | `400 Invalid widget ID format`                              |
-| Q-10 | `[ ]`  | [GET /api/widget/embed.js?id=11111111-1111-1111-1111-111111111111](http://localhost:8500/api/widget/embed.js?id=11111111-1111-1111-1111-111111111111)                             | `200` body contiene `"11111111-..."` y NO contiene `alert(` |
-
-Comandos curl para los POST (no clickables, copiar y pegar):
-
-```bash
-# Q-11: Retell webhook sin firma → 401/503
+# B-06: Retell webhook sin firma → 401/503
 curl -i -X POST http://localhost:8500/api/webhooks/retell -H "content-type: application/json" -d '{"event":"call_ended"}'
 
-# Q-12: Retell tools sin firma → 401/503
+# B-07: Retell tools sin firma → 401/503
 curl -i -X POST http://localhost:8500/api/webhooks/retell/tools -H "content-type: application/json" -d '{"name":"book_appointment","args":{},"call":{"metadata":{}}}'
 
-# Q-13: WhatsApp sin x-hub-signature-256 → 401 (si WHATSAPP_APP_SECRET está set) o 503
+# B-08: WhatsApp sin x-hub-signature-256 → 401/503
 curl -i -X POST http://localhost:8500/api/webhooks/whatsapp -H "content-type: application/json" -d '{"object":"whatsapp_business_account","entry":[]}'
 
-# Q-14: CRM webhook sin x-tenant-id → 400
+# B-09: CRM webhook sin x-tenant-id → 400
 curl -i -X POST http://localhost:8500/api/webhooks/crm -H "content-type: application/json" -d '{"telefono":"+34600000000"}'
 
-# Q-15: CRM con x-tenant-id pero sin firma → 401/403/503
+# B-10: CRM con x-tenant-id pero sin firma → 401/403/503
 curl -i -X POST http://localhost:8500/api/webhooks/crm -H "x-tenant-id: 00000000-0000-0000-0000-000000000000" -H "content-type: application/json" -d '{"telefono":"+34600000000"}'
 ```
 
-> **Nota**: el spec automatizado [`tests/e2e/core/sprint-0-security.spec.ts`](../tests/e2e/core/sprint-0-security.spec.ts) cubre estos 15 quick checks. Si `npm run test:e2e` pasa, A) ya está OK; pero la firma manual del dev sigue siendo obligatoria para el cierre.
+### Bloque C — Verificar fixes recientes del sprint (≤10 min)
+
+> Bugs detectados en E2C (`SP-1-CLOSE-2`) y corregidos en `SP-1-CLOSE-4`. Validar que no hay regresión visual ni de comportamiento.
+
+| #    | Estado | Test                                          | Pasos                                                                                                                                                                          | Esperado                                                                              |
+| ---- | :----: | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| C-01 | `[ ]`  | **BUG-002 — viewer NO accede a `/admin`**     | Login con viewer (`viewer@af.local`). Manualmente teclea la URL [/dashboard/admin](http://localhost:8500/dashboard/admin) en barra del browser.                                | Redirect a `/dashboard`. NO debe mostrar el panel admin ni datos financieros internos. |
+| C-02 | `[ ]`  | **BUG-001 — logout redirige a `/login`**      | Login con admin. Click en "Cerrar sesión" en el Topbar.                                                                                                                        | URL cambia a `/login`. Refresh F5: sigue en `/login` (sesión invalidada).             |
+| C-03 | `[ ]`  | **viewer no ve link a `/admin` en sidebar**   | Inspeccionar sidebar del viewer logueado.                                                                                                                                      | NO debe aparecer el item "Admin" (defensa en profundidad además del middleware).      |
+
+### Bloque D — Exploración libre (≤20 min)
+
+> Time-box de 20 minutos para usar la app como un usuario real curioso. Reporta **cualquier** cosa rara, aunque no parezca grave. Ideas:
+>
+> - Refrescar el dashboard 5 veces seguidas → ¿performance percibida estable? ¿flickers?
+> - Cambiar tema light/dark → ¿algún componente se rompe?
+> - Resize del viewport a mobile (375px) → ¿layout responsive?
+> - DevTools console abierta → ¿warnings o errores nuevos en runtime?
+> - Network tab → ¿alguna llamada en rojo o 4xx/5xx inesperada?
+> - Probar atajos de teclado típicos (Tab, Enter, Esc) en formularios → ¿accesibilidad básica?
+> - Click derecho en links → "Abrir en pestaña nueva" → ¿funciona?
+> - Logout + refresh manual + back button → ¿no se filtra info de sesión anterior?
+
+Cualquier finding va a la sección **"Bugs detectados"** del RoadMap del sprint para que SP-1-CLOSE-4 los absorba.
 
 ---
 
-### B) Tabla completa de tests del cierre — Sprint 0
-
-> **Para el cierre formal `SP-1-CLOSE-3`**. Cubre TODOS los gates 1-07..1-26 incluyendo casos que requieren login con usuarios distintos, manipular `tenants.config` en Supabase Studio, y calcular HMAC con clave real.
-
-| #        | Estado | Test                                                   | URL / Comando                                                                                                                                     | Esperado                                                                                             | Setup previo                                                                                                                                                                                                       | Notas |
-| -------- | :----: | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| SP0-T-01 | `[ ]`  | Login válido + cookie de sesión                        | [/login](http://localhost:8500/login)                                                                                                             | Redirect a `/dashboard` + cookie `sb-*-auth-token`                                                   | Credenciales válidas (p.ej. `admin@2you.ai`)                                                                                                                                                                       |       |
-| SP0-T-02 | `[ ]`  | `/dashboard/settings` bloquea no admin (1-16)          | [/dashboard/settings](http://localhost:8500/dashboard/settings)                                                                                   | Redirect a `/dashboard`                                                                              | Login con user **no admin**                                                                                                                                                                                        |       |
-| SP0-T-03 | `[ ]`  | `/dashboard/settings` accesible admin (1-16)           | [/dashboard/settings](http://localhost:8500/dashboard/settings)                                                                                   | Renderiza sección Settings completa                                                                  | Login con user **admin** (tras script 1-16: `app_metadata.is_admin=true`)                                                                                                                                          |       |
-| SP0-T-04 | `[ ]`  | Listado de tenants solo admin (1-17)                   | [/dashboard/admin](http://localhost:8500/dashboard/admin)                                                                                         | No admin → lista vacía; admin → todos los tenants                                                    | Dos sesiones (admin y no admin)                                                                                                                                                                                    |       |
-| SP0-T-05 | `[ ]`  | Crear tenant solo admin (1-17)                         | Click "Nuevo cliente" en `/dashboard/admin`                                                                                                       | No admin → "Acción requiere rol admin"; admin → tenant creado                                        | Form del panel admin                                                                                                                                                                                               |       |
-| SP0-T-06 | `[ ]`  | Borrar tenant solo admin (1-17)                        | Click delete en `/dashboard/admin`                                                                                                                | No admin → throw error; admin → eliminado                                                            | Idem                                                                                                                                                                                                               |       |
-| SP0-T-07 | `[ ]`  | API orquestación rechaza anónimos (1-07)               | [/api/orchestration/workflows?tenantId=...](http://localhost:8500/api/orchestration/workflows?tenantId=00000000-0000-0000-0000-000000000000)      | `401 Unauthorized`                                                                                   | Borrar cookies de sesión antes                                                                                                                                                                                     |       |
-| SP0-T-08 | `[ ]`  | API orquestación rechaza tenant ajeno (1-07)           | `GET /api/orchestration/workflows?tenantId=<tenant_B>`                                                                                            | `403 Forbidden`                                                                                      | Login user de tenant **A** + UUID real de tenant **B**                                                                                                                                                             |       |
-| SP0-T-09 | `[ ]`  | Cron sweep exige secret (1-08)                         | [/api/orchestration/sweep](http://localhost:8500/api/orchestration/sweep)                                                                         | Sin header → `401/503`; con `-H "x-cron-secret: $CRON_SECRET"` → `200`                               | `CRON_SECRET` en `.env.local`                                                                                                                                                                                      |       |
-| SP0-T-10 | `[ ]`  | Cron reminders exige secret (1-08)                     | [/api/cron/appointments/reminders](http://localhost:8500/api/cron/appointments/reminders)                                                         | Idem Q-04                                                                                            | Idem                                                                                                                                                                                                               |       |
-| SP0-T-11 | `[ ]`  | Orchestration disabled por defecto (1-09)              | `POST /api/orchestration/publish` con body válido                                                                                                 | Sin flag → `403 Orchestration disabled`; con `tenants.config.test_orchestrator_enabled=true` → `200` | Editar JSONB en Supabase Studio: [http://localhost:54323](http://localhost:54323)                                                                                                                                  |       |
-| SP0-T-12 | `[ ]`  | client-sql exige admin (1-10)                          | [/api/admin/tenants/<uuid>/client-sql](http://localhost:8500/api/admin/tenants/00000000-0000-0000-0000-000000000000/client-sql)                   | Anónimo/no admin → `401/403`; admin → `200` con SQL adjunto                                          | UUID real de un tenant existente                                                                                                                                                                                   |       |
-| SP0-T-13 | `[ ]`  | `/api/tenant/migrate` GET exige admin (1-11)           | [/api/tenant/migrate](http://localhost:8500/api/tenant/migrate)                                                                                   | Anónimo → `401`; admin → `200` JSON `{sql:"..."}`                                                    | —                                                                                                                                                                                                                  |       |
-| SP0-T-14 | `[ ]`  | Webhook Retell sin firma → 401 (1-12)                  | `curl -X POST /api/webhooks/retell` (ver Q-11)                                                                                                    | `401` o `503` (sin `RETELL_WEBHOOK_SECRET`)                                                          | —                                                                                                                                                                                                                  |       |
-| SP0-T-15 | `[ ]`  | Webhook Retell tools sin firma → 401 (1-13)            | `curl -X POST /api/webhooks/retell/tools` (ver Q-12)                                                                                              | `401` o `503`                                                                                        | —                                                                                                                                                                                                                  |       |
-| SP0-T-16 | `[ ]`  | WhatsApp sin `WHATSAPP_APP_SECRET` env → 503 (1-14)    | `curl -X POST /api/webhooks/whatsapp -d '{}'`                                                                                                     | `503 Service misconfigured`                                                                          | **Borrar temp** `WHATSAPP_APP_SECRET` de `.env.local` + reiniciar dev. Restaurar al terminar.                                                                                                                      |       |
-| SP0-T-17 | `[ ]`  | WhatsApp sin header `x-hub-signature-256` → 401 (1-14) | `curl -X POST /api/webhooks/whatsapp -d '{}'`                                                                                                     | `401 Missing signature`                                                                              | `WHATSAPP_APP_SECRET` configurada                                                                                                                                                                                  |       |
-| SP0-T-18 | `[ ]`  | CRM webhook sin `x-tenant-id` → 400 (1-15)             | `curl -X POST /api/webhooks/crm -d '{}'` (ver Q-14)                                                                                               | `400 Missing x-tenant-id header`                                                                     | —                                                                                                                                                                                                                  |       |
-| SP0-T-19 | `[ ]`  | CRM con tenant pero sin firma → 401/403 (1-15)         | `curl -X POST /api/webhooks/crm -H "x-tenant-id: <uuid>"` (ver Q-15)                                                                              | `401`, `403` o `503`                                                                                 | —                                                                                                                                                                                                                  |       |
-| SP0-T-20 | `[ ]`  | CRM con firma válida → 200 (1-15)                      | `curl -X POST /api/webhooks/crm -H "x-tenant-id: <uuid>" -H "x-webhook-signature: <hex>"`                                                         | `200 Lead ingested`                                                                                  | 1) UPDATE en Supabase Studio: `tenants.config = config \|\| '{"webhook_crm_secret":"test-secret"}'::jsonb WHERE id='<uuid>'`. 2) `echo -n '<body>' \| openssl dgst -sha256 -hmac 'test-secret'` para calcular HMAC |       |
-| SP0-T-21 | `[ ]`  | RLS tenants — cliente solo ve su tenant (1-18)         | SQL en Studio: `SELECT * FROM tenants;` autenticado como user A                                                                                   | Solo fila del tenant del user                                                                        | En [Studio](http://localhost:54323) → SQL Editor → conexión con el JWT del user A                                                                                                                                  |       |
-| SP0-T-22 | `[ ]`  | RLS tenants — admin ve todos (1-18)                    | Mismo SELECT con JWT de un admin                                                                                                                  | Todas las filas                                                                                      | Admin con `app_metadata.is_admin=true`                                                                                                                                                                             |       |
-| SP0-T-23 | `[ ]`  | RLS tenants — no admin no puede INSERT (1-18)          | `INSERT INTO tenants (...)` como user no admin                                                                                                    | Policy bloquea (`row violates row-level security policy`)                                            | —                                                                                                                                                                                                                  |       |
-| SP0-T-24 | `[ ]`  | RLS knowledge_base — owner-only (1-19)                 | `SELECT * FROM knowledge_base WHERE tenant_id='<tenant_B>'` como user A                                                                           | 0 filas devueltas (aunque existan en DB)                                                             | Insertar previamente un knowledge_base en tenant B como service_role                                                                                                                                               |       |
-| SP0-T-25 | `[ ]`  | fetchCalls filtra por tenant activo (1-20)             | [/dashboard/historial](http://localhost:8500/dashboard/historial)                                                                                 | Solo leads del tenant activo; sin cookie `esden-tenant-id` → tabla vacía                             | Login como user de tenant A; borrar cookie en DevTools para 2º caso                                                                                                                                                |       |
-| SP0-T-26 | `[ ]`  | IDOR inbox: editar lead ajeno falla silencioso (1-21)  | Manipular `leadId` en URL del inbox a un lead de tenant B                                                                                         | UI dice OK pero verificar en DB que el lead B NO cambió                                              | Login tenant A + UUID real de lead del tenant B                                                                                                                                                                    |       |
-| SP0-T-27 | `[ ]`  | IDOR inbox: borrar lead ajeno no afecta (1-21)         | `deleteLead(leadId=<lead_B>)` desde DevTools/UI tenant A                                                                                          | UI OK, lead B sigue en DB                                                                            | Idem                                                                                                                                                                                                               |       |
-| SP0-T-28 | `[ ]`  | SSRF migrate bloquea host privado (1-22)               | `POST /api/tenant/migrate` como admin                                                                                                             | `400 Supabase URL inválida (red privada bloqueada)`                                                  | UPDATE: `tenants.supabase_url='http://internal-admin.local'`. `ALLOW_INTERNAL_TENANT_URLS` **no** set.                                                                                                             |       |
-| SP0-T-29 | `[ ]`  | SSRF migrate permite localhost en dev (1-22)           | `POST /api/tenant/migrate` como admin                                                                                                             | Sin env → `400`; con `ALLOW_INTERNAL_TENANT_URLS=true` → `200`                                       | `tenants.supabase_url='http://localhost:8200'`; toggle env y reiniciar dev                                                                                                                                         |       |
-| SP0-T-30 | `[ ]`  | Widget XSS id malicioso → 400 (1-23)                   | [/api/widget/embed.js?id=hacker';alert(1);//](http://localhost:8500/api/widget/embed.js?id=hacker%27;alert%281%29;//)                             | `400 Invalid widget ID format`                                                                       | —                                                                                                                                                                                                                  |       |
-| SP0-T-31 | `[ ]`  | Widget UUID válido → JS sanitizado (1-23)              | [/api/widget/embed.js?id=11111111-1111-1111-1111-111111111111](http://localhost:8500/api/widget/embed.js?id=11111111-1111-1111-1111-111111111111) | `200`; body contiene `"11111111-..."` y NO contiene `alert(`                                         | —                                                                                                                                                                                                                  |       |
-| SP0-T-32 | `[ ]`  | axios bump no rompe download de media WhatsApp (1-24)  | Recibir webhook WhatsApp tipo `image`                                                                                                             | Log `[WHATSAPP PROCESSOR] Media uploaded to MinIO`, sin error de tipos `AxiosHeaderValue`            | WhatsApp real o mock del payload Meta                                                                                                                                                                              |       |
-| SP0-T-33 | `[ ]`  | Paquete `crypto` deprecated removido (1-25)            | `npm ls crypto` en raíz del repo                                                                                                                  | `(empty)` — el paquete `crypto@1.0.1` ya no está. `npm run dev` arranca sin warning deprecation      | Tras `npm install` post-pull de `feature/sp-0`                                                                                                                                                                     |       |
-| SP0-T-34 | `[ ]`  | Next.js 16.2.6 sin warnings CVE (1-26)                 | `npm run dev` + `npm run build`                                                                                                                   | Sin warnings de CVE en consola; rutas dinámicas funcionan                                            | —                                                                                                                                                                                                                  |       |
+> **Nota histórica**: el spec [`tests/e2e/core/sprint-0-security.spec.ts`](../tests/e2e/core/sprint-0-security.spec.ts) cubre 16 gates de seguridad automatizados; [`tests/e2e/sprint-0-close/smoke-flows.spec.ts`](../tests/e2e/sprint-0-close/smoke-flows.spec.ts) cubre 6 smoke flows. Si `npm run test:e2e` está 24/24 verde, los bloques A-B son confirmación de que **el browser real coincide con headless**. Si fueras a saltarte algún bloque por tiempo, el orden de prioridad es: **C > A > D > B** (los fixes recientes son lo más nuevo y arriesgado).
 
 ### Tests diferidos a sesión pre-deploy (VPS)
 
