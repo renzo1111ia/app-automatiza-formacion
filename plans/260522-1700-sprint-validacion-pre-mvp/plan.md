@@ -27,7 +27,8 @@ Sprint de validación independiente cuya función es **re-testear en el VPS de R
 
 - **Lead**: Renzo.
 - **Equipo**: equipo de desarrollo de Renzo (tester(s) humano(s) + Renzo como dev).
-- **Capacidad**: por definir según el equipo de Renzo (estimación inicial 24-40h dependiendo de hotfixes).
+- **Capacidad**: 8h/día (estimación inicial **40-55h** total — revisada 22-05-2026 desde 24-40h iniciales).
+- **Razón del aumento**: SP-4B ahora **absorbe los `SP-N-CLOSE-3` (test manual del dev) de Sprints 1, 2, 2B y 3**. Esos manuales (~2h cada uno) se integran en el bloque 4 de cada phase de este sprint (~8h adicionales). Más overhead por re-test E2E VPS de los nuevos sprints (2B Dashboard KPIs).
 - **Branch**: `feature/sprint-03b-validacion-pre-mvp` desde `developer` tras el cierre de Sprint 3.
 
 ---
@@ -36,13 +37,13 @@ Sprint de validación independiente cuya función es **re-testear en el VPS de R
 
 Una fase por cada sprint anterior, más una de cierre. Cada fase se **rellena al cerrar el sprint anterior correspondiente** (auto-fill — ver sección "Mecánica de auto-fill" más abajo).
 
-| Fase | Archivo                                                            | Cubre                                     | Estado inicial                             |
-| ---- | ------------------------------------------------------------------ | ----------------------------------------- | ------------------------------------------ |
-| 01   | [phase-01-validacion-sprint-0.md](phase-01-validacion-sprint-0.md) | Sprint 0 — Hotfixes seguridad (SP-1)      | 📝 Llenado al cierre Sprint 0 (22-05-2026) |
-| 02   | [phase-02-validacion-sprint-1.md](phase-02-validacion-sprint-1.md) | Sprint 1 — Capa de datos (SP-2)           | 🔘 Plantilla vacía                         |
-| 03   | [phase-03-validacion-sprint-2.md](phase-03-validacion-sprint-2.md) | Sprint 2 — Adapter HubSpot+Zoho (SP-3)    | 🔘 Plantilla vacía                         |
-| 04   | [phase-04-validacion-sprint-3.md](phase-04-validacion-sprint-3.md) | Sprint 3 — Hardening (SP-4) — v0.4.0-rc.1 | 🔘 Plantilla vacía                         |
-| 05   | [phase-05-cierre-sprint.md](phase-05-cierre-sprint.md)             | PR a `developer` + bump v0.4.0 GA         | 🔘 Plantilla estándar                      |
+| Fase | Archivo                                                            | Cubre                                                                    | Estado inicial                             |
+| ---- | ------------------------------------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------ |
+| 01   | [phase-01-validacion-sprint-0.md](phase-01-validacion-sprint-0.md) | Sprint 0 — Hotfixes seguridad (SP-1)                                     | 📝 Llenado al cierre Sprint 0 (22-05-2026) |
+| 02   | [phase-02-validacion-sprint-1.md](phase-02-validacion-sprint-1.md) | Sprint 1 — Capa de datos (SP-2) + **manual humano** (antes CLOSE-3)      | 🔘 Plantilla vacía                         |
+| 03   | [phase-03-validacion-sprint-2.md](phase-03-validacion-sprint-2.md) | Sprint 2 (HubSpot+Zoho) + Sprint 2B (Dashboard KPIs) + **manual humano** | 🔘 Plantilla vacía                         |
+| 04   | [phase-04-validacion-sprint-3.md](phase-04-validacion-sprint-3.md) | Sprint 3 — Hardening (SP-4) — v0.4.0-rc.1 + **manual humano**            | 🔘 Plantilla vacía                         |
+| 05   | [phase-05-cierre-sprint.md](phase-05-cierre-sprint.md)             | PR a `developer` + bump v0.4.0 GA                                        | 🔘 Plantilla estándar                      |
 
 ---
 

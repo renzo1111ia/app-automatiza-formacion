@@ -138,9 +138,19 @@ Al cerrar fase, ejecutar SIN preguntar:
 2. Si hay UI nueva: browser tests con Playwright.
 3. Informe al usuario con: tests passed/failed/fixed + lo implementado + invitación a probar manual (si aplica).
 
+### `SP-N-CLOSE-3` (test manual del dev) DIFERIDO a SP-4B (regla 22-05-2026)
+
+A partir de Sprint 1, **NO se ejecuta CLOSE-3 (test manual del dev) en cada sprint MVP**. Se difiere al `SP-4B phase-NN bloque 4` (test manual del tester Renzo), que lo absorbe junto con su validación E2E VPS.
+
+- ✅ Sprint 0 (cerrado): CLOSE-3 ya reemplazado por reporte análisis docs Bea + Renzo.
+- Sprints 1, 2, 2B, 3: CLOSE-3 marcado como 🟢 Diferida en RoadMap. El manual humano lo ejecuta Renzo en SP-4B.
+- Sprints post-MVP (Sheets, Costes-LLM, Refinamiento, Salesforce, etc.): mantienen su CLOSE-3 estándar (no se difieren).
+
+Razón: liberar a Javi HP de la coordinación con humano por cada sprint, concentrar todo el QA manual en un sprint dedicado con un equipo independiente (Renzo + tester) que pueda dedicarle tiempo real.
+
 ### Hand-off al Sprint Validación Pre-MVP (SP-4B) — obligatorio en `SP-N-CLOSE-5`
 
-Al cerrar **cualquier Sprint N** del MVP (Sprints 0, 1, 2, 3 — NO los post-MVP), su `SP-N-CLOSE-5` lleva una subtarea obligatoria **"Hand-off a SP-4B phase-NN"** que actualiza el archivo `plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md` correspondiente con:
+Al cerrar **cualquier Sprint N** del MVP (Sprints 0, 1, 2, 2B, 3 — NO los post-MVP), su `SP-N-CLOSE-5` lleva una subtarea obligatoria **"Hand-off a SP-4B phase-NN"** que actualiza el archivo `plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md` correspondiente con:
 
 - Comandos exactos de test automático del sprint cerrado (`npm run …`).
 - Specs Playwright E2C añadidas en este sprint, con rutas que cubren.
