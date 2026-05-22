@@ -13,6 +13,7 @@ import {
 } from "../actions/orchestrator-config";
 import { enqueueLeadStep, LeadSequenceJob } from "./queue/lead-sequence-queue";
 import { logOrchestrationStep } from "./scheduler";
+import { LeadStageEnum } from "@/lib/schemas/_base";
 import type {
   Lead,
   PlannedAction,
@@ -81,7 +82,7 @@ export class Orchestrator {
       // 5. Update Supabase Stage & Advisor
       await (supabase.from("lead") as any)
         .update({
-          current_stage: "SCHEDULING",
+          current_stage: LeadStageEnum.enum.SCHEDULING,
           assigned_advisor_id: nextAdvisorId,
           last_advisor_assignment: new Date().toISOString(),
         })

@@ -15,8 +15,10 @@
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { logOrchestrationStep } from "@/lib/core/scheduler";
+import { LeadStageEnum, HandoffReasonEnum, type HandoffReason } from "@/lib/schemas/_base";
 
-export type UnreachableReason = "invalid_phone" | "max_attempts_exceeded" | "user_requested_stop";
+export type UnreachableReason = HandoffReason;
+export { HandoffReasonEnum };
 
 export interface HandleUnreachableResult {
   success: boolean;
@@ -51,7 +53,7 @@ export async function handleUnreachable(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase.from("lead" as any) as any)
       .update({
-        current_stage: "UNREACHABLE",
+        current_stage: LeadStageEnum.enum.UNREACHABLE,
         tipo_lead: "ilocalizable",
         unreachable_reason: reason,
       })

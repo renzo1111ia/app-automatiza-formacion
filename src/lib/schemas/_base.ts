@@ -17,7 +17,16 @@ export const phoneSchema = z
 
 // ─── Enums comunes ─────────────────────────────────────────────────────────
 
-export const LeadStageEnum = z.enum(["QUALIFICATION", "SCHEDULING", "COMPLETED", "DROPPED"]);
+// NEW-02: Enum unificado del estado del lead a lo largo del funnel.
+// Valores históricos coinciden con datos en BD; UNREACHABLE añadido en NEW-13 (ADR-014).
+// Mapper Zoho ↔ interno: ver src/lib/integrations/zoho-mapping.ts (cuando exista, Fase 2).
+export const LeadStageEnum = z.enum([
+  "QUALIFICATION", // En proceso de cualificar (entrada del lead)
+  "SCHEDULING", // Cualificado, agendando llamada/cita
+  "COMPLETED", // Cita confirmada/realizada (BOOKED equivalente)
+  "DROPPED", // Descartado (no cualifica, fuera de campaña, etc.)
+  "UNREACHABLE", // Ilocalizable (handoff humano — ADR-014)
+]);
 export type LeadStage = z.infer<typeof LeadStageEnum>;
 
 // Razones de handoff humano (ADR-014, NEW-13).
