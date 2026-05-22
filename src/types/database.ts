@@ -816,13 +816,13 @@ export type Database = {
         Insert: Omit<KnowledgeEmbedding, "id" | "created_at">;
         Update: Partial<KnowledgeEmbedding>;
       };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       system_logs: {
         Row: {
           id: string;
           tenant_id: string;
           level: string;
           message: string;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           metadata: any;
           created_at: string;
         };
@@ -832,11 +832,13 @@ export type Database = {
             tenant_id: string;
             level: string;
             message: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             metadata: any;
             created_at: string;
           },
           "id" | "created_at"
         >;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Update: Partial<{ level: string; message: string; metadata: any }>;
       };
     };
