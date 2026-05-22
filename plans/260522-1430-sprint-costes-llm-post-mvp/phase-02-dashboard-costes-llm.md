@@ -1,29 +1,30 @@
 ---
-title: "Phase 03 — Dashboard de costes LLM por tenant/proveedor (4-04)"
-sprint: 4
-phase: 3
-tasks: [4-04]
+title: "Phase 02 — Dashboard de costes LLM por tenant/proveedor (C-02)"
+sprint: SP-5B
+phase: 2
+tasks: [C-02]
 effort: 16-22h
 status: pending
 agents: [af-agents:code, af-agents:uxui]
 ---
 
-# Phase 03 — Dashboard de Costes LLM
+# Phase 02 — Dashboard de Costes LLM
 
 ## Context Links
 
 - Plan overview: [plan.md](plan.md)
-- RoadMap: [RoadMap.md](../RoadMap.md) línea 331 (4-04)
+- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-02)
+- **Origen del movimiento (22-05-2026):** esta fase vivía como Sprint 3 phase-03 (tarea 4-04). Se trasladó al Sprint Costes-LLM (post-MVP) cuando la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`.
 - Researcher report: [researcher-observability-d-20260520.md](../reports/researcher-observability-d-20260520.md) — sección 4
-- Phase 02: crea tabla `llm_usage_logs` y `llm-cost-tracker.ts` — **PREREQUISITO**
-- DA-4-005: precios LLM hardcodeados obsoletos (GPT-4 de 2023) — se corrigen aquí
+- Phase 01 (este sprint): crea tabla `llm_usage_logs` y `llm-cost-tracker.ts` — **PREREQUISITO**
+- DA-4-005: precios LLM hardcodeados obsoletos (GPT-4 de 2023) — se corrigen en `llm-pricing.ts` (Ph1)
 - DA-4-010: API keys OpenAI visibles en UI dashboard — NO exponer en este dashboard
 
 ## Overview
 
 - **Priority:** P2
-- **Status:** Pendiente (bloqueado por Ph2 — tabla llm_usage_logs)
-- **Descripción:** Implementar el sistema completo de tracking de tokens LLM por tenant/proveedor/modelo usando LangChain CallbackHandler, y un dashboard de costes en el admin panel con Recharts.
+- **Status:** Pendiente (bloqueado por Ph1 — tabla `llm_usage_logs`)
+- **Descripción:** Implementar el dashboard de costes en el admin panel con Recharts, que consume la tabla `llm_usage_logs` creada en Ph1 de este sprint. La parte de tracking (LangChain CallbackHandler + `recordLlmUsage` helper) se hace en Ph1.
 
 ## Key Insights
 
@@ -38,7 +39,7 @@ agents: [af-agents:code, af-agents:uxui]
 
 ### Funcionales
 - LangChain `CostTrackingCallback` captura tokens en CADA llamada LLM (Anthropic, OpenAI, Google, Bedrock)
-- Tabla `llm_usage_logs` (creada en Ph2) recibe INSERT por cada LLM call con tenant_id, proveedor, modelo, tokens, cost_usd
+- Tabla `llm_usage_logs` (creada en Ph1) recibe INSERT por cada LLM call con tenant_id, proveedor, modelo, tokens, cost_usd
 - Dashboard admin: gráfica de costes por proveedor por mes (BarChart)
 - Dashboard admin: evolución costes totales por tenant por semana (LineChart)
 - Dashboard tenant: solo sus propios costes, desglose por acción (qualification, chat, analysis)
@@ -77,7 +78,7 @@ Dashboard UI:
 
 ### Crear
 - `src/lib/llm-pricing.ts` — constante con precios actualizados por proveedor/modelo
-- `src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (iniciado en Ph2)
+- `src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (iniciado en Ph1)
 - `src/app/api/admin/llm-costs/route.ts` — endpoint admin costes agregados
 - `src/app/api/llm-costs/route.ts` — endpoint tenant costes propios
 - `src/app/dashboard/admin/costs/page.tsx` — admin dashboard UI
@@ -186,7 +187,7 @@ Tres componentes:
 
 - [ ] `src/lib/llm-pricing.ts` con precios actualizados (fix DA-4-005)
 - [ ] `src/lib/llm-cost-tracker.ts` — CostTrackingCallback completo
-- [ ] Verificar que Ph2 creó `llm_usage_logs` con RLS correcta
+- [ ] Verificar que Ph1 creó `llm_usage_logs` con RLS correcta
 - [ ] Inyectar CostTrackingCallback en LLM factory (todos los providers)
 - [ ] Test: llamada LLM real → INSERT en llm_usage_logs → verificar tokens y cost_usd
 - [ ] API Route `/api/admin/llm-costs` con agregaciones SQL
@@ -216,7 +217,7 @@ Tres componentes:
 
 ## Security Considerations
 
-- `llm_usage_logs` tiene RLS: tenant solo ve sus datos (confirmado en migración Ph2)
+- `llm_usage_logs` tiene RLS: tenant solo ve sus datos (confirmado en migración Ph1)
 - Admin view (`/api/admin/llm-costs`) solo accesible con `is_admin = true` en session
 - Los costes son información financiera sensible: no exponer en endpoints públicos
 - `cost_usd` calculado en app, no en BD — evita SQL injection en cálculos financieros
@@ -224,5 +225,5 @@ Tres componentes:
 
 ## Next Steps
 
-- Los datos de `llm_usage_logs` pueden usarse en Sprint 4 para alertas de coste (budget alerts por tenant)
-- Sprint 4 puede migrar a LangSmith si el equipo escala y necesita debugging LLM avanzado
+- Los datos de `llm_usage_logs` pueden usarse en sprints futuros para alertas de coste (budget alerts por tenant)
+- Sprints futuros pueden migrar a LangSmith si el equipo escala y necesita debugging LLM avanzado

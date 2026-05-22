@@ -20,9 +20,10 @@
 ## Key Insights
 
 - **2-22 (`as any` + `: any` declarations):** NO atacar de golpe. Estrategia: primero los archivos que ya tienen repository/schema (Fases 1-4), luego el resto.
-  - **Métrica ground truth (baseline 21-05-2026):** `npm run lint` reporta **164 errores `@typescript-eslint/no-explicit-any`** en código de producción (`src/lib/`, `src/app/`, `src/components/`, `src/types/`). Ver `plans/reports/lint-baseline-20260521.md` para distribución por archivo y log raw.
+  - **Métrica ground truth (baseline 21-05-2026):** `npm run lint` reportaba **164 errores `@typescript-eslint/no-explicit-any`** en código de producción. Ver `plans/reports/lint-baseline-20260521.md`.
+  - **Métrica actualizada (cierre Sprint 0, 22-05-2026):** baseline reducido a **128 errores `no-explicit-any`** (-36 como subproducto del hardening Sprint 0, sin tarea dedicada). Ver `plans/reports/sp-1-close-1-auto-test-20260522.md` §"Distribución de errores por regla" para listado completo por archivo. Adicionalmente, 1 error `react-hooks/set-state-in-effect` y 1 `prefer-const` se resuelven en SP-1-CLOSE-4 (fuera del scope de 2-22).
   - **Quick win Fase 01:** regenerar `src/types/database.ts` con `npx supabase gen types typescript --local` → fix instantáneo de 3 errores `any` consecutivos en línea 550.
-  - **Objetivo Sprint 1:** 164 → 0 al cerrar (SP-2-CLOSE-1 ya exige `npm run lint` con 0 errores).
+  - **Objetivo Sprint 1:** 128 → 0 al cerrar (SP-2-CLOSE-1 ya exige `npm run lint` con 0 errores).
   - **Distribución típica:** integraciones SDK externos (HubSpot, Zoho, Retell, Ultravox, WhatsApp), processors BullMQ, Recharts charts. Cada archivo concentra 1-3 errores → fragmentado y abordable incrementalmente.
   - **Compromiso por fase:** cualquier fase del Sprint 1 que toque un archivo de la lista del baseline DEBE dejarlo en 0 errores antes de cerrar. Tracking en `plans/logs/sprint-2/lint-debt.log.md`.
 - **2-31 (lucide-react major):** API principal no cambió, pero algunos iconos fueron renombrados entre 0.x y 1.x. Requiere inventario visual.
@@ -159,3 +160,26 @@ Estrategia 2-22 (eliminar `as any`):
 - 2-22 puede iniciar en paralelo con Fase 3 — coordinación: no editar el mismo archivo al mismo tiempo
 - Resultados de 2-34 determinan si eslint 10 entra en Sprint 3 o se aplaza a Sprint 4
 - 2-32 (shadcn CLI) aplazado a Sprint 3 — no entra en Sprint 1
+
+---
+
+## Tarea adicional 2-37 — Logger estructurado con scrubbing PII en widget + server actions críticas (informe Renzo)
+
+**Origen:** [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) §3 ⚠️
+
+**Problema:** `src/lib/actions/widget.ts:30` contiene `console.log("[WIDGET AI] 🤖 Message from widget ${widgetId} for lead ${leadId}")` en producción. Otros server actions también usan `console.log/error` directamente con `widgetId`, `leadId`, `email`, `telefono` y payloads. Riesgo: PII en logs no estructurados, no auditables, no redactables.
+
+**Fix:**
+
+1. Inventariar (`grep -rn "console.log\|console.error\|console.warn" src/lib/actions/ src/app/api/`). Filtrar los que llevan identificadores o payloads de usuario.
+2. Crear/usar logger estructurado (si ya existe en el stack — verificar `src/lib/logger.ts` o similar; si no, crear con `pino` o equivalente ya en dependencias). Definir helper `scrubPii(obj)` que reemplaza `email`, `telefono`, `phone`, `nombre`, `token` por `[REDACTED]` antes de loguear.
+3. Reemplazar `console.log` por `logger.debug({ widgetId, leadId: leadId ?? null }, 'widget message received')` (sin emojis, sin string concat — formato estructurado).
+4. Cambios en `widget.ts` línea ~30, `WhatsAppAIProcessor.ts`, `RescueWorker.ts`, otros call sites detectados.
+5. **NO eliminar logs de error** — sólo los de info/debug con PII. Los logs de error deben conservar contexto técnico (no PII) para debug.
+
+**Estimación:** 1h (incluida en subtotal Sprint 1).
+
+**Cross-refs:**
+- 4-03 Sprint 3 (observabilidad: logging estructurado + métricas BullMQ): este es el contrato. 2-37 es la cleanup tactical previo a esa fase.
+- 1-27 Sprint 0 (widget hardening): NO toca el `console.log` (eso es esta tarea); 1-27 sólo añade el guard.
+- 2-22 (limpieza `as any`): paralelizable, mismo file (`widget.ts`) pero distintas líneas.

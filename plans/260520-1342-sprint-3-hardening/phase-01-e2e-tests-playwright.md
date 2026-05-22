@@ -68,7 +68,7 @@ Capa de tests:
   Vitest unit/integration ──── Unit + integration tests
        │
        └─ src/**/__tests__/ o tests/
-            ├── unit/            (Zod schemas, utils, cost calculator)
+            ├── unit/            (Zod schemas, utils)
             ├── integration/     (Repositories BD real, BullMQ workers, Server Actions)
             └── fixtures/
 
@@ -100,7 +100,7 @@ Data flow tests:
 - `vitest.config.ts`
 - `tests/integration/worker-lead-sequence.test.ts`
 - `tests/unit/zod-schemas.test.ts`
-- `tests/unit/llm-cost-calculator.test.ts`
+- ~~`tests/unit/llm-cost-calculator.test.ts`~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 
 ### Modificar
 
@@ -194,7 +194,7 @@ Implementar en orden de prioridad:
 
 - `tests/integration/worker-lead-sequence.test.ts` — BullMQ worker con Redis real
 - `tests/unit/zod-schemas.test.ts` — validación de schemas de Sprint 1
-- `tests/unit/llm-cost-calculator.test.ts` — cálculo costes por proveedor/modelo
+- ~~`tests/unit/llm-cost-calculator.test.ts` — cálculo costes por proveedor/modelo~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 - Repositories: test unit de cada repository de Sprint 1 contra BD real
 
 ### Paso 9: GitHub Actions CI
@@ -244,7 +244,7 @@ jobs:
 - [ ] Tests WCAG modales (depende Ph4)
 - [ ] Integration tests Workers BullMQ
 - [ ] Unit tests Zod schemas
-- [ ] Unit tests LLM cost calculator
+- [ ] ~~Unit tests LLM cost calculator~~ **MOVIDO al Sprint Costes-LLM post-MVP**
 - [ ] Coverage report ≥ 80%
 - [ ] GitHub Actions CI jobs
 - [ ] Lighthouse score ≥ 90 en rutas principales
@@ -278,3 +278,28 @@ jobs:
 - Ph4 (WCAG fixes) debe completarse para que los tests de accesibilidad E2E sean meaningful
 - Ph5 (CSP headers) debe verificarse que no rompe los tests E2E (headers CORS, etc.)
 - Este phase establece el pipeline de CI que bloquea PRs futuros si los tests fallan
+
+---
+
+## Tarea adicional 4-09 — Test E2E Playwright completo del módulo Widget Chatbot (informe Renzo)
+
+**Origen:** [Informe Renzo Módulo Chatbot Web V1](../../docs/Informes%20de%20programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf) §3 📄 (falta cobertura E2E del módulo widget).
+
+**Problema:** El módulo de Chatbot Web (`/widget/[id]`, `/api/widget/embed.js`, server action `widget.ts:getChatbotResponse`) atraviesa 3 capas (script injector → iframe React → server action) con lead capture desde URL params, context assembly con ChatMemoryService + ChatSummaryService + KnowledgeBaseService, llamada OpenAI y persistencia en `chat_messages`. **No hay tests E2E** que verifiquen el flujo completo. Cualquier refactor futuro (Sprint 1 capa de datos, Sprint 2 adapters, …) puede romperlo silenciosamente.
+
+**Cobertura mínima (Playwright):**
+
+1. **Golden path**: cargar `embed.js?id=WIDGET_ID` desde un HTML test → verifica que se inyecta la burbuja + iframe → escribir mensaje → recibir respuesta del bot → verificar en DB que `chat_messages` tiene el mensaje y la respuesta + un `lead` nuevo creado con `origen='WEB_WIDGET'`.
+2. **Captura de lead vía URL params**: cargar embed con `?email=test%2Bauto@example.com` → escribir mensaje → verificar que el `lead` creado tiene `email = test+auto@example.com`.
+3. **Pre-identificación**: cargar embed con `?email=existing@example.com` para un lead ya existente → escribir mensaje → verificar que NO se crea un lead duplicado, se actualiza el existente.
+4. **Rechazo desde dominio no whitelistado** (depende de 1-27 Sprint 0): configurar `web_widgets.allowed_domains=['allowed.example.com']` → llamada desde origin `https://other.example.com` → respuesta `success:false, error:'Origin not allowed: ...'`.
+5. **Rate limit** (depende de 1-27 Sprint 0): 6 requests en <60s con `rate_limit_per_minute=5` → 6ª devuelve `error:'Rate limit exceeded'`.
+6. **Modelo gpt-4.1 → fallback** (depende de 2-35 Sprint 1): si la whitelist Zod NO está aún, el widget aplica el parche en runtime — comprobar respuesta válida. Tras 2-35, el test debe pasar sin necesidad del parche.
+
+**Estimación:** 4h (incluida en subtotal Sprint 3).
+
+**Cross-refs:**
+- 1-27 Sprint 0 (allowed_domains + rate limit): requisitos para tests 4 y 5.
+- 2-35 Sprint 1 (Zod model_name): test 6 cambia de comportamiento tras 2-35.
+- 4-01/4-02 (este phase): la infraestructura Playwright/coverage se reutiliza.
+- 4-08 (rate limit Server Actions genérico, ph05): los tests también validan la cobertura genérica si llega a tiempo.
