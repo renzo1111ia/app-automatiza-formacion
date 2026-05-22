@@ -1,11 +1,14 @@
 "use server";
 
+import { headers } from "next/headers";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { WebWidget, AIAgentVariant } from "@/types/database";
 import OpenAI from "openai";
 import { ChatMemoryService } from "@/lib/services/chat-memory";
 import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowledge-base";
 import { FactExtractionService } from "@/lib/services/fact-extractor";
+import { validateWidgetOrigin } from "@/lib/api/validate-widget-origin";
+import { rateLimitWidget } from "@/lib/api/rate-limit-widget";
 
 export async function getWebWidgetConfig(id: string) {
     const supabase = await getAdminSupabaseClient();
@@ -37,6 +40,23 @@ export async function getChatbotResponse({ widgetId, leadId, message, knownVaria
         if (widgetError || !widgetData) return { success: false, error: "Widget not found" };
 
         const widget = widgetData as WebWidget;
+
+        // Sprint 0 1-27: hardening — Origin/Referer allowlist + rate limit por (widgetId, IP).
+        // Origen: informe Renzo Módulo Chatbot Web V1 §3 🔴.
+        const reqHeaders = await headers();
+        const originCheck = validateWidgetOrigin(reqHeaders, widget.allowed_domains, widgetId);
+        if (!originCheck.ok) {
+            return { success: false, error: `Origin not allowed: ${originCheck.reason ?? "unknown"}` };
+        }
+        const clientIp =
+            (reqHeaders.get("x-forwarded-for") ?? "").split(",")[0]?.trim() ||
+            reqHeaders.get("x-real-ip") ||
+            "unknown";
+        const rl = await rateLimitWidget(widgetId, clientIp, widget.rate_limit_per_minute ?? 5);
+        if (!rl.allowed) {
+            return { success: false, error: "Rate limit exceeded" };
+        }
+
         const agentId = widget.agent_id;
         if (!agentId) return { success: false, error: "No agent assigned to this widget" };
 

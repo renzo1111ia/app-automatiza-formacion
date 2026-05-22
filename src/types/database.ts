@@ -300,6 +300,9 @@ export interface WebWidget {
     bubble_color: string | null;
     bubble_icon: string | null;
     status: 'ACTIVE' | 'INACTIVE' | string;
+    // Sprint 0 1-27: hardening — allowed_domains vacío = legacy ALLOW; poblado = enforce.
+    allowed_domains: string[];
+    rate_limit_per_minute: number;
     created_at: string;
     updated_at: string;
 }
