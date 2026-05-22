@@ -138,6 +138,16 @@ Al cerrar fase, ejecutar SIN preguntar:
 2. Si hay UI nueva: browser tests con Playwright.
 3. Informe al usuario con: tests passed/failed/fixed + lo implementado + invitación a probar manual (si aplica).
 
+## Screenshots
+
+**Ubicación única**: `docs/screenshots/`. NUNCA guardar `.png`/`.jpg` sueltos en la raíz del proyecto ni en `src/`.
+
+- Screenshots manuales (capturas para docs, debugging, onboarding): `docs/screenshots/<descriptive-name>.png`.
+- Screenshots vía Playwright MCP (`browser_take_screenshot`): pasar siempre `filename: "docs/screenshots/<name>.png"` (o ruta absoluta equivalente).
+- Excepciones permitidas (NO mover): `playwright-report/**` y `test-results/**` (los genera Playwright en sus paths fijos), `public/`, `src/app/icon.png`, `node_modules/**`, `.next/**`.
+
+Si encuentras screenshots fuera de `docs/screenshots/` que no caigan en las excepciones, muévelos sin preguntar.
+
 ## Productivity Time Format
 
 - Duración: `2h 30min`, `45min`. NUNCA decimales.

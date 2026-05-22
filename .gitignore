@@ -71,3 +71,6 @@ docs/auditoria.zip
 __pycache__/
 *.pyc
 
+
+# Backups locales de la DB (contienen datos seed + cualquier dato real cargado)
+backups/local-db/
