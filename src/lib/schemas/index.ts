@@ -6,3 +6,4 @@ export * from "./appointments";
 export * from "./ai-agents";
 export * from "./knowledge-base";
 export * from "./integrations";
+export * from "./opportunities";

@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { orchestrator } from "@/lib/core/orchestrator";
 import { Tenant, ClientConfig } from "@/types/database";
 import { LeadStageEnum } from "@/lib/schemas/_base";
+import { leadOpportunitiesRepository } from "@/lib/repositories/lead-opportunities-repository";
 
 /**
  * UNIVERSAL INGEST ENDPOINT
@@ -114,7 +115,27 @@ export async function POST(req: NextRequest) {
       throw new Error("Failed to create lead: " + leadErr.message);
     }
 
-    // 5. TRIGGER ORCHESTRATION
+    // 5. NEW-06: registrar oportunidad con dedup automatico.
+    // Bea V1: un lead puede tener N solicitudes; dedup en ventana 48h por lead+programa.
+    let opportunityResult: Awaited<
+      ReturnType<typeof leadOpportunitiesRepository.createWithDedup>
+    > | null = null;
+    if (lead && lead.id) {
+      opportunityResult = await leadOpportunitiesRepository.createWithDedup(tenantId, {
+        lead_id: lead.id,
+        programa_id: payload.programa_id || null,
+        source: "ingest_form",
+        metadata: { origen: payload.origen, campana: payload.campana },
+      });
+      if (opportunityResult.error) {
+        console.warn(
+          "[INGEST] lead_opportunities createWithDedup error (no bloqueante):",
+          opportunityResult.error
+        );
+      }
+    }
+
+    // 6. TRIGGER ORCHESTRATION
     if (lead && lead.id) {
       await orchestrator.handleNewLead(lead.id, tenantId);
     }
@@ -122,8 +143,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       leadId: lead?.id,
+      opportunityId: opportunityResult?.data?.id,
+      isDuplicate: opportunityResult?.isDuplicate ?? false,
+      duplicateOfId: opportunityResult?.originalId,
       status: "INGESTED",
-      message: "Lead processed and orchestration started",
+      message: opportunityResult?.isDuplicate
+        ? "Lead procesado; oportunidad marcada como duplicada (politica dedup 48h)"
+        : "Lead processed and orchestration started",
     });
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Internal Server Error";
