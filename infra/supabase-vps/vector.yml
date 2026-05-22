@@ -1,0 +1,19 @@
+# Vector — placeholder mínimo
+# Para producción real, configurar fuentes/sinks reales (logflare, datadog, etc.)
+# En MVP dev: solo healthcheck endpoint
+api:
+  enabled: true
+  address: 0.0.0.0:9001
+
+sources:
+  noop:
+    type: demo_logs
+    format: shuffle
+    lines: ["healthcheck"]
+    interval: 60
+
+sinks:
+  blackhole:
+    type: blackhole
+    inputs: [noop]
+    print_interval_secs: 0

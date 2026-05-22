@@ -1,0 +1,352 @@
+# =============================================================================
+# Supabase self-hosted para VPS Dokploy (dev.automatizaformacion.com)
+# =============================================================================
+# Mismas versiones que Supabase local (verificado 2026-05-23):
+#   postgres:17.6.1.106   gotrue:v2.188.1   kong:2.8.1
+#   postgrest:v14.10      realtime:v2.86.3  storage-api:v1.54.1
+#   studio:2026.04.28     postgres-meta:v0.96.4
+#
+# Uso en Dokploy:
+#   1. Project "dev automatiza formacion" → Create Service → tipo "Compose"
+#   2. Source: Git (apuntando a este repo, branch developer, path /infra/supabase-vps/)
+#      O alternativa: Source: Raw → pegar contenido inline
+#   3. Environment del Compose → pegar TODAS las env vars del bloque "REQUIRED ENVS" abajo
+#   4. Deploy
+#
+# Diferencias vs compose oficial Supabase:
+#   - Sin Edge Functions (no usamos)
+#   - Sin Logflare/Vector (analytics opcional, lo añadimos en Sprint 3)
+#   - Sin Inbucket/Mailpit (email testing, Sprint 3)
+#   - Storage backend: filesystem local (no S3) — para MVP basta
+#
+# REQUIRED ENVS (en Dokploy Compose → tab Environment, pegar todas):
+#   POSTGRES_PASSWORD=<del vault>
+#   JWT_SECRET=<del vault>
+#   ANON_KEY=<del vault>
+#   SERVICE_ROLE_KEY=<del vault>
+#   DASHBOARD_USERNAME=admin
+#   DASHBOARD_PASSWORD=<del vault>
+#   VAULT_ENC_KEY=<del vault>
+#   SECRET_KEY_BASE=<del vault>
+#   SITE_URL=https://dev.automatizaformacion.com
+#   API_EXTERNAL_URL=https://supabase.automatizaformacion.com
+#   STUDIO_URL=https://studio.automatizaformacion.com
+#   POSTGRES_HOST=supabase-db
+#   POSTGRES_DB=postgres
+#   POSTGRES_PORT=5432
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # Postgres — base de datos principal con extensions Supabase
+  # ===========================================================================
+  supabase-db:
+    image: public.ecr.aws/supabase/postgres:17.6.1.106
+    container_name: supabase-db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      supabase-vector: { condition: service_healthy, required: false }
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: ${POSTGRES_PORT}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data:Z
+      - supabase-db-config:/etc/postgresql-custom
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Vector (logging) — placeholder, no se usa, lo ponemos por compatibilidad
+  # ===========================================================================
+  supabase-vector:
+    image: timberio/vector:0.28.1-alpine
+    container_name: supabase-vector
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9001/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ./vector.yml:/etc/vector/vector.yml:ro
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Auth (GoTrue) — autenticación de usuarios
+  # ===========================================================================
+  supabase-auth:
+    image: public.ecr.aws/supabase/gotrue:v2.188.1
+    container_name: supabase-auth
+    restart: unless-stopped
+    depends_on:
+      supabase-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL}
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${SITE_URL},https://dev.automatizaformacion.com,http://localhost:8500
+      GOTRUE_DISABLE_SIGNUP: "false"
+
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"  # MVP dev: auto-confirm. Producción: false + SMTP
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      GOTRUE_SMS_AUTOCONFIRM: "false"
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # PostgREST — API REST automática sobre el schema public
+  # ===========================================================================
+  supabase-rest:
+    image: public.ecr.aws/supabase/postgrest:v14.10
+    container_name: supabase-rest
+    restart: unless-stopped
+    depends_on:
+      supabase-db: { condition: service_healthy }
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    command: "postgrest"
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Realtime — websockets sobre cambios en tablas
+  # ===========================================================================
+  supabase-realtime:
+    image: public.ecr.aws/supabase/realtime:v2.86.3
+    container_name: realtime-dev.supabase-realtime
+    restart: unless-stopped
+    depends_on:
+      supabase-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "-H", "Authorization: Bearer ${ANON_KEY}", "http://localhost:4000/api/tenants/realtime-dev/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    environment:
+      PORT: 4000
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: supabase_admin
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: supabaserealtime
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      ERL_AFLAGS: -proto_dist inet_tcp
+      DNS_NODES: "''"
+      RLIMIT_NOFILE: "10000"
+      APP_NAME: realtime
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Storage — S3-compatible storage backend filesystem
+  # ===========================================================================
+  supabase-storage:
+    image: public.ecr.aws/supabase/storage-api:v1.54.1
+    container_name: supabase-storage
+    restart: unless-stopped
+    depends_on:
+      supabase-db: { condition: service_healthy }
+      supabase-rest: { condition: service_started }
+      supabase-imgproxy: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/status"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://supabase-rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      FILE_SIZE_LIMIT: 52428800  # 50MB
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://supabase-imgproxy:5001
+    volumes:
+      - supabase-storage-data:/var/lib/storage:z
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # ImgProxy — transformaciones de imágenes
+  # ===========================================================================
+  supabase-imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    container_name: supabase-imgproxy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    volumes:
+      - supabase-storage-data:/var/lib/storage:z
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Postgres Meta — API para metadata del Postgres (usado por Studio)
+  # ===========================================================================
+  supabase-meta:
+    image: public.ecr.aws/supabase/postgres-meta:v0.96.4
+    container_name: supabase-meta
+    restart: unless-stopped
+    depends_on:
+      supabase-db: { condition: service_healthy }
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: ${POSTGRES_HOST}
+      PG_META_DB_PORT: ${POSTGRES_PORT}
+      PG_META_DB_NAME: ${POSTGRES_DB}
+      PG_META_DB_USER: supabase_admin
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Studio — UI admin de Supabase (acceso vía https://studio.automatizaformacion.com)
+  # ===========================================================================
+  supabase-studio:
+    image: public.ecr.aws/supabase/studio:2026.04.28-sha-89d08a2
+    container_name: supabase-studio
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://supabase-studio:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      supabase-analytics: { condition: service_started, required: false }
+      supabase-meta: { condition: service_started }
+    environment:
+      STUDIO_PG_META_URL: http://supabase-meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: "Automatiza Formación"
+      DEFAULT_PROJECT_NAME: "dashboard-af"
+      SUPABASE_URL: http://supabase-kong:8000
+      SUPABASE_PUBLIC_URL: ${API_EXTERNAL_URL}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+    networks: [supabase-net]
+
+  # ===========================================================================
+  # Kong — API gateway que enruta /auth, /rest, /storage, /realtime
+  # ===========================================================================
+  supabase-kong:
+    image: public.ecr.aws/supabase/kong:2.8.1
+    container_name: supabase-kong
+    restart: unless-stopped
+    depends_on:
+      supabase-analytics: { condition: service_started, required: false }
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+    volumes:
+      - ./kong.yml:/home/kong/temp.yml:ro
+    entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
+    networks: [supabase-net]
+    # Kong escucha en 8000 (HTTP) — Traefik de Dokploy enruta supabase.automatizaformacion.com → 8000
+
+  # ===========================================================================
+  # Analytics (Logflare) — opcional, lo dejamos placeholder mínimo
+  # ===========================================================================
+  supabase-analytics:
+    image: public.ecr.aws/supabase/logflare:1.39.1
+    container_name: supabase-analytics
+    restart: unless-stopped
+    profiles: ["analytics"]  # NO arranca por defecto. Activar con --profile analytics
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      LOGFLARE_NODE_HOST: 127.0.0.1
+      DB_USERNAME: supabase_admin
+      DB_DATABASE: _supabase
+      DB_HOSTNAME: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_SCHEMA: _analytics
+      LOGFLARE_API_KEY: ${LOGFLARE_API_KEY:-changeme}
+      LOGFLARE_SINGLE_TENANT: "true"
+      LOGFLARE_SUPABASE_MODE: "true"
+      LOGFLARE_MIN_CLUSTER_SIZE: 1
+      RELEASE_COOKIE: cookie
+    networks: [supabase-net]
+
+# =============================================================================
+# Volumes — persistencia local del VPS (no perder entre redeploys)
+# =============================================================================
+volumes:
+  supabase-db-data:
+  supabase-db-config:
+  supabase-storage-data:
+
+# =============================================================================
+# Network — todos los servicios Supabase en la misma red interna
+# =============================================================================
+networks:
+  supabase-net:
+    name: supabase-net
+    driver: bridge
