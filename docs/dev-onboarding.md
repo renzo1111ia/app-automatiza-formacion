@@ -112,6 +112,67 @@ El equipo de desarrollo del cliente (Automatiza Formación) entregó (22-05-2026
 
 **Si necesitas mirar datos reales de producción**: pide al cliente acceso delegado IAM al Supabase Studio (Sección 5.2 del `roadmap_status_handover.md`). Mejor que compartir service_role_key.
 
+### 2.8 Credenciales de acceso — admin y root del VPS (actualizado 23-05-2026)
+
+**TL;DR:** desde 23-05-2026 los usuarios `demo@af.local` y `viewer@af.local` están **deprecated**. El único admin oficial es `automatizaformacion@gmail.com`. Las passwords reales NO van a git — están en el vault (`infra/supabase-vps/.vault/`) y/o en `.env.local` de cada dev.
+
+#### Admin del dashboard (local + VPS)
+
+| Item             | Valor                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| Email            | `automatizaformacion@gmail.com`                                                                        |
+| Password (local) | en `.env.local` → variable `DEMO_USER_PASSWORD` (escapar `#` con comillas: `DEMO_USER_PASSWORD="..."`) |
+| Password (VPS)   | misma password que local, pídela al lead por canal seguro                                              |
+| Tenant default   | `Automatiza Formación` (`e3ec5649-5d75-4917-89f3-4b75dfceac54` en local)                               |
+| Rol              | admin (`user_metadata.is_admin=true`)                                                                  |
+| URL local        | <http://localhost:8500/login>                                                                          |
+| URL VPS          | <https://dev.automatizaformacion.com/login>                                                            |
+
+**Script reutilizable** para (re)crear este usuario en cualquier instancia Supabase:
+
+```bash
+# LOCAL (lee .env.local automáticamente)
+NEW_ADMIN_EMAIL="automatizaformacion@gmail.com" \
+NEW_ADMIN_PASSWORD='BeaOli#AF*2026!' \
+npx tsx scripts/set-admin-user.ts
+
+# VPS (overrides explícitos contra Supabase remoto — solo desde dentro del cluster o
+# vía proxy/tunnel; el Supabase del VPS NO está expuesto públicamente)
+SUPABASE_URL_OVERRIDE="http://supabase-kong:8000" \
+SUPABASE_SERVICE_ROLE_KEY_OVERRIDE="<service_role_key del vault dev-dash-envs.env>" \
+NEW_ADMIN_EMAIL="automatizaformacion@gmail.com" \
+NEW_ADMIN_PASSWORD='BeaOli#AF*2026!' \
+npx tsx scripts/set-admin-user.ts
+```
+
+El script:
+
+- Borra los usuarios legacy `demo@af.local`, `viewer@af.local`, `demo@af.com` (configurable vía `LEGACY_USERS_TO_DELETE`).
+- Crea/actualiza el admin con `email_confirm:true` y `user_metadata.is_admin=true`.
+- Enlaza `tenants.auth_user_id` al nuevo admin.
+- Avisa si la password tiene <12 chars o le falta diversidad (no bloquea — es decisión del dev).
+
+#### Viewer (segundo usuario no-admin para tests de roles)
+
+`scripts/show-demo-credentials.ts` regenera al ejecutarlo un usuario `viewer@af.local` con password aleatoria fuerte (20 chars + sufijo `-Aa1!`). La password se muestra una sola vez por stdout — guárdala si la necesitas.
+
+#### Root SSH del VPS Hetzner
+
+- Host: `46.62.193.169` (puerto 22, user `root`).
+- Auth recomendado: SSH key ed25519 en `infra/supabase-vps/.vault/dashboard-af-vps-key` (gitignored). Public key fingerprint `SHA256:mOKxnaoIXOpRamauhLjkT9ADOeoE3D3i3Pr9JI49MiE`. Si tu dev no la tiene registrada en `/root/.ssh/authorized_keys` del VPS, pide al lead que la añada vía Hetzner Cloud Console (Server → tab Rescue/Console).
+- Helper: `bash infra/supabase-vps/scripts/ssh-vps.sh "<cmd>"` o sin argumentos para sesión interactiva. El script auto-detecta OpenSSH (con key) o plink (con password fallback).
+- **Reset password root**: la password actual del root vive en el vault `infra/supabase-vps/.vault/ssh-vps.env` → `VPS_PASSWORD`. Fue **reseteada el 23-05-2026 12:30** vía panel Hetzner → Rescue → Reset Root Password (la anterior `qT6lEE8p7*Nd` no coincidía con `/etc/shadow`). Si la SSH key se pierde, se entra por la consola KVM web de Hetzner con esta password.
+- **NO hardcodear** ninguna de estas credenciales en código, README, docs commiteables, ni commit messages.
+
+#### Política global (heredada de `~/.claude/CLAUDE.md`)
+
+Cualquier nueva cuenta auto-generada sigue la sección "Password & Credential Policy" del CLAUDE.md global:
+
+- Mínimo 20 chars random con mezcla alfanumérica+símbolos para auto-generación.
+- Avisar si una password dictada por el usuario tiene <12 chars o le falta diversidad.
+- JWT secrets / encryption keys / service roles → `crypto.randomBytes(32+)`.
+- Documentar SIEMPRE dónde vive el secreto (vault file, panel, KMS) — NUNCA el valor en docs.
+
 ## 3. Trabajo con Claude Code
 
 ### 3.1 Lo que ya tienes al clonar
@@ -218,6 +279,6 @@ Cada dev puede tener su propia política, pero el proyecto recomienda:
 
 ---
 
-**Última actualización**: 21-05-2026 (sección 2.6 — puertos fijos del proyecto).
+**Última actualización**: 23-05-2026 (sección 2.8 — admin único `automatizaformacion@gmail.com` + nota password root VPS).
 **Mantenedor**: Javier HP (Auditor).
 **Contacto**: admin@2you.ai.

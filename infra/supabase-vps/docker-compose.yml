@@ -306,8 +306,35 @@ services:
       - ./kong.yml:/home/kong/temp.yml:ro
     entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
     networks: [supabase-net, dokploy-network]
-    # Kong escucha en 8000 (HTTP). En dokploy-network también para que dev.dash
-    # (otro service del project) pueda resolver supabase-kong por DNS Docker.
+    # =========================================================================
+    # Traefik labels — publicar Kong bajo path-prefix dev.automatizaformacion.com/supabase
+    # Resuelve el bug "dev.dash no resuelve supabase-kong por DNS Swarm overlay"
+    # exponiendo Kong vía la traefik del cluster Dokploy (que SÍ es resolvable
+    # tanto desde dev.dash como desde el navegador del usuario).
+    #
+    # Beneficios vs subdominio dedicado:
+    #   - Same-origin con dev.dash → cero CORS, cookies Supabase comparten dominio
+    #   - Reusa el cert Let's Encrypt ya emitido para dev.automatizaformacion.com
+    #   - No requiere registro DNS adicional
+    #
+    # priority=100 fuerza que esta ruta gane vs el catch-all de dev.dash.
+    # stripprefix elimina /supabase antes de pasar a Kong (Kong recibe /auth/v1/*).
+    #
+    # NOTA: los nombres `websecure` y `letsencrypt` son los defaults de Dokploy.
+    # Si vuestra instalación usa otros, ajustar tras Redeploy o usar la UI
+    # "Domains" del service en Dokploy (alternativa equivalente).
+    # =========================================================================
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      - "traefik.http.routers.supabase-kong.rule=Host(`dev.automatizaformacion.com`) && PathPrefix(`/supabase`)"
+      - "traefik.http.routers.supabase-kong.entrypoints=websecure"
+      - "traefik.http.routers.supabase-kong.tls=true"
+      - "traefik.http.routers.supabase-kong.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.supabase-kong.priority=100"
+      - "traefik.http.routers.supabase-kong.middlewares=supabase-stripprefix@docker"
+      - "traefik.http.middlewares.supabase-stripprefix.stripprefix.prefixes=/supabase"
+      - "traefik.http.services.supabase-kong.loadbalancer.server.port=8000"
 
   # ===========================================================================
   # Analytics (Logflare) — opcional, lo dejamos placeholder mínimo

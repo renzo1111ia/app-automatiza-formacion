@@ -135,44 +135,57 @@ Si algún container queda en restart loop, captura el log y pásamelo.
 
 ---
 
-## 3. Configurar dominios + HTTPS
+## 3. Configurar acceso público — path-prefix (REVISADO 23-05-2026)
 
-### 3.1. Dominio para Kong (API Gateway)
+**Decisión arquitectónica**: en lugar de subdominios dedicados, Supabase se publica bajo path-prefix del dominio existente `dev.automatizaformacion.com`. Ver memoria persistente `project-supabase-vps-deploy-state.md` para historial completo.
 
-En Dokploy → service `supabase` → tab **Domains** → **Add Domain**:
+Razones clave:
 
-| Campo                 | Valor                              |
-| --------------------- | ---------------------------------- |
-| Host                  | `supabase.automatizaformacion.com` |
-| Path                  | `/`                                |
-| Container             | `supabase-kong`                    |
-| Container Port        | `8000`                             |
-| HTTPS                 | ON                                 |
-| Certificate Provider  | Let's Encrypt                      |
-| HTTP → HTTPS Redirect | ON                                 |
+- **Same-origin con dev.dash** → cero CORS, cookies Supabase compartidas SSR↔client.
+- **Reusa cert + DNS** ya emitidos para `dev.automatizaformacion.com`.
+- **Arregla bug** "Swarm overlay no resuelve supabase-kong por DNS interno": pasa por traefik, que SÍ es resolvable desde Swarm services (dev.dash).
 
-### 3.2. Dominio para Studio UI
+### 3.1. Kong → `dev.automatizaformacion.com/supabase/*`
 
-Otra entrada **Add Domain**:
+El `docker-compose.yml` ya incluye las **labels traefik** necesarias (sección `supabase-kong.labels`). Al redeploy del service `supabase`, traefik debería recoger la ruta automáticamente.
 
-| Campo                 | Valor                            |
-| --------------------- | -------------------------------- |
-| Host                  | `studio.automatizaformacion.com` |
-| Path                  | `/`                              |
-| Container             | `supabase-studio`                |
-| Container Port        | `3000`                           |
-| HTTPS                 | ON                               |
-| Certificate Provider  | Let's Encrypt                    |
-| HTTP → HTTPS Redirect | ON                               |
+**Si las labels no funcionan** (Dokploy puede usar nombres distintos de entrypoint/certresolver), añadir manualmente en Dokploy → service `supabase` → tab **Domains** → **Add Domain**:
 
-Espera ~2 min a que Let's Encrypt emita certs. Verifica:
+| Campo                | Valor                                 |
+| -------------------- | ------------------------------------- |
+| Host                 | `dev.automatizaformacion.com`         |
+| Path                 | `/supabase`                           |
+| Strip Path           | ON                                    |
+| Container            | `supabase-kong`                       |
+| Container Port       | `8000`                                |
+| HTTPS                | ON                                    |
+| Certificate Provider | Let's Encrypt (reusa cert existente)  |
+| Priority             | 100 (mayor que el catch-all dev.dash) |
+
+### 3.2. Studio — NO se expone públicamente (acceso vía SSH tunnel)
+
+Studio es "god mode" (SQL editor + RLS bypass). Acceso recomendado:
 
 ```bash
-curl -I https://supabase.automatizaformacion.com -m 10
-# Esperado: HTTP/2 200 OR 401 (Kong responde, pide auth)
+# Desde tu máquina local:
+bash infra/supabase-vps/scripts/ssh-vps.sh "sudo socat TCP-LISTEN:3010,fork TCP:supabase-studio:3000 &"
+# O usar SSH tunnel directo:
+ssh -L 3010:supabase-studio:3000 -i infra/supabase-vps/.vault/dashboard-af-vps-key root@46.62.193.169
+# Abrir en navegador: http://localhost:3010
+```
 
-curl -I https://studio.automatizaformacion.com -m 10
-# Esperado: HTTP/2 200 OR 401 (Studio responde, pide basic auth)
+Si en el futuro se necesita acceso público a Studio, exponerlo con HTTP Basic Auth + IP allowlist, NUNCA sin auth.
+
+### 3.3. Verificar publicación (tras Redeploy)
+
+```bash
+# Health endpoint de GoTrue a través del path-prefix:
+curl -sS "https://dev.automatizaformacion.com/supabase/auth/v1/health" -m 10
+# Esperado: {"version":"v2.188.1","name":"GoTrue","description":"GoTrue is a user registration..."}
+
+# Headers para confirmar que traefik está stripping correctamente:
+curl -sI "https://dev.automatizaformacion.com/supabase/auth/v1/health" -m 10 | head -5
+# Esperado: HTTP/2 200, x-kong-*, server: kong/...
 ```
 
 ---
@@ -319,8 +332,9 @@ NEXTAUTH_URL=https://dev.automatizaformacion.com
 NEXTAUTH_SECRET=<DEL_VAULT — NEXTAUTH_SECRET>
 LOG_LEVEL=info
 
-# === SUPABASE (apuntando al stack nuevo) ===
-NEXT_PUBLIC_SUPABASE_URL=https://supabase.automatizaformacion.com
+# === SUPABASE (path-prefix vía traefik — same-origin con dev.dash) ===
+NEXT_PUBLIC_SUPABASE_URL=https://dev.automatizaformacion.com/supabase
+SUPABASE_URL=https://dev.automatizaformacion.com/supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<DEL_VAULT — ANON_KEY>
 SUPABASE_SERVICE_ROLE_KEY=<DEL_VAULT — SERVICE_ROLE_KEY>
 DATABASE_URL=postgresql://postgres:<DEL_VAULT_POSTGRES_PASSWORD>@supabase-db:5432/postgres
