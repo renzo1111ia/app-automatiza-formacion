@@ -70,7 +70,7 @@ services:
       - config_file=/etc/postgresql/postgresql.conf
       - -c
       - log_min_messages=fatal
-    networks: [supabase-net]
+    networks: [supabase-net, dokploy-network]
 
   # ===========================================================================
   # Vector (logging) — placeholder, no se usa, lo ponemos por compatibilidad
@@ -305,8 +305,9 @@ services:
     volumes:
       - ./kong.yml:/home/kong/temp.yml:ro
     entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
-    networks: [supabase-net]
-    # Kong escucha en 8000 (HTTP) — Traefik de Dokploy enruta supabase.automatizaformacion.com → 8000
+    networks: [supabase-net, dokploy-network]
+    # Kong escucha en 8000 (HTTP). En dokploy-network también para que dev.dash
+    # (otro service del project) pueda resolver supabase-kong por DNS Docker.
 
   # ===========================================================================
   # Analytics (Logflare) — opcional, lo dejamos placeholder mínimo
@@ -345,9 +346,17 @@ volumes:
   supabase-storage-data:
 
 # =============================================================================
-# Network — todos los servicios Supabase en la misma red interna
+# Networks
+# - supabase-net: red interna del stack Supabase (auth, storage, realtime,
+#   meta, imgproxy, studio se quedan SOLO aquí — no necesitan acceso externo).
+# - dokploy-network: red compartida del panel Dokploy donde están dev.dash,
+#   Rediscola, minio, etc. Solo los containers que dev.dash necesita resolver
+#   (supabase-db y supabase-kong) se unen también a esta red.
 # =============================================================================
 networks:
   supabase-net:
     name: supabase-net
     driver: bridge
+  dokploy-network:
+    name: dokploy-network
+    external: true
