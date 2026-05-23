@@ -67,6 +67,10 @@ docs/Docs-entrega-clienta/
 docs/auditoria/
 docs/auditoria.zip
 
+# Claude Code: settings.local.json contiene permisos/envs específicos del dev
+# (incluyendo allowlist para SSH al VPS). settings.json sí se comparte.
+.claude/settings.local.json
+
 # Python bytecode cache
 __pycache__/
 *.pyc
