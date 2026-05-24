@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CRMSection } from "./integrations/crm-section";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -612,6 +613,8 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
           </p>
         </div>
       </div>
+
+      <CRMSection />
     </div>
   );
 }
