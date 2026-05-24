@@ -19,11 +19,28 @@ Lee [`CLAUDE.md`](../CLAUDE.md) del repo raíz para la visión completa del proy
 
 ### 2.1 Requisitos previos
 
-- **Node.js** 22.x LTS o superior (Next.js 16 lo exige).
-- **npm** 10.x (o pnpm 9.x si prefieres).
+- **Node.js 20.20.2** (LTS pinned por `.nvmrc`). El VPS Dokploy corre Node 20-alpine — usa la misma versión en local para evitar drift (warnings `EBADENGINE`, bugs "funciona en local pero no en prod").
+- **npm 10.x** (ships con Node 20).
 - **Git** 2.40+.
 - **Docker Desktop** (para PostgreSQL local si no usas el Supabase remoto del equipo).
 - **Claude Code CLI** instalado (`npm i -g @anthropic-ai/claude-code` o desde extensión IDE).
+
+> 📌 **Migración a Node 22 LTS planificada para Sprint 3 Hardening** ([`phase-03-migracion-node-22-lts.md`](../plans/260520-1342-sprint-3-hardening/phase-03-migracion-node-22-lts.md)). Hasta entonces, pinned a Node 20.
+
+#### Cómo instalar la versión exacta (recomendado: nvm)
+
+```powershell
+# Windows: nvm-windows
+nvm install 20.20.2
+nvm use 20.20.2
+# (en la raíz del repo, el .nvmrc lo selecciona automáticamente si tienes auto-switch)
+
+# macOS/Linux: nvm
+nvm install
+nvm use
+```
+
+Verifica: `node --version` debe devolver `v20.20.2`.
 
 ### 2.2 Clonar el repo
 

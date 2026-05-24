@@ -8,18 +8,7 @@ branch: feature/sprint-03-hardening
 sprint_id: SP-4
 version_target: v0.4.0
 tags:
-  [
-    testing,
-    e2e,
-    playwright,
-    vitest,
-    coverage,
-    observabilidad,
-    wcag,
-    hardening,
-    csp,
-    rate-limits,
-  ]
+  [testing, e2e, playwright, vitest, coverage, observabilidad, wcag, hardening, csp, rate-limits]
 created: 2026-05-20
 last_updated: 2026-05-22
 ---
@@ -32,19 +21,21 @@ last_updated: 2026-05-22
 
 ## Fases
 
-| #   | Archivo                                                                                    | Tareas RoadMap          | Est.      | Estado    |
-| --- | ------------------------------------------------------------------------------------------ | ----------------------- | --------- | --------- |
+| #   | Archivo                                                                                    | Tareas RoadMap               | Est.      | Estado    |
+| --- | ------------------------------------------------------------------------------------------ | ---------------------------- | --------- | --------- |
 | 1   | [phase-01-e2e-tests-playwright.md](phase-01-e2e-tests-playwright.md)                       | 4-01 + 4-02 (parcial) + 4-09 | 32-36h    | Pendiente |
-| 2   | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03 reducido           | 7-9h      | Pendiente |
-| —   | ~~phase-03-dashboard-costes-llm.md~~ **MOVIDA a Sprint Costes-LLM (post-Sheets v0.5.1)** | ~~4-04~~                | —         | MOVIDA    |
-| 4   | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md)                                           | 4-05 (24 findings DA-5) | 28-40h    | Pendiente |
-| 5   | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md)     | 4-06 + 4-08             | 16-20h    | Pendiente |
-| 6   | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md)               | 4-07                    | 6-8h      | Pendiente |
-| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                     | SP-4-CLOSE-1..5         | 8h + bugs | Pendiente |
+| 2   | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03 reducido                | 7-9h      | Pendiente |
+| 3   | [phase-03-migracion-node-22-lts.md](phase-03-migracion-node-22-lts.md)                     | SP-4-NODE-22                 | 4-6h      | Pendiente |
+| 4   | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md)                                           | 4-05 (24 findings DA-5)      | 28-40h    | Pendiente |
+| 5   | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md)     | 4-06 + 4-08                  | 16-20h    | Pendiente |
+| 6   | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md)               | 4-07                         | 6-8h      | Pendiente |
+| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                     | SP-4-CLOSE-1..5              | 8h + bugs | Pendiente |
 
-**Total desarrollo:** ~89-113h · **Total con cierre:** ~97-121h · **Objetivo:** 95h base · -21h vs original tras mover phase-03 (Dashboard costes LLM) al Sprint Costes-LLM post-MVP
+**Total desarrollo:** ~93-119h · **Total con cierre:** ~101-127h · **Objetivo:** 99h base (+4h vs anterior por phase-03 Node 22)
 
-> **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP. Phase-03 entera y la parte de tabla `llm_usage_logs`/cost-tracker de Phase-02 se han movido a [Sprint Costes-LLM post-Sheets `v0.5.1`](../260522-1430-sprint-costes-llm-post-mvp/plan.md). Phase-02 sigue cubriendo Pino + bull-board + Sentry.
+> **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP. La phase original 03 (Dashboard costes LLM) y la parte de tabla `llm_usage_logs`/cost-tracker de Phase-02 se han movido a [Sprint Costes-LLM post-Sheets `v0.5.1`](../260522-1430-sprint-costes-llm-post-mvp/plan.md). Phase-02 sigue cubriendo Pino + bull-board + Sentry.
+>
+> **Cambio 24-05-2026:** tras Sprint 2 v0.2.7 (downgrade lint-staged + pin Node 20 LTS), se añade nueva phase-03 [Migración Node 22 LTS](phase-03-migracion-node-22-lts.md) para alinear local ↔ VPS y desbloquear lint-staged 17. Estimación 4-6h. No confundir con la phase-03 movida (Dashboard costes LLM).
 
 ## Dependencias entre fases
 
@@ -71,11 +62,11 @@ NOTA: Ph3 (Dashboard costes LLM) MOVIDA al Sprint Costes-LLM post-Sheets (v0.5.1
 
 ## Solapes con sprints anteriores
 
-| Sprint anterior         | Componente reutilizado                                        |
-| ----------------------- | ------------------------------------------------------------- |
-| Sprint 0 (SP-1-CLOSE-2) | Playwright setup base (si se instaló en Sprint 0)             |
-| Sprint 1 (2-30, 2-31)   | Componentes shadcn actualizados (WCAG aprovecha)              |
-| Sprint 1 (2-14..2-18)   | Repository pattern (coverage targets aprovecha repos)         |
+| Sprint anterior         | Componente reutilizado                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| Sprint 0 (SP-1-CLOSE-2) | Playwright setup base (si se instaló en Sprint 0)                                              |
+| Sprint 1 (2-30, 2-31)   | Componentes shadcn actualizados (WCAG aprovecha)                                               |
+| Sprint 1 (2-14..2-18)   | Repository pattern (coverage targets aprovecha repos)                                          |
 | Sprint 2                | Multi-LLM pipeline existente (el callback de costes se usará en el Sprint Costes-LLM post-MVP) |
 
 ## Criterios de éxito del Sprint 3
