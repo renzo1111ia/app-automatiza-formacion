@@ -88,6 +88,7 @@ export async function OverviewSection({
         to={to}
         filters={filters}
         title={null}
+        editButtonLabel="Personalizar Overview"
       />
 
       {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution */}

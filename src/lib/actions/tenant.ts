@@ -438,6 +438,17 @@ export async function updateTenantConfig(id: string, partialConfig: Record<strin
       }
     }
 
+    // 2.5 Sprint 2B: validar overview_kpis si viene en config (max 8, shape valido).
+    if (updatedConfig.overview_kpis !== undefined) {
+      const parsed = OverviewKpisArraySchema.safeParse(updatedConfig.overview_kpis);
+      if (!parsed.success) {
+        return {
+          success: false,
+          error: `overview_kpis inválido: ${parsed.error.issues.map((i) => i.message).join(", ")}`,
+        };
+      }
+    }
+
     // 3. Save
     const { data, error } = await supabase
       .from("tenants")
