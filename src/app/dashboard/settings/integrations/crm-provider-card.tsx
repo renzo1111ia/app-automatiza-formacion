@@ -30,7 +30,7 @@ export function CRMProviderCard({ provider, integration, otherActive, onChanged 
     if (!integration?.id) return;
     setTesting(true);
     try {
-      const res = await fetch(`/api/integrations/${integration.id}/healthcheck`, {
+      const res = await fetch(`/api/integrations/manage/${integration.id}/healthcheck`, {
         method: "POST",
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
@@ -49,7 +49,7 @@ export function CRMProviderCard({ provider, integration, otherActive, onChanged 
     if (!confirm(`¿Desconectar ${meta.label}? Las credenciales se eliminan localmente.`)) return;
     setDisconnecting(true);
     try {
-      const res = await fetch(`/api/integrations/${integration.id}/disconnect`, {
+      const res = await fetch(`/api/integrations/manage/${integration.id}/disconnect`, {
         method: "POST",
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };

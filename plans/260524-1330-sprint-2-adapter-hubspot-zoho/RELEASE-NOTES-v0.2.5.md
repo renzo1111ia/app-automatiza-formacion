@@ -41,10 +41,11 @@ MVP de la capa de integraciones CRM multi-tenant: HubSpot Public App + Zoho mult
   - `GET /api/integrations` — listado tenant-scoped.
   - `GET/POST /api/integrations/[provider]/auth/start` — genera state + cookie + redirect.
   - `GET /api/integrations/[provider]/auth/callback` — quad-check + encrypt + persist.
-  - `POST /api/integrations/[id]/healthcheck`.
-  - `POST /api/integrations/[id]/disconnect` — soft-delete preservando audit.
-  - `PATCH /api/integrations/[id]/write-policy` con Zod validation.
-  - `GET /api/integrations/[id]/audit` — query con filtros.
+  - `POST /api/integrations/manage/[id]/healthcheck`.
+  - `POST /api/integrations/manage/[id]/disconnect` — soft-delete preservando audit.
+  - `PATCH /api/integrations/manage/[id]/write-policy` con Zod validation.
+  - `GET /api/integrations/manage/[id]/audit` — query con filtros.
+- **Nota v0.2.6 hotfix (BUG-2-01)**: las rutas de gestión por ID se movieron de `/api/integrations/[id]/*` a `/api/integrations/manage/[id]/*` para resolver conflicto del App Router de Next.js (dos slugs dinámicos hermanos `[id]` y `[provider]` causaban `Error: You cannot use different slug names for the same dynamic path`). Las URLs OAuth `[provider]/auth/*` se mantienen sin cambios (no afecta a redirect URIs registradas en HubSpot/Zoho).
 
 ### Infra
 

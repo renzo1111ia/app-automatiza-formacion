@@ -1,5 +1,5 @@
 /**
- * POST /api/integrations/[id]/healthcheck
+ * POST /api/integrations/manage/[id]/healthcheck
  *
  * Carga la integration tenant-scoped, invoca provider.healthcheck(), persiste
  * `last_healthcheck_at` + `healthcheck_status`. Devuelve JSON.

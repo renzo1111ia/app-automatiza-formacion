@@ -38,7 +38,7 @@ export function AuditLogViewer({ integration }: Props) {
     try {
       const qs = new URLSearchParams({ limit: "50" });
       if (leadFilter.trim()) qs.set("lead_id", leadFilter.trim());
-      const res = await fetch(`/api/integrations/${integration.id}/audit?${qs.toString()}`);
+      const res = await fetch(`/api/integrations/manage/${integration.id}/audit?${qs.toString()}`);
       const data = (await res.json()) as { rows?: AuditRow[] };
       setRows(data.rows ?? []);
     } finally {

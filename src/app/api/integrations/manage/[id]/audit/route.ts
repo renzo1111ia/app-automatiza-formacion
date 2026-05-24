@@ -1,5 +1,5 @@
 /**
- * GET /api/integrations/[id]/audit?lead_id=...&limit=50&offset=0
+ * GET /api/integrations/manage/[id]/audit?lead_id=...&limit=50&offset=0
  *
  * Devuelve audit log filtrado por la integración (tenant-scoped via RLS).
  */

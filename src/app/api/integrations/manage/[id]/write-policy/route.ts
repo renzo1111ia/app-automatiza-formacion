@@ -1,5 +1,5 @@
 /**
- * PATCH /api/integrations/[id]/write-policy
+ * PATCH /api/integrations/manage/[id]/write-policy
  *
  * Body: { write_policy, override_fields }
  * Persiste el cambio tenant-scoped.

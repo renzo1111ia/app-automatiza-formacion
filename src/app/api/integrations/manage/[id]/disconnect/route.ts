@@ -1,5 +1,5 @@
 /**
- * POST /api/integrations/[id]/disconnect
+ * POST /api/integrations/manage/[id]/disconnect
  *
  * Invoca provider.disconnect() (revoke remoto si soportado) + soft-delete:
  * marca is_active=false y limpia credentials_cipher. Mantiene la row para audit

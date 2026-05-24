@@ -27,7 +27,7 @@ export function WritePolicyEditor({ integration, onSaved }: Props) {
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean);
-      const res = await fetch(`/api/integrations/${integration.id}/write-policy`, {
+      const res = await fetch(`/api/integrations/manage/${integration.id}/write-policy`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ write_policy: policy, override_fields: fields }),
