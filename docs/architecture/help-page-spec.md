@@ -1,27 +1,35 @@
 ---
-title: "Spec funcional — Página Help / Ayuda al admin"
+title: "Spec funcional — Doc Admin + Docs Clientes"
 audience: equipo de desarrollo (uxui + frontend + database + api)
 owner_agent: af-agents:help-docs-keeper
 date: 20-05-2026
-status: spec inicial, pendiente diseño UI definitivo
+last_revision: 24-05-2026 — split en dos páginas separadas (Doc Admin + Docs Clientes)
+status: spec activa
 references:
   - .claude/agents/help-docs-keeper.md
   - docs/dev-team-handover.md sección 16
+  - plans/260524-1020-doc-agent-empty-states-full/phase-C-doc-pages-implementation.md
 ---
 
-# Spec funcional — Página Help / Ayuda al admin
+# Spec funcional — Doc Admin + Docs Clientes
 
-Especificación de la página de ayuda interna del dashboard. Mantenida proactivamente por el agente [`af-agents:help-docs-keeper`](../../.claude/agents/help-docs-keeper.md).
+Especificación de las DOS páginas de documentación del dashboard. Mantenidas proactivamente por el agente [`af-agents:help-docs-keeper`](../../.claude/agents/help-docs-keeper.md).
 
-> **Inspiración visual**: layout tipo "help dev portal" con tabs por scope + secciones en scroll vertical + TOC anclado a la derecha. Estilo coherente con el dashboard actual de dashboard-af (dark theme actual, accent verde/cyan, sidebar lateral).
+> **Decisión 24-05-2026 (autoexec plan)**: el spec original proponía UNA página con 3 tabs (SuperAdmin / Organization / My Space). El usuario optó por **DOS páginas separadas** para mayor visibilidad en sidebar y separación clara de audiencias. El layout interno (cards + TOC scroll-spy + estados provisional/completada) se mantiene en cada página.
+
+> **Inspiración visual**: layout tipo "help dev portal" con sidebar TOC + contenido en scroll vertical. Estilo coherente con el dashboard actual de dashboard-af (dark theme, accent indigo/violet para admin, accent emerald/teal para clientes).
 
 ---
 
 ## 1. Ubicación en el producto
 
-- **Ruta**: `/admin/help` (o `/admin/ayuda` según convención de i18n del equipo).
-- **Menú lateral**: entrada **"Help"** o **"Ayuda"** colocada en **la última posición** del menú lateral del admin, debajo de "Sistema" (separada visualmente del resto con un divider).
-- **Acceso**: cualquier usuario autenticado con rol `admin` del tenant. Hay un scope adicional `SuperAdmin` accesible sólo para roles plataforma.
+| Página            | Ruta                       | Audiencia                                                                                    | Acceso                              |
+| ----------------- | -------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **Doc Admin**     | `/dashboard/docs-admin`    | Roles plataforma (Javier HP, equipo Esden) y admins de tenant que necesiten material técnico | Sólo `app_metadata.is_admin = true` |
+| **Docs Clientes** | `/dashboard/docs-clientes` | Admin del tenant cliente final + cualquier usuario autenticado del CRM                       | Cualquier sesión autenticada        |
+
+- **Menú lateral**: dos entradas separadas al final del sidebar, debajo de la entrada `Docs` existente (no se quita la actual). `Doc Admin` lleva el icono `ShieldCheck`, `Docs Clientes` lleva `BookOpen`.
+- **`Doc Admin` cubre** el scope SuperAdmin original. **`Docs Clientes` cubre** los scopes Organization + My Space del spec antiguo.
 
 ---
 
@@ -55,11 +63,11 @@ Especificación de la página de ayuda interna del dashboard. Mantenida proactiv
 
 ### Tres tabs (scopes) en el header
 
-| Tab | Audiencia | Contenido |
-| --- | --- | --- |
-| **SuperAdmin** | Roles plataforma (Javier, equipo Esden) | Administración global: tenants, usuarios cross-tenant, app catalog, AI proxy, audit log, sponsors, developers, settings de plataforma |
-| **Organization** | Admin del tenant (centro de formación) | Gestión de su organización: equipo, miembros, configuración tenant, integraciones CRM, agentes IA, knowledge base, campañas |
-| **My Space** | Cualquier usuario autenticado | Su propio perfil, preferencias, notificaciones, ayuda personal |
+| Tab              | Audiencia                               | Contenido                                                                                                                             |
+| ---------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **SuperAdmin**   | Roles plataforma (Javier, equipo Esden) | Administración global: tenants, usuarios cross-tenant, app catalog, AI proxy, audit log, sponsors, developers, settings de plataforma |
+| **Organization** | Admin del tenant (centro de formación)  | Gestión de su organización: equipo, miembros, configuración tenant, integraciones CRM, agentes IA, knowledge base, campañas           |
+| **My Space**     | Cualquier usuario autenticado           | Su propio perfil, preferencias, notificaciones, ayuda personal                                                                        |
 
 Cada tab tiene **su propia lista de secciones** y su propio TOC.
 
@@ -112,45 +120,45 @@ Cada sección renderiza como una **card** vertical con:
 
 ### Tab "SuperAdmin"
 
-| # | Sección | slug | Estado inicial | Notas |
-| - | --- | --- | --- | --- |
-| 1 | Dashboard | `superadmin-dashboard` | 🟡 Provisional | Vista general plataforma |
-| 2 | Users | `superadmin-users` | 🟡 Provisional | Gestión global usuarios |
-| 3 | Organizations | `superadmin-organizations` | 🟡 Provisional | Tenants |
-| 4 | Roles | `superadmin-roles` | 🟡 Provisional | RBAC plataforma |
-| 5 | App Templates | `superadmin-app-templates` | 🟡 Provisional | |
-| 6 | App Catalog | `superadmin-app-catalog` | 🟡 Provisional | |
-| 7 | Developers | `superadmin-developers` | 🟡 Provisional | Acceso API |
-| 8 | Sponsors | `superadmin-sponsors` | 🟡 Provisional | |
-| 9 | Audit Log | `superadmin-audit-log` | 🟡 Provisional | Cross-tenant audit |
-| 10 | Menus | `superadmin-menus` | 🟡 Provisional | Personalización menú |
-| 11 | AI Proxy | `superadmin-ai-proxy` | 🟡 Provisional | Proxy LLM costes |
-| 12 | Settings | `superadmin-settings` | 🟡 Provisional | Config plataforma |
-| 13 | Shortcuts | `superadmin-shortcuts` | 🟡 Provisional | Atajos teclado |
-| 14 | FAQ | `superadmin-faq` | 🟡 Provisional | Preguntas frecuentes admin |
+| #   | Sección       | slug                       | Estado inicial | Notas                      |
+| --- | ------------- | -------------------------- | -------------- | -------------------------- |
+| 1   | Dashboard     | `superadmin-dashboard`     | 🟡 Provisional | Vista general plataforma   |
+| 2   | Users         | `superadmin-users`         | 🟡 Provisional | Gestión global usuarios    |
+| 3   | Organizations | `superadmin-organizations` | 🟡 Provisional | Tenants                    |
+| 4   | Roles         | `superadmin-roles`         | 🟡 Provisional | RBAC plataforma            |
+| 5   | App Templates | `superadmin-app-templates` | 🟡 Provisional |                            |
+| 6   | App Catalog   | `superadmin-app-catalog`   | 🟡 Provisional |                            |
+| 7   | Developers    | `superadmin-developers`    | 🟡 Provisional | Acceso API                 |
+| 8   | Sponsors      | `superadmin-sponsors`      | 🟡 Provisional |                            |
+| 9   | Audit Log     | `superadmin-audit-log`     | 🟡 Provisional | Cross-tenant audit         |
+| 10  | Menus         | `superadmin-menus`         | 🟡 Provisional | Personalización menú       |
+| 11  | AI Proxy      | `superadmin-ai-proxy`      | 🟡 Provisional | Proxy LLM costes           |
+| 12  | Settings      | `superadmin-settings`      | 🟡 Provisional | Config plataforma          |
+| 13  | Shortcuts     | `superadmin-shortcuts`     | 🟡 Provisional | Atajos teclado             |
+| 14  | FAQ           | `superadmin-faq`           | 🟡 Provisional | Preguntas frecuentes admin |
 
 ### Tab "Organization"
 
-| # | Sección | slug | Estado inicial | Notas |
-| - | --- | --- | --- | --- |
-| 1 | Dashboard Org | `org-dashboard` | 🟡 Provisional | KPIs del tenant |
-| 2 | Equipo | `org-team` | 🟡 Provisional | Miembros del tenant |
-| 3 | Leads | `org-leads` | 🟡 Provisional | Cualificación + cadencia |
-| 4 | Llamadas | `org-calls` | 🟡 Provisional | Retell + Ultravox |
-| 5 | Agentes IA | `org-ai-agents` | 🟡 Provisional | Virginia + variants |
-| 6 | Knowledge Base | `org-knowledge-base` | 🟡 Provisional | Contenido para agentes IA |
-| 7 | Integraciones CRM | `org-integrations-crm` | 🟡 Provisional | HubSpot + Zoho (Fase 2) |
-| 8 | Programas | `org-programs` | 🟡 Provisional | Cursos y reglas de cualificación |
-| 9 | Configuración del tenant | `org-settings` | 🟡 Provisional | |
+| #   | Sección                  | slug                   | Estado inicial | Notas                            |
+| --- | ------------------------ | ---------------------- | -------------- | -------------------------------- |
+| 1   | Dashboard Org            | `org-dashboard`        | 🟡 Provisional | KPIs del tenant                  |
+| 2   | Equipo                   | `org-team`             | 🟡 Provisional | Miembros del tenant              |
+| 3   | Leads                    | `org-leads`            | 🟡 Provisional | Cualificación + cadencia         |
+| 4   | Llamadas                 | `org-calls`            | 🟡 Provisional | Retell + Ultravox                |
+| 5   | Agentes IA               | `org-ai-agents`        | 🟡 Provisional | Virginia + variants              |
+| 6   | Knowledge Base           | `org-knowledge-base`   | 🟡 Provisional | Contenido para agentes IA        |
+| 7   | Integraciones CRM        | `org-integrations-crm` | 🟡 Provisional | HubSpot + Zoho (Fase 2)          |
+| 8   | Programas                | `org-programs`         | 🟡 Provisional | Cursos y reglas de cualificación |
+| 9   | Configuración del tenant | `org-settings`         | 🟡 Provisional |                                  |
 
 ### Tab "My Space"
 
-| # | Sección | slug | Estado inicial | Notas |
-| - | --- | --- | --- | --- |
-| 1 | Mi perfil | `me-profile` | 🟡 Provisional | |
-| 2 | Notificaciones | `me-notifications` | 🟡 Provisional | |
-| 3 | Preferencias UI | `me-preferences` | 🟡 Provisional | Idioma, tema, etc |
-| 4 | Sesiones activas | `me-sessions` | 🟡 Provisional | Seguridad cuenta |
+| #   | Sección          | slug               | Estado inicial | Notas             |
+| --- | ---------------- | ------------------ | -------------- | ----------------- |
+| 1   | Mi perfil        | `me-profile`       | 🟡 Provisional |                   |
+| 2   | Notificaciones   | `me-notifications` | 🟡 Provisional |                   |
+| 3   | Preferencias UI  | `me-preferences`   | 🟡 Provisional | Idioma, tema, etc |
+| 4   | Sesiones activas | `me-sessions`      | 🟡 Provisional | Seguridad cuenta  |
 
 ---
 
@@ -245,14 +253,14 @@ CREATE TABLE help_steps (
 
 ## 5. Endpoints API (Next.js App Router)
 
-| Método | Endpoint | Función | Auth |
-| --- | --- | --- | --- |
-| GET | `/api/help/sections?scope=superadmin` | Listar secciones del scope ordenadas | authenticated |
-| GET | `/api/help/sections/[slug]` | Detalle de una sección con screenshots+fields+steps | authenticated |
-| POST | `/api/help/sections` | Crear sección | superadmin only |
-| PATCH | `/api/help/sections/[id]` | Actualizar sección o cambiar estado | superadmin only |
-| POST | `/api/help/screenshots` | Subir screenshot (multipart, va a Supabase Storage) | superadmin only |
-| DELETE | `/api/help/sections/[id]` | Eliminar sección | superadmin only |
+| Método | Endpoint                              | Función                                             | Auth            |
+| ------ | ------------------------------------- | --------------------------------------------------- | --------------- |
+| GET    | `/api/help/sections?scope=superadmin` | Listar secciones del scope ordenadas                | authenticated   |
+| GET    | `/api/help/sections/[slug]`           | Detalle de una sección con screenshots+fields+steps | authenticated   |
+| POST   | `/api/help/sections`                  | Crear sección                                       | superadmin only |
+| PATCH  | `/api/help/sections/[id]`             | Actualizar sección o cambiar estado                 | superadmin only |
+| POST   | `/api/help/screenshots`               | Subir screenshot (multipart, va a Supabase Storage) | superadmin only |
+| DELETE | `/api/help/sections/[id]`             | Eliminar sección                                    | superadmin only |
 
 > **El agente `help-docs-keeper` accede vía `service_role` desde un job programado**, no desde el cliente. Esto evita exponer escritura desde el frontend.
 
@@ -262,15 +270,15 @@ CREATE TABLE help_steps (
 
 Componentes a crear, delegados a `af-agents:uxui`:
 
-| Componente | Path sugerido | Función |
-| --- | --- | --- |
-| `<HelpPage>` | `src/app/admin/help/page.tsx` | Página raíz con tabs |
-| `<HelpScopeTabs>` | `src/components/help/HelpScopeTabs.tsx` | Tabs superiores |
-| `<HelpSectionList>` | `src/components/help/HelpSectionList.tsx` | Lista vertical de secciones del scope activo |
-| `<HelpSectionCard>` | `src/components/help/HelpSectionCard.tsx` | Card individual de sección |
-| `<HelpTableOfContents>` | `src/components/help/HelpTableOfContents.tsx` | TOC lateral derecho con scroll spy |
-| `<HelpStatusBadge>` | `src/components/help/HelpStatusBadge.tsx` | Badge 🟡 Provisional / 🟢 Completada |
-| `<HelpScreenshot>` | `src/components/help/HelpScreenshot.tsx` | Imagen con caption, lazy load, lightbox click |
+| Componente              | Path sugerido                                 | Función                                       |
+| ----------------------- | --------------------------------------------- | --------------------------------------------- |
+| `<HelpPage>`            | `src/app/admin/help/page.tsx`                 | Página raíz con tabs                          |
+| `<HelpScopeTabs>`       | `src/components/help/HelpScopeTabs.tsx`       | Tabs superiores                               |
+| `<HelpSectionList>`     | `src/components/help/HelpSectionList.tsx`     | Lista vertical de secciones del scope activo  |
+| `<HelpSectionCard>`     | `src/components/help/HelpSectionCard.tsx`     | Card individual de sección                    |
+| `<HelpTableOfContents>` | `src/components/help/HelpTableOfContents.tsx` | TOC lateral derecho con scroll spy            |
+| `<HelpStatusBadge>`     | `src/components/help/HelpStatusBadge.tsx`     | Badge 🟡 Provisional / 🟢 Completada          |
+| `<HelpScreenshot>`      | `src/components/help/HelpScreenshot.tsx`      | Imagen con caption, lazy load, lightbox click |
 
 Estilo: hereda del design system actual del dashboard (dark theme, accent verde/cyan, bordes redondeados, mismas familias tipográficas y spacing tokens).
 
@@ -340,12 +348,12 @@ Obligatorio antes de cerrar la sección como 🟢:
 
 ## 9. Tareas pendientes de planificar
 
-| Cuándo | Qué | Quién |
-| --- | --- | --- |
-| Sprint 2 o 3 (cuando el equipo de UX tenga ciclos) | Diseño UI definitivo de la página + componentes | `uxui` |
-| Sprint 2 o 3 | Implementación de schema BD + endpoints API | `database` + `api` |
-| Sprint 2 o 3 | Implementación de componentes React | `uxui` + `code` |
-| Cada cierre de sprint (a partir de Sprint WCAG) | `help-docs-keeper` corre y actualiza secciones afectadas | `help-docs-keeper` |
+| Cuándo                                             | Qué                                                      | Quién              |
+| -------------------------------------------------- | -------------------------------------------------------- | ------------------ |
+| Sprint 2 o 3 (cuando el equipo de UX tenga ciclos) | Diseño UI definitivo de la página + componentes          | `uxui`             |
+| Sprint 2 o 3                                       | Implementación de schema BD + endpoints API              | `database` + `api` |
+| Sprint 2 o 3                                       | Implementación de componentes React                      | `uxui` + `code`    |
+| Cada cierre de sprint (a partir de Sprint WCAG)    | `help-docs-keeper` corre y actualiza secciones afectadas | `help-docs-keeper` |
 
 ---
 
