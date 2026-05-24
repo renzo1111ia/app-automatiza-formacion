@@ -3,11 +3,13 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 22-05-2026 23:00
-last_updated_by: Javi HP (Sprint 1 CERRADO · 24 tareas Completada + 8 Diferida + 6 ADRs · branch `feature/sprint-01-capa-datos` con 16 commits · PR a developer PENDIENTE por orden explícita del usuario)
-project_version: v0.1.0
+last_updated: 24-05-2026 14:15
+last_updated_by: Javi HP (Sprint 2 KICKOFF · branch `feature/sprint-02-adapter-hubspot-zoho` creada · 3 researchers DONE · 8 phases planificadas · 74h estim secuencial / ~52h con paralelismo)
+project_version: v0.2.0
 sprint_0_progress: "✅ **Released v0.1.0 — Sprint 0 cerrado 22-05-2026 17:29 + cierre formal PR #4 a las 19:30** · Tag `v0.1.0` en commit `a387dfe` (merge PR #2) · DEV 🟢: 0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-07..1-27 (26 tareas locales). 1-03, 1-05 → 🟡 diferidas 100% VPS pre-deploy staging. Cierre completo: CLOSE-1 🟢 (~30min, DONE_WITH_CONCERNS aceptado, lint 118 err preexistentes), CLOSE-2 🟢 (~45min, 24/24 E2E + 5 WCAG findings + 2 bugs corregidos), CLOSE-3 🟢 (~1h 30min, análisis Bea+Renzo V1), CLOSE-4 🟢 (~25min, 2 bugs + 2 lint fixes), CLOSE-5 🟢 (~45min, CHANGELOG + RoadMap + PR #4 cierre formal). ⏱ **Total Sprint 0: ~11h 5min vs 118h estimadas (−91%)**. CHANGELOG.md publicado."
-sprint_1_progress: "CERRADO 22-05-2026 23:00 · ⏱ Real efectivo ~12h vs ~205h estim (paralelismo orquestación). 24 tareas 🟢 Completada (Bloques 2.1, 2.2, 2.3, 2.6 completos · 2.5, 2.7, 2.8 parcial · 2.9 completo). 8 tareas 🟢 Diferida (2-19..2-22 a ADR-019; 2-31, 2-32, 2-34 a ADR-018; 2-36 a Sprint Costes-LLM; NEW-01 paso 3 a v0.5.3). 6 ADRs creados (014-019). SP-2-CLOSE-1..5 ✅ excepto CLOSE-3 diferido a SP-4B phase-02. ENCRYPTION_KEY env crítica para deploy. Resumen: `plans/260520-1342-sprint-1-capa-datos/SP-2-CLOSE-summary.md`."
+sprint_1_progress: "MERGEADO a developer vía PR #5 (commit `94c035a`) · ⏱ Real efectivo ~12h vs ~205h estim (paralelismo orquestación). 24 tareas 🟢 Completada (Bloques 2.1, 2.2, 2.3, 2.6 completos · 2.5, 2.7, 2.8 parcial · 2.9 completo). 8 tareas 🟢 Diferida (2-19..2-22 a ADR-019; 2-31, 2-32, 2-34 a ADR-018; 2-36 a Sprint Costes-LLM; NEW-01 paso 3 a v0.5.3). 6 ADRs creados (014-019). SP-2-CLOSE-1..5 ✅ excepto CLOSE-3 diferido a SP-4B phase-02. ENCRYPTION_KEY env crítica para deploy. Resumen: `plans/260520-1342-sprint-1-capa-datos/SP-2-CLOSE-summary.md`."
+autoexec_plan_260524_progress: "✅ COMPLETADO 24-05-2026 ~11:30 (3 commits directos a developer + 1 commit cierre) · Plan `plans/260524-1020-doc-agent-empty-states-full/` ejecutado sin intervención post-/clear · Phase B `6701b74` (70 alerts→toast, EmptyState, web_widgets.updated_at + orchestrator flag migrations LOCAL+VPS) · Phase C `93cf858` (help_sections table + API + HelpPageShell + /dashboard/docs-admin + /dashboard/docs-clientes + 11 secciones seeded LOCAL+VPS) · Phase D `e0dda4c` (help-docs-keeper agent actualizado a 2 scopes + hook `af-docs-watcher.cjs` registrado y testeado) · Cierre `b0e6769`. VPS aplicado vía pg-meta REST (SSH key denegada, workaround documentado en `reference-vps-pg-meta.md`). 11/12 acceptance criteria · 1 diferido orgánicamente (screenshots WCAG-validated, los hace help-docs-keeper en próximos Edit/Write)."
+sprint_2_progress: "🟡 EN DESARROLLO desde 24-05-2026 14:00 · branch `feature/sprint-02-adapter-hubspot-zoho` (creada desde developer post-autoexec) · 3 researchers ✅ (HubSpot v3 fetch-puro, Zoho multi-DC con 7 bugs B-01..B-07, adapter pattern + write_policy + TokenManager dedup) · Plan consolidado por planner Opus en 9 archivos: `plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md` + phase-00..07. 74h estim secuencial · ~52h con paralelismo óptimo (Phase 02‖03‖04 tras Phase 01). Decisiones cliente: HubSpot Public App OAuth, 1 CRM activo/tenant (`UNIQUE(tenant_id)`), scope MVP = HubSpot + Zoho + UI admin + audit + tests Vitest+MSW. Sheets/Salesforce → Fase 4."
 excluded_from: [staging, main]
 ---
 
@@ -551,44 +553,68 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ## Fase 2 — Sprint 2: Adapter layer + 2 CRMs (MVP)
 
-| Campo                          | Valor                                    |
-| ------------------------------ | ---------------------------------------- |
-| **Sprint ID**                  | `SP-3`                                   |
-| **Versión objetivo al cierre** | `v0.3.0`                                 |
-| **Estado del sprint**          | 🔘 Pendiente                             |
-| **Estimación total**           | 2-3 sem (80h–120h)                       |
-| **Rama de trabajo sugerida**   | `feature/sprint-02-adapter-hubspot-zoho` |
-| **Inicio**                     | Mié 01-07-2026 09:00                     |
-| **Fin Est.**                   | Mié 22-07-2026 19:00                     |
-| **Fin Real**                   | —                                        |
+| Campo                          | Valor                                                                                                                |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| **Sprint ID**                  | `SP-3`                                                                                                               |
+| **Versión objetivo al cierre** | `v0.3.0`                                                                                                             |
+| **Estado del sprint**          | 🟡 En Desarrollo                                                                                                     |
+| **Estimación total**           | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research)                                |
+| **Rama de trabajo**            | `feature/sprint-02-adapter-hubspot-zoho` (creada 24-05-2026 14:00 desde developer)                                   |
+| **Inicio**                     | 24-05-2026 14:00                                                                                                     |
+| **Fin Est.**                   | 27-05-2026 (5-6 días lab con paralelismo)                                                                            |
+| **Fin Real**                   | —                                                                                                                    |
+| **Plan detallado**             | [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/`](260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) (9 archivos) |
+| **⏱ Push (sprint)**            | —                                                                                                                    |
+| **⏱ Cierre (sprint)**          | —                                                                                                                    |
 
-> **Asignado a:** Javi HP (solo). 16 días lab × 10h/día = 160h. Sin vacaciones, sin descuentos.
+> **Asignado a:** Javi HP (solo, orquestación + dev). **Refinado 24-05-2026** tras 3 researchers (HubSpot v3, Zoho multi-DC, adapter pattern): estim original 148-169h reducida a 74h gracias a (a) Sprint 1 ya entregó token-crypto + base integrations table, (b) Zoho ya tiene adapter funcional → solo bugfixes, (c) HubSpot = fetch puro sin SDK.
 
-### Tareas de desarrollo (Fase 2)
+> **Decisiones cliente (24-05-2026):** HubSpot = Public App OAuth, 1 CRM activo/tenant (`UNIQUE(tenant_id)`), scope MVP = HubSpot+Zoho+UI+audit+tests. Sheets/Salesforce → Fase 4.
 
-> MVP de integraciones: HubSpot + Zoho. **Sheets queda fuera del MVP** (aplazado a Fase 4).
+### Bloques (tracking fino — política CLAUDE.md Sprint 2+)
 
-| ID                               | Tarea                                                                               | Estimación | Estado       | Notas                                                                                    |
-| -------------------------------- | ----------------------------------------------------------------------------------- | ---------- | ------------ | ---------------------------------------------------------------------------------------- |
-| 3-01                             | Diseñar `IntegrationAdapter` interface + factory por tenant                         | 12h        | 🔘 Pendiente | phase-01 Sprint 2                                                                        |
-| 3-02                             | Adapter HubSpot (OAuth2, contacts, deals, webhooks bidireccionales)                 | 44h        | 🔘 Pendiente | phase-02 Sprint 2 — el más grande del sprint                                             |
-| 3-03                             | Adapter Zoho CRM (OAuth2 / API Key, leads, deals, multi-región es/es-mx)            | 28h        | 🔘 Pendiente | phase-03 Sprint 2 — multi-DC EU/US                                                       |
-| 3-04                             | Tabla `crm_field_mapping` editable + `write_policy` (R-014 append-only por defecto) | 14h        | 🔘 Pendiente | phase-04 Sprint 2. Crítico                                                               |
-| 3-05                             | UI admin para conectar CRM del tenant (panel)                                       | 20h        | 🔘 Pendiente | phase-05 Sprint 2                                                                        |
-| 3-06                             | `crm_write_audit` log + visualización en panel admin                                | 10h        | 🔘 Pendiente | phase-06 Sprint 2                                                                        |
-| 3-07                             | Tests de integración contra cuentas sandbox HubSpot + Zoho                          | 20h        | 🔘 Pendiente | phase-07 Sprint 2                                                                        |
-| **Subtotal Fase 2 — Desarrollo** |                                                                                     | **148h**   |              | + ~10h cierre (phase-08). Total Sprint 2 ≈ 158h (con paralelismo 2 devs: 80-100h reales) |
+| Bloque                         | Contenido                                                                                        | Estim   | Estado           | ⏱ Push | ⏱ Cierre | Plan file                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ | ------- | ---------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------- |
+| **3.0** Setup                  | env vars (OAUTH*STATE_SECRET, HUBSPOT*_, ZOHO\__) + carpetas + msw devDep                        | 2h      | 🟡 En Desarrollo | —      | —        | [phase-00](260524-1330-sprint-2-adapter-hubspot-zoho/phase-00-setup.md)                                   |
+| **3.1** Foundation             | ICRMProvider ampliado + migration integrations + TokenManager dedup + crm-error + oauth-state    | 14h     | 🔘 Pendiente     | —      | —        | [phase-01](260524-1330-sprint-2-adapter-hubspot-zoho/phase-01-foundation-interface-integrations-table.md) |
+| **3.2** Zoho multi-DC bugfixes | Fix B-01..B-07: api_domain dinámico, accounts-server, 401→refresh→retry, paginación, email exact | 10h     | 🔘 Pendiente     | —      | —        | [phase-02](260524-1330-sprint-2-adapter-hubspot-zoho/phase-02-zoho-multidc-bugfixes.md)                   |
+| **3.3** HubSpot Public App     | OAuth start+callback + adapter completo (CRUD + tasks + meetings) + custom properties af\_\*     | 16h     | 🔘 Pendiente     | —      | —        | [phase-03](260524-1330-sprint-2-adapter-hubspot-zoho/phase-03-hubspot-public-app-oauth.md)                |
+| **3.4** WriteGuard + audit     | WriteGuard standalone + filtro append_only + crm_write_audit append-only RLS + tests             | 6h      | 🔘 Pendiente     | —      | —        | [phase-04](260524-1330-sprint-2-adapter-hubspot-zoho/phase-04-write-guard-audit-log.md)                   |
+| **3.5** UI admin               | IntegrationsManager refactor: cards CRM + OAuth flow + write_policy editor + audit viewer + WCAG | 12h     | 🔘 Pendiente     | —      | —        | [phase-05](260524-1330-sprint-2-adapter-hubspot-zoho/phase-05-ui-admin-integrations.md)                   |
+| **3.6** Tests + docs + ADRs    | Coverage Vitest ≥80% + crm-adapters.md + ADRs 020/021/022 + help_sections "integrations"         | 10h     | 🔘 Pendiente     | —      | —        | [phase-06](260524-1330-sprint-2-adapter-hubspot-zoho/phase-06-tests-coverage-docs.md)                     |
+| **3.7** Cierre                 | CLOSE-1..5 + hand-off SP-4B phase-03                                                             | 6h      | 🔘 Pendiente     | —      | —        | [phase-07](260524-1330-sprint-2-adapter-hubspot-zoho/phase-07-sprint-close.md)                            |
+| **Subtotal Sprint 2**          |                                                                                                  | **74h** |                  |        |          | secuencial · ~52h con paralelismo 02‖03‖04                                                                |
+
+### Tareas individuales del Sprint 2 (granularidad por bloque)
+
+#### Bloque 3.0 — Setup
+
+| ID     | Tarea                                                                | Estim | Estado           | ⏱ Push | ⏱ Cierre |
+| ------ | -------------------------------------------------------------------- | ----- | ---------------- | ------ | -------- |
+| 3-00.1 | Generar OAUTH_STATE_SECRET local + añadir a .env.example             | 15min | 🟡 En Desarrollo | —      | —        |
+| 3-00.2 | Crear estructura carpetas crm/oauth, tests/integrations, tests/mocks | 10min | 🔘 Pendiente     | —      | —        |
+| 3-00.3 | Dependency Guard msw@^2 (af-agents:adr) + npm install                | 30min | 🔘 Pendiente     | —      | —        |
+| 3-00.4 | tests/mocks/server.ts + vitest.config setupFiles                     | 30min | 🔘 Pendiente     | —      | —        |
+| 3-00.5 | Smoke npm run test -- --run + commit                                 | 30min | 🔘 Pendiente     | —      | —        |
+
+#### Bloque 3.1 — Foundation (se rellena al arrancar)
+
+> 🔘 Pendiente — desglose detallado en [`phase-01-foundation-interface-integrations-table.md`](260524-1330-sprint-2-adapter-hubspot-zoho/phase-01-foundation-interface-integrations-table.md) implementation steps.
+
+#### Bloques 3.2..3.7 — Tareas (se desglosan al arrancar cada bloque)
+
+> 🔘 Pendiente — desglose detallado en las phase-XX correspondientes. El `roadmap-keeper` rellena tareas individuales al cambiar el bloque a 🟡 En Desarrollo.
 
 ### Tareas de cierre obligatorias (Sprint 2)
 
-| ID                           | Tarea                                                                                                                            | Estimación    | Estado       | Notas                                |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------ | ------------------------------------ |
-| SP-3-CLOSE-1                 | Auto test                                                                                                                        | 1h 30min      | 🔘 Pendiente |                                      |
-| SP-3-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                                                                                     | 2h 30min      | 🔘 Pendiente | Flujo OAuth completo HubSpot + Zoho  |
-| ~~SP-3-CLOSE-3~~             | ~~Test Manual del Dev~~ — **DIFERIDO a 👤 SP-4B phase-03 bloque 4** (Renzo + equipo)                                             | (0h aquí)     | 🟢 Diferida  | Decisión 22-05-2026                  |
-| SP-3-CLOSE-4                 | Corrección de Bugs detectados                                                                                                    | (variable)    | 🔘 Pendiente |                                      |
-| SP-3-CLOSE-5                 | Cierre de Sprint → PR a `developer` + bump a `v0.3.0` + crear rama Sprint 3 + **hand-off a SP-4B phase-03** (rellenar plantilla) | 1h            | 🔘 Pendiente | Hand-off obligatorio antes de cerrar |
-| **Subtotal cierre Sprint 2** |                                                                                                                                  | **6h + bugs** |              |                                      |
+| ID                           | Tarea                                                                                  | Estimación    | Estado       | ⏱ Push | ⏱ Cierre | Notas                                |
+| ---------------------------- | -------------------------------------------------------------------------------------- | ------------- | ------------ | ------ | -------- | ------------------------------------ |
+| SP-3-CLOSE-1                 | Auto test (typecheck + lint + build + Vitest)                                          | 1h 30min      | 🔘 Pendiente | —      | —        | Cobertura ≥80% en `crm/`             |
+| SP-3-CLOSE-2                 | E2C Local + WCAG 2.2 AA (Playwright + axe-core)                                        | 2h 30min      | 🔘 Pendiente | —      | —        | Flujo OAuth completo HubSpot + Zoho  |
+| ~~SP-3-CLOSE-3~~             | ~~Test Manual del Dev~~ — **DIFERIDO a 👤 SP-4B phase-03 bloque 4** (Renzo + equipo)   | (0h aquí)     | 🟢 Diferida  | —      | —        | Decisión 22-05-2026                  |
+| SP-3-CLOSE-4                 | Corrección de Bugs detectados                                                          | (variable)    | 🔘 Pendiente | —      | —        |                                      |
+| SP-3-CLOSE-5                 | Cierre → push + PR a `developer` (sin merge) + bump `v0.3.0` + hand-off SP-4B phase-03 | 1h            | 🔘 Pendiente | —      | —        | Hand-off obligatorio antes de cerrar |
+| **Subtotal cierre Sprint 2** |                                                                                        | **6h + bugs** |              |        |          |                                      |
 
 ---
 

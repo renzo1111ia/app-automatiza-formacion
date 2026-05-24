@@ -2,13 +2,15 @@
 
 **AI CRM + Workflow Orchestrator multi-tenant para academias formativas** (sector formación, España + Latam).
 
-| Campo           | Valor                                                                                                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.1.0` (Sprint 0 cerrado 22-05-2026). Sprint 1 listo para promocionar a `v0.2.0` (PR a `developer` pendiente)                                                            |
-| Estado          | 🔵 Sprint 1 (capa de datos) cerrado en rama 22-05-2026 — capa Zod + 7 repositorios + RLS hardening + AES-256-GCM tokens OAuth + 58 tests Vitest + 6 ADRs (014-019)         |
-| Target MVP      | `v0.4.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)            |
-| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox |
-| Rama de trabajo | [`feature/sprint-01-capa-datos`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-01-capa-datos) (cerrado, esperando PR)          |
+| Campo           | Valor                                                                                                                                                                                                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Versión         | `v0.2.0` en `developer` (Sprint 1 mergeado vía PR #5 `94c035a`). Próximo bump: `v0.3.0` al cerrar Sprint 2.                                                                                                                      |
+| Estado          | 🟡 **Sprint 2 EN DESARROLLO** (adapter HubSpot + Zoho + UI admin) — branch `feature/sprint-02-adapter-hubspot-zoho` desde 24-05-2026. 74h estim · ~52h con paralelismo.                                                          |
+| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy desde `developer`. Plan autoexec doc-agent + empty-states mergeado 24-05-2026 (4 commits, 70 alerts→toast, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher`). |
+| Target MVP      | `v0.4.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)                                                                  |
+| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                       |
+| Rama de trabajo | [`feature/sprint-02-adapter-hubspot-zoho`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-02-adapter-hubspot-zoho) (activa)                                                           |
+| Plan Sprint 2   | [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md`](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) (9 archivos: overview + 8 fases)                                                                            |
 
 > ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
 

@@ -71,6 +71,10 @@ docs/auditoria.zip
 # (incluyendo allowlist para SSH al VPS). settings.json sí se comparte.
 .claude/settings.local.json
 
+# Claude Code: logs de hooks (runtime, no aportan al repo) y agent-memory privado
+.claude/logs/
+.claude/agent-memory/
+
 # Python bytecode cache
 __pycache__/
 *.pyc
