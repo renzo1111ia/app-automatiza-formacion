@@ -13,7 +13,7 @@ import {
 } from "@/lib/integrations/crm/server-actions";
 import { verifyOAuthState, extractTenantId } from "@/lib/integrations/crm/oauth/oauth-state";
 import { CRMFactory } from "@/lib/integrations/crm/factory";
-import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { getActiveTenantId, getAdminSupabaseClient } from "@/lib/supabase/server";
 import { encryptJson } from "@/lib/crypto/token-crypto";
 import { extractDCFromCallback } from "@/lib/integrations/crm/providers/zoho-dc-detector";
 import type { ZohoCRMProvider } from "@/lib/integrations/crm/providers/zoho";
@@ -58,6 +58,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const tenantId = extractTenantId(state);
   if (!tenantId || !verifyOAuthState(state, tenantId)) {
     return settingsRedirect(`error=csrf_mismatch&provider=${providerKey}`);
+  }
+
+  // F-API-1 — defensa contra session swap: el usuario que completa el callback
+  // DEBE ser owner del tenant_id encoded en el state (no basta con que la
+  // cookie httpOnly persista — un user nuevo en mismo browser podría aprobar
+  // el flow de un user anterior).
+  const sessionTenantId = await getActiveTenantId();
+  if (sessionTenantId !== tenantId) {
+    return settingsRedirect(`error=session_mismatch&provider=${providerKey}`);
   }
 
   const supabase = await getAdminSupabaseClient();
@@ -156,8 +165,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
       .catch((err) => console.error(`[oauth/callback] hubspot init failed: ${err.message}`));
   }
 
-  // Limpiar cookie.
-  cookieStore.delete(`oauth_state_${providerKey}`);
-
-  return settingsRedirect(`success=${providerKey}`);
+  // F-API-2 — cookie deletion debe aplicarse al response final (Next.js 15
+  // Route Handler: mutaciones via cookies() pueden no persistir tras crear
+  // un NextResponse independiente).
+  const response = settingsRedirect(`success=${providerKey}`);
+  response.cookies.delete(`oauth_state_${providerKey}`);
+  return response;
 }

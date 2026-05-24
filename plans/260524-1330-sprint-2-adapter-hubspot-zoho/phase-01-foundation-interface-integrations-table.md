@@ -141,18 +141,18 @@ Flujo de un request al CRM:
 
 ## Todo list
 
-- [ ] Ampliar `interface.ts` con OAuth + capabilities + lifecycle
-- [ ] Crear `crm-error.ts` con mappers
-- [ ] Crear `oauth/oauth-state.ts` HMAC sign/verify
-- [ ] Tests `oauth-state.test.ts` + `crm-error.test.ts`
-- [ ] Crear migración SQL `20260524100000_integrations_oauth_and_audit.sql`
-- [ ] Aplicar migración local + validar con psql
-- [ ] Crear `token-manager.ts` con dedup lock
-- [ ] Test `token-manager.test.ts` (concurrent dedup case)
-- [ ] Refactor `factory.ts` cache por integrationId + TTL
-- [ ] Smoke factory.getProvider
-- [ ] `npm run typecheck` + `npm run build` verdes
-- [ ] Commit a feature branch
+- [x] Ampliar `interface.ts` con OAuth + capabilities + lifecycle
+- [x] Crear `crm-error.ts` con mappers
+- [x] Crear `oauth/oauth-state.ts` HMAC sign/verify
+- [x] Tests `oauth-state.test.ts` + `crm-error.test.ts`
+- [x] Crear migración SQL `20260524100000_integrations_oauth_and_audit.sql`
+- [x] Aplicar migración local + validar con psql
+- [x] Crear `token-manager.ts` con dedup lock
+- [x] Test `token-manager.test.ts` (concurrent dedup case)
+- [x] Refactor `factory.ts` cache por integrationId + TTL
+- [x] Smoke factory.getProvider
+- [x] `npm run typecheck` + `npm run build` verdes
+- [x] Commit a feature branch
 
 ## Success criteria
 

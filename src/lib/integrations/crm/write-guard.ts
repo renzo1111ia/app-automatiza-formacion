@@ -34,6 +34,12 @@ export interface WriteGuardOptions {
   policy: WritePolicy;
   /** Whitelist de campos permitidos en `overwrite_with_audit`. */
   allowedOverrideFields?: string[];
+  /**
+   * F-WG-1 — escape hatch para casos legítimos donde se sabe que el lead no
+   * existe (e.g. testing, primer createLead followed by updateLead idempotente).
+   * Default: false → throw si `currentCRMFields` es undefined (fail-closed).
+   */
+  allowEmptyCurrent?: boolean;
 }
 
 interface AuditRow {
@@ -55,8 +61,17 @@ interface AuditRow {
 export async function applyWritePolicy(opts: WriteGuardOptions): Promise<Record<string, unknown>> {
   const current = opts.currentCRMFields;
   if (current === undefined) {
+    if (!opts.allowEmptyCurrent) {
+      // F-WG-1 — fail-closed: caller DEBE pasar currentCRMFields (resultado
+      // de provider.getLead). Para lead nuevo idempotente, pasar
+      // `allowEmptyCurrent: true` explícito.
+      throw new Error(
+        `WriteGuard: currentCRMFields requerido (integration=${opts.integrationId} lead=${opts.leadId}). ` +
+          `Llamar provider.getLead() antes, o pasar allowEmptyCurrent: true si es write idempotente sobre lead nuevo.`
+      );
+    }
     console.warn(
-      `[WriteGuard] currentCRMFields undefined para integration=${opts.integrationId} lead=${opts.leadId}. Asumiendo todo vacío.`
+      `[WriteGuard] allowEmptyCurrent=true (integration=${opts.integrationId} lead=${opts.leadId}). Asumiendo todo vacío.`
     );
   }
   const currentSafe = current ?? {};

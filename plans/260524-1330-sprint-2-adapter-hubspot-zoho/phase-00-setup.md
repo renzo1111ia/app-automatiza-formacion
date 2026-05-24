@@ -85,15 +85,15 @@ tests/
 
 ## Todo list
 
-- [ ] Generar OAUTH_STATE_SECRET local + añadir a `.env.local`
-- [ ] Editar `.env.example` con 5 vars nuevas comentadas
-- [ ] Crear estructura carpetas + `.gitkeep`
-- [ ] Dependency Guard `msw@^2` → instalar
-- [ ] Crear `tests/mocks/server.ts` con setupServer vacío
-- [ ] Editar `vitest.config.ts` setupFiles
-- [ ] Smoke `npm run test -- --run`
-- [ ] Verificar `NEXT_PUBLIC_APP_URL=http://localhost:8500`
-- [ ] Commit a feature branch
+- [x] Generar OAUTH_STATE_SECRET local + añadir a `.env.local`
+- [x] Editar `.env.example` con 5 vars nuevas comentadas
+- [x] Crear estructura carpetas + `.gitkeep`
+- [x] Dependency Guard `msw@^2` → instalar
+- [x] Crear `tests/mocks/server.ts` con setupServer vacío
+- [x] Editar `vitest.config.ts` setupFiles
+- [x] Smoke `npm run test -- --run`
+- [x] Verificar `NEXT_PUBLIC_APP_URL=http://localhost:8500`
+- [x] Commit a feature branch
 
 ## Success criteria
 

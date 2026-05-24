@@ -110,12 +110,12 @@ WriteGuard:
 
 ## Todo list
 
-- [ ] Crear `write-guard.ts` con `applyWritePolicy`
-- [ ] Crear `audit-query.ts` con `getAuditLog`
-- [ ] Tests write-guard cubriendo todos los casos + audit failure
-- [ ] Tests audit-query con RLS multi-tenant
-- [ ] typecheck + test verdes
-- [ ] Commit
+- [x] Crear `write-guard.ts` con `applyWritePolicy`
+- [x] Crear `audit-query.ts` con `getAuditLog`
+- [x] Tests write-guard cubriendo todos los casos + audit failure
+- [x] Tests audit-query con RLS multi-tenant
+- [x] typecheck + test verdes
+- [x] Commit
 
 ## Success criteria
 

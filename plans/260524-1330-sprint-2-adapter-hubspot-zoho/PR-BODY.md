@@ -99,10 +99,36 @@ Documentación detallada en `docs/integrations/hubspot-app-setup.md`.
 
 ## Tareas diferidas
 
+### Diferidas a Sprint 3 (hardening)
+
+- **F-LEGACY-1 (CRITICAL):** `ZohoPollingProcessor` sigue usando legacy `src/lib/integrations/zoho.ts` (B-01..B-07 sin fix en el camino de polling). Requiere migration plan al nuevo `CRMFactory.getProviderForIntegration()`. Tenants EU/IN/AU rotos en polling.
+- **F-HS-1 (HIGH):** Paginación `resolveListId` HubSpot — actualmente sólo recorre los primeros ~50 lists, falla NOT_FOUND si la lista buscada está en página 2+.
+- **F-HS-2 (MEDIUM):** `addTags` HubSpot lanza NOT_FOUND si lista no existe (diverge de Zoho create-if-missing).
+- **F-HS-4 (MEDIUM):** `init()` HubSpot best-effort sin persisted flag → si falla, no se reintenta.
+- **F-WG-3 (MEDIUM):** `toStringSafe(Date)` → debe usar `.toISOString()` (locale-independent audit).
+- **F-API-3 (MEDIUM):** Sin `Cache-Control: no-store` en OAuth routes.
+- **Coverage providers:** zoho.ts 52% / hubspot.ts 77% / zoho-dc-detector.ts 64% (target ≥85%). Gap en tests de `createEvent/createTask/executeAction` (paths no críticos del MVP).
+- **Coverage DB helpers:** factory.ts / audit-query.ts / server-actions.ts en 0-36% (testeados indirectamente vía MSW; falta integration tests con DB real).
 - Playwright E2E specs completos para IntegrationsManager → Sprint 3 (junto al hardening de tests E2E).
+- Sentry/observability para `WriteGuard` audit fire-and-forget (F-WG-2 documentado en ADR-022).
+
+### Acciones manuales del usuario (pre-deploy)
+
 - HubSpot Public App registro real en developers.hubspot.com → acción manual de Bea/Renzo antes del deploy VPS.
 - Smoke E2E contra sandbox HubSpot/Zoho real → SP-4B (Renzo).
 - E2E VPS Playwright → diferido a SP-4B (VPS sin URL pública pre-MVP aún).
+
+## Fixes ck-debug aplicados post-autoexec (commit pendiente)
+
+Tras la revisión sistemática ck-debug del commit `74cc137`, se aplicaron 4 fixes adicionales:
+
+- **F-COV-1 (CRITICAL):** [vitest.config.ts](vitest.config.ts) — añadido `src/lib/integrations/crm/**` al coverage `include`. Sin esto, la suite no medía cobertura del módulo Sprint 2.
+- **F-API-1 (CRITICAL security):** [src/app/api/integrations/[provider]/auth/callback/route.ts](src/app/api/integrations/[provider]/auth/callback/route.ts) — validación `sessionTenantId === tenantId` post-HMAC verify. Defensa contra session swap (user A inicia flow → user B se loguea en mismo browser → completa callback → tokens persistidos al tenant A correcto). Cuarto check del triple-check ahora es quad-check.
+- **F-API-2 (HIGH):** idem — cookie deletion movida a `response.cookies.delete()` (Next.js 15 Route Handler correctness; `cookies().delete()` post-redirect puede no aplicarse).
+- **F-WG-1 (HIGH):** [src/lib/integrations/crm/write-guard.ts](src/lib/integrations/crm/write-guard.ts) — fail-closed por defecto cuando `currentCRMFields === undefined`. Escape hatch explícito `allowEmptyCurrent: true` para callers que sí quieren bypass (lead nuevo idempotente). Anteriormente era fail-OPEN (warning + permitir escribir todo) — footgun.
+
+Tests añadidos: 1 nuevo en write-guard cubriendo `F-WG-1` (170 total: 169 passed + 1 nuevo).
+Reporte completo: [`plans/reports/qa-260524-1625-sprint-2-cierre.md`](../reports/qa-260524-1625-sprint-2-cierre.md).
 
 ## ADRs aprobados
 

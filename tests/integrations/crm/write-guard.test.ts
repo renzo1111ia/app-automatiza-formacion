@@ -61,12 +61,23 @@ describe("WriteGuard — append_only", () => {
     expect(out).toEqual({ telefono: "+34999" });
   });
 
-  it("currentCRMFields undefined → asume todo vacío + warning", async () => {
+  it("F-WG-1: currentCRMFields undefined sin allowEmptyCurrent → throw (fail-closed)", async () => {
+    await expect(
+      applyWritePolicy({
+        ...baseOpts,
+        policy: "append_only",
+        fields: { email: "new@x.com" },
+      })
+    ).rejects.toThrowError(/currentCRMFields requerido/);
+  });
+
+  it("F-WG-1: allowEmptyCurrent=true → asume vacío + warning + escribe", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const out = await applyWritePolicy({
       ...baseOpts,
       policy: "append_only",
       fields: { email: "new@x.com" },
+      allowEmptyCurrent: true,
     });
     expect(out).toEqual({ email: "new@x.com" });
     expect(warnSpy).toHaveBeenCalled();

@@ -20,8 +20,10 @@ export default defineConfig({
         "src/lib/repositories/**",
         "src/lib/crypto/**",
         "src/lib/utils/logger.ts",
+        // Sprint 2 — capa de integraciones CRM (acceptance criterion ≥80%).
+        "src/lib/integrations/crm/**",
       ],
-      exclude: ["**/*.d.ts", "**/index.ts"],
+      exclude: ["**/*.d.ts", "**/index.ts", "src/lib/integrations/crm/**/index.ts"],
     },
   },
   resolve: {
