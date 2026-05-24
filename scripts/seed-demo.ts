@@ -221,6 +221,7 @@ async function upsertTenant(
         dashboard_title: dashboardTitle,
         primary_color: "#4f46e5",
         demo_key: nameKey,
+        test_orchestrator_enabled: true,
       },
     })
     .select("id")

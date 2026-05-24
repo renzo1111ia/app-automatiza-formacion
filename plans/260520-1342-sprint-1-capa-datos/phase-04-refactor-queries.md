@@ -24,11 +24,13 @@
 ## Requirements
 
 **Funcionales:**
+
 - 0 queries `supabase.from('...')` inline en `src/app/api/**/*.ts`
 - 0 queries inline en `src/lib/actions/**/*.ts`
 - 0 queries inline en `worker.js` o procesadores BullMQ (excepto donde técnicamente necesario)
 
 **No-funcionales:**
+
 - Cada API route / action: máx 30 líneas de lógica (el resto es validación + repository call)
 - Preservar contratos de API existentes (no cambiar response shape)
 
@@ -51,11 +53,13 @@ Mismo patrón para server actions y workers.
 ## Related Code Files
 
 **Modificar:**
+
 - `src/app/api/**/*.ts` — 2-19: extraer queries a repositories
 - `src/lib/actions/**/*.ts` — 2-20: extraer queries a repositories, eliminar service_role
 - `worker.js` y `src/lib/processors/**/*.ts` — 2-21: ver phase-06 del plan RLS
 
 **Leer para contexto:**
+
 - `plans/20260519-1200-rls-multitenant-hardening/phase-06-webhooks-workers.md`
 - Repositorios creados en Fase 03
 
@@ -98,11 +102,11 @@ Mismo patrón para server actions y workers.
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Action migrada pierde validación previa | Media | Alto | Revisar cada action: ¿había validación inline? Si sí → mover validación Zod explícita |
-| Worker BullMQ necesita service_role para ops admin | Media | Medio | Documentar excepción en comentario; no es un finding si el contexto es background job legítimo |
-| Response shape cambia y rompe frontend | Baja | Alto | Comparar response antes/después; usar `JSON.stringify` para diff en test |
+| Riesgo                                             | Prob  | Impacto | Mitigación                                                                                     |
+| -------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------- |
+| Action migrada pierde validación previa            | Media | Alto    | Revisar cada action: ¿había validación inline? Si sí → mover validación Zod explícita          |
+| Worker BullMQ necesita service_role para ops admin | Media | Medio   | Documentar excepción en comentario; no es un finding si el contexto es background job legítimo |
+| Response shape cambia y rompe frontend             | Baja  | Alto    | Comparar response antes/después; usar `JSON.stringify` para diff en test                       |
 
 ## Security Considerations
 
@@ -124,7 +128,7 @@ Mismo patrón para server actions y workers.
 
 ## ~~Tarea adicional 2-36~~ — **MOVIDA al Sprint Costes-LLM (post-Sheets `v0.5.1`) como C-03**
 
-**Decisión 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`. Como 2-36 (`token_usage` en `chat_messages`) sólo aporta valor cuando hay dashboard de costes que lo consuma, se traslada al Sprint Costes-LLM post-MVP junto con el dashboard (era 4-04 Sprint 3) y la tabla `llm_usage_logs` + tracker LangChain (era parte de 4-03 Sprint 3).
+**Decisión 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.3.0`. Como 2-36 (`token_usage` en `chat_messages`) sólo aporta valor cuando hay dashboard de costes que lo consuma, se traslada al Sprint Costes-LLM post-MVP junto con el dashboard (era 4-04 Sprint 3) y la tabla `llm_usage_logs` + tracker LangChain (era parte de 4-03 Sprint 3).
 
 **Ver detalle en:** [plans/260522-1430-sprint-costes-llm-post-mvp/phase-03-token-usage-chat-messages.md](../260522-1430-sprint-costes-llm-post-mvp/phase-03-token-usage-chat-messages.md)
 

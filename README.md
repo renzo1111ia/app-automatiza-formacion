@@ -2,13 +2,15 @@
 
 **AI CRM + Workflow Orchestrator multi-tenant para academias formativas** (sector formación, España + Latam).
 
-| Campo           | Valor                                                                                                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.1.0` (Sprint 0 cerrado 22-05-2026). Sprint 1 listo para promocionar a `v0.2.0` (PR a `developer` pendiente)                                                            |
-| Estado          | 🔵 Sprint 1 (capa de datos) cerrado en rama 22-05-2026 — capa Zod + 7 repositorios + RLS hardening + AES-256-GCM tokens OAuth + 58 tests Vitest + 6 ADRs (014-019)         |
-| Target MVP      | `v0.4.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)            |
-| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox |
-| Rama de trabajo | [`feature/sprint-01-capa-datos`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-01-capa-datos) (cerrado, esperando PR)          |
+| Campo           | Valor                                                                                                                                                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Versión         | `v0.2.0` en `developer` (Sprint 1 mergeado vía PR #5 `94c035a`). Próximo bump: `v0.2.5` al mergear PR #12 (Sprint 2). **Versiones rebajadas 24-05-2026**: Sprint 2=`v0.2.5`, Sprint 2B=`v0.2.7`, Sprint 3=`v0.3.0-rc.1`, MVP GA=`v0.3.0`. |
+| Estado          | 🔵 **Sprint 2 PR #12 abierto** (adapter HubSpot + Zoho + UI admin) — branch `feature/sprint-02-adapter-hubspot-zoho` pushed, pendiente merge a `developer`. 170 tests verdes.                                                             |
+| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy desde `developer`. Plan autoexec doc-agent + empty-states mergeado 24-05-2026 (4 commits, 70 alerts→toast, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher`).          |
+| Target MVP      | `v0.3.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)                                                                           |
+| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                                |
+| Rama de trabajo | [`feature/sprint-02-adapter-hubspot-zoho`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-02-adapter-hubspot-zoho) (activa)                                                                    |
+| Plan Sprint 2   | [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md`](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) (9 archivos: overview + 8 fases)                                                                                     |
 
 > ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
 
@@ -96,13 +98,15 @@ Para que se activen al clonar: `npm install` corre `prepare: husky` automáticam
 
 > 📊 **Vista live**: [`plans/RoadMap.md`](plans/RoadMap.md) — se actualiza con cada cambio de estado de tarea.
 
-| Sprint                   | Versión          | Estado           | Notas                                                                                                        |
-| ------------------------ | ---------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| **0 Hotfixes seguridad** | `v0.1.0`         | 🟡 En desarrollo | 5 tareas a 🔵 (0-00, 0-01, 1-04, 1-26 + helpers). 2 diferidas (1-03, 1-05 esperan acceso VPS). Resto en cola |
-| 1 Capa datos             | `v0.2.0`         | 🔘 Pendiente     | Sin ORM nuevo. Repository pattern + Zod + RLS hardening                                                      |
-| 2 HubSpot + Zoho         | `v0.3.0`         | 🔘 Pendiente     | Adapter layer + UI admin (MVP)                                                                               |
-| 3 Hardening              | **`v0.4.0` MVP** | 🔘 Pendiente     | Tests E2E, observabilidad, dashboards de costes                                                              |
-| 4-9 Post-MVP             | `v0.5.0+`        | 🔘 Pendiente     | Google Sheets, Salesforce, GoHighLevel, ActiveCampaign                                                       |
+| Sprint                            | Versión                             | Estado                | Notas                                                                                                                                                                                    |
+| --------------------------------- | ----------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Hotfixes seguridad              | `v0.1.0`                            | 🟢 Completado         | Tag v0.1.0 en `a387dfe` (PR #2). 26 tareas locales · 2 diferidas a pre-deploy VPS. ~11h efectivas vs 118h estim                                                                          |
+| 1 Capa datos                      | `v0.2.0`                            | 🟢 Completado         | Mergeado a developer vía PR #5 (`94c035a`). 24 tareas · 8 diferidas · 6 ADRs (014-019) · 58 tests Vitest. ~12h efectivas vs 205h estim                                                   |
+| Autoexec doc-agent + empty-states | —                                   | 🟢 Completado         | 4 commits directos a developer 24-05-2026: 70 alerts→toast, EmptyState, web_widgets fix, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher.cjs`                              |
+| **2 HubSpot + Zoho**              | `v0.2.5`                            | 🔵 **PR #12 abierto** | Branch `feature/sprint-02-adapter-hubspot-zoho`. PR #12 a developer, pendiente merge. 170 tests verdes + build. [Plan completo](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) |
+| 2B Dashboard KPIs MVP             | `v0.2.7`                            | 🔘 Pendiente          | Post Sprint 2. 16-24h. Requirement Bea: dashboard KPIs agregado configurable                                                                                                             |
+| 3 Hardening                       | `v0.3.0-rc.1` / **`v0.3.0` MVP GA** | 🔘 Pendiente          | Tests E2E, observabilidad, accesibilidad WCAG 2.2 AA total. RC en Sprint 3, GA en SP-4B Validación pre-MVP.                                                                              |
+| 4 Post-MVP                        | `v0.4.0+`                           | 🔘 Pendiente          | Google Sheets bidireccional · Salesforce · GoHighLevel · ActiveCampaign · Costes-LLM                                                                                                     |
 
 ---
 
@@ -125,7 +129,7 @@ Ver historial completo de decisiones en [`docs/audit/DECISIONES-AUDITOR-JAVIER-H
 2. [`docs/dev-onboarding.md`](docs/dev-onboarding.md) — setup + primer arranque
 3. [`CLAUDE.md`](CLAUDE.md) — reglas del proyecto
 4. [`plans/RoadMap.md`](plans/RoadMap.md) — en qué sprint estamos
-5. La carpeta del sprint actual: `plans/260520-1342-sprint-0-hotfixes-seguridad/` (Sprint 0 vigente)
+5. La carpeta del sprint actual: [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/`](plans/260524-1330-sprint-2-adapter-hubspot-zoho/) (Sprint 2 vigente)
 
 ---
 

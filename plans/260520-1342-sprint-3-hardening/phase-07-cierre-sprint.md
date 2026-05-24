@@ -20,7 +20,7 @@ agent: af-agents:testing
 
 - **Priority:** P1
 - **Status:** Pendiente — bloqueado por Ph1-Ph6 completas
-- **Descripción:** Protocolo de cierre de sprint: auto tests, E2E completo, test manual del dev, corrección de bugs, y PR a `developer` con bump a `v0.4.0` (MVP completo).
+- **Descripción:** Protocolo de cierre de sprint: auto tests, E2E completo, test manual del dev, corrección de bugs, y PR a `developer` con bump a `v0.3.0` (MVP completo).
 
 ## Prerequisito absoluto
 
@@ -126,14 +126,14 @@ Documento de hallazgos: anotar en SP-4-CLOSE-4.
 ### SP-4-CLOSE-4 — Corrección de Bugs Detectados (variable)
 
 Bugs encontrados en CLOSE-2 y CLOSE-3 se documentan y corrigen aquí.
-Criterio para incluir en v0.4.0: bugs críticos o High que bloqueen flujos golden path.
+Criterio para incluir en v0.3.0: bugs críticos o High que bloqueen flujos golden path.
 Criterio para posponer a hotfix/Sprint 4: bugs Medium/Low cosméticos.
 
 Tras cada corrección: re-ejecutar CLOSE-1 (auto tests) para confirmar no regresión.
 
 ---
 
-### SP-4-CLOSE-5 — Cierre Sprint → PR a developer + bump v0.4.0 (30min)
+### SP-4-CLOSE-5 — Cierre Sprint → PR a developer + bump v0.3.0 (30min)
 
 ```bash
 # 1. Asegurarse en rama feature/sprint-03-hardening
@@ -141,20 +141,20 @@ git status  # limpio, todo committed
 
 # 2. Bump de versión
 # Editar package.json: "version": "0.3.0" → "1.0.0"
-# Editar CHANGELOG.md: añadir fecha a la entrada [v0.4.0]
+# Editar CHANGELOG.md: añadir fecha a la entrada [v0.3.0]
 
 # 3. Commit final
 git add package.json CHANGELOG.md
-git commit -m "chore: bump version to v0.4.0 — MVP completo Sprint 3"
+git commit -m "chore: bump version to v0.3.0 — MVP completo Sprint 3"
 
 # 4. Tag
-git tag -a v0.4.0 -m "v0.4.0 — MVP completo: E2E, WCAG 2.2 AA, observabilidad, dashboard LLM, hardening"
+git tag -a v0.3.0 -m "v0.3.0 — MVP completo: E2E, WCAG 2.2 AA, observabilidad, dashboard LLM, hardening"
 
 # 5. PR a developer (NO a staging ni main — requieren autorización explícita)
 gh pr create \
   --base developer \
   --head feature/sprint-03-hardening \
-  --title "feat: Sprint 3 — Hardening v0.4.0 MVP completo" \
+  --title "feat: Sprint 3 — Hardening v0.3.0 MVP completo" \
   --body "Sprint 3 completado. Ver plans/260520-1342-sprint-3-hardening/plan.md para detalle."
 ```
 
@@ -163,9 +163,9 @@ gh pr create \
 **Checklist CLOSE-5:**
 
 - [ ] `package.json` version = "1.0.0"
-- [ ] `CHANGELOG.md` entrada [v0.4.0] con fecha
+- [ ] `CHANGELOG.md` entrada [v0.3.0] con fecha
 - [ ] Commit con mensaje convencional
-- [ ] Tag v0.4.0 creado localmente
+- [ ] Tag v0.3.0 creado localmente
 - [ ] PR a `developer` creado (NO a staging/main)
 - [ ] PR description incluye link al plan
 - [ ] Invitar al usuario a planificar Fase 4 (o decidir pausa post-MVP)
@@ -182,7 +182,7 @@ gh pr create \
 - [ ] CLOSE-4: re-run CLOSE-1 tras correcciones
 - [ ] CLOSE-5: package.json version 1.0.0
 - [ ] CLOSE-5: CHANGELOG.md fecha
-- [ ] CLOSE-5: tag v0.4.0
+- [ ] CLOSE-5: tag v0.3.0
 - [ ] CLOSE-5: PR a developer
 
 ## Success Criteria
@@ -191,14 +191,14 @@ gh pr create \
 - Recorrido completo MVP en browser sin bloqueantes (CLOSE-2)
 - 0 bugs Critical/High sin resolver (CLOSE-4)
 - PR a `developer` creado con todos los cambios del Sprint 3
-- Tag `v0.4.0` creado
+- Tag `v0.3.0` creado
 - Lighthouse a11y score capturado como artefacto del sprint
 
 ## Risk Assessment
 
 | Riesgo                                         | Prob  | Impacto  | Mitigación                                                          |
 | ---------------------------------------------- | ----- | -------- | ------------------------------------------------------------------- |
-| CLOSE-4 desborda tiempo por bugs inesperados   | Alta  | Variable | Posponer bugs Medium/Low a hotfix; no bloquear v0.4.0 por cosmética |
+| CLOSE-4 desborda tiempo por bugs inesperados   | Alta  | Variable | Posponer bugs Medium/Low a hotfix; no bloquear v0.3.0 por cosmética |
 | Playwright tests flaky en CI (CLOSE-1)         | Media | Bajo     | Retry 2 configurado; flakyness localizado antes de CLOSE            |
 | Lighthouse score < 90 por DA-5-012 no resuelto | Media | Medio    | Aceptar score entre 85-89 si DA-5-012 fue cortado; documentar en PR |
 
@@ -206,4 +206,4 @@ gh pr create \
 
 - El PR de cierre NO debe incluir archivos `.env` ni secretos
 - Verificar con `git diff HEAD~1 --name-only` que no hay `.env*` en el commit
-- Tag v0.4.0 es público en git history — asegurarse de que no hay credenciales en el código antes de tagear
+- Tag v0.3.0 es público en git history — asegurarse de que no hay credenciales en el código antes de tagear
