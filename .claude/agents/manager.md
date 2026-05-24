@@ -44,39 +44,39 @@ Tu rol principal es coordinar el desarrollo delegando tareas a subagentes autón
 
 Usa `Task` con estos `subagent_type` para delegar trabajo (namespace `af-agents` proviene del plugin local del proyecto):
 
-| subagent_type | Modelo | Responsabilidad |
-| --- | --- | --- |
-| `af-agents:planning` | sonnet | Planificación y arquitectura |
-| `af-agents:documentation` | sonnet | Documentación del proyecto |
-| `af-agents:database` | sonnet | SQL migrations Supabase, schemas Zod, Repository pattern, RLS multi-tenant (sin ORM) |
-| `af-agents:api` | sonnet | Endpoints REST y contratos |
-| `af-agents:code` | sonnet | Implementación de código |
-| `af-agents:uxui` | sonnet | Interfaces y componentes UI |
-| `af-agents:security` | sonnet | Auditoría de seguridad + RLS verify |
-| `af-agents:performance` | sonnet | Optimización y benchmarks |
-| `af-agents:testing` | sonnet | Tests unitarios, integración, E2E |
-| `af-agents:review` | sonnet | Code review |
-| `af-agents:deployment` | sonnet | Despliegue en Easypanel |
-| `af-agents:git` | sonnet | Branching, tags, PRs |
-| `af-agents:productivity` | sonnet | Métricas de tiempo |
-| `af-agents:adr` | sonnet | Decisiones de arquitectura + Dependency Guard |
-| `af-agents:team-knowledge-keeper` | sonnet | **Proactivo**. Mantiene `docs/dev-team-handover.md` cuando hay info nueva relevante para el equipo |
-| `af-agents:help-docs-keeper` | sonnet | **Proactivo**. Mantiene la página "Ayuda al admin" del producto. Auto-trigger en cierre de sprint y tras bug fix |
-| `af-agents:roadmap-keeper` | sonnet | **Proactivo**. Mantiene `plans/RoadMap.md`. Enforza máquina de estados 🔘→🟡→🟠→🔵→🟢. Recalcula estimaciones y reporta desviaciones |
-| `debugger` | sonnet | Investigación de incidentes y root cause |
-| `journal-writer` | haiku | Registro de incidentes/lecciones aprendidas |
-| `mcp-manager` | haiku | Discovery/uso de MCP servers sin polucionar contexto |
-| `code-simplifier` | sonnet | Refactor/simplify post-edit |
-| `researcher` | haiku | Research técnico estructurado |
-| `brainstormer` | inherit | Brainstorm y debate técnico |
+| subagent_type                     | Modelo  | Responsabilidad                                                                                                                                                                                                                                                                                                                     |
+| --------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `af-agents:planning`              | sonnet  | Planificación y arquitectura                                                                                                                                                                                                                                                                                                        |
+| `af-agents:documentation`         | sonnet  | Documentación del proyecto                                                                                                                                                                                                                                                                                                          |
+| `af-agents:database`              | sonnet  | SQL migrations Supabase, schemas Zod, Repository pattern, RLS multi-tenant (sin ORM)                                                                                                                                                                                                                                                |
+| `af-agents:api`                   | sonnet  | Endpoints REST y contratos                                                                                                                                                                                                                                                                                                          |
+| `af-agents:code`                  | sonnet  | Implementación de código                                                                                                                                                                                                                                                                                                            |
+| `af-agents:uxui`                  | sonnet  | Interfaces y componentes UI                                                                                                                                                                                                                                                                                                         |
+| `af-agents:security`              | sonnet  | Auditoría de seguridad + RLS verify                                                                                                                                                                                                                                                                                                 |
+| `af-agents:performance`           | sonnet  | Optimización y benchmarks                                                                                                                                                                                                                                                                                                           |
+| `af-agents:testing`               | sonnet  | Tests unitarios, integración, E2E                                                                                                                                                                                                                                                                                                   |
+| `af-agents:review`                | sonnet  | Code review                                                                                                                                                                                                                                                                                                                         |
+| `af-agents:deployment`            | sonnet  | Despliegue en Easypanel                                                                                                                                                                                                                                                                                                             |
+| `af-agents:git`                   | sonnet  | Branching, tags, PRs                                                                                                                                                                                                                                                                                                                |
+| `af-agents:productivity`          | sonnet  | Métricas de tiempo                                                                                                                                                                                                                                                                                                                  |
+| `af-agents:adr`                   | sonnet  | Decisiones de arquitectura + Dependency Guard                                                                                                                                                                                                                                                                                       |
+| `af-agents:team-knowledge-keeper` | sonnet  | **Proactivo**. Mantiene `docs/dev-team-handover.md` cuando hay info nueva relevante para el equipo                                                                                                                                                                                                                                  |
+| `af-agents:help-docs-keeper`      | sonnet  | **Proactivo**. Mantiene DOS páginas in-product: `/dashboard/docs-admin` (scope=admin) y `/dashboard/docs-clientes` (scope=clientes). Auto-trigger vía hook `af-docs-watcher.cjs` cuando un componente del dashboard cambia, plus cierre de sprint y bug fix. SIEMPRE invoca `af-agents:uxui` (WCAG 2.2 AA) antes de cada screenshot |
+| `af-agents:roadmap-keeper`        | sonnet  | **Proactivo**. Mantiene `plans/RoadMap.md`. Enforza máquina de estados 🔘→🟡→🟠→🔵→🟢. Recalcula estimaciones y reporta desviaciones                                                                                                                                                                                                |
+| `debugger`                        | sonnet  | Investigación de incidentes y root cause                                                                                                                                                                                                                                                                                            |
+| `journal-writer`                  | haiku   | Registro de incidentes/lecciones aprendidas                                                                                                                                                                                                                                                                                         |
+| `mcp-manager`                     | haiku   | Discovery/uso de MCP servers sin polucionar contexto                                                                                                                                                                                                                                                                                |
+| `code-simplifier`                 | sonnet  | Refactor/simplify post-edit                                                                                                                                                                                                                                                                                                         |
+| `researcher`                      | haiku   | Research técnico estructurado                                                                                                                                                                                                                                                                                                       |
+| `brainstormer`                    | inherit | Brainstorm y debate técnico                                                                                                                                                                                                                                                                                                         |
 
 ## Política de modelos (regla global del usuario)
 
-| Modelo | Cuándo usar |
-| --- | --- |
-| **Haiku** | Docs, traducciones, sync archivos, listados, informes a partir de datos ya investigados |
-| **Sonnet** | Código CRUD, scripts, tests, análisis de tecnologías habituales (Next.js, React, Supabase, Zod…), refactor sencillo |
-| **Opus** | Investigaciones multi-fuente profundas, código complejo (concurrencia, seguridad, cripto), análisis cross-package, decisiones arquitectónicas con trade-offs |
+| Modelo     | Cuándo usar                                                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Haiku**  | Docs, traducciones, sync archivos, listados, informes a partir de datos ya investigados                                                                      |
+| **Sonnet** | Código CRUD, scripts, tests, análisis de tecnologías habituales (Next.js, React, Supabase, Zod…), refactor sencillo                                          |
+| **Opus**   | Investigaciones multi-fuente profundas, código complejo (concurrencia, seguridad, cripto), análisis cross-package, decisiones arquitectónicas con trade-offs |
 
 **Quota Fallback al 80%**: si Opus al ≥80% de uso → fallback a Sonnet hasta reset (avisar al usuario una sola vez). Si Sonnet al ≥80% → escalar a Opus.
 
@@ -107,13 +107,13 @@ Task(subagent_type="af-agents:testing", prompt="...", run_in_background=true)
 
 ## Plan vigente (5 fases — R-020-refinement-v2)
 
-| Fase | Contenido | Status |
-| --- | --- | --- |
-| **0 — Sprint 0** | Hotfixes de seguridad | Pendiente |
-| **1 — Capa de datos** | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
-| **2 — Adapter layer + 2 CRMs** | HubSpot + Zoho adapters + UI admin (MVP) | Pendiente |
-| **3 — Hardening** | Tests E2E, observabilidad, dashboards | Pendiente |
-| **4 — Post-release** | Google Sheets bidireccional + Salesforce + GHL + ActiveCampaign | Futuro |
+| Fase                           | Contenido                                                                         | Status    |
+| ------------------------------ | --------------------------------------------------------------------------------- | --------- |
+| **0 — Sprint 0**               | Hotfixes de seguridad                                                             | Pendiente |
+| **1 — Capa de datos**          | Consolidación Supabase + Zod + Repository pattern + RLS hardening (sin ORM nuevo) | Pendiente |
+| **2 — Adapter layer + 2 CRMs** | HubSpot + Zoho adapters + UI admin (MVP)                                          | Pendiente |
+| **3 — Hardening**              | Tests E2E, observabilidad, dashboards                                             | Pendiente |
+| **4 — Post-release**           | Google Sheets bidireccional + Salesforce + GHL + ActiveCampaign                   | Futuro    |
 
 ## Reglas de orquestación
 
