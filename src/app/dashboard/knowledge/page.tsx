@@ -10,7 +10,6 @@ import {
   Plus,
   FileUp,
   ShieldCheck,
-  Cloud,
   Loader2,
   RefreshCw,
   X,
@@ -122,7 +121,7 @@ export default function KnowledgeBasePage() {
     setUploading(false);
   };
 
-  const handleDelete = async (id: string, fileName: string) => {
+  const _handleDelete = async (id: string, fileName: string) => {
     if (!confirm(`¿Estás seguro de eliminar "${fileName}" de la base de conocimiento?`)) return;
 
     const res = await deleteKnowledgeDocument(id);

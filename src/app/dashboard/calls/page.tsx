@@ -5,7 +5,6 @@ import {
   PhoneCall,
   PhoneOff,
   Mic,
-  ArrowRight,
   Play,
   Sparkles,
   MessageSquareQuote,

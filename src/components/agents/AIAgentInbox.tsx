@@ -563,14 +563,13 @@ export default function AIAgentInbox() {
       for (let i = 1; i <= count; i++) {
         let val = "";
         if (i === 1) val = selectedLead.nombre || "Cliente";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        else if (i === 2)
+        else if (i === 2) {
+          const meta = (selectedLead.metadata as Record<string, unknown>) ?? {};
+          val = (meta.course_name as string) || (meta.curso as string) || "nuestro programa";
+        } else if (i === 3)
           val =
-            (selectedLead.metadata as any)?.course_name ||
-            (selectedLead.metadata as any)?.curso ||
-            "nuestro programa";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        else if (i === 3) val = (selectedLead.metadata as any)?.appointment_date || "próximamente";
+            ((selectedLead.metadata as Record<string, unknown>)?.appointment_date as string) ||
+            "próximamente";
         else val = "...";
         bodyParams.push({ type: "text", text: val });
       }

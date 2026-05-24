@@ -3,8 +3,6 @@
 import Link from "next/link";
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  MessageCircle,
-  Zap,
   Save,
   PlusCircle,
   Trash2,
@@ -15,7 +13,6 @@ import {
   Palette,
   Settings2,
   Copy,
-  ExternalLink,
   LucideIcon,
   AlertCircle,
   Smartphone,
