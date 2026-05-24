@@ -8,3 +8,4 @@ export * from "./knowledge-base";
 export * from "./integrations";
 export * from "./opportunities";
 export * from "./overview-kpi";
+export * from "./kpi-overview-io";
