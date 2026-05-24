@@ -107,11 +107,22 @@ Estructura de la entrada:
 
 ### Added
 
+> ⚠️ **NOTA 24-05-2026**: Borrador CHANGELOG OBSOLETO en items LLM. Reescribir antes de CLOSE-5:
+>
+> - ❌ ELIMINAR "Dashboard de costes LLM por tenant/proveedor/mes" → MOVIDO a Sprint Costes-LLM v0.5.1
+> - ❌ ELIMINAR "Tabla llm_usage_logs con RLS multi-tenant" → MOVIDO a Sprint Costes-LLM v0.5.1
+> - ✅ AÑADIR "Migración Node 20 → Node 22 LTS" (phase-03 nueva)
+> - ✅ AÑADIR "Campañas: importar Excel + filtros multi-variable + cola configurable" (NEW-09 phase-08)
+> - ✅ AÑADIR "Calendario festivos manuales por país" (NEW-10 phase-08)
+> - ✅ AÑADIR "Renombrar Historial → Leads" (NEW-11 phase-08)
+> - ✅ AÑADIR "Settings UX: buscador integraciones + probar conexión + confirmación robusta + edición panel lateral" (NEW-12 phase-08)
+> - ✅ CAMBIAR version `v0.3.0` → `v0.3.0-rc.1` (release candidate; el GA `v0.3.0` lo activa SP-4B)
+
 - Suite E2E completa con Playwright (6+ golden paths, tests de seguridad RLS, WCAG)
 - Coverage ≥80% con Vitest + v8 coverage
 - Logging estructurado JSON (Pino) en API Routes, Server Actions y Workers BullMQ
-- Dashboard de costes LLM por tenant/proveedor/mes (Recharts)
-- Tabla llm_usage_logs con RLS multi-tenant para tracking de tokens
+- ~~Dashboard de costes LLM por tenant/proveedor/mes (Recharts)~~ — **MOVIDO** Sprint Costes-LLM v0.5.1
+- ~~Tabla llm_usage_logs con RLS multi-tenant para tracking de tokens~~ — **MOVIDO** Sprint Costes-LLM v0.5.1
 - bull-board UI para monitoreo de colas BullMQ (solo admin)
 - Sistema de notificaciones accesible con sonner (reemplaza alert() nativo)
 - Modales accesibles: migración a shadcn Dialog (focus trap, ARIA, Escape)

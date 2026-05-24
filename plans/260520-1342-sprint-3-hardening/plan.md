@@ -6,7 +6,7 @@ priority: P1
 effort: 95h base (+ 8h cierre = 103h total, bugs variables) · -21h vs original tras mover phase Dashboard costes LLM al post-MVP
 branch: feature/sprint-03-hardening
 sprint_id: SP-4
-version_target: v0.4.0
+version_target: v0.3.0-rc.1
 tags:
   [testing, e2e, playwright, vitest, coverage, observabilidad, wcag, hardening, csp, rate-limits]
 created: 2026-05-20
@@ -21,21 +21,28 @@ last_updated: 2026-05-22
 
 ## Fases
 
-| #   | Archivo                                                                                    | Tareas RoadMap               | Est.      | Estado    |
-| --- | ------------------------------------------------------------------------------------------ | ---------------------------- | --------- | --------- |
-| 1   | [phase-01-e2e-tests-playwright.md](phase-01-e2e-tests-playwright.md)                       | 4-01 + 4-02 (parcial) + 4-09 | 32-36h    | Pendiente |
-| 2   | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03 reducido                | 7-9h      | Pendiente |
-| 3   | [phase-03-migracion-node-22-lts.md](phase-03-migracion-node-22-lts.md)                     | SP-4-NODE-22                 | 4-6h      | Pendiente |
-| 4   | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md)                                           | 4-05 (24 findings DA-5)      | 28-40h    | Pendiente |
-| 5   | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md)     | 4-06 + 4-08                  | 16-20h    | Pendiente |
-| 6   | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md)               | 4-07                         | 6-8h      | Pendiente |
-| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                     | SP-4-CLOSE-1..5              | 8h + bugs | Pendiente |
+| #   | Archivo                                                                                    | Tareas RoadMap                 | Est.      | Estado    |
+| --- | ------------------------------------------------------------------------------------------ | ------------------------------ | --------- | --------- |
+| 1   | [phase-01-e2e-tests-playwright.md](phase-01-e2e-tests-playwright.md)                       | 4-01 + 4-02 (parcial) + 4-09   | 32-36h    | Pendiente |
+| 2   | [phase-02-observabilidad-logging-metricas.md](phase-02-observabilidad-logging-metricas.md) | 4-03 reducido                  | 7-9h      | Pendiente |
+| 3   | [phase-03-migracion-node-22-lts.md](phase-03-migracion-node-22-lts.md)                     | SP-4-NODE-22                   | 4-6h      | Pendiente |
+| 4   | [phase-04-wcag-22-aa.md](phase-04-wcag-22-aa.md)                                           | 4-05 (24 findings DA-5)        | 28-40h    | Pendiente |
+| 5   | [phase-05-hardening-headers-rate-limits.md](phase-05-hardening-headers-rate-limits.md)     | 4-06 + 4-08                    | 16-20h    | Pendiente |
+| 6   | [phase-06-documentacion-release-v1.md](phase-06-documentacion-release-v1.md)               | 4-07                           | 6-8h      | Pendiente |
+| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                     | SP-4-CLOSE-1..5                | 8h + bugs | Pendiente |
+| 8   | [phase-08-features-bloque-3b.md](phase-08-features-bloque-3b.md)                           | NEW-09, NEW-10, NEW-11, NEW-12 | 19-25h    | Pendiente |
 
-**Total desarrollo:** ~93-119h · **Total con cierre:** ~101-127h · **Objetivo:** 99h base (+4h vs anterior por phase-03 Node 22)
+**Total desarrollo:** ~112-144h · **Total con cierre:** ~120-152h · **Objetivo:** 132h base
+(refinado tras research R2 24-05-2026: +4h phase-03 Node 22 antes; +19-25h phase-08 NEW-09..12 ahora desglosadas;
+phase-05 corregida 10-14h → 16-20h por inclusión de 4-08)
 
 > **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP. La phase original 03 (Dashboard costes LLM) y la parte de tabla `llm_usage_logs`/cost-tracker de Phase-02 se han movido a [Sprint Costes-LLM post-Sheets `v0.5.1`](../260522-1430-sprint-costes-llm-post-mvp/plan.md). Phase-02 sigue cubriendo Pino + bull-board + Sentry.
 >
 > **Cambio 24-05-2026:** tras Sprint 2 v0.2.7 (downgrade lint-staged + pin Node 20 LTS), se añade nueva phase-03 [Migración Node 22 LTS](phase-03-migracion-node-22-lts.md) para alinear local ↔ VPS y desbloquear lint-staged 17. Estimación 4-6h. No confundir con la phase-03 movida (Dashboard costes LLM).
+>
+> **Cambio 24-05-2026 (planificación detallada):** tras research R2 (`plans/reports/researcher-sprint-3-audit-coverage-260524.md`) se añade nueva [phase-08 Features Bloque 3.B](phase-08-features-bloque-3b.md) con desglose completo de NEW-09 (Excel+filtros+cola, 12-18h), NEW-10 (festivos manuales, 3h), NEW-11 (rename Historial→Leads, 2h, **antes de phase-01**), NEW-12 (Settings UX, 6h). Total: 19-25h. Total Sprint 3 actualizado: 112-144h (vs 89-117h anterior). NEW-11 es bloqueante: hacer ANTES de phase-01 para evitar specs E2E con nombres viejos.
+>
+> **Cambio 24-05-2026 (fix CLOSE-5 versión triple):** phase-07 CLOSE-5 tenía 3 versiones distintas (`v1.0.0` en línea 165, `v0.3.0` en línea 154, `v0.4.0` en frontmatter del plan, `v0.3.0-rc.1` en RoadMap). Unificado a **`v0.3.0-rc.1`** (release candidate, MVP GA será v0.3.0 tras SP-4B validación).
 
 ## Dependencias entre fases
 

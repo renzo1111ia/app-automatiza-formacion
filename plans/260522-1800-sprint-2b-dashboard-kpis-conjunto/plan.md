@@ -1,71 +1,112 @@
 ---
 title: "Sprint 2B — Dashboard KPIs conjunto (MVP)"
 sprint_id: SP-3B
-version_target: v0.2.7
+version_target: v0.2.8
 branch: feature/sprint-02b-dashboard-kpis-conjunto
 assigned_to: Javi HP
 created: 22-05-2026 18:00 por Javi HP
+last_updated: 24-05-2026 (planificación detallada tras research R1)
 status: 🔘 Pendiente (arranca tras Sprint 2 mergeado a developer)
-position: entre Sprint 2 (HubSpot+Zoho v0.2.5) y Sprint 3 (Hardening v0.3.0-rc.1)
+position: entre Sprint 2 (HubSpot+Zoho v0.2.7) y Sprint 3 (Hardening v0.3.0-rc.1)
+effort: 16-24h dev + 4h 30min cierre = 21-29h totales
 ---
 
 # Sprint 2B — Dashboard KPIs conjunto
 
-Sprint corto, dedicado y bloqueante del MVP: implementa el **dashboard de KPIs agregado** que pidió explícitamente la clienta (Bea, doc Correcciones V1, punto 12):
+Sprint corto y bloqueante del MVP: implementa la sección **Overview** del dashboard pidiendo Bea (clienta), **extendiendo el `/dashboard` existente** (no creando ruta nueva). Cero migraciones SQL nuevas.
 
-> "Echo de menos un panel de métricas y KPIs conjunto (llamada, whatsapp, web), donde se vean número de leads, leads contactados, leads cualificados, tiempo ahorrado, etc etc (se deben poder definir los KPIs que se quieren visualizar). Pero es importante tener un Dashboard de control general."
+> "Echo de menos un panel de métricas y KPIs conjunto (llamada, whatsapp, web), donde se vean número de leads, leads contactados, leads cualificados, tiempo ahorrado, etc etc (se deben poder definir los KPIs que se quieren visualizar). Pero es importante tener un Dashboard de control general." — Bea, doc Correcciones V1 punto 12
 
-## Asignación
+## Key insight tras research R1
 
-- **Lead**: Javi HP.
-- **Capacidad**: 10h productivas/día.
-- **Duración estimada**: 2-3 días lab (16-24h dev + 4h 30min cierre).
-- **Fechas**: Inicio Lun 27-07-2026, fin estim. Mié 29-07-2026.
+El `/dashboard` actual **ya implementa** SummaryManager + ChartManager + KPIs configurables por tenant (via `tenants.config JSONB`). Sprint 2B **NO construye dashboard nuevo** — añade una sección `<OverviewSection>` arriba del `<SummarySection>` actual con cross-canal KPIs (llamada + whatsapp + web consolidados).
 
-## Tareas de desarrollo
+**Decisiones arquitectónicas confirmadas (R1):**
 
-| ID     | Tarea                                                                                                                                                                                                                                                                                                       | Estim  | Estado | Notas                                                                                                                                                                           |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NEW-04 | **Dashboard KPIs conjunto** (`/dashboard` agregado o nueva ruta `/dashboard/overview`) con widget builder configurable que cruza datos de llamadas + whatsapp + web. Reusa `SummaryManager` + `ChartManager`. Server actions agregadas (cruzando `lead`, `llamadas`, `chat_messages`, `widget_*`). WCAG AA. | 16-24h | 🔘     | Requerimiento Bea. Foco: KPIs número leads / contactados / cualificados / tiempo ahorrado por IA / etc. Configurables por tenant. Filtros: rango fechas, campaña, origen, curso |
+- **Ruta**: extender `/dashboard` con `<OverviewSection>` ENCIMA del `<SummarySection>` actual. NO crear `/dashboard/overview`.
+- **Persistencia**: `configKey: "overview_kpis"` en `tenants.config` JSONB. **Zero-migration.** Reusa patrón existente (`kpis`, `funnel`, `charts`).
+- **Backend**: `getKpiOverview()` = thin wrapper sobre `getKpiGenerales()` (ya hace exactamente esto: lanza 5 queries paralelas con `Promise.all`). Cero queries nuevas.
+- **NO vista materializada PostgreSQL** en MVP (diferida a Sprint 3 hardening si métricas lo justifican).
+- **4 gráficos por defecto**: area (leads/día) + funnel (cross-canal) + donut (distribución canal) + bar (leads por origen).
+- **WCAG desde inicio**: 3 pitfalls preventivos (trend badges sin texto, charts sin `role="img"`, headings semánticos).
 
-### Acciones concretas (sub-tareas)
+## Fases
 
-1. Diseño UI: layout sección "overview" con hero metrics + 4 gráficos + tabla resumen (1h).
-2. Backend: server action `getKpiOverview(tenant, from, to, filters)` que cruza 4 tablas en memoria (siguiendo el patrón Software Join del módulo WhatsApp) (4-6h).
-3. Backend: `getDynamicChartSeriesOverview()` con 4 series por defecto (volumen leads diarios, conversión por canal, top campañas, embudo agregado) (3-4h).
-4. UI: nuevo route `/dashboard/overview` (o reemplazar `/dashboard` actual de Resumen de Leads con esta vista — decisión arquitectónica al arrancar) (4h).
-5. UI: widget builder de KPIs personalizables por tenant (similar a `KpiBuilder.tsx` ya existente — reusar) (3-4h).
-6. Tests: smoke E2E + WCAG audit de la nueva ruta (2-3h).
-7. Migración SQL: opcional, vista materializada si rendimiento lo requiere (1-2h).
+| #   | Archivo                                                                                      | Tareas                                                                            | Est.     | Estado    |
+| --- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------- | --------- |
+| 1   | [phase-01-decision-arquitectura-y-defaults.md](phase-01-decision-arquitectura-y-defaults.md) | Validar decisión `/dashboard` extend, definir `DEFAULT_OVERVIEW_KPIS`, schema Zod | 1h 30min | Pendiente |
+| 2   | [phase-02-backend-getkpioverview.md](phase-02-backend-getkpioverview.md)                     | `getKpiOverview()` thin wrapper + Zod schemas + tests Vitest                      | 3h       | Pendiente |
+| 3   | [phase-03-frontend-overview-section.md](phase-03-frontend-overview-section.md)               | `<OverviewSection>` integrado en `/dashboard/page.tsx` con Suspense + skeletons   | 4h       | Pendiente |
+| 4   | [phase-04-overview-charts-defaults.md](phase-04-overview-charts-defaults.md)                 | 4 gráficos por defecto (area, funnel, donut, bar) integrados via ChartManager     | 3h       | Pendiente |
+| 5   | [phase-05-kpi-builder-overview.md](phase-05-kpi-builder-overview.md)                         | KPI Builder extendido con configKey `overview_kpis` (reusa SummaryManager)        | 3h       | Pendiente |
+| 6   | [phase-06-wcag-accesibilidad-preventiva.md](phase-06-wcag-accesibilidad-preventiva.md)       | 3 pitfalls WCAG preventivos: aria-labels trend badges + charts + headings         | 2h       | Pendiente |
+| 7   | [phase-07-cierre-sprint.md](phase-07-cierre-sprint.md)                                       | SP-3B-CLOSE-1..5 + hand-off SP-4B phase-03b                                       | 4h 30min | Pendiente |
 
-## Tareas de cierre (SP-3B-CLOSE-1..5)
-
-| Task                | Descripción                                                                        | Estim               | Estado      |
-| ------------------- | ---------------------------------------------------------------------------------- | ------------------- | ----------- |
-| SP-3B-CLOSE-1       | Auto test (typecheck + lint + build + test)                                        | 1h 30min            | 🔘          |
-| SP-3B-CLOSE-2       | Test E2C Local Playwright + WCAG sobre nuevo `/dashboard/overview`                 | 2h                  | 🔘          |
-| ~~SP-3B-CLOSE-3~~   | ~~Test Manual~~ — **DIFERIDO a 👤 SP-4B phase-03 bloque 4** (Renzo)                | (0h)                | 🟢 Diferida |
-| SP-3B-CLOSE-4       | Bugs detectados                                                                    | (variable)          | 🔘          |
-| SP-3B-CLOSE-5       | PR a developer + bump v0.2.7 + crear rama Sprint 3 + **hand-off a SP-4B phase-03** | 1h                  | 🔘          |
-| **Subtotal cierre** |                                                                                    | **4h 30min + bugs** |             |
+**Total desarrollo:** ~16-19h (rango bajo del estim 16-24h por simplificación R1 = no greenfield) · **Total con cierre:** ~21-24h.
 
 ## Dependencias
 
-- **Bloqueante anterior**: Sprint 2 (HubSpot+Zoho) debe estar mergeado a `developer`. Las server actions agregadas dependen del modelo de `lead` que Sprint 1 estabiliza con Zod + Repository.
-- **Bloqueante siguiente**: Sprint 3 (Hardening) no debe arrancar hasta SP-3B mergeado, porque Sprint 3 reusa parte del dashboard para tests E2E y observabilidad.
+- **Bloqueante anterior**: Sprint 2 (HubSpot+Zoho) mergeado en `developer` con `a826fd6` + hotfix v0.2.7 ✅ (cumplido 24-05-2026).
+- **Bloqueante siguiente**: Sprint 3 (Hardening) no arranca hasta Sprint 2B mergeado, porque Sprint 3 phase-01 E2E reusa `/dashboard` extendido para tests.
 
-## Riesgos
+## Asignación
 
-| Riesgo                                                 | Mitigación                                                                     |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| Server actions agregadas escalan mal con muchos leads  | Vista materializada PostgreSQL si latencia >500ms p95                          |
-| Widget builder duplica `KpiBuilder.tsx` existente      | Decisión arquitectónica al arrancar: extender el existente vs nuevo componente |
-| Bea quiere KPIs "configurables" — alcance puede inflar | Si se pasa de 24h, congelar config en KPIs hardcoded MVP + builder en post-MVP |
+- **Lead**: Javi HP. Capacidad 10h productivas/día L-V.
+- **Duración estimada**: 2-3 días lab.
+- **Fechas previstas**: Inicio Lun 27-07-2026 (según RoadMap), fin Mié 29-07-2026.
+
+> ⚠️ **Nota fechas**: el gap de 2 meses entre cierre Sprint 2 (24-05-2026) y arranque Sprint 2B (27-07-2026) según RoadMap requiere validación. Posiblemente las fechas RoadMap deban adelantarse tras cerrar Sprint 2 antes de lo estimado. Revisar al inicio del sprint.
+
+## Riesgos top-5
+
+| Riesgo                                                                                               | Prob  | Impacto | Mitigación                                                                                 |
+| ---------------------------------------------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------------------ |
+| Web widget (`web_widgets`) no trackea sesiones todavía → gráfico "distribución por canal" incompleto | Media | Bajo    | Mostrar solo canales con data; añadir TODO post-MVP para enriquecer cuando widget trackee  |
+| `tiempo_respuesta_promedio_minutos` devuelve null → KPI card vacío                                   | Alta  | Bajo    | Ocultar condicionalmente si valor es null; mostrar tooltip "Datos insuficientes"           |
+| KPI Builder en `/settings/KpiBuilder.tsx` es ligero, no soporta drag-and-drop                        | Media | Medio   | Decisión phase-05: reusar SummaryManager full (DnD) o KpiBuilder simple                    |
+| Sobre-ingeniería con vista materializada PostgreSQL desde el inicio                                  | Baja  | Bajo    | YAGNI confirmado en R1. Diferir a Sprint 3 si performance >500ms p95.                      |
+| WCAG findings detectados en E2C bloquean cierre                                                      | Media | Medio   | Phase-06 cubre 3 pitfalls preventivos. Restantes findings se difieren a Sprint 3 phase-04. |
+
+## Solapes con sprints anteriores
+
+| Sprint anterior       | Componente reutilizado                                                    |
+| --------------------- | ------------------------------------------------------------------------- |
+| Sprint 1 (Bloque 2.5) | SummaryManager + ChartManager + FilterBar + tenants.config JSONB pattern  |
+| Sprint 1 (Bloque 2.8) | Logger estructurado (Pino) para errores en `getKpiOverview`               |
+| Sprint 2              | `getKpiGenerales()` ya en analytics.ts:139 — reuso directo, zero rewrites |
+
+## Criterios de éxito del Sprint 2B
+
+- [ ] `<OverviewSection>` visible en `/dashboard` arriba de `<SummarySection>` con 4 KPIs hero por defecto.
+- [ ] 4 gráficos overview funcionando (area + funnel + donut + bar).
+- [ ] KPI Builder permite añadir/quitar/reordenar KPIs del overview por tenant.
+- [ ] Datos cross-canal (llamada + whatsapp + web cuando aplique) consolidados en una sola vista.
+- [ ] `npm run typecheck` + `lint` + `build` + Vitest → 0 errores.
+- [ ] 3 pitfalls WCAG preventivos resueltos (aria-labels, role="img", headings semánticos).
+- [ ] PR a `developer` con bump v0.2.8.
+- [ ] Hand-off rellenado en SP-4B phase-03b.
 
 ## Output esperado al cierre
 
-- Nueva ruta `/dashboard/overview` (o `/dashboard` consolidado) operativa con 4-6 KPIs hero + 4 gráficos + filtros.
-- Test E2C pasa 100%.
-- Bump SemVer `v0.2.7`.
+- Nueva sección `<OverviewSection>` en `/dashboard` operativa con 4 KPIs hero + 4 gráficos + filtros (reusa `FilterBar`).
+- `getKpiOverview()` documentado en `docs/architecture/dashboard-kpis.md` (nuevo).
+- Test Vitest smoke + E2C local pasa 100%.
+- Bump SemVer `v0.2.8` (corregido de v0.2.7 → v0.2.8 por colisión con Sprint 2 hotfix).
 - PR mergeado a `developer`.
-- Hand-off a SP-4B phase-03 con instrucciones para Renzo.
+- Hand-off a SP-4B phase-03b con instrucciones para Renzo.
+
+## Tracking de tiempos
+
+Logs en `plans/logs/sprint-3b/3b-XX.log.md` (siguiendo política Sprint 2+ de granularidad fina por bloque).
+
+## Referencias
+
+- Research R1 base: `plans/reports/researcher-sprint-2b-kpis-dashboard-260524.md` (201 líneas, modelo Sonnet)
+- Requerimiento Bea: doc Correcciones V1 punto 12 (`docs/Docs-entrega-clienta/`)
+- Código existente clave:
+  - `src/app/dashboard/page.tsx` — estructura completa actual
+  - `src/lib/actions/analytics.ts:139` — `getKpiGenerales()` a reusar
+  - `src/components/dashboard/SummaryManager.tsx` — KPI manager con DnD
+  - `src/components/dashboard/ChartManager.tsx` — chart manager
+  - `src/lib/constants/kpi-defaults.ts` — patrón DEFAULT_SUMMARY_KPIS
+  - `src/types/tenant.ts` — interfaces KpiConfig, ChartConfig

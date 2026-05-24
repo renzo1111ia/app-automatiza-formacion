@@ -1,12 +1,22 @@
 ---
-title: "Phase 05 — Hardening: CSP Headers, Rate Limits, CSRF, npm audit CI (4-06)"
+title: "Phase 05 — Hardening: CSP Headers, Rate Limits, CSRF, npm audit CI (4-06 + 4-08)"
 sprint: 4
 phase: 5
-tasks: [4-06]
-effort: 10-14h
+tasks: [4-06, 4-08]
+effort: 16-20h
 status: pending
 agents: [af-agents:security, af-agents:code]
+last_updated: 24-05-2026 (effort corregido 10-14h → 16-20h tras research R2; incluye 4-08 withRateLimit HOF Server Actions, 6h)
 ---
+
+> ⚠️ **Paso 0 OBLIGATORIO antes de Implementation Steps** (R2 hallazgo):
+> verificar runtime de `middleware.ts` (Edge vs Node). Si es Edge, `ioredis` NO funciona y hay que mover el rate-limiter a API Routes o usar `@upstash/redis` (HTTP-based). Comando:
+>
+> ```powershell
+> grep -nE "export const runtime|export const config" src/middleware.ts src/proxy.ts
+> ```
+>
+> Si no encuentra `runtime: "edge"`, asumir Node runtime (default Next 16) y `ioredis` funciona. Si encuentra Edge, replantear approach ANTES de implementar.
 
 # Phase 05 — Hardening: Headers + Rate Limits + CSRF
 
@@ -38,6 +48,7 @@ agents: [af-agents:security, af-agents:code]
 ## Requirements
 
 ### Funcionales
+
 - Security headers en TODAS las rutas (CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
 - Rate limiting activo: `/api/auth/*` → 5 req/min/IP; `/api/webhooks/*` → 30 req/min/IP; `/api/*` general → 100 req/min/IP
 - CSRF: verificar que Server Actions tienen protección, documentar; añadir `Origin` check en API Routes POST críticos sin CSRF de Next.js
@@ -45,6 +56,7 @@ agents: [af-agents:security, af-agents:code]
 - Renovate bot configurado (patch auto-PR, minor manual-review, major bloqueado)
 
 ### No funcionales
+
 - Rate limiting: latencia añadida < 2ms (Redis local, operación INCR es O(1))
 - Headers: no romper funcionalidades existentes (CORS para widget embed, CSP para LLM API calls)
 - Sin nuevas dependencias de producción
@@ -79,10 +91,12 @@ Security layers:
 ## Related Code Files
 
 ### Modificar
+
 - `src/middleware.ts` — añadir rate limiting + CSRF check
 - `next.config.js` — headers() con security headers
 
 ### Crear
+
 - `src/lib/rate-limiter.ts` — helper sliding window Redis
 - `.github/workflows/security.yml` — npm audit job
 - `.github/renovate.json` — Renovate config
@@ -90,9 +104,10 @@ Security layers:
 ## Implementation Steps
 
 ### Paso 1: Helper rate limiter (sin nueva dep)
+
 ```typescript
 // src/lib/rate-limiter.ts
-import { Redis } from 'ioredis';
+import { Redis } from "ioredis";
 
 const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true });
 
@@ -109,7 +124,7 @@ export async function rateLimit(
   pipe.incr(windowKey);
   pipe.pexpire(windowKey, ttlMs);
   const results = await pipe.exec();
-  const count = results?.[0]?.[1] as number ?? 1;
+  const count = (results?.[0]?.[1] as number) ?? 1;
 
   return {
     allowed: count <= limit,
@@ -120,50 +135,58 @@ export async function rateLimit(
 ```
 
 ### Paso 2: Rate limiting en middleware.ts
+
 ```typescript
 // middleware.ts — añadir al inicio del handler
-import { rateLimit } from '@/lib/rate-limiter';
-import { NextResponse } from 'next/server';
+import { rateLimit } from "@/lib/rate-limiter";
+import { NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || request.headers.get('x-real-ip')
-    || 'unknown';
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
 
   // Rate limits por tipo de endpoint
   const pathname = request.nextUrl.pathname;
-  let limit = 100, windowMs = 60_000;
+  let limit = 100,
+    windowMs = 60_000;
 
-  if (pathname.startsWith('/api/auth') || pathname === '/login') {
+  if (pathname.startsWith("/api/auth") || pathname === "/login") {
     limit = 5; // anti-brute force login
-  } else if (pathname.startsWith('/api/webhooks')) {
+  } else if (pathname.startsWith("/api/webhooks")) {
     limit = 30;
-  } else if (pathname.startsWith('/api/admin')) {
+  } else if (pathname.startsWith("/api/admin")) {
     limit = 50;
   }
 
   const { allowed, remaining, resetMs } = await rateLimit(
-    `ip:${ip}:${pathname.split('/')[2] || 'root'}`,
-    limit, windowMs
+    `ip:${ip}:${pathname.split("/")[2] || "root"}`,
+    limit,
+    windowMs
   );
 
   if (!allowed) {
-    return new NextResponse('Too Many Requests', {
+    return new NextResponse("Too Many Requests", {
       status: 429,
       headers: {
-        'Retry-After': String(Math.ceil(resetMs / 1000)),
-        'X-RateLimit-Limit': String(limit),
-        'X-RateLimit-Remaining': '0',
+        "Retry-After": String(Math.ceil(resetMs / 1000)),
+        "X-RateLimit-Limit": String(limit),
+        "X-RateLimit-Remaining": "0",
       },
     });
   }
 
   // CSRF check para API Routes POST (no Server Actions — ya protegidas por Next.js)
-  if (request.method === 'POST' && pathname.startsWith('/api/') && !pathname.startsWith('/api/webhooks')) {
-    const origin = request.headers.get('origin');
-    const host = request.headers.get('host');
-    if (origin && !origin.endsWith(host || '')) {
-      return new NextResponse('CSRF check failed', { status: 403 });
+  if (
+    request.method === "POST" &&
+    pathname.startsWith("/api/") &&
+    !pathname.startsWith("/api/webhooks")
+  ) {
+    const origin = request.headers.get("origin");
+    const host = request.headers.get("host");
+    if (origin && !origin.endsWith(host || "")) {
+      return new NextResponse("CSRF check failed", { status: 403 });
     }
   }
 
@@ -173,11 +196,12 @@ export async function middleware(request: NextRequest) {
 ```
 
 ### Paso 3: Security headers en next.config.js
+
 ```javascript
 // next.config.js
 const securityHeaders = [
   {
-    key: 'Content-Security-Policy',
+    key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
       // Tailwind v4 requiere unsafe-inline styles en MVP
@@ -195,18 +219,18 @@ const securityHeaders = [
       "base-uri 'self'",
       "form-action 'self'",
       "upgrade-insecure-requests",
-    ].join('; ')
+    ].join("; "),
   },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
-    key: 'Strict-Transport-Security',
-    value: 'max-age=63072000; includeSubDomains; preload'
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains; preload",
   },
   {
-    key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=()'
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=()",
   },
 ];
 
@@ -214,15 +238,15 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/(.*)",
         headers: securityHeaders,
       },
       // Widget embed: necesita frame-ancestors más permisivo para iframe en sitios de clientes
       {
-        source: '/api/widget/(.*)',
+        source: "/api/widget/(.*)",
         headers: [
-          { key: 'X-Frame-Options', value: 'ALLOWALL' },
-          { key: 'Content-Security-Policy', value: "frame-ancestors *" },
+          { key: "X-Frame-Options", value: "ALLOWALL" },
+          { key: "Content-Security-Policy", value: "frame-ancestors *" },
         ],
       },
     ];
@@ -235,6 +259,7 @@ const nextConfig = {
 ### Paso 4: Verificar CSRF en Server Actions
 
 Next.js 16 App Router protege Server Actions automáticamente con:
+
 1. Verificación de `Content-Type: application/x-www-form-urlencoded` o `multipart/form-data`
 2. Comprobación de `Origin` header vs Host
 3. SameSite=Lax en cookies de Supabase Auth
@@ -244,6 +269,7 @@ Next.js 16 App Router protege Server Actions automáticamente con:
 Para API Routes POST sin Server Actions, el check de `Origin` en middleware (Paso 2) es suficiente.
 
 ### Paso 5: npm audit en CI
+
 ```yaml
 # .github/workflows/security.yml
 name: Security Audit
@@ -259,7 +285,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '24' }
+        with: { node-version: "24" }
       - run: npm ci
       - name: npm audit
         run: npm audit --audit-level=high
@@ -267,6 +293,7 @@ jobs:
 ```
 
 ### Paso 6: Renovate bot
+
 ```json
 // .github/renovate.json
 {
@@ -325,12 +352,12 @@ jobs:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| CSP rompe LLM API calls (connect-src incompleto) | Media | Alto | Verificar TODOS los dominios externos en connect-src antes de deploy; console.log en dev para detectar blocked requests |
-| Rate limiting en Edge Runtime — ioredis no compatible | Alta | Alto | Redis en middleware SOLO si Next.js usa Node runtime; mover check a API Route si es Edge |
-| Renovate genera demasiados PRs simultáneos | Media | Bajo | `prConcurrentLimit: 3` limita PRs activos |
-| npm audit falla por vulnerabilidades conocidas en dev deps (eslint) | Media | Bajo | `--audit-level=high` solo falla en High+; Medium dev vulns se ignoran |
+| Riesgo                                                              | Prob  | Impacto | Mitigación                                                                                                              |
+| ------------------------------------------------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| CSP rompe LLM API calls (connect-src incompleto)                    | Media | Alto    | Verificar TODOS los dominios externos en connect-src antes de deploy; console.log en dev para detectar blocked requests |
+| Rate limiting en Edge Runtime — ioredis no compatible               | Alta  | Alto    | Redis en middleware SOLO si Next.js usa Node runtime; mover check a API Route si es Edge                                |
+| Renovate genera demasiados PRs simultáneos                          | Media | Bajo    | `prConcurrentLimit: 3` limita PRs activos                                                                               |
+| npm audit falla por vulnerabilidades conocidas en dev deps (eslint) | Media | Bajo    | `--audit-level=high` solo falla en High+; Medium dev vulns se ignoran                                                   |
 
 ## Security Considerations
 
@@ -370,9 +397,9 @@ jobs:
    export function withRateLimit<TArgs extends unknown[], TResult>(
      actionFn: (...args: TArgs) => Promise<TResult>,
      opts: {
-       key: string;                              // ej: 'widget', 'simulator', 'kb-embed'
-       perMinute: number;                        // límite
-       identify: (...args: TArgs) => Promise<string>;  // returns 'tenantId:ip' o 'widgetId:ip'
+       key: string; // ej: 'widget', 'simulator', 'kb-embed'
+       perMinute: number; // límite
+       identify: (...args: TArgs) => Promise<string>; // returns 'tenantId:ip' o 'widgetId:ip'
      }
    ): (...args: TArgs) => Promise<TResult | { success: false; error: string }>;
    ```
@@ -385,6 +412,7 @@ jobs:
 **Estimación:** 6h (incluida en subtotal Sprint 3).
 
 **Cross-refs:**
+
 - 1-27 Sprint 0 (widget hardening): es el caso de uso piloto; 4-08 lo eleva a infraestructura reutilizable.
 - 4-06 (esta fase, `/api/*` rate limit): comparten el `rate-limiter.ts` y el cliente Redis.
 - 4-09 (E2E widget): los tests de rate limit del widget se reutilizan para validar `withRateLimit` con otros consumidores.
