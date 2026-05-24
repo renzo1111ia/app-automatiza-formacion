@@ -1,7 +1,11 @@
 {
   "name": "af-dashboard",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "private": true,
+  "engines": {
+    "node": ">=20.17.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev -p 8500",
     "build": "next build",
@@ -88,7 +92,7 @@
     "eslint": "^9",
     "eslint-config-next": "^16.2.6",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.5",
+    "lint-staged": "^16.1.0",
     "msw": "^2.14.6",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
