@@ -2,15 +2,15 @@
 
 **AI CRM + Workflow Orchestrator multi-tenant para academias formativas** (sector formación, España + Latam).
 
-| Campo           | Valor                                                                                                                                                                                                                                     |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.2.0` en `developer` (Sprint 1 mergeado vía PR #5 `94c035a`). Próximo bump: `v0.2.5` al mergear PR #12 (Sprint 2). **Versiones rebajadas 24-05-2026**: Sprint 2=`v0.2.5`, Sprint 2B=`v0.2.7`, Sprint 3=`v0.3.0-rc.1`, MVP GA=`v0.3.0`. |
-| Estado          | 🔵 **Sprint 2 PR #12 abierto** (adapter HubSpot + Zoho + UI admin) — branch `feature/sprint-02-adapter-hubspot-zoho` pushed, pendiente merge a `developer`. 170 tests verdes.                                                             |
-| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy desde `developer`. Plan autoexec doc-agent + empty-states mergeado 24-05-2026 (4 commits, 70 alerts→toast, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher`).          |
-| Target MVP      | `v0.3.0` GA — estim. Vie 21-08-2026 (post-Sprint Validación Pre-MVP SP-4B con Renzo; +11 días vs plan original 10-08 por extensiones docs Bea+Renzo 22-05-2026)                                                                           |
-| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                                |
-| Rama de trabajo | [`feature/sprint-02-adapter-hubspot-zoho`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/tree/feature/sprint-02-adapter-hubspot-zoho) (activa)                                                                    |
-| Plan Sprint 2   | [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md`](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) (9 archivos: overview + 8 fases)                                                                                     |
+| Campo           | Valor                                                                                                                                                                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Versión         | `v0.2.7` en `developer` (Sprint 2 cerrado 24-05-2026 con hotfix BUG-2-01 + Node 20 pin). Próximo bump: `v0.2.8` al cerrar Sprint 2B Dashboard KPIs (Jue 28-05). Roadmap MVP: Sprint 3=`v0.3.0-rc.1` (12-06), MVP GA=`v0.3.0` (22-06). |
+| Estado          | 🟢 **Sprint 2 CERRADO** v0.2.7 (HubSpot + Zoho + UI admin + 5/5 E2E VPS). 🚀 **Próximo: Sprint 2B Dashboard KPIs** Mar 26-05 → Jue 28-05-2026 (3d, v0.2.8, zero-migration extendiendo /dashboard).                                    |
+| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy desde `developer`. Sprint 2 v0.2.7 verificado en VPS (5/5 specs Playwright verdes). Migración Node 22 LTS planificada en Sprint 3 phase-03.                                      |
+| Target MVP      | `v0.3.0` GA — **estim. Lun 22-06-2026** (replanteo 24-05 −7 sem por ratio real Sprints 0/1/2 −91% a −94%). Calendario: Sprint 2B 26-28/05 · Sprint 3 29/05–12/06 · SP-4B Renzo 16-19/06 · MVP GA 22/06.                               |
+| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                            |
+| Rama de trabajo | Pendiente crear: `feature/sprint-03-dashboard-kpis-overview` para Sprint 2B (parte de `developer`).                                                                                                                                   |
+| Plan Sprint 2B  | [`plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/plan.md`](plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/plan.md) (7 phase files, decisión arquitectónica zero-migration extender /dashboard).                             |
 
 > ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
 

@@ -6,7 +6,7 @@ effort: 3h
 sprint_id: SP-3B
 task_ids: [SP-3B-04]
 created: 24-05-2026
-last_updated: 24-05-2026
+last_updated: 24-05-2026 21:30 (decisiones cerradas: funnel YA EXISTE en ChartManager.tsx:108, web widget canal=2 valores+tooltip)
 ---
 
 # Phase 04 — Overview Charts: 4 gráficos por defecto
@@ -18,10 +18,15 @@ last_updated: 24-05-2026
 - Server action existente: `getDynamicChartSeries()` en `src/lib/actions/analytics.ts`
 - Charts disponibles: area, bar, donut, funnel, vertical-bar, heatmap (en `ChartConfig.type`)
 
+## Decisiones cerradas 24-05-2026 21:30
+
+- **Chart funnel**: pre-check verificado, EXISTE en `src/components/dashboard/ChartManager.tsx:108` con `FunnelChartComponent`. Reuso directo, sin fallback.
+- **Distribución por canal (donut)**: mostrar 2 valores (llamadas + whatsapp) con tooltip `"Web tracking en desarrollo"`. Web widget (`web_widgets`) NO trackea sesiones todavía, esto se difiere a backlog post-MVP (tabla `web_widget_sessions` + ingesta). Decisión Javi HP — evita +6-10h fuera de alcance.
+
 ## Overview
 
 **Priority:** P1 (parte visible del MVP overview).
-**Brief:** Añadir 4 gráficos por defecto al `<OverviewSection>`: area (leads/día), funnel (cross-canal), donut (distribución canal), bar (leads por origen).
+**Brief:** Añadir 4 gráficos por defecto al `<OverviewSection>`: area (leads/día), funnel (cross-canal), donut (distribución canal, 2 valores + tooltip), bar (leads por origen).
 
 ## Key Insights
 

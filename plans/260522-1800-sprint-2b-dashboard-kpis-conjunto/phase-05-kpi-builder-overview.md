@@ -6,7 +6,7 @@ effort: 3h
 sprint_id: SP-3B
 task_ids: [SP-3B-05]
 created: 24-05-2026
-last_updated: 24-05-2026
+last_updated: 24-05-2026 21:30 (decisión cerrada: opción C reusar SummaryManager + pestaña KPIs dedicada en /dashboard)
 ---
 
 # Phase 05 — KPI Builder Overview (configurable por tenant)
@@ -16,12 +16,17 @@ last_updated: 24-05-2026
 - Research: `plans/reports/researcher-sprint-2b-kpis-dashboard-260524.md` §3
 - Builder existente ligero: `src/app/dashboard/settings/KpiBuilder.tsx`
 - Manager existente con DnD: `src/components/dashboard/SummaryManager.tsx`
-- Pregunta abierta R1 #3: ¿reusar SummaryManager full (DnD) o KpiBuilder simple?
+- Pregunta R1 #3 RESUELTA: opción **C — reusar SummaryManager + pestaña dedicada** (decisión Javi HP 24-05-2026 21:30).
+
+## Decisión cerrada 24-05-2026 21:30
+
+- **Enfoque KPI Builder = opción C**: aprovecha la lógica DnD existente de `SummaryManager.tsx` (verificada). Añade pestaña "KPIs" en `/dashboard` con UI ad-hoc para configurar `overview_kpis` y `overview_charts`. Bea ve sección diferenciada con DnD ya funcionando. Estim ~6-8h (mismo rango que opción B sin perder reuso).
+- Descartadas: A (sin pestaña, menos visible para Bea) y B (KpiBuilder simple aislado, más código nuevo + tests).
 
 ## Overview
 
 **Priority:** P1 (cumple requerimiento Bea "se deben poder definir los KPIs que se quieren visualizar").
-**Brief:** Permitir al admin de cada tenant editar `overview_kpis` y `overview_charts` desde `/dashboard/settings` (sección Tenant > KPIs Overview). Reusa el patrón que ya funciona para `kpis`, `funnel`, `charts`.
+**Brief:** Permitir al admin de cada tenant editar `overview_kpis` y `overview_charts` desde una pestaña "KPIs" dedicada en `/dashboard` (no en `/settings`). Reusa SummaryManager con DnD para reordenar, añadir/quitar KPIs y charts. Patrón persistencia: `tenants.config.overview_kpis` JSONB (mismo que `kpis`, `funnel`, `charts`).
 
 ## Decisión arquitectónica (resolver al arrancar phase)
 

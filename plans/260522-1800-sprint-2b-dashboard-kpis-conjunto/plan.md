@@ -5,7 +5,7 @@ version_target: v0.2.8
 branch: feature/sprint-02b-dashboard-kpis-conjunto
 assigned_to: Javi HP
 created: 22-05-2026 18:00 por Javi HP
-last_updated: 24-05-2026 (planificación detallada tras research R1)
+last_updated: 24-05-2026 21:30 (replanteo fechas -7sem + decisiones cerradas: KPI Builder=C, Web widget=2 valores+tooltip, funnel YA EXISTE en ChartManager.tsx:108)
 status: 🔘 Pendiente (arranca tras Sprint 2 mergeado a developer)
 position: entre Sprint 2 (HubSpot+Zoho v0.2.7) y Sprint 3 (Hardening v0.3.0-rc.1)
 effort: 16-24h dev + 4h 30min cierre = 21-29h totales
@@ -52,18 +52,18 @@ El `/dashboard` actual **ya implementa** SummaryManager + ChartManager + KPIs co
 ## Asignación
 
 - **Lead**: Javi HP. Capacidad 10h productivas/día L-V.
-- **Duración estimada**: 2-3 días lab.
-- **Fechas previstas**: Inicio Lun 27-07-2026 (según RoadMap), fin Mié 29-07-2026.
+- **Duración estimada**: 3 días lab.
+- **Fechas previstas (actualizadas 24-05-2026)**: Inicio **Mar 26-05-2026 09:00**, fin **Jue 28-05-2026 19:00**.
 
-> ⚠️ **Nota fechas**: el gap de 2 meses entre cierre Sprint 2 (24-05-2026) y arranque Sprint 2B (27-07-2026) según RoadMap requiere validación. Posiblemente las fechas RoadMap deban adelantarse tras cerrar Sprint 2 antes de lo estimado. Revisar al inicio del sprint.
+> ✅ **Replanteo aplicado 24-05-2026 21:30**: gap original de 2 meses eliminado. Sprint 2B arranca al día siguiente del cierre Sprint 2, aplicando el ratio real Sprints 0/1/2 (−91% a −94% vs estim). MVP v0.3.0 GA replanteado a Lun 22-06-2026.
 
 ## Riesgos top-5
 
 | Riesgo                                                                                               | Prob  | Impacto | Mitigación                                                                                 |
 | ---------------------------------------------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------------------ |
-| Web widget (`web_widgets`) no trackea sesiones todavía → gráfico "distribución por canal" incompleto | Media | Bajo    | Mostrar solo canales con data; añadir TODO post-MVP para enriquecer cuando widget trackee  |
+| Web widget (`web_widgets`) no trackea sesiones todavía → gráfico "distribución por canal" incompleto | Media | Bajo    | ✅ DECIDIDO 24-05: 2 valores + tooltip "Web tracking en desarrollo"                        |
 | `tiempo_respuesta_promedio_minutos` devuelve null → KPI card vacío                                   | Alta  | Bajo    | Ocultar condicionalmente si valor es null; mostrar tooltip "Datos insuficientes"           |
-| KPI Builder en `/settings/KpiBuilder.tsx` es ligero, no soporta drag-and-drop                        | Media | Medio   | Decisión phase-05: reusar SummaryManager full (DnD) o KpiBuilder simple                    |
+| KPI Builder en `/settings/KpiBuilder.tsx` es ligero, no soporta drag-and-drop                        | Media | Medio   | ✅ DECIDIDO 24-05: opción C = reusar SummaryManager (DnD) + pestaña KPIs dedicada          |
 | Sobre-ingeniería con vista materializada PostgreSQL desde el inicio                                  | Baja  | Bajo    | YAGNI confirmado en R1. Diferir a Sprint 3 si performance >500ms p95.                      |
 | WCAG findings detectados en E2C bloquean cierre                                                      | Media | Medio   | Phase-06 cubre 3 pitfalls preventivos. Restantes findings se difieren a Sprint 3 phase-04. |
 
