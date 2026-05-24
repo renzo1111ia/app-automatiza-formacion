@@ -19,7 +19,7 @@ agents: [af-agents:code, af-agents:deployment]
 - DA-1: `docs/audit/deep/DA-1-concurrency-orchestrator.md` — DA-1-005 silenciado Redis (logging fix)
 - **Sprint Costes-LLM** (post-MVP, `v0.5.1`): [plans/260522-1430-sprint-costes-llm-post-mvp/](../260522-1430-sprint-costes-llm-post-mvp/) — recibe la parte de `llm_usage_logs` + `llm-cost-tracker.ts` que originalmente vivía en esta fase.
 
-> **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`. Se extrajeron de esta fase la **migración SQL `llm_usage_logs`** y el helper **`src/lib/llm-cost-tracker.ts`** (LangChain CallbackHandler). Ambos se han movido al [Sprint Costes-LLM Ph1](../260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md). Esta fase queda reducida a Pino + métricas BullMQ + Sentry (7-9h en vez de 12-16h).
+> **Cambio 22-05-2026:** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.3.0`. Se extrajeron de esta fase la **migración SQL `llm_usage_logs`** y el helper **`src/lib/llm-cost-tracker.ts`** (LangChain CallbackHandler). Ambos se han movido al [Sprint Costes-LLM Ph1](../260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md). Esta fase queda reducida a Pino + métricas BullMQ + Sentry (7-9h en vez de 12-16h).
 
 ## Overview
 
@@ -39,6 +39,7 @@ agents: [af-agents:code, af-agents:deployment]
 ## Requirements
 
 ### Funcionales
+
 - Logging estructurado JSON en todos los API Routes críticos (`/api/webhooks/*`, `/api/orchestration/*`, `/api/auth/*`)
 - Logging en BullMQ Workers: job started, job completed, job failed con `tenant_id`, `lead_id`, `duration_ms`
 - Métricas BullMQ: `waiting`, `active`, `completed`, `failed` disponibles via bull-board UI
@@ -46,6 +47,7 @@ agents: [af-agents:code, af-agents:deployment]
 - ~~Tabla `llm_usage_logs` en PostgreSQL con RLS multi-tenant (usada por Ph3)~~ **MOVIDO a Sprint Costes-LLM Ph1 (post-MVP)**
 
 ### No funcionales
+
 - Logs en `stdout` únicamente (sin archivos de log en disco) — Easypanel los captura
 - Nivel configurable via `LOG_LEVEL` env var (`info` prod, `debug` dev)
 - Sin impacto en rendimiento: Pino es asíncrono, no bloquea el request
@@ -74,6 +76,7 @@ Métricas BullMQ:
 ## Related Code Files
 
 ### Crear
+
 - `src/lib/logger.ts` — singleton Pino logger
 - `src/lib/bullmq-metrics.ts` — helper getJobCounts + persistencia PostgreSQL
 - `src/app/api/admin/queues/[[...slug]]/route.ts` — bull-board Next.js route
@@ -81,6 +84,7 @@ Métricas BullMQ:
 - ~~`src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (preparación Ph3)~~ **MOVIDO a Sprint Costes-LLM Ph1**
 
 ### Modificar
+
 - `src/app/api/webhooks/retell/route.ts` — añadir logging structured
 - `src/app/api/webhooks/crm/route.ts` — añadir logging structured
 - `src/app/api/orchestration/*/route.ts` — añadir logging structured
@@ -92,23 +96,26 @@ Métricas BullMQ:
 ## Implementation Steps
 
 ### Paso 1: ADR + instalar Pino
+
 ```
 ADR check: pino@^9.x no está en proyecto. Pasar por af-agents:adr.
 ```
+
 ```bash
 npm install pino pino-http
 npm install -D @types/pino
 ```
 
 ### Paso 2: Logger singleton
+
 ```typescript
 // src/lib/logger.ts
-import pino from 'pino';
+import pino from "pino";
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || "info",
   formatters: { level: (label) => ({ level: label }) },
-  base: { service: 'dashboard-af', env: process.env.NODE_ENV },
+  base: { service: "dashboard-af", env: process.env.NODE_ENV },
   timestamp: pino.stdTimeFunctions.isoTime,
   serializers: {
     err: pino.stdSerializers.err,
@@ -123,7 +130,9 @@ export function tenantLogger(tenantId: string, context: Record<string, unknown> 
 ```
 
 ### Paso 3: Fix DA-1-005 — logging en enqueueLeadStep
+
 En `src/lib/queue/lead-sequence-queue.ts`, el catch silencioso:
+
 ```typescript
 // ANTES (DA-1-005):
 } catch (err) {
@@ -138,28 +147,40 @@ En `src/lib/queue/lead-sequence-queue.ts`, el catch silencioso:
 ```
 
 ### Paso 4: Logging en API Routes críticos
+
 Añadir al inicio de cada handler:
+
 ```typescript
-const log = logger.child({ tenant_id: tenantId, action: 'webhook.retell', trace_id: crypto.randomUUID() });
-log.info({ leadId }, 'Webhook received');
+const log = logger.child({
+  tenant_id: tenantId,
+  action: "webhook.retell",
+  trace_id: crypto.randomUUID(),
+});
+log.info({ leadId }, "Webhook received");
 // ...
-log.info({ duration_ms: Date.now() - start }, 'Webhook processed');
+log.info({ duration_ms: Date.now() - start }, "Webhook processed");
 ```
 
 ### Paso 5: Logging en Workers BullMQ
+
 ```typescript
-worker.on('completed', (job) => {
-  logger.info({ jobId: job.id, tenant_id: job.data.tenantId, duration_ms: job.processedOn! - job.timestamp }, 'Job completed');
+worker.on("completed", (job) => {
+  logger.info(
+    { jobId: job.id, tenant_id: job.data.tenantId, duration_ms: job.processedOn! - job.timestamp },
+    "Job completed"
+  );
 });
-worker.on('failed', (job, err) => {
-  logger.error({ jobId: job?.id, tenant_id: job?.data.tenantId, err }, 'Job failed');
+worker.on("failed", (job, err) => {
+  logger.error({ jobId: job?.id, tenant_id: job?.data.tenantId, err }, "Job failed");
 });
 ```
 
 ### Paso 6: bull-board UI
+
 ```bash
 npm install @bull-board/api@^6.x @bull-board/nextjs@^6.x
 ```
+
 Crear `/admin/queues` route protegida con verificación de rol admin.
 
 ### ~~Paso 7: Migración SQL llm_usage_logs~~ — **MOVIDO a Sprint Costes-LLM Ph1**
@@ -167,19 +188,21 @@ Crear `/admin/queues` route protegida con verificación de rol admin.
 La tabla `llm_usage_logs` y todas sus políticas RLS se crean en [Sprint Costes-LLM Ph1](../260522-1430-sprint-costes-llm-post-mvp/phase-01-tabla-llm-usage-y-tracker.md) (post-Sheets `v0.5.1`). Esta fase NO la crea.
 
 ### Paso 7 (antes Paso 8): Sentry setup básico
+
 ```bash
 npm install @sentry/nextjs@^8.x  # Pasar por ADR
 npx @sentry/wizard@latest -i nextjs
 ```
+
 Configurar SENTRY_DSN en .env. Captura de errores en API Routes y Server Actions.
 
 ## Todo List
 
-- [ ] ADR para pino, @bull-board/*, @sentry/nextjs
+- [ ] ADR para pino, @bull-board/\*, @sentry/nextjs
 - [ ] Instalar pino + pino-http
 - [ ] `src/lib/logger.ts` — singleton + tenantLogger helper
 - [ ] Fix DA-1-005 en `lead-sequence-queue.ts`
-- [ ] Logging structured en webhooks/retell, webhooks/crm, orchestration/*
+- [ ] Logging structured en webhooks/retell, webhooks/crm, orchestration/\*
 - [ ] Logging en BullMQ Worker (completed, failed, stalled)
 - [ ] Instalar bull-board + crear ruta /admin/queues protegida
 - [ ] ~~Migración SQL `llm_usage_logs` + RLS~~ **MOVIDO a Sprint Costes-LLM Ph1**
@@ -199,11 +222,11 @@ Configurar SENTRY_DSN en .env. Captura de errores en API Routes y Server Actions
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Pino incompatible con Edge Runtime de Next.js | Media | Bajo | Logging solo en Server (Node runtime) — sin logging en Edge middleware |
-| bull-board expuesto sin auth | Alta | Alto | Auth check OBLIGATORIO en route handler antes de servir UI |
-| Migración SQL rompe datos existentes | Baja | Medio | Nueva tabla, no modifica existentes; backup antes |
+| Riesgo                                        | Prob  | Impacto | Mitigación                                                             |
+| --------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------- |
+| Pino incompatible con Edge Runtime de Next.js | Media | Bajo    | Logging solo en Server (Node runtime) — sin logging en Edge middleware |
+| bull-board expuesto sin auth                  | Alta  | Alto    | Auth check OBLIGATORIO en route handler antes de servir UI             |
+| Migración SQL rompe datos existentes          | Baja  | Medio   | Nueva tabla, no modifica existentes; backup antes                      |
 
 ## Security Considerations
 

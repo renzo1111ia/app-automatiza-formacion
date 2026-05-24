@@ -1,12 +1,12 @@
 ---
 title: "Sprint 2B — Dashboard KPIs conjunto (MVP)"
 sprint_id: SP-3B
-version_target: v0.3.5
+version_target: v0.2.7
 branch: feature/sprint-02b-dashboard-kpis-conjunto
 assigned_to: Javi HP
 created: 22-05-2026 18:00 por Javi HP
 status: 🔘 Pendiente (arranca tras Sprint 2 mergeado a developer)
-position: entre Sprint 2 (HubSpot+Zoho v0.3.0) y Sprint 3 (Hardening v0.4.0-rc.1)
+position: entre Sprint 2 (HubSpot+Zoho v0.2.5) y Sprint 3 (Hardening v0.3.0-rc.1)
 ---
 
 # Sprint 2B — Dashboard KPIs conjunto
@@ -46,7 +46,7 @@ Sprint corto, dedicado y bloqueante del MVP: implementa el **dashboard de KPIs a
 | SP-3B-CLOSE-2       | Test E2C Local Playwright + WCAG sobre nuevo `/dashboard/overview`                 | 2h                  | 🔘          |
 | ~~SP-3B-CLOSE-3~~   | ~~Test Manual~~ — **DIFERIDO a 👤 SP-4B phase-03 bloque 4** (Renzo)                | (0h)                | 🟢 Diferida |
 | SP-3B-CLOSE-4       | Bugs detectados                                                                    | (variable)          | 🔘          |
-| SP-3B-CLOSE-5       | PR a developer + bump v0.3.5 + crear rama Sprint 3 + **hand-off a SP-4B phase-03** | 1h                  | 🔘          |
+| SP-3B-CLOSE-5       | PR a developer + bump v0.2.7 + crear rama Sprint 3 + **hand-off a SP-4B phase-03** | 1h                  | 🔘          |
 | **Subtotal cierre** |                                                                                    | **4h 30min + bugs** |             |
 
 ## Dependencias
@@ -66,6 +66,6 @@ Sprint corto, dedicado y bloqueante del MVP: implementa el **dashboard de KPIs a
 
 - Nueva ruta `/dashboard/overview` (o `/dashboard` consolidado) operativa con 4-6 KPIs hero + 4 gráficos + filtros.
 - Test E2C pasa 100%.
-- Bump SemVer `v0.3.5`.
+- Bump SemVer `v0.2.7`.
 - PR mergeado a `developer`.
 - Hand-off a SP-4B phase-03 con instrucciones para Renzo.

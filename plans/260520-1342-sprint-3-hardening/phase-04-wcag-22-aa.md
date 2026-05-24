@@ -22,7 +22,7 @@ agents: [af-agents:uxui, af-agents:code]
 
 - **Priority:** P1
 - **Status:** Pendiente
-- **Descripción:** Corregir los 24 findings de accesibilidad identificados en el audit DA-5. La app actualmente es NON-COMPLIANT con WCAG 2.1 AA. El objetivo es alcanzar Lighthouse a11y score ≥ 90 y resolver todos los findings Critical antes del lanzamiento v0.4.0.
+- **Descripción:** Corregir los 24 findings de accesibilidad identificados en el audit DA-5. La app actualmente es NON-COMPLIANT con WCAG 2.1 AA. El objetivo es alcanzar Lighthouse a11y score ≥ 90 y resolver todos los findings Critical antes del lanzamiento v0.3.0.
 
 ## Key Insights
 
@@ -37,7 +37,8 @@ agents: [af-agents:uxui, af-agents:code]
 
 ### Funcionales — por severidad
 
-**Critical (6 findings — OBLIGATORIOS para v0.4.0):**
+**Critical (6 findings — OBLIGATORIOS para v0.3.0):**
+
 - DA-5-003: Labels con htmlFor/id en CreateLeadDialog (9 campos)
 - DA-5-013: Focus trap modales AIAgentInbox (3 modales inline)
 - DA-5-014: Focus trap + Escape en modal HistorialTable
@@ -46,6 +47,7 @@ agents: [af-agents:uxui, af-agents:code]
 - Resolver también DA-5-021 (alert() → errores inline con ARIA) — High pero ligado a Critical
 
 **High (9 findings — requeridos para score ≥ 90):**
+
 - DA-5-001: alt descriptivo imágenes de lead
 - DA-5-004: `<tr onClick>` semántica interactiva
 - DA-5-006: `<div onClick>` → `<button>` en agents
@@ -59,6 +61,7 @@ agents: [af-agents:uxui, af-agents:code]
 **Medium (6 findings) + Low (1):** Completar tras Critical + High.
 
 ### No funcionales
+
 - Sin regresiones visuales en componentes modificados
 - Verificación con `@axe-core/playwright` en E2E (Ph1) y Lighthouse CLI manual
 
@@ -115,6 +118,7 @@ Orden de implementación recomendado:
 ## Related Code Files
 
 ### Modificar
+
 - `src/components/layout/DashboardShell.tsx` — DA-5-017 skip link
 - `src/app/layout.tsx` — DA-5-018 metadata root, DA-5-017 id="main-content"
 - `src/app/login/page.tsx` — DA-5-007 autocomplete, DA-5-021 role=alert
@@ -132,6 +136,7 @@ Orden de implementación recomendado:
 - `src/components/historial/` — DA-5-008 badges de estado
 
 ### Crear
+
 - `src/components/ui/confirm-dialog.tsx` — hook `useConfirmDialog` centralizado
 - `src/app/dashboard/agents/page.tsx` — metadata export
 - (todos los page.tsx del dashboard) — metadata exports
@@ -141,11 +146,12 @@ Orden de implementación recomendado:
 ### GRUPO 1: Quick wins
 
 **DA-5-017 — Skip link (30min)**
+
 ```tsx
 // DashboardShell.tsx — añadir como primer hijo
 <a
   href="#main-content"
-  className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-xl"
+  className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[200] focus:rounded-xl focus:px-4 focus:py-2"
 >
   Saltar al contenido principal
 </a>
@@ -153,6 +159,7 @@ Orden de implementación recomendado:
 ```
 
 **DA-5-007 — autocomplete (15min)**
+
 ```tsx
 // login/page.tsx
 <Input type="email" autoComplete="email" ... />
@@ -162,6 +169,7 @@ Orden de implementación recomendado:
 ```
 
 **DA-5-015 — tr teclado (45min)**
+
 ```tsx
 // HistorialTable.tsx — cada <tr onClick>
 <tr
@@ -174,6 +182,7 @@ Orden de implementación recomendado:
 ```
 
 **DA-5-006 — div→button (30min)**
+
 ```tsx
 // agents/page.tsx:263
 <button
@@ -185,6 +194,7 @@ Orden de implementación recomendado:
 ```
 
 **DA-5-002 — aria-hidden SVGs (20min)**
+
 ```tsx
 // Sidebar.tsx
 <svg aria-hidden="true" focusable="false" ...>
@@ -201,36 +211,62 @@ npx shadcn@latest add sonner
 En `layout.tsx` añadir `<Toaster />`.
 
 Reemplazar todas las instancias de `alert(...)` por:
+
 ```typescript
-import { toast } from 'sonner';
+import { toast } from "sonner";
 // ANTES: alert("Error: Nombre y Teléfono son obligatorios")
 // DESPUÉS:
 toast.error("Nombre y Teléfono son obligatorios");
 ```
 
 Crear `src/components/ui/confirm-dialog.tsx`:
+
 ```tsx
 // Hook reutilizable para reemplazar window.confirm()
 export function useConfirmDialog() {
   const [state, setState] = useState({ open: false, resolve: null });
-  
-  const confirm = (message: string) => new Promise((resolve) => {
-    setState({ open: true, message, resolve });
-  });
-  
+
+  const confirm = (message: string) =>
+    new Promise((resolve) => {
+      setState({ open: true, message, resolve });
+    });
+
   const ConfirmDialog = () => (
-    <Dialog open={state.open} onOpenChange={(open) => { if (!open) state.resolve?.(false); }}>
+    <Dialog
+      open={state.open}
+      onOpenChange={(open) => {
+        if (!open) state.resolve?.(false);
+      }}
+    >
       <DialogContent>
-        <DialogHeader><DialogTitle>Confirmar acción</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Confirmar acción</DialogTitle>
+        </DialogHeader>
         <p>{state.message}</p>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { state.resolve?.(false); setState(s => ({...s, open: false})); }}>Cancelar</Button>
-          <Button variant="destructive" onClick={() => { state.resolve?.(true); setState(s => ({...s, open: false})); }}>Confirmar</Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              state.resolve?.(false);
+              setState((s) => ({ ...s, open: false }));
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              state.resolve?.(true);
+              setState((s) => ({ ...s, open: false }));
+            }}
+          >
+            Confirmar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-  
+
   return { confirm, ConfirmDialog };
 }
 ```
@@ -242,11 +278,13 @@ npx shadcn@latest add dialog
 ```
 
 Para CADA modal manual (`fixed inset-0 z-[100]`):
+
 1. Reemplazar estructura con `<Dialog>` + `<DialogContent>` + `<DialogHeader>` + `<DialogTitle>`
 2. Radix automáticamente añade: `role="dialog"`, `aria-modal="true"`, focus trap, Escape handler
 3. El `<DialogTitle>` sirve como `aria-labelledby` automáticamente
 
 Estructura target:
+
 ```tsx
 <Dialog open={isOpen} onOpenChange={setIsOpen}>
   <DialogContent className="...">
@@ -264,18 +302,29 @@ Junto con la migración a Dialog, añadir id+htmlFor a todos los 9 campos del fo
 ### GRUPO 4: Contraste y visual
 
 **DA-5-010 — globals.css:**
+
 ```css
-:root { --secondary-text: #5a6475; }
-.dark { --secondary-text: #a8b4c8; }
+:root {
+  --secondary-text: #5a6475;
+}
+.dark {
+  --secondary-text: #a8b4c8;
+}
 ```
+
 Buscar/reemplazar `text-muted-foreground/[0-9]` → `text-[--secondary-text]` o color fijo.
 
 **DA-5-008 — badges estado:**
+
 ```tsx
 const callStatusConfig = {
-  CONTACTED: { label: 'Contactado', icon: <CheckCircle />, className: 'bg-green-100 text-green-800' },
-  NO_CONTACT: { label: 'No contactado', icon: <Clock />, className: 'bg-amber-100 text-amber-800' },
-  ANNULLED: { label: 'Anulado', icon: <XCircle />, className: 'bg-red-100 text-red-800' },
+  CONTACTED: {
+    label: "Contactado",
+    icon: <CheckCircle />,
+    className: "bg-green-100 text-green-800",
+  },
+  NO_CONTACT: { label: "No contactado", icon: <Clock />, className: "bg-amber-100 text-amber-800" },
+  ANNULLED: { label: "Anulado", icon: <XCircle />, className: "bg-red-100 text-red-800" },
 };
 // Renderizar: <Badge>{config.icon} {config.label}</Badge>
 ```
@@ -283,9 +332,10 @@ const callStatusConfig = {
 ### GRUPO 5: Títulos de página (DA-5-018)
 
 En cada `src/app/dashboard/*/page.tsx`:
+
 ```typescript
 export const metadata: Metadata = {
-  title: 'Historial — Automatiza Formación',
+  title: "Historial — Automatiza Formación",
 };
 // O para títulos dinámicos:
 export async function generateMetadata({ params }): Promise<Metadata> {
@@ -296,20 +346,22 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 ### GRUPO 6: DA-5-012 — Responsive AIAgentInbox (si tiempo)
 
 Convertir layout 3 columnas fijo en:
+
 - Mobile (< md): lista conversaciones → al seleccionar → chat full-width
 - Panel detalles: drawer inferior en mobile, columna derecha en desktop
 - Usar patrón `useState` para `activeMobileView: 'list' | 'chat' | 'details'`
 
 ## Todo List
 
-**Critical (obligatorio v0.4.0):**
+**Critical (obligatorio v0.3.0):**
+
 - [ ] DA-5-017: Skip link DashboardShell.tsx
 - [ ] DA-5-007: autocomplete login + reset-password
 - [ ] DA-5-006: div→button agents/page.tsx:263
 - [ ] DA-5-015: tr tabIndex+onKeyDown HistorialTable.tsx
 - [ ] DA-5-002: aria-hidden SVGs Sidebar.tsx
 - [ ] Instalar sonner via shadcn
-- [ ] Reemplazar todos los alert() por toast.*
+- [ ] Reemplazar todos los alert() por toast.\*
 - [ ] Crear useConfirmDialog hook
 - [ ] Reemplazar todos los window.confirm() por useConfirmDialog
 - [ ] Instalar Dialog via shadcn (si no instalado)
@@ -321,6 +373,7 @@ Convertir layout 3 columnas fijo en:
 - [ ] DA-5-023: verificar role=dialog en modales migrados (auto con shadcn)
 
 **High:**
+
 - [ ] DA-5-001: alt descriptivo imágenes lead AIAgentInbox.tsx
 - [ ] DA-5-004: semántica interactiva tr HistorialTable
 - [ ] DA-5-008: iconos + labels español en badges estado
@@ -330,6 +383,7 @@ Convertir layout 3 columnas fijo en:
 - [ ] DA-5-018: metadata title en todas las pages del dashboard
 
 **Medium/Low:**
+
 - [ ] DA-5-005: jerarquía headings (h1→h2 en páginas internas)
 - [ ] DA-5-011: text sizes mínimos (auditar text-[8px] → text-xs)
 - [ ] DA-5-019: aria-label en icon-only buttons calendar
@@ -337,9 +391,11 @@ Convertir layout 3 columnas fijo en:
 - [ ] DA-5-024: sonner ya instalado — verificar Toaster en layout
 
 **Opcional (P2):**
+
 - [ ] DA-5-012: responsive AIAgentInbox (solo si tiempo)
 
 **Verificación:**
+
 - [ ] Lighthouse a11y score ≥ 90 en /dashboard, /dashboard/historial, /dashboard/agents
 - [ ] `@axe-core/playwright` sin violations Critical en E2E
 - [ ] Prueba manual con Tab key en todos los flujos principales
@@ -356,13 +412,13 @@ Convertir layout 3 columnas fijo en:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| Migración modales a Dialog rompe lógica de estado existente | Media | Alto | Refactor incremental por modal; tests manuales después de cada migración |
-| DA-5-010 búsqueda/reemplazo genera regresiones visuales | Media | Medio | Review visual en browser tras cada bloque de cambios; no hacer todo en un solo commit |
-| DA-5-012 responsive desborda el sprint (esfuerzo L) | Alta | Bajo | Marcar como P2, cortar al final sin bloquear el resto |
-| sonner rompe estilos existentes (zIndex, portal) | Baja | Bajo | Instalar via shadcn que lo preconfigura; verificar z-index ordering |
-| Dialog de shadcn + framer-motion (AnimatePresence) en conflicto | Media | Medio | Eliminar AnimatePresence en modales migrados a Dialog; Dialog ya tiene animaciones propias |
+| Riesgo                                                          | Prob  | Impacto | Mitigación                                                                                 |
+| --------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------------------ |
+| Migración modales a Dialog rompe lógica de estado existente     | Media | Alto    | Refactor incremental por modal; tests manuales después de cada migración                   |
+| DA-5-010 búsqueda/reemplazo genera regresiones visuales         | Media | Medio   | Review visual en browser tras cada bloque de cambios; no hacer todo en un solo commit      |
+| DA-5-012 responsive desborda el sprint (esfuerzo L)             | Alta  | Bajo    | Marcar como P2, cortar al final sin bloquear el resto                                      |
+| sonner rompe estilos existentes (zIndex, portal)                | Baja  | Bajo    | Instalar via shadcn que lo preconfigura; verificar z-index ordering                        |
+| Dialog de shadcn + framer-motion (AnimatePresence) en conflicto | Media | Medio   | Eliminar AnimatePresence en modales migrados a Dialog; Dialog ya tiene animaciones propias |
 
 ## Security Considerations
 
