@@ -67,7 +67,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
     expect(page.url()).toContain("/dashboard");
   });
 
-  test("VPS-03: /dashboard/settings carga", async ({ page, context }) => {
+  test("VPS-03: /dashboard/settings carga", async ({ page }) => {
     // Reusar sesión: login primero
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(800);
@@ -168,7 +168,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
     expect(hasZoho, "Card Zoho debe estar visible tras Sprint 2").toBe(true);
   });
 
-  test("VPS-05: API /api/integrations responde (auth)", async ({ page, request }) => {
+  test("VPS-05: API /api/integrations responde (auth)", async ({ page }) => {
     // Login para obtener cookies
     await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(800);
