@@ -32,9 +32,21 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error("[seed-demo] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   process.exit(1);
 }
-if (!DEMO_PASSWORD || DEMO_PASSWORD.length < 16) {
-  console.error("[seed-demo] DEMO_USER_PASSWORD must be at least 16 chars in .env.local");
+if (!DEMO_PASSWORD || DEMO_PASSWORD.length < 12) {
+  console.error("[seed-demo] DEMO_USER_PASSWORD must be at least 12 chars in .env.local");
   process.exit(1);
+}
+// Aviso sin bloquear si pinta débil (mismo criterio que set-admin-user.ts)
+if (
+  DEMO_PASSWORD.length < 16 ||
+  !/[A-Z]/.test(DEMO_PASSWORD) ||
+  !/[a-z]/.test(DEMO_PASSWORD) ||
+  !/[0-9]/.test(DEMO_PASSWORD) ||
+  !/[^A-Za-z0-9]/.test(DEMO_PASSWORD)
+) {
+  console.warn(
+    `[seed-demo] ⚠️ AVISO: password ${DEMO_PASSWORD.length} chars. Recomendado 16+ con mezcla May/min/núm/símbolo.`
+  );
 }
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
