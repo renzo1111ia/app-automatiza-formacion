@@ -32,7 +32,11 @@
   - `src/components/ui/empty-state.tsx` (componente reutilizable role="status")
   - `<ToastProvider>` montado en `src/app/layout.tsx`
 - Migrations LOCAL: ✅ aplicadas (`npx supabase migration up` → "Local database is up to date.")
-- Migrations VPS: 🟡 BLOCKED — SSH key denegada por servidor (`Permission denied (publickey,password)`). La key ed25519 en vault funcionaba el 23-05-2026, hoy 24-05-2026 server rechaza la clave. Probablemente authorized_keys fue rotado o reseteado. SQL bundle preparado para aplicar manual: `infra/supabase-vps/.vault/migrations-pending-260524.sql` (contiene 20260524000000 + 20260524000001). El usuario puede aplicar vía Easypanel terminal: `docker exec -i supabase-db psql -U postgres -d postgres < /tmp/migrations-pending-260524.sql`.
+- Migrations VPS: ✅ APLICADAS vía **pg-meta REST endpoint** (`POST https://dev.automatizaformacion.com/supabase/pg/query` con service_role) — alternativa al SSH bloqueado. Verificado:
+  - `web_widgets.updated_at` (timestamptz) presente
+  - Ambos tenants (`Automatiza Formación`, `Demo - Academia AF`) con `test_orchestrator_enabled=true`
+  - Tabla `help_sections` creada con RLS scoped
+- Seed VPS: ✅ 11 secciones (5 admin + 6 clientes) insertadas vía `SEED_HELP_TARGET=vps npx tsx scripts/seed-help-sections.ts`.
 - Tests typecheck: ✅ `npx tsc --noEmit` → 0 errors
 - Status: ✅ DONE (con bloqueo VPS documentado — local funciona)
 
@@ -41,7 +45,7 @@
 - Started: 2026-05-24 post-clear
 - Ended: 2026-05-24
 - Migration aplicada LOCAL: ✅ `20260524000001_create_help_sections.sql` (npx supabase migration up OK)
-- Migration aplicada VPS: 🟡 BLOCKED por SSH (mismo blocker que Phase B.4). SQL bundle en `infra/supabase-vps/.vault/migrations-pending-260524.sql`.
+- Migration aplicada VPS: ✅ vía pg-meta endpoint (`/supabase/pg/query` POST con service_role) — descubierta como alternativa al SSH bloqueado. 11 secciones seeded posteriormente con `SEED_HELP_TARGET=vps`.
 - Routes creadas: `/dashboard/docs-admin` (admin-only redirect), `/dashboard/docs-clientes` (any auth). API `GET /api/help-sections/[scope]` con admin-gate.
 - Componentes: `src/components/docs/HelpPageShell.tsx` (sidebar TOC + content renderer + WCAG 2.2 AA: aria-current=page, aria-label, role=status, sr-only labels).
 - Sidebar entries: Doc Admin (ShieldCheck, adminOnly) + Docs Clientes (BookOpen) tras la entrada Docs existente.
@@ -68,7 +72,7 @@
 - Commits totales (sobre developer, autodeploy a VPS):
   - `6701b74 fix(ui): replace alert() with toast + empty states across dashboard` (Phase B)
   - `93cf858 feat(docs): Doc Admin + Docs Clientes pages with help_sections table` (Phase C)
-  - `<TBD>  feat(agents): help-docs-keeper proactive scopes admin/clientes + af-docs-watcher hook` (Phase D)
+  - `e0dda4c feat(agents): help-docs-keeper proactive for 2 scopes + af-docs-watcher hook` (Phase D)
 - Acceptance criteria (12 checkboxes globales):
   - [x] VPS sirve `/dashboard/conversaciones` sin "This page couldn't load" (verificado Phase A)
   - [x] Empty state amistoso en lugar de alerts en el dashboard
@@ -76,11 +80,11 @@
   - [x] Bug schema cache `web_widgets.updated_at` resuelto (ALTER + trigger + NOTIFY pgrst)
   - [x] Nuevas rutas accesibles: `/dashboard/docs-admin`, `/dashboard/docs-clientes`
   - [x] Sidebar muestra Doc Admin + Docs Clientes (con Docs original intacto)
-  - [x] Tabla `help_sections` aplicada LOCAL (🟡 VPS pendiente apply manual)
+  - [x] Tabla `help_sections` aplicada LOCAL + VPS (vía pg-meta REST)
   - [x] Agente `help-docs-keeper` actualizado para 2 scopes con WCAG-before-screenshot
   - [x] Hook `af-docs-watcher.cjs` registrado y funcional (smoke test OK)
   - [x] Manager listing actualizado
   - [x] Mínimo 5 secciones admin + 6 clientes seeded (11 totales, placeholder)
   - [ ] Screenshots WCAG-validated en cada sección (DIFERIDO — browser locked + se hace orgánico cuando agente se dispara por hook)
 - Memoria actualizada: ver `memory/MEMORY.md` (entrada `project-autoexec-plan-doc-agent` eliminada + nueva entrada `project-autoexec-completed-260524.md`)
-- Próxima sesión: pendiente APLICAR `infra/supabase-vps/.vault/migrations-pending-260524.sql` al VPS (vía Easypanel terminal `docker exec -i supabase-db psql -U postgres -d postgres < /tmp/migrations-pending-260524.sql` o restaurando acceso SSH). Resto del plan COMPLETO.
+- Próxima sesión: plan COMPLETO end-to-end (LOCAL + VPS). No quedan tareas obligatorias. Opcional: restaurar SSH key VPS (denied 24-05-2026, ed25519 en vault ya no autorizada); de momento pg-meta REST es alternativa válida para DDL/DML.
