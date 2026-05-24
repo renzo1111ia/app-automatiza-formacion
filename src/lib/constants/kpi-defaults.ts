@@ -230,6 +230,50 @@ export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
   },
 ];
 
+// ─── OVERVIEW CHARTS (Sprint 2B) ──────────────────────────────────────────────
+
+/**
+ * 3 gráficos dynamic por defecto para <OverviewSection>.
+ * El 4º chart "Distribución por canal" es custom (OverviewCanalDonut)
+ * porque cruza tablas (llamadas + conversaciones_whatsapp) y no encaja en
+ * el patrón getDynamicChartSeries single-table.
+ *
+ * Persistencia: tenants.config.overview_charts JSONB. Zero-migration.
+ * Fallback a este array si tenant no tiene config.overview_charts.
+ */
+export const DEFAULT_OVERVIEW_CHARTS: ChartConfig[] = [
+  {
+    id: "ov-ch-1",
+    type: "area",
+    title: "Leads ingresados por día",
+    dataKey: "dynamic",
+    xKey: "lead.fecha_ingreso_crm",
+    size: "6",
+    isVisible: true,
+    order: 1,
+  },
+  {
+    id: "ov-ch-2",
+    type: "vertical-bar",
+    title: "Leads por origen",
+    dataKey: "dynamic",
+    xKey: "lead.origen",
+    size: "6",
+    isVisible: true,
+    order: 2,
+  },
+  {
+    id: "ov-ch-3",
+    type: "vertical-bar",
+    title: "Leads por tipo",
+    dataKey: "dynamic",
+    xKey: "lead.tipo_lead",
+    size: "6",
+    isVisible: true,
+    order: 3,
+  },
+];
+
 // ─── DEFAULT CHARTS ───────────────────────────────────────────────────────────
 
 export const DEFAULT_CHARTS: ChartConfig[] = [

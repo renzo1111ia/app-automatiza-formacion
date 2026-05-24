@@ -1,8 +1,15 @@
-import { getKpiGenerales, getDynamicKpis, type AnalyticsFilters } from "@/lib/actions/analytics";
+import {
+  getKpiGenerales,
+  getDynamicKpis,
+  getDynamicChartSeries,
+  type AnalyticsFilters,
+} from "@/lib/actions/analytics";
 import { getActiveTenantConfig } from "@/lib/actions/tenant";
 import { SummaryManager } from "@/components/dashboard/SummaryManager";
-import { DEFAULT_OVERVIEW_KPIS } from "@/lib/constants/kpi-defaults";
-import type { KpiConfig } from "@/types/tenant";
+import { ChartManager } from "@/components/dashboard/ChartManager";
+import { OverviewCanalDistribution } from "@/components/dashboard/OverviewCanalDistribution";
+import { DEFAULT_OVERVIEW_KPIS, DEFAULT_OVERVIEW_CHARTS } from "@/lib/constants/kpi-defaults";
+import type { KpiConfig, ChartConfig } from "@/types/tenant";
 import { LayoutDashboard } from "lucide-react";
 
 /**
@@ -31,7 +38,12 @@ export async function OverviewSection({
     ((tenantConfig.config as Record<string, unknown>)?.overview_kpis as KpiConfig[]) || [];
   const mergedKpis = tenantOverviewKpis.length > 0 ? tenantOverviewKpis : DEFAULT_OVERVIEW_KPIS;
 
-  const [kpi, dynamicValues] = await Promise.all([
+  const tenantOverviewCharts =
+    ((tenantConfig.config as Record<string, unknown>)?.overview_charts as ChartConfig[]) || [];
+  const mergedCharts =
+    tenantOverviewCharts.length > 0 ? tenantOverviewCharts : DEFAULT_OVERVIEW_CHARTS;
+
+  const [kpi, dynamicValues, chartData] = await Promise.all([
     getKpiGenerales(from, to, filters),
     getDynamicKpis(
       from,
@@ -39,6 +51,7 @@ export async function OverviewSection({
       mergedKpis.filter((k) => !k.staticKey),
       filters
     ),
+    getDynamicChartSeries(mergedCharts, from, to, filters),
   ]);
 
   return (
@@ -71,6 +84,24 @@ export async function OverviewSection({
         filters={filters}
         title={null}
       />
+
+      {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution */}
+      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="lg:col-span-2">
+          <ChartManager
+            tenant={tenantConfig}
+            initialCharts={mergedCharts}
+            data={chartData}
+            isAdmin={isAdmin}
+            configKey="overview_charts"
+            filters={filters}
+            title="Gráficos Overview"
+          />
+        </div>
+        <div className="bg-card rounded-2xl border p-6">
+          <OverviewCanalDistribution kpi={kpi} />
+        </div>
+      </div>
     </section>
   );
 }
