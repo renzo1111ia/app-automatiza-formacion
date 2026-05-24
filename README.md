@@ -98,13 +98,15 @@ Para que se activen al clonar: `npm install` corre `prepare: husky` automáticam
 
 > 📊 **Vista live**: [`plans/RoadMap.md`](plans/RoadMap.md) — se actualiza con cada cambio de estado de tarea.
 
-| Sprint                   | Versión          | Estado           | Notas                                                                                                        |
-| ------------------------ | ---------------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
-| **0 Hotfixes seguridad** | `v0.1.0`         | 🟡 En desarrollo | 5 tareas a 🔵 (0-00, 0-01, 1-04, 1-26 + helpers). 2 diferidas (1-03, 1-05 esperan acceso VPS). Resto en cola |
-| 1 Capa datos             | `v0.2.0`         | 🔘 Pendiente     | Sin ORM nuevo. Repository pattern + Zod + RLS hardening                                                      |
-| 2 HubSpot + Zoho         | `v0.3.0`         | 🔘 Pendiente     | Adapter layer + UI admin (MVP)                                                                               |
-| 3 Hardening              | **`v0.4.0` MVP** | 🔘 Pendiente     | Tests E2E, observabilidad, dashboards de costes                                                              |
-| 4-9 Post-MVP             | `v0.5.0+`        | 🔘 Pendiente     | Google Sheets, Salesforce, GoHighLevel, ActiveCampaign                                                       |
+| Sprint                            | Versión          | Estado               | Notas                                                                                                                                                                                                                   |
+| --------------------------------- | ---------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Hotfixes seguridad              | `v0.1.0`         | 🟢 Completado        | Tag v0.1.0 en `a387dfe` (PR #2). 26 tareas locales · 2 diferidas a pre-deploy VPS. ~11h efectivas vs 118h estim                                                                                                         |
+| 1 Capa datos                      | `v0.2.0`         | 🟢 Completado        | Mergeado a developer vía PR #5 (`94c035a`). 24 tareas · 8 diferidas · 6 ADRs (014-019) · 58 tests Vitest. ~12h efectivas vs 205h estim                                                                                  |
+| Autoexec doc-agent + empty-states | —                | 🟢 Completado        | 4 commits directos a developer 24-05-2026: 70 alerts→toast, EmptyState, web_widgets fix, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher.cjs`                                                             |
+| **2 HubSpot + Zoho**              | `v0.3.0`         | 🟡 **En desarrollo** | Branch `feature/sprint-02-adapter-hubspot-zoho` desde 24-05-2026 14:00. 8 fases, 74h estim secuencial. Phase 00 ✅ (env+carpetas+msw+ADR-020). [Plan completo](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) |
+| 2B Dashboard KPIs MVP             | `v0.3.5`         | 🔘 Pendiente         | Post Sprint 2. 16-24h. Requirement Bea: dashboard KPIs agregado configurable                                                                                                                                            |
+| 3 Hardening                       | **`v0.4.0` MVP** | 🔘 Pendiente         | Tests E2E, observabilidad, accesibilidad WCAG 2.2 AA total                                                                                                                                                              |
+| 4 Post-MVP                        | `v0.5.0+`        | 🔘 Pendiente         | Google Sheets bidireccional · Salesforce · GoHighLevel · ActiveCampaign · Costes-LLM                                                                                                                                    |
 
 ---
 
@@ -127,7 +129,7 @@ Ver historial completo de decisiones en [`docs/audit/DECISIONES-AUDITOR-JAVIER-H
 2. [`docs/dev-onboarding.md`](docs/dev-onboarding.md) — setup + primer arranque
 3. [`CLAUDE.md`](CLAUDE.md) — reglas del proyecto
 4. [`plans/RoadMap.md`](plans/RoadMap.md) — en qué sprint estamos
-5. La carpeta del sprint actual: `plans/260520-1342-sprint-0-hotfixes-seguridad/` (Sprint 0 vigente)
+5. La carpeta del sprint actual: [`plans/260524-1330-sprint-2-adapter-hubspot-zoho/`](plans/260524-1330-sprint-2-adapter-hubspot-zoho/) (Sprint 2 vigente)
 
 ---
 
