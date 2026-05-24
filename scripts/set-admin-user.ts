@@ -142,10 +142,18 @@ async function ensureTenant(): Promise<string | null> {
 
 async function ensureAdminUser(tenantId: string | null): Promise<string | null> {
   const existingId = await findUserByEmail(NEW_EMAIL);
-  const metadata = {
+  // user_metadata: writable by user via supabase.auth.updateUser — útil para UI.
+  // app_metadata: writable ONLY por service_role — fuente de verdad para auth checks
+  //   (middleware.ts:60 lee app_metadata.is_admin para evitar privilege escalation,
+  //   ver Sprint 0 tarea 1-16). Por eso seteamos AMBOS.
+  const userMetadata = {
     is_admin: true,
     tenant_id: tenantId,
     full_name: NEW_FULL_NAME,
+  };
+  const appMetadata = {
+    is_admin: true,
+    tenant_id: tenantId,
   };
 
   if (existingId) {
@@ -155,7 +163,8 @@ async function ensureAdminUser(tenantId: string | null): Promise<string | null> 
     const { error } = await admin.auth.admin.updateUserById(existingId, {
       password: NEW_PASSWORD,
       email_confirm: true,
-      user_metadata: metadata,
+      user_metadata: userMetadata,
+      app_metadata: appMetadata,
     });
     if (error) {
       console.error(`  [updateUser] error: ${error.message}`);
@@ -169,7 +178,8 @@ async function ensureAdminUser(tenantId: string | null): Promise<string | null> 
     email: NEW_EMAIL,
     password: NEW_PASSWORD,
     email_confirm: true,
-    user_metadata: metadata,
+    user_metadata: userMetadata,
+    app_metadata: appMetadata,
   });
   if (error) {
     console.error(`  [createUser] error: ${error.message}`);
