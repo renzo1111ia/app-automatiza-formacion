@@ -2,6 +2,8 @@
 
 Sprint 2 — MVP de la capa de integraciones CRM multi-tenant: HubSpot Public App + Zoho multi-DC, ambos con OAuth 2.0, WriteGuard append-only por defecto, y UI admin completa para gestionar conexiones.
 
+**Versión target:** `v0.2.5` (Sprint 2). Decisión 24-05-2026 rebajada la línea de versiones del MVP: Sprint 2=`v0.2.5`, Sprint 2B=`v0.2.7`, Sprint 3=`v0.3.0-rc.1`, MVP GA (post-SP-4B)=`v0.3.0`.
+
 ## Highlights
 
 - **HubSpot Public App OAuth 2.0**: nuevo provider con fetch puro, custom properties (`af_origen`, `af_metadata_extra`) auto-provisionadas en `init()`.
