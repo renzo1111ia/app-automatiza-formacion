@@ -3,11 +3,7 @@
 
 import { getSupabaseServerClient, getActiveTenantId } from "@/lib/supabase/server";
 import { KpiConfig, ChartConfig } from "@/types/tenant";
-import {
-  KpiOverviewInputSchema,
-  KpiOverviewOutputSchema,
-  type KpiOverviewOutput,
-} from "@/lib/schemas/kpi-overview-io";
+import { KpiOverviewInputSchema, type KpiOverviewOutput } from "@/lib/schemas/kpi-overview-io";
 
 // â”€â”€â”€ SHARED TYPES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
