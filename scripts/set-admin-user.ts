@@ -128,6 +128,7 @@ async function ensureTenant(): Promise<string | null> {
         headers: [],
         dashboard_title: `${TENANT_NAME} — CRM`,
         primary_color: "#4f46e5",
+        test_orchestrator_enabled: true,
       },
     })
     .select("id")
