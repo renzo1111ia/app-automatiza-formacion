@@ -12,6 +12,11 @@ import { DEFAULT_OVERVIEW_KPIS, DEFAULT_OVERVIEW_CHARTS } from "@/lib/constants/
 import type { KpiConfig, ChartConfig } from "@/types/tenant";
 import { LayoutDashboard } from "lucide-react";
 
+// TODO Sprint 3 hardening: cuando se añadan trend badges (+12%, -3%) a los
+// KPI cards del overview, deben incluir aria-label descriptivo + icono
+// direccional (TrendingUp/TrendingDown). Color no puede ser único indicador
+// (WCAG 2.2 AA criterion 1.4.1). Patrón en phase-06 plan.
+
 /**
  * Sprint 2B — Sección Overview cross-canal del /dashboard.
  * Reusa SummaryManager con configKey="overview_kpis" y DEFAULT_OVERVIEW_KPIS
