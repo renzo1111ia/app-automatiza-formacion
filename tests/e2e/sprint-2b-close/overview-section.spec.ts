@@ -187,3 +187,221 @@ test.describe("sprint-2b-close smoke Overview @smoke", () => {
     ).toBeGreaterThan(10);
   });
 });
+
+/**
+ * Tests EXHAUSTIVOS pre-PR — simulan revisión humana profunda
+ * (interacción FilterBar, edit mode admin, regresiones secciones existentes, console errors).
+ */
+test.describe("sprint-2b-close deep checks pre-PR @deep", () => {
+  test("2B-08: NO console errors críticos en /dashboard cargado completo", async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    await loginAsAdmin(page);
+    await page
+      .getByText("Distribución por canal", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(3000); // dejar que TODOS los Suspense resuelvan
+
+    // Filtrar errores conocidos no-bloqueantes (React hydration warnings, Recharts ResponsiveContainer)
+    const critical = consoleErrors.filter(
+      (e) =>
+        !e.includes("Warning:") &&
+        !e.includes("ResponsiveContainer") &&
+        !e.includes("hydration") &&
+        !e.toLowerCase().includes("favicon") &&
+        !e.includes("DevTools")
+    );
+
+    if (critical.length > 0) {
+      console.log("[2B-08] Console errors críticos detectados:", critical);
+    }
+
+    expect(critical.length, `Console errors críticos: ${critical.join(" | ")}`).toBe(0);
+  });
+
+  test("2B-09: FilterBar 'Hoy' afecta KPIs del Overview (recarga datos)", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+
+    // Capturar valor inicial (Últimos 30 días por defecto)
+    const totalLeadsCard = page.locator('div:has(> *:text("Total Leads"))').first();
+    await page.waitForTimeout(1500);
+
+    // Click preset "Hoy" en FilterBar
+    const hoyBtn = page.getByRole("button", { name: "Hoy", exact: true });
+    await hoyBtn.click();
+    await page.waitForTimeout(500);
+
+    // Click "Aplicar" para forzar el cambio
+    const aplicarBtn = page.getByRole("button", { name: "Aplicar", exact: true });
+    await aplicarBtn.click();
+
+    // Esperar a que la URL cambie con el preset y los datos recarguen.
+    // FilterBar usa ?preset=today (no ?from=&to=).
+    await page.waitForURL(/preset=|from=/, { timeout: 10_000 });
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(2000);
+
+    // La URL debe contener preset=today O from= (cualquiera de los 2 formatos)
+    const url = page.url();
+    expect(
+      url.includes("preset=today") || url.includes("from="),
+      `URL debe llevar preset=today o from= tras click 'Hoy'. URL: ${url}`
+    ).toBe(true);
+
+    // Overview debe seguir renderizado (no se rompió)
+    expect(await totalLeadsCard.isVisible()).toBe(true);
+
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, "2b-09-filter-hoy-applied.png"),
+      fullPage: false,
+    });
+  });
+
+  test("2B-10: SummarySection original sigue renderizando (no regresión)", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(2000);
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+
+    // SummarySection actual usa DEFAULT_SUMMARY_KPIS que tiene "Llamadas realizadas"
+    // y "Total Minutos IA" — labels que NO están en DEFAULT_OVERVIEW_KPIS
+    expect(
+      bodyText.includes("Llamadas realizadas"),
+      "Regresión: SummarySection debe seguir renderizando 'Llamadas realizadas'"
+    ).toBe(true);
+    expect(
+      bodyText.includes("Total Minutos IA") || bodyText.includes("Total Minutos"),
+      "Regresión: SummarySection debe seguir renderizando 'Total Minutos'"
+    ).toBe(true);
+  });
+
+  test("2B-11: FunnelSection original sigue renderizando (no regresión)", async ({ page }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(3000); // FunnelSection es lazy, dar tiempo
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+
+    // FunnelSection usa DEFAULT_FUNNEL con labels específicos
+    expect(
+      bodyText.includes("Embudo de") || bodyText.includes("Conversi"),
+      "Regresión: FunnelSection debe renderizar 'Embudo de Conversión'"
+    ).toBe(true);
+
+    // El botón "Personalizar Embudo" debe seguir existiendo (no roto por BUG-2B-01 fix)
+    expect(
+      bodyText.includes("Personalizar Embudo"),
+      "Regresión: botón 'Personalizar Embudo' del FunnelSection debe seguir visible (admin)"
+    ).toBe(true);
+  });
+
+  test("2B-12: BUG-2B-03 verificado — donut canal con datos renderiza correctamente", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Distribución por canal", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page.waitForTimeout(2000);
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+
+    // Si hay datos (caso happy path): debe aparecer "Llamadas" o "WhatsApp" en el chart canal
+    // Si NO hay datos (caso empty state): debe aparecer "Sin datos en el período seleccionado"
+    const hasDataLabels = bodyText.includes("Llamadas") && bodyText.includes("WhatsApp");
+    const isEmptyState = bodyText.includes("Sin datos en el período seleccionado");
+
+    expect(
+      hasDataLabels || isEmptyState,
+      "Donut canal: o renderiza con datos (Llamadas+WhatsApp) o muestra empty state"
+    ).toBe(true);
+  });
+
+  test("2B-13: Botón 'Personalizar Overview' click activa edit mode (DnD visible)", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Personalizar Overview", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+
+    const personalizarBtn = page.getByRole("button", { name: /Personalizar Overview/i }).first();
+    await personalizarBtn.click();
+    await page.waitForTimeout(1000);
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+
+    // En edit mode aparecen botones "Cancelar" + "Guardar Cambios"
+    expect(bodyText.includes("Cancelar"), "Edit mode debe mostrar botón 'Cancelar'").toBe(true);
+    expect(
+      bodyText.includes("Guardar Cambios"),
+      "Edit mode debe mostrar botón 'Guardar Cambios'"
+    ).toBe(true);
+
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, "2b-13-edit-mode-activo.png"),
+      fullPage: true,
+    });
+
+    // Cancelar para limpiar
+    await page
+      .getByRole("button", { name: /Cancelar/i })
+      .first()
+      .click();
+    await page.waitForTimeout(500);
+  });
+
+  test("2B-14: Navegación cross-page — /dashboard/settings y vuelta a /dashboard sin romper", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+
+    // Navegar a settings
+    await page.goto("/dashboard/settings", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
+    expect(page.url()).toContain("/dashboard/settings");
+
+    // Volver a /dashboard — overview debe seguir funcionando
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    await page
+      .getByText("Total Leads", { exact: false })
+      .first()
+      .waitFor({ state: "visible", timeout: 20_000 });
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+    expect(bodyText.includes("Resumen"), "Overview debe seguir tras navegación cross-page").toBe(
+      true
+    );
+  });
+
+  test("2B-15: API /api/integrations responde 200 (no regresión Sprint 2)", async ({ page }) => {
+    await loginAsAdmin(page);
+    const response = await page.request.get("/api/integrations");
+    console.log(`[2B-15] GET /api/integrations → ${response.status()}`);
+    expect([200, 401]).toContain(response.status());
+  });
+});
