@@ -666,14 +666,14 @@ Para que `SP-1-CLOSE-5` pueda arrancar, **TODAS** estas condiciones deben estar 
 
 ### Tareas de cierre obligatorias (Sprint 2B)
 
-| ID                            | Tarea                                                                        | Estimación          | Estado        | ⏱ Push | ⏱ Cierre | Notas                                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------- | ------------------- | ------------- | ------ | -------- | ---------------------------------------------------------------------------------------- |
-| SP-3B-CLOSE-1                 | Auto test (typecheck + lint + build + Vitest)                                | 1h 30min            | 🟢 Completada | —      | —        | 193/193 tests verdes. Lint 116 err preexistentes (0 nuevos Sprint 2B)                    |
-| SP-3B-CLOSE-2                 | E2C Local + WCAG 2.2 AA (Playwright)                                         | 2h 30min            | 🟢 Completada | —      | —        | 7/7 specs verdes · commit `9d4d36b` · 4 screenshots en docs/screenshots/sprint-2b-close/ |
-| ~~SP-3B-CLOSE-3~~             | ~~Test Manual del Dev~~ DIFERIDO a SP-4B phase-03b bloque 4 (Renzo + equipo) | (0h aquí)           | 🟢 Diferida   | —      | —        | Decisión 22-05-2026                                                                      |
-| SP-3B-CLOSE-4                 | Corrección de Bugs detectados                                                | (variable)          | 🟢 Completada | —      | —        | BUG-2B-01 editButtonLabel · BUG-2B-02 Zod defense-in-depth · BUG-2B-03 empty state donut |
-| SP-3B-CLOSE-5                 | Cierre: PR a developer + bump v0.2.8 + hand-off SP-4B phase-03b              | 1h                  | 🔘 Pendiente  | —      | —        | Pendiente orden usuario. E2E VPS post-merge condicional                                  |
-| **Subtotal cierre Sprint 2B** |                                                                              | **4h 30min + bugs** |               | —      | —        | CLOSE-1/2/4 🟢 · CLOSE-5 🔘 pendiente push + PR                                          |
+| ID                            | Tarea                                                                        | Estimación          | Estado         | ⏱ Push | ⏱ Cierre | Notas                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------- | ------------------- | -------------- | ------ | -------- | -------------------------------------------------------------------------------------------- |
+| SP-3B-CLOSE-1                 | Auto test (typecheck + lint + build + Vitest)                                | 1h 30min            | 🟢 Completada  | —      | —        | 193/193 tests verdes. Lint 116 err preexistentes (0 nuevos Sprint 2B)                        |
+| SP-3B-CLOSE-2                 | E2C Local + WCAG 2.2 AA (Playwright)                                         | 2h 30min            | 🟢 Completada  | —      | —        | 7/7 specs verdes · commit `9d4d36b` · 4 screenshots en docs/screenshots/sprint-2b-close/     |
+| ~~SP-3B-CLOSE-3~~             | ~~Test Manual del Dev~~ DIFERIDO a SP-4B phase-03b bloque 4 (Renzo + equipo) | (0h aquí)           | 🟢 Diferida    | —      | —        | Decisión 22-05-2026                                                                          |
+| SP-3B-CLOSE-4                 | Corrección de Bugs detectados                                                | (variable)          | 🟢 Completada  | —      | —        | BUG-2B-01 editButtonLabel · BUG-2B-02 Zod defense-in-depth · BUG-2B-03 empty state donut     |
+| SP-3B-CLOSE-5                 | Cierre: PR a developer + bump v0.2.8 + hand-off SP-4B phase-03b              | 1h                  | 🔵 Subida rama | 15min  | —        | PR #13 abierto a developer · pendiente OK merge usuario + autodeploy VPS + E2E + bump v0.2.8 |
+| **Subtotal cierre Sprint 2B** |                                                                              | **4h 30min + bugs** |                | 15min  | —        | CLOSE-1/2/4 🟢 · CLOSE-5 🔵 PR #13 abierto · pendiente merge + E2E VPS                       |
 
 ---
 
