@@ -91,27 +91,30 @@ export async function OverviewSection({
         editButtonLabel="Personalizar Overview"
       />
 
-      {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution.
-       * title={false} oculta el h1 "Análisis Visual" interno (redundante porque
-       * ya hay h2 "Resumen general" arriba del OverviewSection — fix BUG-2B-05).
-       * editButtonLabel evita conflicto con el "Personalizar Gráficos" de la
-       * SummarySection inferior (fix BUG-2B-04). */}
-      <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="lg:col-span-2">
-          <ChartManager
-            tenant={tenantConfig}
-            initialCharts={mergedCharts}
-            data={chartData}
-            isAdmin={isAdmin}
-            configKey="overview_charts"
-            filters={filters}
-            title={false}
-            editButtonLabel="Personalizar Overview Gráficos"
-          />
-        </div>
-        <div className="bg-card rounded-2xl border p-6">
-          <OverviewCanalDistribution kpi={kpi} />
-        </div>
+      {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution
+       * inyectado vía `extraSlot` para que viva en el MISMO grid 12-col (forma
+       * un 2x2 limpio en desktop). Antes la canal-distribution iba en un grid
+       * externo aparte y quedaba siempre debajo (UX feedback Bloque A 25-05).
+       * title={false} oculta el h1 "Análisis Visual" interno (fix BUG-2B-05).
+       * editButtonLabel evita duplicado con el "Personalizar Gráficos" del
+       * Análisis Visual (fix BUG-2B-04). */}
+      <div className="mt-8">
+        <ChartManager
+          tenant={tenantConfig}
+          initialCharts={mergedCharts}
+          data={chartData}
+          isAdmin={isAdmin}
+          configKey="overview_charts"
+          filters={filters}
+          title={false}
+          editButtonLabel="Personalizar Overview Gráficos"
+          extraSlot={
+            <div className="bg-card h-full rounded-2xl border p-6">
+              <OverviewCanalDistribution kpi={kpi} />
+            </div>
+          }
+          extraSlotSize="6"
+        />
       </div>
     </section>
   );

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { ChartConfig, Tenant } from "@/types/tenant";
 import { AnalyticsFilters, ChartRow } from "@/lib/actions/analytics";
+import { RevealOnScroll } from "@/components/common/RevealOnScroll";
 import {
   AreaChartComponent,
   VerticalBarChart,
@@ -73,6 +74,7 @@ interface SortableChartProps {
 
 function SortableChartItem({
   c,
+  idx,
   isEditing,
   cycleSize,
   updateChart,
@@ -84,6 +86,73 @@ function SortableChartItem({
     id: c.id,
     disabled: !isEditing,
   });
+
+  // Sprint 2B mejora UX (Bloque A feedback 25-05): fade-in + translate-y on-scroll
+  // con cascada por idx. Respeta prefers-reduced-motion (WCAG 2.3.3).
+  // Se desactiva durante edit mode para no interferir con DnD transform.
+  //
+  // IMPORTANTE: el dashboard layout tiene el scroll en <main class="overflow-y-auto">,
+  // no en window. El IntersectionObserver necesita `root` = ese <main> para detectar
+  // visibilidad correcta. Si root=null usaría window y nunca dispararía para charts
+  // que están dentro del area scrollable pero offscreen del main.
+  const revealRef = useRef<HTMLDivElement | null>(null);
+  // Lazy initializer: si edit mode O reduced-motion → arrancar ya revelado.
+  const [revealed, setRevealed] = useState<boolean>(() => {
+    if (isEditing) return true;
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+  useEffect(() => {
+    if (revealed) return;
+    const el = revealRef.current;
+    if (!el) return;
+    // Buscar el ancestro scrollable (main del dashboard layout)
+    const findScrollRoot = (node: HTMLElement | null): Element | null => {
+      let cur: HTMLElement | null = node?.parentElement ?? null;
+      while (cur && cur !== document.body) {
+        const cs = getComputedStyle(cur);
+        if (
+          (cs.overflowY === "auto" || cs.overflowY === "scroll") &&
+          cur.scrollHeight > cur.clientHeight
+        ) {
+          return cur;
+        }
+        cur = cur.parentElement;
+      }
+      return null; // fallback al viewport
+    };
+    const root = findScrollRoot(el);
+    const rootRect = root ? root.getBoundingClientRect() : null;
+    const rect = el.getBoundingClientRect();
+    const delay = Math.min(idx * 90, 480);
+    const alreadyVisible = rootRect
+      ? rect.top < rootRect.bottom && rect.bottom > rootRect.top
+      : rect.top < window.innerHeight && rect.bottom > 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let observer: IntersectionObserver | undefined;
+    if (alreadyVisible) {
+      timer = setTimeout(() => setRevealed(true), delay);
+    } else {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && observer) {
+              timer = setTimeout(() => setRevealed(true), delay);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { root, threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+      );
+      observer.observe(el);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
+  }, [idx, revealed]);
+  // Edit mode siempre fuerza revelado (sin setState en effect: derivamos directo).
+  const effectiveRevealed = revealed || isEditing;
 
   const colSpanClass =
     c.size === "12"
@@ -113,15 +182,24 @@ function SortableChartItem({
 
   const transformStr = transform ? CSS.Translate.toString(transform) : undefined;
 
+  // Combinar refs: setNodeRef de dnd-kit + revealRef de IntersectionObserver.
+  const setRefs = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    revealRef.current = node;
+  };
+
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       className={cn(
         colSpanClass,
-        "group relative transition-all duration-300",
+        "group relative transition-all duration-700 ease-out will-change-[opacity,transform]",
         isDragging && "opacity-50",
         transformStr && `[transform:${transformStr}]`,
-        transition && `[transition:${transition}]`
+        transition && `[transition:${transition}]`,
+        // on-scroll fade-in (sólo cuando NO se edita para no chocar con dnd-kit transform)
+        !effectiveRevealed && "translate-y-6 opacity-0",
+        effectiveRevealed && "translate-y-0 opacity-100"
       )}
     >
       <div
@@ -211,8 +289,18 @@ export function ChartManager({
   configKey = "charts",
   title,
   editButtonLabel,
+  extraSlot,
+  extraSlotSize = "6",
 }: Props) {
   const editLabel = editButtonLabel ?? "Personalizar Gráficos";
+  const extraSlotColSpan =
+    extraSlotSize === "12"
+      ? "lg:col-span-12"
+      : extraSlotSize === "8"
+        ? "lg:col-span-8"
+        : extraSlotSize === "4"
+          ? "lg:col-span-4"
+          : "lg:col-span-6";
   const [isEditing, setIsEditing] = useState(false);
   const [charts, setCharts] = useState<ChartConfig[]>(initialCharts);
   const [saving, setSaving] = useState(false);
@@ -382,6 +470,15 @@ export function ChartManager({
                 />
               ))}
           </SortableContext>
+          {/* Sprint 2B mejora UX: slot extra (no draggable, no editable) integrado en el
+           * mismo grid 12-col que los charts dynamic. Permite a OverviewSection meter
+           * <OverviewCanalDistribution /> alineado con "Leads por tipo" (no debajo).
+           * Animado on-scroll igual que los SortableChartItem. */}
+          {extraSlot && (
+            <RevealOnScroll delay={Math.min(charts.length * 90, 540)} className={extraSlotColSpan}>
+              {extraSlot}
+            </RevealOnScroll>
+          )}
         </div>
       </DndContext>
 
@@ -913,4 +1010,11 @@ interface Props {
   // evitar duplicado visual cuando hay 2 instancias de ChartManager en la
   // misma página (OverviewSection + Análisis Visual de SummarySection).
   editButtonLabel?: string;
+  // Sprint 2B mejora UX: slot extra renderizado al final del grid 12-col interno.
+  // Usado por OverviewSection para incluir <OverviewCanalDistribution /> en el
+  // mismo grid que los 3 charts dynamic (en lugar de en un grid externo aparte
+  // donde quedaba siempre debajo). Se le aplica el mismo col-span que la prop
+  // `extraSlotSize` indique (default "6" = mitad).
+  extraSlot?: ReactNode;
+  extraSlotSize?: "4" | "6" | "8" | "12";
 }
