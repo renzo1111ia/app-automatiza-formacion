@@ -427,6 +427,32 @@ test.describe("sprint-2b-close deep checks pre-PR @deep", () => {
     expect(h2Texts.some((t) => t.includes("Resumen"))).toBe(true);
   });
 
+  test("2B-18: BUG-2B-07 fix — 3 charts Overview con xKey lead.* renderizan datos (no 'sin datos')", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    // Forzar preset con datos suficientes (30d cubre el seed local)
+    await page.goto("/dashboard?preset=30d", { waitUntil: "domcontentloaded" });
+    await page.getByText("Resumen general", { exact: false }).first().waitFor({ timeout: 20_000 });
+    await page.waitForTimeout(2500); // Suspense streaming charts
+
+    const overviewChartTitles = ["Leads ingresados por día", "Leads por origen", "Leads por tipo"];
+
+    for (const title of overviewChartTitles) {
+      const chart = page.getByRole("img", { name: new RegExp(`^Gráfico: ${title}`) }).first();
+      await chart.waitFor({ state: "visible", timeout: 10_000 });
+      const aria = (await chart.getAttribute("aria-label")) ?? "";
+      // Si sigue 'sin datos' el bug volvió. Esperamos "N puntos de datos" o "Total: N"
+      expect(
+        aria.includes("sin datos") === false,
+        `Chart "${title}" debe tener datos (aria-label: "${aria}")`
+      ).toBe(true);
+      expect(aria, `Chart "${title}" debe describir N puntos/total`).toMatch(
+        /puntos de datos|Total:/
+      );
+    }
+  });
+
   test("2B-17: BUG-2B-04 fix — labels 'Personalizar Gráficos' distintos entre Overview y Análisis Visual", async ({
     page,
   }) => {

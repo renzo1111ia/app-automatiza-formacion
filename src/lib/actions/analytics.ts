@@ -1050,6 +1050,12 @@ export async function getDynamicChartSeries(
         if (xTable === baseTable) selectFields.add(xCol);
         if (useYCol && yTable === baseTable) selectFields.add(yCol);
         if (baseTable !== "lead") selectFields.add("id_lead");
+        // Fix BUG-2B-07 (E2E 25-05-2026): cuando baseTable=lead necesitamos `id`
+        // para que el manual join `rows.filter(r => leadsMap.has(r.id))` funcione.
+        // Sin esto, todas las charts con xKey="lead.*" devolvían series=[] (afectaba
+        // a 3 charts del Overview + 3 del Análisis Visual con xKey lead.origen,
+        // lead.tipo_lead, lead.fecha_ingreso_crm).
+        if (baseTable === "lead") selectFields.add("id");
         selectFields.add(timeCol);
 
         let q = (supabase.from(baseTable as any) as any)
