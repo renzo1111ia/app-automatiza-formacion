@@ -193,7 +193,7 @@ export default async function WhatsappPage({
   const isAdmin = await getAdminStatus();
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6 pb-10">
+    <div className="w-full space-y-6 pb-10">
       <FilterBar />
 
       {/* KPI Cards */}

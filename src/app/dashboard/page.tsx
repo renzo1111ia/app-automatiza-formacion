@@ -175,7 +175,7 @@ export default async function DashboardPage({
   const [availableCampaigns, isAdmin] = await Promise.all([getUniqueCampaigns(), getAdminStatus()]);
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6 pb-10">
+    <div className="w-full space-y-6 pb-10">
       {isAdmin && <TenantSetupBanner />}
 
       <FilterBar availableCampaigns={availableCampaigns} />
