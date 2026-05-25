@@ -2,15 +2,15 @@
 
 **AI CRM + Workflow Orchestrator multi-tenant para academias formativas** (sector formación, España + Latam).
 
-| Campo           | Valor                                                                                                                                                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.2.7` en `developer` (Sprint 2 cerrado 24-05-2026 con hotfix BUG-2-01 + Node 20 pin). Próximo bump: `v0.2.8` al cerrar Sprint 2B Dashboard KPIs (Jue 28-05). Roadmap MVP: Sprint 3=`v0.3.0-rc.1` (12-06), MVP GA=`v0.3.0` (22-06). |
-| Estado          | 🟢 **Sprint 2 CERRADO** v0.2.7 (HubSpot + Zoho + UI admin + 5/5 E2E VPS). 🚀 **Próximo: Sprint 2B Dashboard KPIs** Mar 26-05 → Jue 28-05-2026 (3d, v0.2.8, zero-migration extendiendo /dashboard).                                    |
-| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy desde `developer`. Sprint 2 v0.2.7 verificado en VPS (5/5 specs Playwright verdes). Migración Node 22 LTS planificada en Sprint 3 phase-03.                                      |
-| Target MVP      | `v0.3.0` GA — **estim. Lun 22-06-2026** (replanteo 24-05 −7 sem por ratio real Sprints 0/1/2 −91% a −94%). Calendario: Sprint 2B 26-28/05 · Sprint 3 29/05–12/06 · SP-4B Renzo 16-19/06 · MVP GA 22/06.                               |
-| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                            |
-| Rama de trabajo | Pendiente crear: `feature/sprint-03-dashboard-kpis-overview` para Sprint 2B (parte de `developer`).                                                                                                                                   |
-| Plan Sprint 2B  | [`plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/plan.md`](plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/plan.md) (7 phase files, decisión arquitectónica zero-migration extender /dashboard).                             |
+| Campo           | Valor                                                                                                                                                                                                                                                           |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Versión         | `v0.2.8` en `developer` (Sprint 2B cerrado 25-05-2026 — Dashboard KPIs Overview vista de conjunto, 15/15 E2E VPS verdes). Próximo bump: `v0.3.0-rc.1` al cerrar Sprint 3 Hardening (12-06). Roadmap MVP: SP-4B Validación (16-19/06) → MVP GA `v0.3.0` (22-06). |
+| Estado          | 🟢 **Sprint 2B CERRADO** v0.2.8 (Dashboard KPIs Overview cross-canal + KPI Builder + WCAG 2.2 AA preventivo + 15/15 E2E VPS verdes). 🚀 **Próximo: Sprint 3 Hardening** Vie 29-05 → Vie 12-06-2026 (~112-144h, v0.3.0-rc.1).                                    |
+| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy Dokploy desde `developer`. Sprint 2B v0.2.8 verificado en VPS (**15/15 specs Playwright verdes**, 1m 30s). Migración Node 22 LTS planificada en Sprint 3 phase-03.                                         |
+| Target MVP      | `v0.3.0` GA — **estim. Lun 22-06-2026** (replanteo 24-05 −7 sem por ratio real Sprints 0/1/2/2B −86% a −94%). Calendario: Sprint 3 29/05–12/06 · SP-4B Renzo 16-19/06 · MVP GA 22/06.                                                                           |
+| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) · Retell · Ultravox                                                                                      |
+| Rama de trabajo | Pendiente crear: `feature/sprint-03-hardening` para Sprint 3 (parte de `developer`).                                                                                                                                                                            |
+| Plan Sprint 3   | [`plans/260520-1342-sprint-3-hardening/plan.md`](plans/260520-1342-sprint-3-hardening/plan.md) (9 phase files incluyendo nueva SP-4-NEW-13 endpoints `/api/health` + `/api/version` tras fricción ETag opaco detectada en Sprint 2B CLOSE-5).                   |
 
 > ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
 
@@ -98,22 +98,22 @@ Para que se activen al clonar: `npm install` corre `prepare: husky` automáticam
 
 > 📊 **Vista live**: [`plans/RoadMap.md`](plans/RoadMap.md) — se actualiza con cada cambio de estado de tarea.
 
-| Sprint                            | Versión                             | Estado                | Notas                                                                                                                                                                                    |
-| --------------------------------- | ----------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0 Hotfixes seguridad              | `v0.1.0`                            | 🟢 Completado         | Tag v0.1.0 en `a387dfe` (PR #2). 26 tareas locales · 2 diferidas a pre-deploy VPS. ~11h efectivas vs 118h estim                                                                          |
-| 1 Capa datos                      | `v0.2.0`                            | 🟢 Completado         | Mergeado a developer vía PR #5 (`94c035a`). 24 tareas · 8 diferidas · 6 ADRs (014-019) · 58 tests Vitest. ~12h efectivas vs 205h estim                                                   |
-| Autoexec doc-agent + empty-states | —                                   | 🟢 Completado         | 4 commits directos a developer 24-05-2026: 70 alerts→toast, EmptyState, web_widgets fix, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher.cjs`                              |
-| **2 HubSpot + Zoho**              | `v0.2.5`                            | 🔵 **PR #12 abierto** | Branch `feature/sprint-02-adapter-hubspot-zoho`. PR #12 a developer, pendiente merge. 170 tests verdes + build. [Plan completo](plans/260524-1330-sprint-2-adapter-hubspot-zoho/plan.md) |
-| 2B Dashboard KPIs MVP             | `v0.2.7`                            | 🔘 Pendiente          | Post Sprint 2. 16-24h. Requirement Bea: dashboard KPIs agregado configurable                                                                                                             |
-| 3 Hardening                       | `v0.3.0-rc.1` / **`v0.3.0` MVP GA** | 🔘 Pendiente          | Tests E2E, observabilidad, accesibilidad WCAG 2.2 AA total. RC en Sprint 3, GA en SP-4B Validación pre-MVP.                                                                              |
-| 4 Post-MVP                        | `v0.4.0+`                           | 🔘 Pendiente          | Google Sheets bidireccional · Salesforce · GoHighLevel · ActiveCampaign · Costes-LLM                                                                                                     |
+| Sprint                            | Versión                             | Estado            | Notas                                                                                                                                                                                                                                   |
+| --------------------------------- | ----------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Hotfixes seguridad              | `v0.1.0`                            | 🟢 Completado     | Tag v0.1.0 en `a387dfe` (PR #2). 26 tareas locales · 2 diferidas a pre-deploy VPS. ~11h efectivas vs 118h estim                                                                                                                         |
+| 1 Capa datos                      | `v0.2.0`                            | 🟢 Completado     | Mergeado a developer vía PR #5 (`94c035a`). 24 tareas · 8 diferidas · 6 ADRs (014-019) · 58 tests Vitest. ~12h efectivas vs 205h estim                                                                                                  |
+| Autoexec doc-agent + empty-states | —                                   | 🟢 Completado     | 4 commits directos a developer 24-05-2026: 70 alerts→toast, EmptyState, web_widgets fix, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher.cjs`                                                                             |
+| 2 HubSpot + Zoho                  | `v0.2.7`                            | 🟢 Completado     | PR #12 mergeado (`a826fd6`) + hotfix BUG-2-01 slug conflict. 170 tests + 5/5 E2E VPS verdes. [Release v0.2.7](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.7)                                |
+| **2B Dashboard KPIs Overview**    | `v0.2.8`                            | 🟢 **Completado** | PR #13 mergeado (`17b2902`) + bump v0.2.8 (`bbcbfd0`). 193 Vitest + **15/15 E2E VPS verdes**. 3 bugs resueltos. Ratio −86%. [Release v0.2.8](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.8) |
+| 3 Hardening                       | `v0.3.0-rc.1` / **`v0.3.0` MVP GA** | 🔘 Pendiente      | Tests E2E, observabilidad, accesibilidad WCAG 2.2 AA total. RC en Sprint 3, GA en SP-4B Validación pre-MVP.                                                                                                                             |
+| 4 Post-MVP                        | `v0.4.0+`                           | 🔘 Pendiente      | Google Sheets bidireccional · Salesforce · GoHighLevel · ActiveCampaign · Costes-LLM                                                                                                                                                    |
 
 ---
 
 ## Decisiones cerradas que conviene conocer
 
 1. **Sin ORM nuevo.** Capa de datos = `@supabase/ssr` + Zod + Repository pattern. No Prisma, no Drizzle.
-2. **Sin Dokploy, sin Airtable.** Infra = Easypanel + Supabase self-hosted.
+2. **Sin Airtable.** Infra = **Dokploy** (`panel.automatizaformacion.com`) + Supabase self-hosted en VPS Hetzner.
 3. **Test con BD real** en integración. NO mocks de Supabase.
 4. **Co-autoría de commits**: humanos sí, IA NO.
 5. **Local-first**: typecheck/lint/build/test en local (hooks). CI en GH Actions minimal (tier gratis 2000 min/mes).
