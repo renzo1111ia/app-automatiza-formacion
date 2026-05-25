@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ChartConfig, Tenant } from "@/types/tenant";
 import { AnalyticsFilters, ChartRow } from "@/lib/actions/analytics";
 import {
@@ -210,7 +210,9 @@ export function ChartManager({
   isAdmin,
   configKey = "charts",
   title,
+  editButtonLabel,
 }: Props) {
+  const editLabel = editButtonLabel ?? "Personalizar Gráficos";
   const [isEditing, setIsEditing] = useState(false);
   const [charts, setCharts] = useState<ChartConfig[]>(initialCharts);
   const [saving, setSaving] = useState(false);
@@ -290,11 +292,7 @@ export function ChartManager({
   return (
     <div className="relative mb-10">
       <div className="mb-8 flex items-center justify-between">
-        {title ? (
-          <h2 className="text-[12px] font-bold tracking-[0.15em] text-slate-400 uppercase">
-            {title}
-          </h2>
-        ) : (
+        {title === undefined ? (
           <div className="flex items-center gap-4">
             <div className="rounded-[20px] bg-indigo-50 p-3 dark:bg-indigo-900/20">
               <PieChart className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
@@ -308,6 +306,12 @@ export function ChartManager({
               </p>
             </div>
           </div>
+        ) : title === false || title === null ? null : typeof title === "string" ? (
+          <h2 className="text-[12px] font-bold tracking-[0.15em] text-slate-400 uppercase">
+            {title}
+          </h2>
+        ) : (
+          title
         )}
 
         {isAdmin && (
@@ -343,7 +347,7 @@ export function ChartManager({
                 onClick={() => setIsEditing(true)}
                 className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
               >
-                <Settings className="h-4 w-4" /> Personalizar Gráficos
+                <Settings className="h-4 w-4" /> {editLabel}
               </button>
             )}
           </div>
@@ -900,5 +904,13 @@ interface Props {
   isAdmin: boolean;
   filters?: AnalyticsFilters;
   configKey?: string;
-  title?: string;
+  // Sprint 2B fix BUG-2B-05: `title === undefined` → render default h1 interno
+  // "Análisis Visual". `title === false` / null → ocultar (caller renderiza su
+  // propio heading externo, e.g. OverviewSection). Cualquier otro valor (string
+  // o ReactNode) se renderiza como h2 minor uppercase.
+  title?: ReactNode | false;
+  // Sprint 2B fix BUG-2B-04: parametrizar label del botón Personalizar para
+  // evitar duplicado visual cuando hay 2 instancias de ChartManager en la
+  // misma página (OverviewSection + Análisis Visual de SummarySection).
+  editButtonLabel?: string;
 }

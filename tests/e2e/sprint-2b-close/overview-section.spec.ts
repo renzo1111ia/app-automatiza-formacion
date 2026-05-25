@@ -404,4 +404,60 @@ test.describe("sprint-2b-close deep checks pre-PR @deep", () => {
     console.log(`[2B-15] GET /api/integrations → ${response.status()}`);
     expect([200, 401]).toContain(response.status());
   });
+
+  test("2B-16: BUG-2B-05/06 fix — h1 únicos sin duplicados + sin h2 'OVERVIEW' redundante", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page.getByText("Resumen general", { exact: false }).first().waitFor({ timeout: 20_000 });
+
+    // h1 únicos — el bug previo tenía 2× "Métricas Generales" + total 4 h1
+    const h1Texts = await page.locator("h1").allTextContents();
+    const h1Trimmed = h1Texts.map((t) => t.trim());
+    const duplicates = h1Trimmed.filter((t, i, arr) => arr.indexOf(t) !== i);
+    expect(duplicates, `h1 duplicados detectados: ${duplicates.join(", ")}`).toEqual([]);
+
+    // No debe existir h2 "OVERVIEW" en mayúsculas (era el SectionHeader redundante
+    // generado por DEFAULT_OVERVIEW_KPIS.group="OVERVIEW")
+    const h2Texts = await page.locator("h2").allTextContents();
+    const overviewH2 = h2Texts.find((t) => t.trim() === "OVERVIEW");
+    expect(overviewH2, "h2 'OVERVIEW' redundante NO debe existir").toBeUndefined();
+
+    // h2 "Resumen general" SÍ debe existir (es el heading semántico del OverviewSection)
+    expect(h2Texts.some((t) => t.includes("Resumen"))).toBe(true);
+  });
+
+  test("2B-17: BUG-2B-04 fix — labels 'Personalizar Gráficos' distintos entre Overview y Análisis Visual", async ({
+    page,
+  }) => {
+    await loginAsAdmin(page);
+    await page
+      .getByText("Personalizar Overview Gráficos", { exact: false })
+      .first()
+      .waitFor({ timeout: 20_000 });
+
+    const bodyText = (await page.locator("body").textContent()) ?? "";
+
+    // El nuevo label del Overview ChartManager
+    expect(
+      bodyText.includes("Personalizar Overview Gráficos"),
+      "Label nuevo 'Personalizar Overview Gráficos' debe existir"
+    ).toBe(true);
+
+    // El label genérico debe seguir coexistiendo (Análisis Visual del Summary)
+    expect(
+      bodyText.includes("Personalizar Gráficos"),
+      "Label genérico 'Personalizar Gráficos' debe coexistir (Análisis Visual del Summary)"
+    ).toBe(true);
+
+    // Y no debe haber DOS botones idénticos "Personalizar Gráficos" exactos
+    // (esto requiere distinguir entre "Personalizar Gráficos" y "Personalizar Overview Gráficos")
+    const exactMatches = await page
+      .locator("button", { hasText: /^[\s]*Personalizar Gráficos[\s]*$/ })
+      .count();
+    expect(
+      exactMatches,
+      `Solo 1 botón exacto 'Personalizar Gráficos' (Análisis Visual). Encontrados: ${exactMatches}`
+    ).toBeLessThanOrEqual(1);
+  });
 });

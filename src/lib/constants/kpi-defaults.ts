@@ -184,6 +184,10 @@ export const DEFAULT_SUMMARY_KPIS: KpiConfig[] = [
  * Si el tenant no tiene config.overview_kpis → fallback a este array.
  */
 export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
+  // Sin `group` intencionalmente — los 4 KPI hero del Overview NO deben renderizar
+  // un <SectionHeader> con un h2 redundante encima ("OVERVIEW" mayúsculas era
+  // ruido visual + inconsistente con el h2 "Resumen general" del OverviewSection).
+  // Fix BUG-2B-06 (E2E 25-05-2026).
   {
     id: "ov-total-leads",
     label: "Total Leads",
@@ -192,7 +196,6 @@ export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
     size: "3",
     staticKey: "total_leads",
     isVisible: true,
-    group: "OVERVIEW",
     order: 1,
   },
   {
@@ -203,7 +206,6 @@ export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
     size: "3",
     staticKey: "total_contactados",
     isVisible: true,
-    group: "OVERVIEW",
     order: 2,
   },
   {
@@ -214,7 +216,6 @@ export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
     size: "3",
     staticKey: "total_cualificados",
     isVisible: true,
-    group: "OVERVIEW",
     order: 3,
   },
   {
@@ -225,7 +226,6 @@ export const DEFAULT_OVERVIEW_KPIS: KpiConfig[] = [
     size: "3",
     staticKey: "tiempo_ahorrado_formateado",
     isVisible: true,
-    group: "OVERVIEW",
     order: 4,
   },
 ];

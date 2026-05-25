@@ -87,11 +87,15 @@ export async function OverviewSection({
         from={from}
         to={to}
         filters={filters}
-        title={null}
+        title={false}
         editButtonLabel="Personalizar Overview"
       />
 
-      {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution */}
+      {/* 4 charts default: 3 dynamic vía ChartManager + 1 custom canal distribution.
+       * title={false} oculta el h1 "Análisis Visual" interno (redundante porque
+       * ya hay h2 "Resumen general" arriba del OverviewSection — fix BUG-2B-05).
+       * editButtonLabel evita conflicto con el "Personalizar Gráficos" de la
+       * SummarySection inferior (fix BUG-2B-04). */}
       <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="lg:col-span-2">
           <ChartManager
@@ -101,7 +105,8 @@ export async function OverviewSection({
             isAdmin={isAdmin}
             configKey="overview_charts"
             filters={filters}
-            title="Gráficos Overview"
+            title={false}
+            editButtonLabel="Personalizar Overview Gráficos"
           />
         </div>
         <div className="bg-card rounded-2xl border p-6">

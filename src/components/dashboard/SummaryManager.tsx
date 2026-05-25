@@ -105,7 +105,10 @@ interface Props {
   dynamicValues: Record<string, number>;
   isAdmin: boolean;
   configKey?: string;
-  title?: ReactNode;
+  // Sprint 2B fix BUG-2B-05: `title === undefined` → render default h1 interno.
+  // `title === null` / `false` / <></> → ocultar (caller ya renderiza su propio
+  // heading externo, e.g. OverviewSection con su h2 "Resumen general").
+  title?: ReactNode | false;
   from?: string;
   to?: string;
   filters?: AnalyticsFilters;
@@ -449,9 +452,7 @@ export function SummaryManager({
     <div className="relative mb-10">
       {layout !== "funnel" ? (
         <div className="mb-8 flex items-center justify-between">
-          {title ? (
-            title
-          ) : (
+          {title === undefined ? (
             <div className="flex items-center gap-4">
               <div className="rounded-[20px] bg-blue-50 p-3 dark:bg-blue-900/20">
                 <TrendingUp className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -465,6 +466,8 @@ export function SummaryManager({
                 </p>
               </div>
             </div>
+          ) : (
+            title || null
           )}
 
           {isAdmin && (
