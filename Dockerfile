@@ -40,6 +40,17 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build metadata para endpoint /api/version (SP-4-NEW-13). Inyectados por Dokploy
+# en el `docker build --build-arg` o equivalente. Sin valor → fallback "unknown".
+# Permite verificar post-deploy que el VPS sirve el commit esperado:
+#   curl https://dev.automatizaformacion.com/api/version
+ARG GIT_COMMIT_SHA
+ARG GIT_BRANCH
+ARG BUILD_TIMESTAMP
+ENV GIT_COMMIT_SHA=${GIT_COMMIT_SHA}
+ENV GIT_BRANCH=${GIT_BRANCH}
+ENV BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
