@@ -158,7 +158,7 @@ export function SummaryCard({ label, value, sub, icon }: SummaryCardProps) {
 export function HorizontalBarChart({ title, data }: { title: string; data: ChartRow[] }) {
   return (
     <ChartCard title={title}>
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: -10, right: 20 }}>
           <CartesianGrid strokeDasharray="0" horizontal={false} stroke="#f1f5f9" />
           <XAxis
@@ -197,7 +197,7 @@ export function VerticalBarChart({ title, data }: { title: string; data: ChartRo
   const dynamicBarSize = data.length <= 3 ? 56 : data.length <= 6 ? 36 : 22;
   return (
     <ChartCard title={title}>
-      <div className="flex h-[260px] gap-3">
+      <div className="flex h-full min-h-[260px] gap-3">
         <div className="min-w-0 flex-1">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 8, bottom: 40, left: -20 }}>
@@ -276,7 +276,7 @@ export function DonutChart({
 
   return (
     <ChartCard title={title}>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height="100%" minHeight={280}>
         <PieChart>
           <Pie
             data={pie}
@@ -328,7 +328,7 @@ export function DonutChart({
 export function AreaChartComponent({ title, data }: { title: string; data: ChartRow[] }) {
   return (
     <ChartCard title={title}>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height="100%" minHeight={280}>
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -491,13 +491,17 @@ export function HeatmapChartComponent({
 }
 
 /* ── Chart Card wrapper ────────────────────── */
+// Sprint 2B mejora UX (Bloque A feedback 2 25-05): h-full + flex-col para que
+// cada card ocupe la altura completa de su cell del grid (auto-rows-fr alinea
+// todas las cards de la misma fila). El chart interno usa flex-1 + ResponsiveContainer
+// height="100%" para llenar el espacio restante tras el <h3>.
 function ChartCard({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="border-border bg-card rounded-3xl border p-7 shadow-sm">
+    <div className="border-border bg-card flex h-full flex-col rounded-3xl border p-7 shadow-sm">
       <h3 className="text-muted-foreground mb-6 text-sm font-black tracking-widest uppercase">
         {title}
       </h3>
-      {children}
+      <div className="min-h-[260px] flex-1">{children}</div>
     </div>
   );
 }

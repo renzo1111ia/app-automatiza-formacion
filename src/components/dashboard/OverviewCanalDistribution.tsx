@@ -41,8 +41,11 @@ export function OverviewCanalDistribution({ kpi }: { kpi: KpiGenerales }) {
     <div
       role="img"
       aria-label={`Distribución por canal: ${llamadas} llamadas y ${whatsapp} conversaciones de WhatsApp. Web tracking en desarrollo.`}
+      className="flex h-full flex-col"
     >
-      <DonutChart title="Distribución por canal" data={data} centerLabel="Canales" />
+      <div className="flex-1">
+        <DonutChart title="Distribución por canal" data={data} centerLabel="Canales" />
+      </div>
       <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
         <Info className="h-3.5 w-3.5" aria-hidden="true" />
         Web tracking en desarrollo (disponible post-MVP)

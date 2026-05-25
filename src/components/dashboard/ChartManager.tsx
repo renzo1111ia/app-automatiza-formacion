@@ -448,7 +448,7 @@ export function ChartManager({
         onDragEnd={handleDragEnd}
         modifiers={[restrictToFirstScrollableAncestor]}
       >
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid auto-rows-fr grid-cols-1 gap-6 lg:grid-cols-12">
           <SortableContext
             items={charts.filter((c) => isEditing || c.isVisible !== false).map((c) => c.id)}
             strategy={rectSortingStrategy}
