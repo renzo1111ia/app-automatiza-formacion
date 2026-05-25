@@ -210,7 +210,7 @@ export function HistorialColumnManager({
             Configuración de Columnas
           </h3>
           <p className="text-muted-foreground mt-1 text-[10px] font-bold tracking-widest uppercase">
-            Personaliza los encabezados y campos visibles en el Historial
+            Personaliza los encabezados y campos visibles en Leads
           </p>
         </div>
         <div className="flex items-center gap-2">

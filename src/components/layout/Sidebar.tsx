@@ -129,7 +129,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />,
       },
       {
-        label: "Historial",
+        label: "Tabla Leads",
         href: "/dashboard/historial",
         icon: <History className="h-4 w-4" strokeWidth={1.8} />,
       },
