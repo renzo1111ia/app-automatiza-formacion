@@ -109,7 +109,7 @@ export async function OverviewSection({
           title={false}
           editButtonLabel="Personalizar Overview Gráficos"
           extraSlot={
-            <div className="bg-card h-full rounded-2xl border p-6">
+            <div className="h-full">
               <OverviewCanalDistribution kpi={kpi} />
             </div>
           }

@@ -211,8 +211,11 @@ function SortableChartItem({
         )}
       >
         {/* Sprint 2B phase-06 WCAG 2.2 AA: alternative text para screen readers */}
+        {/* h-full obligatorio: sin él el ChartCard hijo (flex h-full) no se estira al
+            espacio del grid cell con auto-rows-fr y queda en altura natural. */}
         <div
           role="img"
+          className="h-full"
           aria-label={`Gráfico: ${c.title}. ${summarizeChartData(
             (c.type === "heatmap" ? null : (chartData as unknown as ChartRow[])) ?? null
           )}`}
