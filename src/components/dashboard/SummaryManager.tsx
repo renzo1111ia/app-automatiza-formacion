@@ -110,6 +110,9 @@ interface Props {
   to?: string;
   filters?: AnalyticsFilters;
   layout?: "grid" | "funnel";
+  // Sprint 2B: parametrizar label del botón Personalizar para evitar duplicado
+  // visual entre OverviewSection y SummarySection (ambos usan layout=grid).
+  editButtonLabel?: string;
 }
 
 interface SortableKpiProps {
@@ -238,7 +241,10 @@ export function SummaryManager({
   to,
   filters,
   layout = "grid",
+  editButtonLabel,
 }: Props) {
+  const defaultLabel = layout === "funnel" ? "Personalizar Embudo" : "Personalizar Tablero";
+  const editLabel = editButtonLabel ?? defaultLabel;
   const [isEditing, setIsEditing] = useState(false);
   const [kpis, setKpis] = useState<KpiConfig[]>(initialKpis);
   const [saving, setSaving] = useState(false);
@@ -503,9 +509,9 @@ export function SummaryManager({
                 <button
                   onClick={() => setIsEditing(true)}
                   className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
-                  title="Personalizar tablero"
+                  title={editLabel}
                 >
-                  <Settings className="h-4 w-4" /> Personalizar Tablero
+                  <Settings className="h-4 w-4" /> {editLabel}
                 </button>
               )}
             </div>
@@ -538,7 +544,7 @@ export function SummaryManager({
                 onClick={() => setIsEditing(true)}
                 className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
               >
-                <Settings className="h-4 w-4" /> Personalizar Embudo
+                <Settings className="h-4 w-4" /> {editLabel}
               </button>
             )}
           </div>

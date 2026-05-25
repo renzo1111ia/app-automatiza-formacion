@@ -5,6 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
 import { requireEnvAny } from "@/lib/env";
 import { Tenant } from "@/types/tenant";
+import { OverviewKpisArraySchema } from "@/lib/schemas/overview-kpi";
 
 /**
  * Sprint 0 tarea 1-17: gate de admin para server actions sensibles
@@ -346,6 +347,16 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
     if (username !== undefined) newConfig.username = username;
     if (api_type !== undefined) newConfig.api_type = api_type;
 
+    // Sprint 2B: validar overview_kpis si viene en config (max 8 KPIs hero, shape valido).
+    if (newConfig.overview_kpis !== undefined) {
+      const parsed = OverviewKpisArraySchema.safeParse(newConfig.overview_kpis);
+      if (!parsed.success) {
+        return {
+          error: `overview_kpis inválido: ${parsed.error.issues.map((i) => i.message).join(", ")}`,
+        };
+      }
+    }
+
     cleanUpdates.config = newConfig;
 
     const { data, error } = await supabase
@@ -424,6 +435,17 @@ export async function updateTenantConfig(id: string, partialConfig: Record<strin
         }
       } else {
         updatedConfig[key] = val;
+      }
+    }
+
+    // 2.5 Sprint 2B: validar overview_kpis si viene en config (max 8, shape valido).
+    if (updatedConfig.overview_kpis !== undefined) {
+      const parsed = OverviewKpisArraySchema.safeParse(updatedConfig.overview_kpis);
+      if (!parsed.success) {
+        return {
+          success: false,
+          error: `overview_kpis inválido: ${parsed.error.issues.map((i) => i.message).join(", ")}`,
+        };
       }
     }
 

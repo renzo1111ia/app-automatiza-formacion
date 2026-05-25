@@ -29,6 +29,7 @@ import {
   Target,
 } from "lucide-react";
 import { SCHEMA_COLUMNS } from "@/lib/constants/schema";
+import { summarizeChartData } from "@/lib/utils/chart-summary";
 import { cn } from "@/lib/utils";
 import { updateTenant } from "@/lib/actions/tenant";
 import { useRouter } from "next/navigation";
@@ -131,7 +132,15 @@ function SortableChartItem({
           isEditing && c.isVisible === false && "opacity-40 grayscale"
         )}
       >
-        {renderChart()}
+        {/* Sprint 2B phase-06 WCAG 2.2 AA: alternative text para screen readers */}
+        <div
+          role="img"
+          aria-label={`Gráfico: ${c.title}. ${summarizeChartData(
+            (c.type === "heatmap" ? null : (chartData as unknown as ChartRow[])) ?? null
+          )}`}
+        >
+          {renderChart()}
+        </div>
 
         {isEditing && (
           <div className="bg-background/40 border-primary/50 absolute inset-0 z-[50] flex items-center justify-center rounded-[32px] border-2 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100 dark:bg-slate-950/40">
