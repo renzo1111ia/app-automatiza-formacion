@@ -256,11 +256,13 @@ Tags los crea el script `promote.ps1` automáticamente al promocionar a `main`.
 1. **No Co-Authored-By Claude/Anthropic/IA** en commits. Sí humanos.
 2. **No push directo** a `staging` o `main`.
 3. **No `git remote add origin <url-cliente>`**.
-4. **No introducir Prisma, Dokploy, Airtable** — stack ya decidido en audit.
+4. **No introducir Prisma, Dokploy, Airtable, AWS Bedrock** — stack ya decidido en audit.
 5. **`.env` real nunca a git** — sólo `.env.example`.
 6. **RLS obligatorio** en multi-tenant. Hay 4 vulnerabilidades activas detectadas en audit — ver `plans/20260519-1200-rls-multitenant-hardening/`.
 7. **Append-only en sync CRM** por defecto. Sobrescritura sólo con audit trail.
 8. **Tests con BD real**, NO mocks de Supabase.
+9. **Responsive breakpoint del shell = `lg:` (1024px)**, no `md:`. Sidebar / hamburger / bottom nav usan `lg:hidden|lg:flex|max-lg:*`. `md:` queda para tipografía y spacing solo. Tabla completa: [`docs/dev-team-handover.md §4.bis`](dev-team-handover.md#4bis-responsive-breakpoints-tailwind-v4). Probar siempre 375 / 768 / 1024 / 1440 antes de PR.
+10. **PROHIBIDO `any` en TypeScript**. ESLint lo bloquea como `error` y husky aborta tu commit. Usa `unknown` + type guards, `Record<string, unknown>`, generics, interfaces dedicadas o casts puntuales con shape explícito. Guía completa con ejemplos reales: [`docs/architecture/typescript-standards.md`](architecture/typescript-standards.md). **Nunca uses `--no-verify`** para saltarte la regla.
 
 ## 6. Recursos clave
 

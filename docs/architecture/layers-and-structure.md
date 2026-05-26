@@ -9,21 +9,41 @@ status: observed (sin ejecutar build/tests)
 
 ## Stack tecnológico
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Next.js 16.1.6 (App Router) |
-| UI | React 19.2.3 |
-| Lenguaje | TypeScript 5, ESM |
-| Base de datos principal | Supabase (`@supabase/supabase-js ^2.97`) |
-| ORM | **Ninguno** — acceso directo via Supabase JS client y `pg`/`postgres` en scripts |
-| Cola de trabajos | BullMQ 5.73 + ioredis / redis |
-| IA conversacional | LangChain (`@langchain/anthropic`, `@langchain/openai`, `@langchain/google-genai`) |
-| Agentes de voz | Retell (`retell-sdk ^5.12`), Ultravox (custom) |
-| Almacenamiento objetos | MinIO (S3-compatible via `@aws-sdk/client-s3`) |
-| Estilos | Tailwind CSS 4, shadcn/ui, Radix UI |
-| Estado cliente | Zustand 5 |
-| Gráficos | Recharts 3 |
-| Flow Builder | `@xyflow/react` (React Flow 12) |
+| Capa                    | Tecnología                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| Framework               | Next.js 16.1.6 (App Router)                                                        |
+| UI                      | React 19.2.3                                                                       |
+| Lenguaje                | TypeScript 5, ESM                                                                  |
+| Base de datos principal | Supabase (`@supabase/supabase-js ^2.97`)                                           |
+| ORM                     | **Ninguno** — acceso directo via Supabase JS client y `pg`/`postgres` en scripts   |
+| Cola de trabajos        | BullMQ 5.73 + ioredis / redis                                                      |
+| IA conversacional       | LangChain (`@langchain/anthropic`, `@langchain/openai`, `@langchain/google-genai`) |
+| Agentes de voz          | Retell (`retell-sdk ^5.12`), Ultravox (custom)                                     |
+| Almacenamiento objetos  | MinIO (S3-compatible via `@aws-sdk/client-s3`)                                     |
+| Estilos                 | Tailwind CSS 4, shadcn/ui, Radix UI                                                |
+| Estado cliente          | Zustand 5                                                                          |
+| Gráficos                | Recharts 3                                                                         |
+| Flow Builder            | `@xyflow/react` (React Flow 12)                                                    |
+
+---
+
+## Responsive breakpoints (Tailwind v4)
+
+Decisión 26-05-2026 (BUG-3-07 fix, Sprint 3): el dashboard usa **`lg:` (1024px)** como punto de cambio entre layout mobile (drawer + hamburger + bottom nav) y desktop (sidebar fija lateral 256px).
+
+| Tailwind  | min-width  | Uso                                                                             |
+| --------- | ---------- | ------------------------------------------------------------------------------- |
+| `sm:`     | 640px      | Texto inline junto a iconos (`sm:inline`).                                      |
+| `md:`     | 768px      | Tipografía + spacing (`md:h-20`, `md:text-base`, `md:px-6`). **NO** estructura. |
+| **`lg:`** | **1024px** | **Estructura layout**: sidebar visible / hamburger oculto / bottom nav oculta.  |
+| `xl:`     | 1280px     | Ajustes finos opcionales (más columnas en grids).                               |
+| `2xl:`    | 1536px     | Cuidado con `max-w-screen-2xl` en containers.                                   |
+
+**Regla absoluta**: visibilidad del shell (sidebar, hamburger, bottom nav, drawer overlay) usa `lg:hidden` / `lg:flex` / `max-lg:*`. Nunca `md:` para estructura.
+
+**Por qué `lg:1024` y no `xl:1280`**: iPad Pro landscape (1194px) y laptops 13"–14" (1366×768, 1440×900) muestran sidebar nativamente. `xl:1280` dejaría tablets y portátiles pequeños en modo "mobile" — incoherente para B2B.
+
+Detalle ampliado + screenshots de validación: [docs/dev-team-handover.md §4.bis](../dev-team-handover.md#4bis-responsive-breakpoints-tailwind-v4) + [docs/screenshots/sprint-3-close/responsive-fix/](../screenshots/sprint-3-close/responsive-fix/).
 
 ---
 
@@ -211,17 +231,17 @@ Un único alias `@/` que mapea a `src/`. Sin aliases adicionales. Todos los impo
 
 ## Convenciones observadas
 
-| Convención | Estado |
-|---|---|
-| App Router (Next.js 14+) | Sí — `app/` con `layout.tsx`, `page.tsx`, `route.ts` |
-| Server Components por defecto | Sí |
-| Server Actions | Sí — en `src/lib/actions/` |
-| kebab-case para directorios | Sí (voice-agents, web-chatbot, campanas) |
-| PascalCase para componentes | Sí |
-| camelCase para funciones/vars | Sí |
-| Barrel exports (index.ts) | No — imports directos a archivos |
-| Un componente por archivo | Generalmente sí, con excepciones (helpers inline) |
-| Zod para validación de input | Sí (`lib/validations/lead.ts`) pero solo en ingesta |
+| Convención                    | Estado                                               |
+| ----------------------------- | ---------------------------------------------------- |
+| App Router (Next.js 14+)      | Sí — `app/` con `layout.tsx`, `page.tsx`, `route.ts` |
+| Server Components por defecto | Sí                                                   |
+| Server Actions                | Sí — en `src/lib/actions/`                           |
+| kebab-case para directorios   | Sí (voice-agents, web-chatbot, campanas)             |
+| PascalCase para componentes   | Sí                                                   |
+| camelCase para funciones/vars | Sí                                                   |
+| Barrel exports (index.ts)     | No — imports directos a archivos                     |
+| Un componente por archivo     | Generalmente sí, con excepciones (helpers inline)    |
+| Zod para validación de input  | Sí (`lib/validations/lead.ts`) pero solo en ingesta  |
 
 ---
 

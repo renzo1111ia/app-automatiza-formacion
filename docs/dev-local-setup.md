@@ -147,7 +147,6 @@ Borra cookies del browser para `localhost:8500` y vuelve a login.
 
 - **Voice (Retell/Ultravox)**: necesitan API keys + webhooks publicos (ngrok o similar)
 - **CRMs (HubSpot/Zoho)**: requieren OAuth apps creadas + redirect URI publica
-- **Bedrock**: requiere autorizacion explicita y AWS creds
 - **Email transactional**: no hay provider configurado por defecto
 
 Estas features fallan al usarse pero la app arranca y deja navegar el dashboard, ver leads demo, etc.

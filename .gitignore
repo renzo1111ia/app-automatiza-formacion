@@ -74,6 +74,7 @@ docs/auditoria.zip
 # Claude Code: logs de hooks (runtime, no aportan al repo) y agent-memory privado
 .claude/logs/
 .claude/agent-memory/
+.claude/scheduled_tasks.lock
 
 # Python bytecode cache
 __pycache__/

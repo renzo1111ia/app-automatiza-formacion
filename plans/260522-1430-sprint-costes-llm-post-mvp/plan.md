@@ -31,13 +31,14 @@ last_updated: 2026-05-22
 
 **Trabajo trasladado:**
 
-| Origen                                      | Tarea original                                                                | Aquí |
-| ------------------------------------------- | ----------------------------------------------------------------------------- | ---- |
-| Sprint 3 phase-02 (4-03 parcial)            | Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangChain CallbackHandler | C-01 |
-| Sprint 3 phase-03 entera (4-04)             | Dashboard de costes LLM por tenant/proveedor (Recharts)                       | C-02 |
-| Sprint 1 phase-04 (2-36)                    | `token_usage` (`completion.usage`) en `chat_messages` para todos los consumidores OpenAI | C-03 |
+| Origen                           | Tarea original                                                                           | Aquí |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | ---- |
+| Sprint 3 phase-02 (4-03 parcial) | Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangChain CallbackHandler           | C-01 |
+| Sprint 3 phase-03 entera (4-04)  | Dashboard de costes LLM por tenant/proveedor (Recharts)                                  | C-02 |
+| Sprint 1 phase-04 (2-36)         | `token_usage` (`completion.usage`) en `chat_messages` para todos los consumidores OpenAI | C-03 |
 
 **Lo que SE QUEDA en MVP** (Sprint 3 phase-02 reducido):
+
 - Pino logging estructurado en API Routes, Server Actions y BullMQ Workers
 - Métricas BullMQ vía bull-board (`/admin/queues`)
 - Sentry para captura de errores
@@ -52,12 +53,12 @@ last_updated: 2026-05-22
 
 ## Fases
 
-| #   | Archivo                                                                                | Tareas RoadMap | Est.       | Estado    |
-| --- | -------------------------------------------------------------------------------------- | -------------- | ---------- | --------- |
-| 1   | [phase-01-tabla-llm-usage-y-tracker.md](phase-01-tabla-llm-usage-y-tracker.md)         | C-01           | 5-7h       | Pendiente |
-| 2   | [phase-02-dashboard-costes-llm.md](phase-02-dashboard-costes-llm.md)                   | C-02           | 16-22h     | Pendiente |
-| 3   | [phase-03-token-usage-chat-messages.md](phase-03-token-usage-chat-messages.md)         | C-03           | 2h         | Pendiente |
-| 4   | [phase-04-cierre-sprint.md](phase-04-cierre-sprint.md)                                 | SP-5B-CLOSE-1..5 | 5h 30min + bugs | Pendiente |
+| #   | Archivo                                                                        | Tareas RoadMap   | Est.            | Estado    |
+| --- | ------------------------------------------------------------------------------ | ---------------- | --------------- | --------- |
+| 1   | [phase-01-tabla-llm-usage-y-tracker.md](phase-01-tabla-llm-usage-y-tracker.md) | C-01             | 5-7h            | Pendiente |
+| 2   | [phase-02-dashboard-costes-llm.md](phase-02-dashboard-costes-llm.md)           | C-02             | 16-22h          | Pendiente |
+| 3   | [phase-03-token-usage-chat-messages.md](phase-03-token-usage-chat-messages.md) | C-03             | 2h              | Pendiente |
+| 4   | [phase-04-cierre-sprint.md](phase-04-cierre-sprint.md)                         | SP-5B-CLOSE-1..5 | 5h 30min + bugs | Pendiente |
 
 **Total desarrollo:** 23-31h · **Total con cierre:** ~28-37h · **Objetivo:** 27h base
 
@@ -84,16 +85,16 @@ DEPENDENCIAS INTERNAS:
 
 ## Solapes con sprints anteriores
 
-| Sprint anterior            | Componente reutilizado                                                                                |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Sprint 3 (4-03 reducido)   | Pino logger (`src/lib/logger.ts`) — se inyecta dentro del LangChain CallbackHandler                   |
-| Sprint 1 (2-09)            | Zod schemas `ai_agent_variants` y `chat_messages` con whitelist `model_name` (2-35)                   |
-| Sprint 0 (1-27)            | Patrón Server Action hardening — el endpoint de dashboard de costes va por `withRateLimit` (4-08)     |
+| Sprint anterior          | Componente reutilizado                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| Sprint 3 (4-03 reducido) | Pino logger (`src/lib/logger.ts`) — se inyecta dentro del LangChain CallbackHandler               |
+| Sprint 1 (2-09)          | Zod schemas `ai_agent_variants` y `chat_messages` con whitelist `model_name` (2-35)               |
+| Sprint 0 (1-27)          | Patrón Server Action hardening — el endpoint de dashboard de costes va por `withRateLimit` (4-08) |
 
 ## Criterios de éxito del Sprint
 
 - [ ] Tabla `llm_usage_logs` creada con RLS multi-tenant funcional (INSERT como tenant A no visible por tenant B)
-- [ ] `llm-cost-tracker.ts` LangChain CallbackHandler captura tokens en todas las llamadas OpenAI/Anthropic/Google/Bedrock
+- [ ] `llm-cost-tracker.ts` LangChain CallbackHandler captura tokens en todas las llamadas OpenAI/Anthropic/Google (Bedrock descartado del stack 26-05-2026)
 - [ ] `chat_messages.metadata.token_usage` poblado para nuevos mensajes (WhatsApp, Widget, Rescue, FactExtractor)
 - [ ] Dashboard admin visible: gráfica costes por proveedor por mes + evolución por tenant por semana
 - [ ] Dashboard tenant visible: sólo costes del tenant activo
@@ -108,11 +109,11 @@ Logs en `plans/logs/sprint-costes-llm/C-XX.log.md` (misma estructura Sprints 1/2
 
 ## Riesgos top-3
 
-| Riesgo                                                                       | Prob  | Impacto | Mitigación                                                                            |
-| ---------------------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------------- |
+| Riesgo                                                                        | Prob  | Impacto | Mitigación                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | LangChain CallbackHandler no captura llamadas OpenAI **directas** (no por LC) | Alta  | Alto    | Inventario en Ph1: identificar todos los `openai.chat.completions.create()` directos y envolverlos en wrapper que también persista en `llm_usage_logs`. El widget (`widget.ts`) es uno de ellos |
-| Recharts pesa ~150KB extra en bundle del dashboard                           | Baja  | Bajo    | Recharts ya está en stack (Sprint 1/2), no es dep nueva                               |
-| Precios LLM cambian entre v0.5.1 release y deploy real                       | Media | Bajo    | `llm-pricing.ts` es constante editable; commit + redeploy en <5min                    |
+| Recharts pesa ~150KB extra en bundle del dashboard                            | Baja  | Bajo    | Recharts ya está en stack (Sprint 1/2), no es dep nueva                                                                                                                                         |
+| Precios LLM cambian entre v0.5.1 release y deploy real                        | Media | Bajo    | `llm-pricing.ts` es constante editable; commit + redeploy en <5min                                                                                                                              |
 
 ## Orden fijo en el roadmap
 

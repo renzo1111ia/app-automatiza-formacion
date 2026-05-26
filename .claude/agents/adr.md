@@ -43,7 +43,7 @@ Eres el **ADR Agent** del proyecto **dashboard-af**. Gestionas decisiones de arq
 - **Frontend**: Next.js 16, React 19, Tailwind, shadcn/ui (probable)
 - **Backend**: Next.js App Router, BullMQ, worker.js
 - **BD**: PostgreSQL via Supabase self-hosted (Easypanel), `@supabase/ssr`, Zod, Repository pattern, RLS multi-tenant. **SIN ORM nuevo** (decisión confirmada).
-- **LLM**: LangChain + Anthropic + OpenAI + Google Genai + AWS Bedrock
+- **LLM**: LangChain + Anthropic + OpenAI + Google Genai (AWS Bedrock descartado del stack 26-05-2026)
 - **Voice**: Retell + Ultravox (abstracción `VoiceProvider` — R-016)
 - **CRM MVP**: HubSpot + Zoho (Fase 2). Sheets bidireccional + Salesforce/GHL/ActiveCampaign en Fase 4.
 - **Deploy**: Easypanel self-hosted (R-023)
@@ -66,6 +66,7 @@ Eres el **ADR Agent** del proyecto **dashboard-af**. Gestionas decisiones de arq
 Archivo: `docs/adr/NNNN-titulo.md`
 
 Secciones obligatorias:
+
 - **Estado**: Proposed / Accepted / Deprecated / Superseded
 - **Contexto**: por qué surge la decisión
 - **Decisión**: qué se decide

@@ -8,16 +8,16 @@ AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Sistema q
 
 ## Stack tecnológico
 
-| Capa | Tecnología |
-|------|-----------|
-| Frontend / SSR | Next.js 16 + React 19 + Tailwind CSS |
-| Base de datos | PostgreSQL vía Supabase self-hosted (Easypanel) |
-| Autenticación + multi-tenant | `@supabase/ssr` + RLS por tenant |
-| Validaciones | Zod + Repository pattern |
-| Colas / workers | BullMQ + Redis |
-| IA conversacional | LangChain (Anthropic + OpenAI + Google Genai + AWS Bedrock) |
-| Voz | Retell + Ultravox |
-| CRMs MVP | HubSpot + Zoho CRM |
+| Capa                         | Tecnología                                      |
+| ---------------------------- | ----------------------------------------------- |
+| Frontend / SSR               | Next.js 16 + React 19 + Tailwind CSS            |
+| Base de datos                | PostgreSQL vía Supabase self-hosted (Easypanel) |
+| Autenticación + multi-tenant | `@supabase/ssr` + RLS por tenant                |
+| Validaciones                 | Zod + Repository pattern                        |
+| Colas / workers              | BullMQ + Redis                                  |
+| IA conversacional            | LangChain (Anthropic + OpenAI + Google Genai)   |
+| Voz                          | Retell + Ultravox                               |
+| CRMs MVP                     | HubSpot + Zoho CRM                              |
 
 ---
 
@@ -82,6 +82,7 @@ dashboard-af/
 Lee [`docs/dev-onboarding.md`](docs/dev-onboarding.md) antes de empezar.
 
 Flujo de trabajo:
+
 1. Crea rama `feature/<descripcion>` desde `developer`
 2. Trabaja localmente, mantén el RoadMap actualizado (`plans/RoadMap.md`)
 3. Abre PR a `developer` (nunca directamente a `staging` o `main`)

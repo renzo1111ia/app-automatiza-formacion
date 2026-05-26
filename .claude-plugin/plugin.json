@@ -9,13 +9,25 @@
   "stack": {
     "frontend": ["Next.js 16", "React 19", "Tailwind"],
     "backend": ["Next.js App Router", "BullMQ"],
-    "database": ["PostgreSQL via Supabase self-hosted (Easypanel)", "@supabase/ssr", "Zod (validaciones)", "Repository pattern", "RLS multi-tenant", "SIN ORM nuevo (decisión confirmada)"],
-    "llm": ["LangChain", "Anthropic", "OpenAI", "Google Genai", "AWS Bedrock"],
+    "database": [
+      "PostgreSQL via Supabase self-hosted (Easypanel)",
+      "@supabase/ssr",
+      "Zod (validaciones)",
+      "Repository pattern",
+      "RLS multi-tenant",
+      "SIN ORM nuevo (decisión confirmada)"
+    ],
+    "llm": ["LangChain", "Anthropic", "OpenAI", "Google Genai"],
     "voice": ["Retell", "Ultravox"],
     "deploy": ["Easypanel self-hosted"]
   },
   "mvp_scope": {
     "phase_c_crms": ["HubSpot", "Zoho"],
-    "deferred_to_phase_e": ["Google Sheets bidireccional", "Salesforce", "GoHighLevel", "ActiveCampaign"]
+    "deferred_to_phase_e": [
+      "Google Sheets bidireccional",
+      "Salesforce",
+      "GoHighLevel",
+      "ActiveCampaign"
+    ]
   }
 }
