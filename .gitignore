@@ -83,3 +83,6 @@ __pycache__/
 
 # Backups locales de la DB (contienen datos seed + cualquier dato real cargado)
 backups/local-db/
+
+# Backups locales del RoadMap antes de operaciones masivas (script compactación, etc.)
+plans/RoadMap.md.backup-*
