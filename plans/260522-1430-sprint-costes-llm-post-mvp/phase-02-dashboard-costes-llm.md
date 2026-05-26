@@ -38,7 +38,8 @@ agents: [af-agents:code, af-agents:uxui]
 ## Requirements
 
 ### Funcionales
-- LangChain `CostTrackingCallback` captura tokens en CADA llamada LLM (Anthropic, OpenAI, Google, Bedrock)
+
+- LangChain `CostTrackingCallback` captura tokens en CADA llamada LLM (Anthropic, OpenAI, Google) — Bedrock descartado del stack 26-05-2026
 - Tabla `llm_usage_logs` (creada en Ph1) recibe INSERT por cada LLM call con tenant_id, proveedor, modelo, tokens, cost_usd
 - Dashboard admin: gráfica de costes por proveedor por mes (BarChart)
 - Dashboard admin: evolución costes totales por tenant por semana (LineChart)
@@ -46,6 +47,7 @@ agents: [af-agents:code, af-agents:uxui]
 - Corregir precios hardcodeados desactualizados (DA-4-005): tabla de precios en constante, no en BD
 
 ### No funcionales
+
 - Cálculo de costes: `cost_usd = (prompt_tokens * input_price_per_1m / 1_000_000) + (completion_tokens * output_price_per_1m / 1_000_000)`
 - Actualizaciones de precios: editar constante en `src/lib/llm-pricing.ts`, no requiere migración BD
 - Dashboard no carga datos en tiempo real — refresh manual o cada 30min (no websockets)
@@ -77,6 +79,7 @@ Dashboard UI:
 ## Related Code Files
 
 ### Crear
+
 - `src/lib/llm-pricing.ts` — constante con precios actualizados por proveedor/modelo
 - `src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (iniciado en Ph1)
 - `src/app/api/admin/llm-costs/route.ts` — endpoint admin costes agregados
@@ -87,6 +90,7 @@ Dashboard UI:
 - `src/components/costs/CostsSummaryCard.tsx` — tarjeta resumen coste total mes
 
 ### Modificar
+
 - `src/lib/llm-factory.ts` (o equivalente) — inyectar `CostTrackingCallback` en cada chain LLM
 - `src/app/dashboard/settings/page.tsx` — añadir link a dashboard de costes tenant
 - `src/app/layout.tsx` — ruta `/dashboard/admin/costs` solo para admin
@@ -94,49 +98,61 @@ Dashboard UI:
 ## Implementation Steps
 
 ### Paso 1: Tabla de precios actualizada (fix DA-4-005)
+
 ```typescript
 // src/lib/llm-pricing.ts
 // Precios en USD por 1M tokens — actualizado Mayo 2026
 export const LLM_PRICING: Record<string, { input: number; output: number }> = {
-  'anthropic/claude-3-5-sonnet': { input: 3.00, output: 15.00 },
-  'anthropic/claude-3-5-haiku': { input: 0.80, output: 4.00 },
-  'anthropic/claude-3-opus': { input: 15.00, output: 75.00 },
-  'openai/gpt-4o': { input: 2.50, output: 10.00 },
-  'openai/gpt-4o-mini': { input: 0.15, output: 0.60 },
-  'openai/gpt-4-turbo': { input: 10.00, output: 30.00 },
-  'google/gemini-1-5-pro': { input: 1.25, output: 5.00 },
-  'google/gemini-1-5-flash': { input: 0.075, output: 0.30 },
-  'bedrock/claude-3-5-sonnet': { input: 3.00, output: 15.00 },
+  "anthropic/claude-3-5-sonnet": { input: 3.0, output: 15.0 },
+  "anthropic/claude-3-5-haiku": { input: 0.8, output: 4.0 },
+  "anthropic/claude-3-opus": { input: 15.0, output: 75.0 },
+  "openai/gpt-4o": { input: 2.5, output: 10.0 },
+  "openai/gpt-4o-mini": { input: 0.15, output: 0.6 },
+  "openai/gpt-4-turbo": { input: 10.0, output: 30.0 },
+  "google/gemini-1-5-pro": { input: 1.25, output: 5.0 },
+  "google/gemini-1-5-flash": { input: 0.075, output: 0.3 },
+  // Bedrock descartado del stack 26-05-2026 — pricing eliminado
 };
 
 export function calculateCostUSD(
-  provider: string, model: string,
-  promptTokens: number, completionTokens: number
+  provider: string,
+  model: string,
+  promptTokens: number,
+  completionTokens: number
 ): number {
   const key = `${provider}/${model}`;
   const pricing = LLM_PRICING[key];
   if (!pricing) return 0; // modelo desconocido — log warning
-  return (promptTokens * pricing.input / 1_000_000) + (completionTokens * pricing.output / 1_000_000);
+  return (
+    (promptTokens * pricing.input) / 1_000_000 + (completionTokens * pricing.output) / 1_000_000
+  );
 }
 ```
 
 ### Paso 2: LangChain CostTrackingCallback
+
 ```typescript
 // src/lib/llm-cost-tracker.ts
-import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
-import { LLMResult } from '@langchain/core/outputs';
-import { calculateCostUSD } from './llm-pricing';
-import { createAdminClient } from './supabase/admin';
+import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+import { LLMResult } from "@langchain/core/outputs";
+import { calculateCostUSD } from "./llm-pricing";
+import { createAdminClient } from "./supabase/admin";
 
 export class CostTrackingCallback extends BaseCallbackHandler {
-  name = 'af-cost-tracker';
+  name = "af-cost-tracker";
   private tenantId: string;
   private leadId?: string;
   private action?: string;
   private provider: string;
   private model: string;
 
-  constructor(opts: { tenantId: string; leadId?: string; action?: string; provider: string; model: string }) {
+  constructor(opts: {
+    tenantId: string;
+    leadId?: string;
+    action?: string;
+    provider: string;
+    model: string;
+  }) {
     super();
     Object.assign(this, opts);
   }
@@ -148,7 +164,7 @@ export class CostTrackingCallback extends BaseCallbackHandler {
     const costUsd = calculateCostUSD(this.provider, this.model, promptTokens, completionTokens);
 
     const supabase = createAdminClient();
-    await supabase.from('llm_usage_logs').insert({
+    await supabase.from("llm_usage_logs").insert({
       tenant_id: this.tenantId,
       provider: this.provider,
       model: this.model,
@@ -163,23 +179,37 @@ export class CostTrackingCallback extends BaseCallbackHandler {
 ```
 
 ### Paso 3: Inyectar callback en LLM factory
+
 En el factory de LLM (donde se instancia ChatOpenAI, ChatAnthropic, etc.), añadir:
+
 ```typescript
-const callbacks = [new CostTrackingCallback({ tenantId, leadId, action, provider: 'anthropic', model: 'claude-3-5-sonnet' })];
-const llm = new ChatAnthropic({ callbacks, /* ...existing config */ });
+const callbacks = [
+  new CostTrackingCallback({
+    tenantId,
+    leadId,
+    action,
+    provider: "anthropic",
+    model: "claude-3-5-sonnet",
+  }),
+];
+const llm = new ChatAnthropic({ callbacks /* ...existing config */ });
 ```
 
 ### Paso 4: API Routes de costes
+
 `/api/admin/llm-costs` — GROUP BY provider, DATE_TRUNC('month', created_at), solo admin.
 `/api/llm-costs` — GROUP BY provider, action, mes — filtrado por RLS (tenant actual).
 
 ### Paso 5: Dashboard UI (Recharts)
+
 Tres componentes:
+
 1. `CostsByProviderChart` — BarChart stacked: eje X = mes, eje Y = cost_usd, series = providers
 2. `CostsByTenantChart` — LineChart: eje X = semana, líneas por tenant (solo admin global)
 3. `CostsSummaryCard` — tarjeta con coste total mes actual, delta vs mes anterior
 
 ### Paso 6: Páginas
+
 - `/dashboard/admin/costs` — solo accesible a superadmin
 - Link desde `/dashboard/settings` para que el tenant vea sus propios costes
 
@@ -209,11 +239,11 @@ Tres componentes:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| LangChain output format diferente por proveedor (tokenUsage path distinto) | Alta | Medio | Testear con CADA proveedor; múltiples paths en handler |
-| Precios LLM cambian frecuentemente | Alta | Bajo | Tabla de precios en constante TypeScript (fácil editar), no en BD |
-| Coste 0 en llamadas con streaming (no reportan tokens al final) | Media | Medio | Verificar si streaming llega a `handleLLMEnd` o requiere `handleLLMStreamEvent` |
+| Riesgo                                                                     | Prob  | Impacto | Mitigación                                                                      |
+| -------------------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------- |
+| LangChain output format diferente por proveedor (tokenUsage path distinto) | Alta  | Medio   | Testear con CADA proveedor; múltiples paths en handler                          |
+| Precios LLM cambian frecuentemente                                         | Alta  | Bajo    | Tabla de precios en constante TypeScript (fácil editar), no en BD               |
+| Coste 0 en llamadas con streaming (no reportan tokens al final)            | Media | Medio   | Verificar si streaming llega a `handleLLMEnd` o requiere `handleLLMStreamEvent` |
 
 ## Security Considerations
 

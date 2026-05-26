@@ -32,6 +32,21 @@ async function fillReactInput(page: Page, selector: string, value: string) {
   await el.dispatchEvent("change");
 }
 
+/**
+ * Login helper robusto: espera hidratación React de los inputs antes de fill
+ * para evitar race condition "missing email or phone" en runs concurrentes.
+ */
+async function loginAsAdmin(page: Page) {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await page.locator("#email").waitFor({ state: "visible", timeout: 5_000 });
+  await page.locator("#password").waitFor({ state: "visible", timeout: 5_000 });
+  await page.waitForTimeout(800);
+  await fillReactInput(page, "#email", ADMIN_EMAIL);
+  await fillReactInput(page, "#password", ADMIN_PASS);
+  await page.locator('button[type="submit"]').first().click();
+  await page.waitForURL(/dashboard/, { timeout: 25_000 });
+}
+
 test.beforeAll(() => {
   ensureScreenshotDir();
 });
@@ -50,14 +65,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
   });
 
   test("VPS-02: Login admin VPS → /dashboard", async ({ page }) => {
-    await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-
-    await fillReactInput(page, "#email", ADMIN_EMAIL);
-    await fillReactInput(page, "#password", ADMIN_PASS);
-
-    await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/dashboard/, { timeout: 25_000 });
+    await loginAsAdmin(page);
 
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, "vps-02-dashboard-loaded.png"),
@@ -68,13 +76,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
   });
 
   test("VPS-03: /dashboard/settings carga", async ({ page }) => {
-    // Reusar sesión: login primero
-    await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    await fillReactInput(page, "#email", ADMIN_EMAIL);
-    await fillReactInput(page, "#password", ADMIN_PASS);
-    await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/dashboard/, { timeout: 25_000 });
+    await loginAsAdmin(page);
 
     await page.goto("/dashboard/settings", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(2000);
@@ -93,13 +95,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
   test("VPS-04: /dashboard/settings → editar cliente → CRMSection con HubSpot+Zoho", async ({
     page,
   }) => {
-    // Login
-    await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    await fillReactInput(page, "#email", ADMIN_EMAIL);
-    await fillReactInput(page, "#password", ADMIN_PASS);
-    await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/dashboard/, { timeout: 25_000 });
+    await loginAsAdmin(page);
 
     await page.goto("/dashboard/settings", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(3000);
@@ -169,13 +165,7 @@ test.describe("sprint-2-close smoke CRM VPS @smoke-vps", () => {
   });
 
   test("VPS-05: API /api/integrations responde (auth)", async ({ page }) => {
-    // Login para obtener cookies
-    await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(800);
-    await fillReactInput(page, "#email", ADMIN_EMAIL);
-    await fillReactInput(page, "#password", ADMIN_PASS);
-    await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/dashboard/, { timeout: 25_000 });
+    await loginAsAdmin(page);
 
     // Reusar el contexto cookies
     const response = await page.request.get("/api/integrations");

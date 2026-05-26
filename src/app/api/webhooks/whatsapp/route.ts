@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { processIncomingWhatsApp } from "@/lib/core/processors/WhatsAppWebhookProcessor";
 import { verifyHmacSignature } from "@/lib/api-auth";
+import { createLogger } from "@/lib/utils/logger";
+
+const log = createLogger("webhook.whatsapp");
 
 /**
  * WHATSAPP WEBHOOK (META CLOUD API)
@@ -10,6 +13,8 @@ import { verifyHmacSignature } from "@/lib/api-auth";
  * Sprint 0 tarea 1-14: validación HMAC OBLIGATORIA — antes se saltaba si
  * la env var faltaba o el header no venía. Ahora ambas son requeridas y se
  * compara timing-safe vía `verifyHmacSignature`.
+ *
+ * Sprint 3 phase-02 (4-03): logger Pino estructurado.
  */
 
 // Verification Endpoint (GET)
@@ -21,16 +26,16 @@ export async function GET(req: Request) {
 
   const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
   if (!verifyToken) {
-    console.error("[WHATSAPP WEBHOOK] WHATSAPP_VERIFY_TOKEN no configurado.");
+    log.error("WHATSAPP_VERIFY_TOKEN no configurado");
     return new Response("Service Unavailable", { status: 503 });
   }
 
   if (mode === "subscribe" && token === verifyToken) {
-    console.log("[WHATSAPP WEBHOOK] Webhook verified successfully.");
+    log.info("Webhook verified successfully");
     return new Response(challenge, { status: 200 });
   }
 
-  console.warn("[WHATSAPP WEBHOOK] Verification failed. Invalid token.");
+  log.warn("Verification failed: invalid token", { mode });
   return new Response("Forbidden", { status: 403 });
 }
 

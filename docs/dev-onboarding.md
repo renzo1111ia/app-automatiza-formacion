@@ -19,20 +19,20 @@ Lee [`CLAUDE.md`](../CLAUDE.md) del repo raíz para la visión completa del proy
 
 ### 2.1 Requisitos previos
 
-- **Node.js 20.20.2** (LTS pinned por `.nvmrc`). El VPS Dokploy corre Node 20-alpine — usa la misma versión en local para evitar drift (warnings `EBADENGINE`, bugs "funciona en local pero no en prod").
-- **npm 10.x** (ships con Node 20).
+- **Node.js 22.22.3** (LTS pinned por `.nvmrc`, codename "Jod", Active LTS hasta Oct 2027). El VPS Dokploy corre Node 22-alpine — usa la misma versión en local para evitar drift (warnings `EBADENGINE`, bugs "funciona en local pero no en prod").
+- **npm 10.x+** (ships con Node 22).
 - **Git** 2.40+.
 - **Docker Desktop** (para PostgreSQL local si no usas el Supabase remoto del equipo).
 - **Claude Code CLI** instalado (`npm i -g @anthropic-ai/claude-code` o desde extensión IDE).
 
-> 📌 **Migración a Node 22 LTS planificada para Sprint 3 Hardening** ([`phase-03-migracion-node-22-lts.md`](../plans/260520-1342-sprint-3-hardening/phase-03-migracion-node-22-lts.md)). Hasta entonces, pinned a Node 20.
+> ✅ **Migración Node 20 → 22 LTS completada en Sprint 3** (25-05-2026, SP-4-NODE-22). Local + VPS alineados. `lint-staged@17` desbloqueado.
 
 #### Cómo instalar la versión exacta (recomendado: nvm)
 
 ```powershell
 # Windows: nvm-windows
-nvm install 20.20.2
-nvm use 20.20.2
+nvm install 22.22.3
+nvm use 22.22.3
 # (en la raíz del repo, el .nvmrc lo selecciona automáticamente si tienes auto-switch)
 
 # macOS/Linux: nvm
@@ -40,7 +40,7 @@ nvm install
 nvm use
 ```
 
-Verifica: `node --version` debe devolver `v20.20.2`.
+Verifica: `node --version` debe devolver `v22.22.3`.
 
 ### 2.2 Clonar el repo
 
@@ -256,11 +256,13 @@ Tags los crea el script `promote.ps1` automáticamente al promocionar a `main`.
 1. **No Co-Authored-By Claude/Anthropic/IA** en commits. Sí humanos.
 2. **No push directo** a `staging` o `main`.
 3. **No `git remote add origin <url-cliente>`**.
-4. **No introducir Prisma, Dokploy, Airtable** — stack ya decidido en audit.
+4. **No introducir Prisma, Dokploy, Airtable, AWS Bedrock** — stack ya decidido en audit.
 5. **`.env` real nunca a git** — sólo `.env.example`.
 6. **RLS obligatorio** en multi-tenant. Hay 4 vulnerabilidades activas detectadas en audit — ver `plans/20260519-1200-rls-multitenant-hardening/`.
 7. **Append-only en sync CRM** por defecto. Sobrescritura sólo con audit trail.
 8. **Tests con BD real**, NO mocks de Supabase.
+9. **Responsive breakpoint del shell = `lg:` (1024px)**, no `md:`. Sidebar / hamburger / bottom nav usan `lg:hidden|lg:flex|max-lg:*`. `md:` queda para tipografía y spacing solo. Tabla completa: [`docs/dev-team-handover.md §4.bis`](dev-team-handover.md#4bis-responsive-breakpoints-tailwind-v4). Probar siempre 375 / 768 / 1024 / 1440 antes de PR.
+10. **PROHIBIDO `any` en TypeScript**. ESLint lo bloquea como `error` y husky aborta tu commit. Usa `unknown` + type guards, `Record<string, unknown>`, generics, interfaces dedicadas o casts puntuales con shape explícito. Guía completa con ejemplos reales: [`docs/architecture/typescript-standards.md`](architecture/typescript-standards.md). **Nunca uses `--no-verify`** para saltarte la regla.
 
 ## 6. Recursos clave
 

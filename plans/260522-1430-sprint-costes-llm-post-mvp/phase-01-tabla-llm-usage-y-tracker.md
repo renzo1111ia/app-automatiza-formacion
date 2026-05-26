@@ -23,7 +23,7 @@ agents: [af-agents:database, af-agents:code]
 
 - **Priority:** P2
 - **Status:** Pendiente
-- **Descripción:** Crear la tabla `llm_usage_logs` con RLS multi-tenant y el LangChain `CostTrackingCallback` que captura tokens en cada llamada LLM (Anthropic, OpenAI, Google, Bedrock) y los persiste. Es la base de datos del dashboard de costes (Ph2).
+- **Descripción:** Crear la tabla `llm_usage_logs` con RLS multi-tenant y el LangChain `CostTrackingCallback` que captura tokens en cada llamada LLM (Anthropic, OpenAI, Google) y los persiste. Es la base de datos del dashboard de costes (Ph2). **Bedrock descartado del stack 26-05-2026** (orden usuario).
 
 ## Key Insights
 
@@ -129,25 +129,28 @@ Flujo OpenAI directo (widget, WhatsApp, etc.):
 
    ```ts
    export const LLM_PRICING_PER_1M_TOKENS = {
-     'openai': {
-       'gpt-4o':        { input: 2.50, output: 10.00 },
-       'gpt-4o-mini':   { input: 0.15, output: 0.60 },
-       'gpt-4-turbo':   { input: 10.00, output: 30.00 },
-       'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
+     openai: {
+       "gpt-4o": { input: 2.5, output: 10.0 },
+       "gpt-4o-mini": { input: 0.15, output: 0.6 },
+       "gpt-4-turbo": { input: 10.0, output: 30.0 },
+       "gpt-3.5-turbo": { input: 0.5, output: 1.5 },
      },
-     'anthropic': {
-       'claude-3-5-sonnet-20241022': { input: 3.00, output: 15.00 },
-       'claude-3-5-haiku-20241022':  { input: 0.80, output: 4.00 },
-       'claude-3-opus-20240229':     { input: 15.00, output: 75.00 },
+     anthropic: {
+       "claude-3-5-sonnet-20241022": { input: 3.0, output: 15.0 },
+       "claude-3-5-haiku-20241022": { input: 0.8, output: 4.0 },
+       "claude-3-opus-20240229": { input: 15.0, output: 75.0 },
      },
-     'google': {
-       'gemini-1.5-pro':   { input: 1.25, output: 5.00 },
-       'gemini-1.5-flash': { input: 0.075, output: 0.30 },
+     google: {
+       "gemini-1.5-pro": { input: 1.25, output: 5.0 },
+       "gemini-1.5-flash": { input: 0.075, output: 0.3 },
      },
    } as const;
 
    export function calculateCostUsd(
-     provider: string, model: string, promptTokens: number, completionTokens: number,
+     provider: string,
+     model: string,
+     promptTokens: number,
+     completionTokens: number
    ): number | null {
      // ...lookup + cálculo
    }
@@ -158,14 +161,16 @@ Flujo OpenAI directo (widget, WhatsApp, etc.):
 3. **`src/lib/llm-cost-tracker.ts`** (~2h):
 
    ```ts
-   import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
-   import { logger } from '@/lib/logger';
-   import { getAdminSupabaseClient } from '@/lib/supabase/server';
-   import { calculateCostUsd } from './llm-pricing';
+   import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+   import { logger } from "@/lib/logger";
+   import { getAdminSupabaseClient } from "@/lib/supabase/server";
+   import { calculateCostUsd } from "./llm-pricing";
 
    export class CostTrackingCallback extends BaseCallbackHandler {
-     name = 'CostTrackingCallback';
-     constructor(private ctx: { tenantId: string; leadId?: string; action: string }) { super(); }
+     name = "CostTrackingCallback";
+     constructor(private ctx: { tenantId: string; leadId?: string; action: string }) {
+       super();
+     }
 
      async handleLLMEnd(output: unknown): Promise<void> {
        // Extraer usage + model (forma exacta depende de la versión LangChain — verificar)
@@ -176,7 +181,7 @@ Flujo OpenAI directo (widget, WhatsApp, etc.):
 
    export async function recordLlmUsage(params: {
      tenantId: string;
-     provider: 'openai' | 'anthropic' | 'google' | 'bedrock';
+     provider: "openai" | "anthropic" | "google";
      model: string;
      usage: { prompt_tokens?: number; completion_tokens?: number };
      action: string;
@@ -185,10 +190,17 @@ Flujo OpenAI directo (widget, WhatsApp, etc.):
    }): Promise<void> {
      try {
        const supabase = await getAdminSupabaseClient();
-       const cost = calculateCostUsd(params.provider, params.model, params.usage.prompt_tokens ?? 0, params.usage.completion_tokens ?? 0);
-       await supabase.from('llm_usage_logs').insert({ /* ... */ });
+       const cost = calculateCostUsd(
+         params.provider,
+         params.model,
+         params.usage.prompt_tokens ?? 0,
+         params.usage.completion_tokens ?? 0
+       );
+       await supabase.from("llm_usage_logs").insert({
+         /* ... */
+       });
      } catch (err) {
-       logger.warn({ err }, '[llm-cost-tracker] insert failed — non-fatal');
+       logger.warn({ err }, "[llm-cost-tracker] insert failed — non-fatal");
      }
    }
    ```
@@ -224,11 +236,11 @@ Flujo OpenAI directo (widget, WhatsApp, etc.):
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| LangChain version API cambió (`handleLLMEnd` signature) entre `@langchain/core` versiones | Media | Bajo | Verificar al implementar; ajustar firma según versión exacta del package.json |
-| Llamadas OpenAI directas olvidadas (call site nuevo añadido después) | Media | Medio | Documentar en `docs/architecture/llm-cost-tracking.md` el patrón obligatorio + check en code review |
-| INSERT a `llm_usage_logs` añade latencia perceptible al chat | Baja | Bajo | Fire-and-forget pattern: `void recordLlmUsage(...)` sin `await` en hot path, o usar `setImmediate` |
+| Riesgo                                                                                    | Prob  | Impacto | Mitigación                                                                                          |
+| ----------------------------------------------------------------------------------------- | ----- | ------- | --------------------------------------------------------------------------------------------------- |
+| LangChain version API cambió (`handleLLMEnd` signature) entre `@langchain/core` versiones | Media | Bajo    | Verificar al implementar; ajustar firma según versión exacta del package.json                       |
+| Llamadas OpenAI directas olvidadas (call site nuevo añadido después)                      | Media | Medio   | Documentar en `docs/architecture/llm-cost-tracking.md` el patrón obligatorio + check en code review |
+| INSERT a `llm_usage_logs` añade latencia perceptible al chat                              | Baja  | Bajo    | Fire-and-forget pattern: `void recordLlmUsage(...)` sin `await` en hot path, o usar `setImmediate`  |
 
 ## Security Considerations
 

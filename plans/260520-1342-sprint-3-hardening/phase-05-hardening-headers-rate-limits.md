@@ -212,7 +212,6 @@ const securityHeaders = [
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co " +
         "https://api.anthropic.com https://api.openai.com " +
         "https://generativelanguage.googleapis.com " +
-        "https://bedrock.*.amazonaws.com " +
         "https://*.ingest.sentry.io",
       "font-src 'self'",
       "frame-ancestors 'none'",

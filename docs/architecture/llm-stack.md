@@ -7,16 +7,16 @@
 
 ## 1. Providers y dependencias
 
-| Provider | SDK / Librería | Versión | Rol en el sistema |
-|----------|---------------|---------|------------------|
-| **OpenAI** | `openai` (directo) | ^4.x | Proveedor dominante. WhatsApp AI, extracción de hechos, análisis de transcripciones, recordatorios, widget |
-| **OpenAI** | `@langchain/openai` | ^1.4.1 | Abstracción multi-provider (AgentFactory). No usado en ruta caliente |
-| **Anthropic** | `@langchain/anthropic` | ^1.3.26 | Disponible en AgentFactory (`CLAUDE`/`ANTHROPIC`) — no activo en flujos de producción observados |
-| **Google** | `@langchain/google-genai` | ^2.1.26 | Disponible en AgentFactory (`GEMINI`) — no activo en flujos de producción observados |
-| **LangChain** | `langchain` | ^1.2.39 | PromptTemplate + StructuredOutputParser en `QualificationProcessor` |
-| **Retell** | `retell-sdk` | ^5.12.0 | SDK oficial para voz. Gestiona el LLM de voz internamente |
-| **Ultravox** | REST custom (`fetch`) | — | Alternativa de voz via Twilio. Sin SDK oficial |
-| **AWS** | `@aws-sdk/client-s3` | — | Solo para MinIO (almacenamiento). AWS Bedrock NO está integrado |
+| Provider       | SDK / Librería            | Versión | Rol en el sistema                                                                                          |
+| -------------- | ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| **OpenAI**     | `openai` (directo)        | ^4.x    | Proveedor dominante. WhatsApp AI, extracción de hechos, análisis de transcripciones, recordatorios, widget |
+| **OpenAI**     | `@langchain/openai`       | ^1.4.1  | Abstracción multi-provider (AgentFactory). No usado en ruta caliente                                       |
+| **Anthropic**  | `@langchain/anthropic`    | ^1.3.26 | Disponible en AgentFactory (`CLAUDE`/`ANTHROPIC`) — no activo en flujos de producción observados           |
+| **Google**     | `@langchain/google-genai` | ^2.1.26 | Disponible en AgentFactory (`GEMINI`) — no activo en flujos de producción observados                       |
+| **LangChain**  | `langchain`               | ^1.2.39 | PromptTemplate + StructuredOutputParser en `QualificationProcessor`                                        |
+| **Retell**     | `retell-sdk`              | ^5.12.0 | SDK oficial para voz. Gestiona el LLM de voz internamente                                                  |
+| **Ultravox**   | REST custom (`fetch`)     | —       | Alternativa de voz via Twilio. Sin SDK oficial                                                             |
+| **AWS S3 SDK** | `@aws-sdk/client-s3`      | —       | Solo para MinIO storage S3-compatible. **AWS Bedrock descartado del stack 26-05-2026**                     |
 
 ---
 
@@ -135,6 +135,7 @@ Los prompts del agente Virginia no están hardcodeados en el código fuente prin
 4. Prepende `timezoneContext` (reglas de zona horaria, hardcodeadas en código) al inicio del prompt.
 
 **Prompts hardcodeados en código** (no en BD):
+
 - `ai-analysis.ts`: prompt de análisis de conversación para cualificación post-llamada.
 - `fact-extractor.ts`: prompt del extractor de hechos.
 - `ai-rescue.ts`: prompt de re-engagement.
@@ -145,13 +146,13 @@ Los prompts del agente Virginia no están hardcodeados en el código fuente prin
 
 ## 5. RAG (Retrieval-Augmented Generation)
 
-| Componente | Implementación |
-|-----------|----------------|
-| Vector store | PGVector en Supabase (tabla `knowledge_base_embeddings`) |
-| Embedding model | `text-embedding-3-small` (OpenAI) |
-| RPC de búsqueda | `supabase.rpc('match_knowledge_base', { query_embedding, match_threshold: 0.4, match_count: 3 })` |
-| Filtrado por KB | `p_knowledge_base_ids` — array de IDs de bases de conocimiento del agente |
-| Integración | Solo en `WhatsAppAIProcessor`. Las llamadas de voz Retell usan el contexto de curso de BD, no RAG dinámico |
+| Componente      | Implementación                                                                                             |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| Vector store    | PGVector en Supabase (tabla `knowledge_base_embeddings`)                                                   |
+| Embedding model | `text-embedding-3-small` (OpenAI)                                                                          |
+| RPC de búsqueda | `supabase.rpc('match_knowledge_base', { query_embedding, match_threshold: 0.4, match_count: 3 })`          |
+| Filtrado por KB | `p_knowledge_base_ids` — array de IDs de bases de conocimiento del agente                                  |
+| Integración     | Solo en `WhatsAppAIProcessor`. Las llamadas de voz Retell usan el contexto de curso de BD, no RAG dinámico |
 
 ---
 
@@ -174,14 +175,14 @@ Los prompts del agente Virginia no están hardcodeados en el código fuente prin
 
 ## 7. Voz: Retell vs Ultravox
 
-| Aspecto | Retell | Ultravox |
-|---------|--------|----------|
-| SDK | `retell-sdk` oficial | REST custom vía `fetch` |
-| Webhook post-llamada | Implementado (`/api/webhooks/retell`) | **No existe** |
-| Tool calls en tiempo real | Implementado (`/api/webhooks/retell/tools`) | No aplicable (sin webhook) |
-| Análisis post-llamada | Sí (vía PostAnalysisService) | No (gap) |
-| Grabación / transcripción | Retell la envía en webhook | Recuperable bajo demanda vía `UltravoxBridge.getCallTranscript()` |
-| Fallback entre proveedores | No — mutuamente excluyentes por config tenant | No |
+| Aspecto                    | Retell                                        | Ultravox                                                          |
+| -------------------------- | --------------------------------------------- | ----------------------------------------------------------------- |
+| SDK                        | `retell-sdk` oficial                          | REST custom vía `fetch`                                           |
+| Webhook post-llamada       | Implementado (`/api/webhooks/retell`)         | **No existe**                                                     |
+| Tool calls en tiempo real  | Implementado (`/api/webhooks/retell/tools`)   | No aplicable (sin webhook)                                        |
+| Análisis post-llamada      | Sí (vía PostAnalysisService)                  | No (gap)                                                          |
+| Grabación / transcripción  | Retell la envía en webhook                    | Recuperable bajo demanda vía `UltravoxBridge.getCallTranscript()` |
+| Fallback entre proveedores | No — mutuamente excluyentes por config tenant | No                                                                |
 
 ---
 
@@ -245,4 +246,4 @@ Deep Qualification [ROTO]
 
 ---
 
-*Última actualización: 2026-05-18 — Auditoría Fase 3*
+_Última actualización: 2026-05-18 — Auditoría Fase 3_

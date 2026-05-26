@@ -352,9 +352,7 @@ WORKER_CONCURRENCY=5
 OPENAI_API_KEY=<copiar de tu .env.local>
 ANTHROPIC_API_KEY=<copiar de tu .env.local>
 GOOGLE_GENAI_API_KEY=<copiar de tu .env.local>
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=<copiar de tu .env.local si Bedrock activo>
-AWS_SECRET_ACCESS_KEY=<copiar de tu .env.local si Bedrock activo>
+# AWS Bedrock descartado 26-05-2026 — sin vars AWS_*
 
 # === VOICE (mismas que .env.local) ===
 RETELL_API_KEY=<copiar>

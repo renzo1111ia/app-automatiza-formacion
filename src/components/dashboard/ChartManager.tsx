@@ -389,9 +389,10 @@ export function ChartManager({
               <PieChart className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h1 className="text-[32px] leading-tight font-bold tracking-tight text-slate-900 dark:text-white">
+              {/* Sprint 3 SP-4-WCAG-09: h1→h2 para heading hierarchy correcta (un único h1 por página, el del dashboard). */}
+              <h2 className="text-[32px] leading-tight font-bold tracking-tight text-slate-900 dark:text-white">
                 Análisis <span className="text-indigo-600 dark:text-indigo-400">Visual</span>
-              </h1>
+              </h2>
               <p className="text-[15px] font-medium text-slate-500 dark:text-slate-400">
                 Histogramas, tendencias y distribución de datos
               </p>
@@ -434,8 +435,11 @@ export function ChartManager({
                 </button>
               </>
             ) : (
+              // Sprint 3 SP-4-WCAG-08: aria-label + title refuerzan accesibilidad para screen readers.
               <button
                 onClick={() => setIsEditing(true)}
+                aria-label={editLabel}
+                title={editLabel}
                 className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
               >
                 <Settings className="h-4 w-4" /> {editLabel}

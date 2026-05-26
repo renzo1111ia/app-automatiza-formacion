@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import { verifyRetellWebhook } from "@/lib/api-auth";
+import { createLogger } from "@/lib/utils/logger";
+
+const log = createLogger("webhook.retell");
 
 /**
  * Handle Retell Webhook Callback
@@ -10,23 +13,30 @@ import { verifyRetellWebhook } from "@/lib/api-auth";
  *
  * Sprint 0 tarea 1-12: firma HMAC obligatoria vía `x-retell-signature`
  * + RETELL_WEBHOOK_SECRET.
+ *
+ * Sprint 3 phase-02 (4-03): logger Pino + trace_id por request.
  */
 export async function POST(req: Request) {
+  const trace_id = crypto.randomUUID();
+
   try {
     const rawBody = await req.text();
 
     const sigGuard = verifyRetellWebhook(req, rawBody);
-    if (sigGuard) return sigGuard;
+    if (sigGuard) {
+      log.warn("HMAC signature verification failed", { trace_id });
+      return sigGuard;
+    }
 
     let body: any;
     try {
       body = JSON.parse(rawBody);
     } catch {
+      log.warn("Invalid JSON payload", { trace_id });
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    // Very basic simple logging to verify the webhook arrival payload structure in console.
-    console.log(`[RETELL WEBHOOK] Received event: ${body.event}`);
+    log.info("Webhook received", { trace_id, event: body.event, call_id: body.call?.call_id });
 
     // We specifically listen for call_analyzed or call_ended
     if (body.event !== "call_analyzed" && body.event !== "call_ended") {

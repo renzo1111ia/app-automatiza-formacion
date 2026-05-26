@@ -4,6 +4,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { LeadWebhookSchema } from "@/lib/validations/lead";
 import { orchestrator } from "@/lib/core/orchestrator";
 import { verifyCrmWebhookSignature } from "@/lib/api-auth";
+import { createLogger } from "@/lib/utils/logger";
+
+const log = createLogger("webhook.crm");
 
 /**
  * CRM WEBHOOK INGESTION ENDPOINT
@@ -12,27 +15,37 @@ import { verifyCrmWebhookSignature } from "@/lib/api-auth";
  * Sprint 0 tarea 1-15: firma HMAC obligatoria con secret per-tenant
  * (`tenants.config.webhook_crm_secret`). El header `x-webhook-signature`
  * (HMAC-SHA256 hex sobre rawBody) se valida contra ese secret.
+ *
+ * Sprint 3 phase-02 (4-03): logger Pino + trace_id por request.
  */
 
 export async function POST(req: Request) {
+  const trace_id = crypto.randomUUID();
   try {
     const tenantId = req.headers.get("x-tenant-id");
 
     if (!tenantId) {
+      log.warn("Missing x-tenant-id header", { trace_id });
       return NextResponse.json({ error: "Missing x-tenant-id header" }, { status: 400 });
     }
 
     const rawBody = await req.text();
 
     const sigGuard = await verifyCrmWebhookSignature(req, rawBody, tenantId);
-    if (sigGuard) return sigGuard;
+    if (sigGuard) {
+      log.warn("HMAC signature verification failed", { trace_id, tenant_id: tenantId });
+      return sigGuard;
+    }
 
     let body: unknown;
     try {
       body = JSON.parse(rawBody);
     } catch {
+      log.warn("Invalid JSON payload", { trace_id, tenant_id: tenantId });
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
+
+    log.info("CRM webhook received", { trace_id, tenant_id: tenantId });
 
     const validatedData = LeadWebhookSchema.safeParse(body);
 

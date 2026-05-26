@@ -458,9 +458,10 @@ export function SummaryManager({
                 <TrendingUp className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h1 className="text-[32px] leading-tight font-bold tracking-tight text-slate-900 dark:text-white">
+                {/* Sprint 3 SP-4-WCAG-09: h1→h2 para heading hierarchy correcta. */}
+                <h2 className="text-[32px] leading-tight font-bold tracking-tight text-slate-900 dark:text-white">
                   Métricas <span className="text-blue-600 dark:text-blue-400">Generales</span>
-                </h1>
+                </h2>
                 <p className="text-[15px] font-medium text-slate-500 dark:text-slate-400">
                   Rendimiento global y estadísticas del sistema
                 </p>
@@ -509,10 +510,12 @@ export function SummaryManager({
                   </button>
                 </>
               ) : (
+                // Sprint 3 SP-4-WCAG-08: aria-label refuerza accesibilidad.
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
+                  aria-label={editLabel}
                   title={editLabel}
+                  className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
                 >
                   <Settings className="h-4 w-4" /> {editLabel}
                 </button>
@@ -543,8 +546,11 @@ export function SummaryManager({
                 </button>
               </div>
             ) : (
+              // Sprint 3 SP-4-WCAG-08: aria-label refuerza accesibilidad para screen readers.
               <button
                 onClick={() => setIsEditing(true)}
+                aria-label={editLabel}
+                title={editLabel}
                 className="text-primary bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all"
               >
                 <Settings className="h-4 w-4" /> {editLabel}
@@ -980,7 +986,7 @@ export function SummaryManager({
           onDragEnd={handleDragEnd}
           modifiers={[restrictToFirstScrollableAncestor]}
         >
-          <div className="mb-8 grid grid-cols-1 gap-4 text-left transition-all duration-500 md:grid-cols-12">
+          <div className="mb-8 grid grid-cols-1 gap-4 text-left transition-all duration-500 sm:grid-cols-6 lg:grid-cols-12">
             <SortableContext
               items={kpis.filter((k) => isEditing || k.isVisible !== false).map((k) => k.id)}
               strategy={rectSortingStrategy}

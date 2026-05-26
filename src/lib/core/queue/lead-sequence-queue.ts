@@ -1,9 +1,16 @@
 import { Queue, Worker, Job } from "bullmq";
 import IORedis from "ioredis";
+import { createLogger } from "@/lib/utils/logger";
 
 /**
  * LEAD SEQUENCE QUEUE (BullMQ + Upstash Redis)
+ *
+ * Sprint 3 phase-02 Observabilidad (4-03): logs estructurados Pino en lifecycle
+ * de Redis connection, enqueue, worker completion/failure. Cubre DA-1-005 (catch
+ * silencioso) y permite filtrar logs por `tenant_id` / `lead_id` en producción.
  */
+
+const log = createLogger("queue.lead-sequence");
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -26,13 +33,12 @@ function createRedisConnection(): IORedis {
       },
     });
 
-    // 🟢 CONFIRMATION LOG: This will show in Dokploy logs
     client.on("ready", () => {
-      console.log(`[REDIS] ✅ READY - Connection established to ${url.hostname}`);
+      log.info("Redis connection ready", { host: url.hostname });
     });
 
     client.on("error", (err) => {
-      console.warn(`[REDIS_QUEUE] Connection Issue: ${err.message}`);
+      log.warn("Redis connection issue", { error: err.message, host: url.hostname });
     });
 
     return client;
@@ -119,15 +125,28 @@ export async function enqueueLeadStep(data: LeadSequenceJob, delayMs = 0): Promi
       jobId: jobName,
     });
 
-    console.log(`[QUEUE] Enqueued ${jobName} with delay ${Math.round(delayMs / 1000 / 60)}min`);
+    log.info("Job enqueued", {
+      jobName,
+      tenant_id: data.tenantId,
+      lead_id: data.leadId,
+      action: data.action,
+      step: data.step,
+      delayMin: Math.round(delayMs / 1000 / 60),
+    });
     return job.id || jobName;
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(
-      `[QUEUE_ENQUEUE_FAILED] jobName=${jobName} leadId=${data.leadId} ` +
-        `tenantId=${data.tenantId} step=${data.step ?? "n/a"} action=${data.action} ` +
-        `delayMs=${delayMs} error=${errMsg}`
-    );
+    // DA-1-005 fix (Sprint 0): log estructurado con contexto + re-throw.
+    // NO retornar ID ficticio: el caller debe enterarse del fallo.
+    log.error("enqueueLeadStep FAILED — job LOST without retry", {
+      jobName,
+      tenant_id: data.tenantId,
+      lead_id: data.leadId,
+      action: data.action,
+      step: data.step,
+      delayMs,
+      error: errMsg,
+    });
     throw error instanceof Error
       ? error
       : new Error(`enqueueLeadStep failed for ${jobName}: ${errMsg}`);
@@ -154,7 +173,12 @@ export async function enqueueQualificationAnalysis(data: {
     );
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`[QUEUE_ERROR] Analysis could not be queued: ${errMsg}`);
+    log.error("Qualification analysis could not be queued", {
+      tenant_id: data.tenantId,
+      lead_id: data.leadId,
+      callId: data.callId,
+      error: errMsg,
+    });
   }
 }
 
@@ -175,7 +199,7 @@ export async function setupWatchdogCron() {
     );
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.warn("[QUEUE] Could not setup watchdog cron:", errMsg);
+    log.warn("Could not setup watchdog cron", { error: errMsg });
   }
 }
 
@@ -196,7 +220,7 @@ export async function setupZohoCron() {
     );
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.warn("[QUEUE] Could not setup Zoho cron:", errMsg);
+    log.warn("Could not setup Zoho cron", { error: errMsg });
   }
 }
 
@@ -209,11 +233,28 @@ export function createLeadWorker(
   });
 
   worker.on("completed", (job) => {
-    console.log(`[WORKER] ✅ Job ${job.id} completed: ${job.data.leadId}`);
+    log.info("Worker job completed", {
+      jobId: job.id,
+      tenant_id: job.data.tenantId,
+      lead_id: job.data.leadId,
+      action: job.data.action,
+      duration_ms: job.processedOn && job.timestamp ? job.processedOn - job.timestamp : undefined,
+    });
   });
 
   worker.on("failed", (job, err) => {
-    console.error(`[WORKER] ❌ Job ${job?.id} failed:`, err.message);
+    log.error("Worker job failed", {
+      jobId: job?.id,
+      tenant_id: job?.data.tenantId,
+      lead_id: job?.data.leadId,
+      action: job?.data.action,
+      attemptsMade: job?.attemptsMade,
+      error: err.message,
+    });
+  });
+
+  worker.on("stalled", (jobId) => {
+    log.warn("Worker job stalled", { jobId });
   });
 
   return worker;

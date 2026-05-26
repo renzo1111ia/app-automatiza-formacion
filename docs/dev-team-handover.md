@@ -106,14 +106,98 @@ Documento autoritativo: [docs/audit/STACK-TECNOLOGICO.md](audit/STACK-TECNOLOGIC
 | **Frontend**         | Next.js 16, React 19, Tailwind, shadcn/ui (probable)                                                                                                                                                                                                                                                      |
 | **Backend**          | Next.js App Router, BullMQ, `worker.js` separado                                                                                                                                                                                                                                                          |
 | **BD**               | PostgreSQL via **Supabase self-hosted** en **Easypanel** (R-023). `@supabase/ssr` + **Zod** + **Repository pattern** + RLS multi-tenant. **SIN ORM nuevo** (decisión confirmada — ver `project_stack_data_layer.md` + `plans/20260519-1200-rls-multitenant-hardening/research/stack-decision-no-orm.md`). |
-| **LLM**              | LangChain + Anthropic + OpenAI + Google Genai + AWS Bedrock                                                                                                                                                                                                                                               |
+| **LLM**              | LangChain + Anthropic + OpenAI + Google Genai. **AWS Bedrock descartado del stack** (26-05-2026, orden del usuario — no se trabajará con AWS)                                                                                                                                                             |
 | **Voz**              | Retell + Ultravox (abstracción `VoiceProvider` — R-016)                                                                                                                                                                                                                                                   |
 | **CRM MVP (Fase 2)** | HubSpot + Zoho                                                                                                                                                                                                                                                                                            |
 | **CRM Fase 4**       | Google Sheets bidireccional + Salesforce + GoHighLevel + ActiveCampaign                                                                                                                                                                                                                                   |
 | **Tests**            | Vitest (unit) + Playwright (E2E)                                                                                                                                                                                                                                                                          |
 | **Deploy**           | Easypanel self-hosted                                                                                                                                                                                                                                                                                     |
 
-**Excluido del stack** (no introducir): Prisma, Dokploy, Airtable.
+**Excluido del stack** (no introducir): Prisma, Dokploy, Airtable, AWS Bedrock, AWS SDK Bedrock (`@aws-sdk/client-bedrock-*`).
+
+> Nota: `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` se mantienen únicamente para hablar con MinIO via protocolo S3-compatible — no se conecta a AWS. Migración futura a Supabase Storage en evaluación post-MVP.
+
+---
+
+## 4.bis Responsive breakpoints (Tailwind v4)
+
+Decisión 26-05-2026 (BUG-3-07 fix, Sprint 3 phase-08): el dashboard usa **breakpoint `lg:` (1024px)** como punto de cambio entre layout mobile (hamburger + bottom nav + drawer) y desktop (sidebar fija lateral). El breakpoint `md:` (768px) está reservado para ajustes tipográficos/spacing, no para estructura del layout.
+
+### Tabla autoritativa
+
+| Tailwind  | Ancho min  | Uso en este proyecto                                                                                                               |
+| --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `sm:`     | 640px      | Ajustes mínimos en componentes inline (ej. `sm:inline` para revelar texto junto a icono).                                          |
+| `md:`     | 768px      | Tipografía + spacing (header height, padding). **NO** usar para mostrar/ocultar sidebar.                                           |
+| **`lg:`** | **1024px** | **Estructura del layout**: sidebar fija visible, hamburger oculto, bottom nav oculta. Por debajo: drawer + hamburger + bottom nav. |
+| `xl:`     | 1280px     | Disponible para ajustes finos en desktops anchos (ej. más columnas en grids).                                                      |
+| `2xl:`    | 1536px     | Disponible. Cuidado con `max-w-screen-2xl` en containers.                                                                          |
+
+### Reglas que el equipo debe seguir
+
+1. **Sidebar visible / hamburger oculto = `lg:`**. Cualquier control de visibilidad del shell del dashboard usa `lg:hidden` / `lg:flex` (y su variante `max-lg:` para drawer mobile).
+2. **`md:` solo tipografía + spacing**: ejemplos válidos `md:h-20`, `md:text-base`, `md:px-6`. Ejemplos prohibidos `md:flex` para mostrar sidebar, `md:hidden` para ocultar hamburger.
+3. **Mobile-first siempre**: componentes nuevos parten de móvil (sin prefijo) y se amplían con `lg:` cuando aplique. Evitar `max-*:` salvo casos justificados (drawer, overlay).
+4. **No introducir breakpoints nuevos** sin actualizar esta tabla y el archivo `tailwind.config` si aplica.
+5. **Probar siempre 4 viewports antes de PR**: 375 (móvil), 768 (tablet vertical), 1024 (laptop pequeño), 1440 (desktop). Si rompe en alguno, fix antes de merge.
+
+### Por qué `lg:1024` y no `xl:1280`
+
+- iPad Pro landscape (1180–1194px) muestra sidebar en `lg:` — sensación nativa desktop al hacer demos.
+- Laptops 13"–14" (1366×768, 1440×900) muy comunes en clienta — `lg:` les da `1024-256 = 768px` de main, suficiente para 4 KPI cards en grid 2×2.
+- `xl:1280` dejaría sidebar oculta hasta laptops grandes; tabletas y portátiles pequeños quedarían en modo "mobile" lo que no es coherente con una app B2B.
+
+### Histórico breakpoint
+
+- **Antes 26-05-2026 (BUG-3-07)**: sidebar usaba `md:flex` (768px). Síntoma: en 768px exactos el main quedaba con solo 512px, KPI hero cards colapsaban (width=0).
+- **Desde 26-05-2026**: sidebar usa `lg:flex` (1024px). Fix en `src/components/layout/Sidebar.tsx` (6 cambios) + `src/components/layout/Topbar.tsx` (1 cambio).
+
+Screenshots de validación: [docs/screenshots/sprint-3-close/responsive-fix/](../docs/screenshots/sprint-3-close/responsive-fix/) (login + dashboard en 768/1024/1280/1440).
+
+---
+
+## 4.ter TypeScript: prohibido `any`
+
+> Decidido 26-05-2026. ESLint marca `@typescript-eslint/no-explicit-any` como `error` y husky bloquea cualquier commit que introduzca un `any`. Esta sección resume el porqué; la guía operativa con alternativas y ejemplos vive en [`docs/architecture/typescript-standards.md`](architecture/typescript-standards.md).
+
+### Regla absoluta
+
+Ningún `.ts` / `.tsx` del repo puede contener `any` explícito (ni como type annotation, ni como `as any`). Las únicas excepciones permitidas son:
+
+1. **Tests** (`tests/**/*.spec.ts`) con un mock puntual y `// eslint-disable-next-line` justificado en comentario.
+2. **Workaround de bug upstream** documentado con link al issue.
+
+Cualquier otro uso se rechaza en code review.
+
+### Por qué
+
+`any` desactiva el sistema de tipos. Hemos perdido tiempo de debug por:
+
+- Campos renombrados en el backend que no rompían en compilación.
+- Refactors de schemas Zod sin saber qué clientes dependían del tipo.
+- Bugs runtime de `cannot read property X of undefined` que `unknown` + type guard habrían detectado en build.
+
+### Cómo cumplirla
+
+| En lugar de                           | Usa                                                                                            |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `metadata: any`                       | `metadata: Record<string, unknown>` o interface dedicada                                       |
+| `(config as any).whatsapp`            | `(config.whatsapp ?? {}) as { accessToken?: string; phoneNumberId?: string }`                  |
+| `function Card({ icon, title }: any)` | `interface CardProps { icon: React.ComponentType; title: string } function Card(p: CardProps)` |
+| Callback con shape variable           | `unknown` + type guard al inicio (`if (typeof x !== 'object') throw …`)                        |
+
+Ver tabla completa con ejemplos del repo en [typescript-standards.md](architecture/typescript-standards.md).
+
+### Lint baseline — política
+
+Hasta 25-05-2026 toleramos **114 problems baseline** (mezcla `any`, `unused-vars`, `prefer-const`). **Esa tolerancia se acaba**. Desde Sprint 3:
+
+- ❌ Ningún PR nuevo introduce `any`. Bloqueado por husky.
+- ✅ Tarea `SP-4-LINT-ZERO` abierta en RoadMap para limpiar los 114 baseline en lotes.
+- ✅ Boy scout rule: si tocas un fichero por otra razón, arregla también sus warnings.
+- 🎯 Objetivo: lint baseline = 0 al cierre del MVP (v0.3.0 GA).
+
+Si husky bloquea tu commit por `no-explicit-any`: **NO uses `--no-verify`**. Lee el error, aplica una alternativa de la tabla, `npm run typecheck` para verificar, re-commit.
 
 ---
 
