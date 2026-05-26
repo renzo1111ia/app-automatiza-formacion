@@ -13,14 +13,14 @@
 ## Alternativas a `any` (uso real en el repo)
 
 | Caso                                                             | Alternativa correcta                                                                                                                                                            |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------- |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --------------------------------------------------------------------------------------- |
 | Objeto con keys arbitrarias pero values uniformes                | `Record<string, T>` — ej. `Record<string, unknown>` para JSON genérico                                                                                                          |
 | No sabes la forma exacta pero quieres seguridad                  | `unknown` + narrowing con `typeof`, `in`, type guards                                                                                                                           |
 | Función genérica que pasa el tipo sin tocarlo                    | Generics — `function identity<T>(x: T): T { return x; }`                                                                                                                        |
 | Forma parcialmente conocida (ej. tenant config desde Supabase)   | Interface + cast explícito puntual: `const wa = (cfg.whatsapp ?? {}) as { accessToken?: string; phoneNumberId?: string }`                                                       |
 | Props de componente "shape libre" (ej. HealthCard genérico)      | Definir interface dedicada — `interface HealthCardProps { icon: React.ComponentType<{ className?: string }>; title: string; status: string; desc: string; isError?: boolean; }` |
 | Datos de librería externa sin types                              | Crear `.d.ts` en `src/types/` con el subset que uses                                                                                                                            |
-| Callback genérico (ej. handler de evento BullMQ con shape ancho) | Type guard al inicio: `if (typeof job.data !== 'object'                                                                                                                         |     | job.data === null) throw new Error('invalid payload')` + interface posterior |
+| Callback genérico (ej. handler de evento BullMQ con shape ancho) | `unknown` + type guard al inicio del handler; ej. `if (typeof job.data !== 'object'                                                                                             |     | job.data === null) throw new Error('invalid payload')` y luego cast a la interface real |
 
 ## Ejemplo concreto (commit 26-05-2026)
 
