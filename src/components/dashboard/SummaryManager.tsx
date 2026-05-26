@@ -986,7 +986,7 @@ export function SummaryManager({
           onDragEnd={handleDragEnd}
           modifiers={[restrictToFirstScrollableAncestor]}
         >
-          <div className="mb-8 grid grid-cols-1 gap-4 text-left transition-all duration-500 md:grid-cols-12">
+          <div className="mb-8 grid grid-cols-1 gap-4 text-left transition-all duration-500 sm:grid-cols-6 lg:grid-cols-12">
             <SortableContext
               items={kpis.filter((k) => isEditing || k.isVisible !== false).map((k) => k.id)}
               strategy={rectSortingStrategy}

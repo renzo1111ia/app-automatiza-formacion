@@ -442,17 +442,21 @@ export function HistorialTable({ initialData, fromDate, toDate, columns }: Props
         onScroll={onScrollTop}
         className="custom-scrollbar sticky top-[100px] z-[20] mb-2 h-5 overflow-x-auto"
       >
+        {/* Sprint 3 BUG-3-12 fix (26-05-2026): Tailwind JIT no procesa class
+            dinámica `[width:${px}px]` (queda como string sin efecto). Usar
+            inline style para que el width siga al tableScrollWidth real. */}
         <div
-          className={cn("h-[1px]", tableScrollWidth ? `[width:${tableScrollWidth}px]` : "w-full")}
+          className="h-[1px]"
+          style={tableScrollWidth ? { width: `${tableScrollWidth}px` } : { width: "100%" }}
         />
       </div>
 
       <div
         ref={tableContainerRef}
         onScroll={onScrollTable}
-        className="border-border bg-card overflow-hidden overflow-x-auto rounded-[2.5rem] border shadow-xl"
+        className="border-border bg-card overflow-x-auto rounded-[2.5rem] border shadow-xl"
       >
-        <table className="w-full text-sm">
+        <table className="w-full min-w-max text-sm">
           <thead>
             <tr className="border-border bg-muted/50 border-b">
               {activeColumns.map((col) => (

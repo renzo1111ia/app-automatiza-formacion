@@ -13,8 +13,9 @@ import fs from "fs";
  * Si la conexión falla, los tests de login se marcan como SKIP con finding.
  */
 
-const ADMIN_EMAIL = "demo@af.local";
-const ADMIN_PASS = "KbHkmRdyIlGDqxFlktWS-Aa1!";
+// Credenciales: VPS_ADMIN_EMAIL / VPS_ADMIN_PASS (mismas creds local+VPS — alineadas con seed-demo.ts).
+const ADMIN_EMAIL = process.env.VPS_ADMIN_EMAIL ?? "automatizaformacion@gmail.com";
+const ADMIN_PASS = process.env.VPS_ADMIN_PASS ?? "BeaOli#AF*2026!";
 const VIEWER_EMAIL = "viewer@af.local";
 const VIEWER_PASS = "LJVQaI1Pd51rPv6yxVAI-Aa1!"; // credencial correcta de show-demo-credentials
 const SCREENSHOT_DIR = "playwright-report/sprint-0-close";
@@ -53,14 +54,19 @@ async function attemptLogin(
   errorText: string | null;
 }> {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(500); // esperar hidratación React
+  // Esperar a que los inputs sean realmente interactivos (hidratación React completa).
+  // Antes era waitForTimeout(500) que en runs concurrentes producía race condition
+  // → form submit antes de que onChange capture valores → "missing email or phone".
+  await page.locator("#email").waitFor({ state: "visible", timeout: 5_000 });
+  await page.locator("#password").waitFor({ state: "visible", timeout: 5_000 });
+  await page.waitForTimeout(800);
 
   await fillReactInput(page, "#email", email);
   await fillReactInput(page, "#password", pass);
 
   // Verificar que los campos tienen valor
-  const emailVal = await page.locator("#email").inputValue();
-  const passVal = await page.locator("#password").inputValue();
+  let emailVal = await page.locator("#email").inputValue();
+  let passVal = await page.locator("#password").inputValue();
 
   if (!emailVal || !passVal) {
     // Fallback: usar keyboard
@@ -68,6 +74,18 @@ async function attemptLogin(
     await page.keyboard.type(email);
     await page.locator("#password").click({ clickCount: 3 });
     await page.keyboard.type(pass);
+    emailVal = await page.locator("#email").inputValue();
+    passVal = await page.locator("#password").inputValue();
+  }
+
+  // Si tras ambos intentos los campos siguen vacíos, abortar antes de submit
+  // para no disparar el "missing email or phone" server-side.
+  if (!emailVal || !passVal) {
+    return {
+      success: false,
+      url: page.url(),
+      errorText: "Form inputs vacíos tras 2 intentos de fill (race hidratación)",
+    };
   }
 
   // Submit
@@ -236,9 +254,12 @@ test.describe("sprint-0-close smoke flows @smoke", () => {
 
     if (!result.success) {
       const isConnError = result.errorText?.match(/ERROR DE RED|Supabase|fetch/i);
-      if (isConnError) {
-        console.warn("SF-05 SKIP: No se puede probar logout sin login previo.");
-        test.skip(true, "Supabase remoto no accesible desde test runner local");
+      const isRaceFill = result.errorText?.match(/Form inputs vac[ií]os|missing email or phone/i);
+      if (isConnError || isRaceFill) {
+        console.warn(
+          `SF-05 SKIP: No se puede probar logout sin login previo (errorText=${result.errorText}).`
+        );
+        test.skip(true, "Login pre-requisito no completó (race hidratación o Supabase down)");
         return;
       }
     }

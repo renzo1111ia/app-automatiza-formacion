@@ -42,6 +42,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
+  },
+  {
     label: "Constructor & IA",
     href: "/dashboard/onboarding",
     icon: <Workflow className="h-5 w-5" strokeWidth={1.8} />,
@@ -129,7 +134,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <MessageCircle className="h-4 w-4" strokeWidth={1.8} />,
       },
       {
-        label: "Tabla Leads",
+        label: "Lista de Leads",
         href: "/dashboard/historial",
         icon: <History className="h-4 w-4" strokeWidth={1.8} />,
       },
@@ -311,7 +316,7 @@ export function Sidebar({
       {/* ── MOBILE: Overlay backdrop ───────────────────────────────── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           onClick={onMobileClose}
         />
       )}
@@ -319,11 +324,11 @@ export function Sidebar({
       {/* ── DESKTOP Sidebar / MOBILE Drawer ───────────────────────── */}
       <aside
         className={cn(
-          "border-border bg-grad-surface relative hidden h-screen flex-col border-r transition-all duration-300 md:flex",
+          "border-border bg-grad-surface relative hidden h-screen flex-col border-r transition-all duration-300 lg:flex",
           collapsed ? "w-16" : "w-64",
-          "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:flex max-md:w-72 max-md:shadow-2xl",
-          mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
-          "max-md:transition-transform max-md:duration-300"
+          "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-50 max-lg:flex max-lg:w-72 max-lg:shadow-2xl",
+          mobileOpen ? "max-lg:translate-x-0" : "max-lg:-translate-x-full",
+          "max-lg:transition-transform max-lg:duration-300"
         )}
       >
         {/* Logo */}
@@ -350,7 +355,7 @@ export function Sidebar({
           {onMobileClose && (
             <button
               onClick={onMobileClose}
-              className="text-muted-foreground/50 hover:bg-card flex h-9 w-9 items-center justify-center rounded-xl transition-all md:hidden"
+              className="text-muted-foreground/50 hover:bg-card flex h-9 w-9 items-center justify-center rounded-xl transition-all lg:hidden"
               title="Cerrar menú"
               aria-label="Cerrar menú"
             >
@@ -369,7 +374,7 @@ export function Sidebar({
 
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-muted-foreground/40 hover:bg-card hover:text-foreground m-3 hidden items-center justify-center rounded-xl py-2.5 transition md:flex"
+          className="text-muted-foreground/40 hover:bg-card hover:text-foreground m-3 hidden items-center justify-center rounded-xl py-2.5 transition lg:flex"
           title={collapsed ? "Expandir" : "Colapsar"}
         >
           <svg
@@ -385,7 +390,7 @@ export function Sidebar({
       </aside>
 
       {/* ── MOBILE: Bottom Navigation Bar ─────────────────────────── */}
-      <nav className="border-border bg-card/95 pb-safe fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t px-1 backdrop-blur-md md:hidden">
+      <nav className="border-border bg-card/95 pb-safe fixed inset-x-0 bottom-0 z-30 flex items-center justify-around border-t px-1 backdrop-blur-md lg:hidden">
         {(
           [
             NAV_ITEMS.find((n) => n.label === "Métricas"),

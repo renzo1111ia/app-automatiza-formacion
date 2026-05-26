@@ -24,13 +24,23 @@ const SUPABASE_KONG_INTERNAL = process.env.SUPABASE_KONG_INTERNAL_URL ?? "http:/
  * `frame-ancestors 'none'` previene clickjacking en todas las rutas EXCEPTO `/widget/*`
  * que se sobrescribe abajo (los clientes embeben el widget en sus sitios).
  */
+// Sprint 3 BUG-3-13 fix (26-05-2026): React dev mode usa eval() para
+// debugging (reconstrucción de callstacks). CSP estricta sin 'unsafe-eval'
+// rompe esta funcionalidad y genera badge "1 Issue" del Next Dev Tools.
+// Solo añadimos 'unsafe-eval' a script-src en NODE_ENV !== 'production'.
+// En prod build se mantiene la CSP estricta original.
+const IS_DEV = process.env.NODE_ENV !== "production";
+const SCRIPT_SRC = IS_DEV
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  : "script-src 'self' 'unsafe-inline'";
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline'", // Next.js inyecta inline scripts (hidratación). strict-dynamic en Sprint 4.
+      SCRIPT_SRC, // Next.js inyecta inline scripts (hidratación). 'unsafe-eval' solo en dev. strict-dynamic en Sprint 4.
       "img-src 'self' data: blob: https:",
       [
         "connect-src 'self'",
@@ -38,7 +48,6 @@ const securityHeaders = [
         "https://api.anthropic.com",
         "https://api.openai.com",
         "https://generativelanguage.googleapis.com",
-        "https://bedrock.*.amazonaws.com",
         "https://*.ingest.sentry.io",
         "https://*.ingest.us.sentry.io",
         "https://api.retellai.com",

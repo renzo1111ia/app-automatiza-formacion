@@ -22,7 +22,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: IS_CI,
   retries: IS_CI ? 2 : 0,
-  workers: IS_CI ? 1 : undefined,
+  // Limitar workers locales a 2: con 8 workers concurrentes Supabase Auth
+  // local satura ocasionalmente (race en POST /auth/v1/token, ver
+  // BUG-3-05 fix 26-05-2026). 2 workers da paralelismo razonable sin flakiness.
+  workers: IS_CI ? 1 : 2,
   reporter: IS_CI
     ? [["list"], ["html", { open: "never" }]]
     : [["list"], ["html", { open: "on-failure" }]],
