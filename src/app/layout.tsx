@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 import { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { SkipLink } from "@/components/layout/SkipLink";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -34,6 +35,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className={`${inter.variable} bg-background text-foreground font-sans antialiased`}>
+        {/* Sprint 3 SP-4-WCAG-10: skip-link al inicio del body (WCAG 2.4.1 Bypass Blocks). */}
+        <SkipLink />
         <ThemeProvider defaultTheme="system" storageKey="ui-theme">
           <ToastProvider>{children}</ToastProvider>
         </ThemeProvider>

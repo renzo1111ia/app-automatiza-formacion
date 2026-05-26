@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "timezone": "Europe/Madrid",
+  "schedule": ["before 9am on Monday"],
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "description": "Patch updates de devDependencies: auto-PR (review humano).",
+      "matchUpdateTypes": ["patch"],
+      "matchDepTypes": ["devDependencies"],
+      "automerge": false,
+      "addLabels": ["patch", "deps:dev"]
+    },
+    {
+      "description": "Minor + patch de dependencies prod: auto-PR (review humano, NO automerge en MVP).",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": ["dependencies"],
+      "automerge": false,
+      "addLabels": ["minor", "deps:prod"]
+    },
+    {
+      "description": "Major updates: BLOQUEADOS. Requieren ADR y aprobación manual.",
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Lock file maintenance: PR semanal automática solo para refresh lockfile.",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": false,
+      "schedule": ["before 9am on Monday"]
+    },
+    {
+      "description": "Security alerts: PR inmediata, prioridad alta.",
+      "matchPackagePatterns": ["*"],
+      "vulnerabilityAlerts": {
+        "labels": ["security", "vulnerability"],
+        "automerge": false,
+        "schedule": []
+      }
+    },
+    {
+      "description": "Ignorar paquetes gestionados manualmente por ADR.",
+      "matchPackageNames": ["typescript", "eslint", "next", "react", "react-dom"],
+      "enabled": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"]
+  },
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate Dependency Dashboard"
+}

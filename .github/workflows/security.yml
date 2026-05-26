@@ -1,0 +1,38 @@
+name: Security Audit
+
+# Sprint 3 phase-05 (4-06): npm audit en CI. Falla build si hay High/Critical CVEs.
+# Complementa el hook af-deps-guard.cjs (preventivo local) con verificación de CI.
+
+on:
+  push:
+    branches: [developer, staging, main]
+  pull_request:
+    branches: [developer, staging, main]
+  schedule:
+    # Lunes 9:00 UTC: catch CVEs publicadas durante la semana en deps existentes.
+    - cron: "0 9 * * 1"
+
+jobs:
+  audit:
+    name: npm audit (high/critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies (ci, locked)
+        run: npm ci --ignore-scripts
+
+      - name: npm audit (production only, high+)
+        run: npm audit --omit=dev --audit-level=high
+        # Solo prod deps; las dev vulns (eslint, etc) NO bloquean. High y Critical fallan.
+
+      - name: npm audit (todas, info)
+        if: always()
+        continue-on-error: true
+        run: npm audit
+        # Reporta TODO sin fallar — útil para visibilidad sin bloquear.

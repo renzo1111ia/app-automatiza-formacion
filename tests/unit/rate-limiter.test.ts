@@ -1,0 +1,119 @@
+/**
+ * Tests unitarios del rate-limiter (SP-4-06 + SP-4-08).
+ *
+ * Mockea ioredis para validar:
+ * - Sliding window cuenta INCR + PEXPIRE pipeline.
+ * - allowed=true cuando count <= limit.
+ * - allowed=false cuando count > limit.
+ * - Fail-open si Redis lanza (return allowed=true).
+ * - extractClientIp prioriza X-Forwarded-For sobre X-Real-IP.
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let pipelineExecResult: any[] | null = [[null, 1]];
+const pipelineMock = {
+  incr: vi.fn().mockReturnThis(),
+  pexpire: vi.fn().mockReturnThis(),
+  exec: vi.fn().mockImplementation(async () => pipelineExecResult),
+};
+
+const redisMock = {
+  pipeline: vi.fn(() => pipelineMock),
+  on: vi.fn(),
+};
+
+vi.mock("ioredis", () => ({
+  Redis: vi.fn().mockImplementation(() => redisMock),
+}));
+
+describe("rate-limiter", () => {
+  beforeEach(() => {
+    // Reset module cache para que cada test obtenga su propio Redis singleton fresco.
+    vi.resetModules();
+    pipelineExecResult = [[null, 1]];
+    pipelineMock.exec.mockClear();
+    pipelineMock.incr.mockClear();
+    pipelineMock.pexpire.mockClear();
+    redisMock.pipeline.mockClear();
+    // Limpiar el singleton global entre tests.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (globalThis as any).__af_rate_limiter_redis;
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("permite request cuando count <= limit", async () => {
+    pipelineExecResult = [[null, 1]];
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const result = await rateLimit("test:1", 5, 60_000);
+
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(4);
+    expect(result.limit).toBe(5);
+    expect(pipelineMock.incr).toHaveBeenCalledTimes(1);
+    expect(pipelineMock.pexpire).toHaveBeenCalledTimes(1);
+  });
+
+  it("bloquea request cuando count > limit", async () => {
+    pipelineExecResult = [[null, 6]];
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const result = await rateLimit("test:2", 5, 60_000);
+
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("permite la request exacta del límite (count === limit)", async () => {
+    pipelineExecResult = [[null, 5]];
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const result = await rateLimit("test:3", 5, 60_000);
+
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(0);
+  });
+
+  it("fail-open si Redis lanza error (no bloquea al usuario)", async () => {
+    pipelineMock.exec.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const result = await rateLimit("test:4", 5, 60_000);
+
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(5);
+  });
+
+  it("usa key con bucket time-based (sliding window)", async () => {
+    pipelineExecResult = [[null, 1]];
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    await rateLimit("user:abc", 10, 30_000);
+
+    const incrCall = pipelineMock.incr.mock.calls[0]?.[0] as string;
+    expect(incrCall).toMatch(/^rl:user:abc:\d+$/);
+  });
+});
+
+describe("extractClientIp", () => {
+  it("prioriza X-Forwarded-For (primer IP de la lista)", async () => {
+    const { extractClientIp } = await import("@/lib/rate-limiter");
+    const req = new Request("http://localhost", {
+      headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.5", "x-real-ip": "10.0.0.5" },
+    });
+    expect(extractClientIp(req)).toBe("203.0.113.1");
+  });
+
+  it("usa X-Real-IP si no hay X-Forwarded-For", async () => {
+    const { extractClientIp } = await import("@/lib/rate-limiter");
+    const req = new Request("http://localhost", {
+      headers: { "x-real-ip": "192.168.1.10" },
+    });
+    expect(extractClientIp(req)).toBe("192.168.1.10");
+  });
+
+  it("retorna 'unknown' si no hay headers IP", async () => {
+    const { extractClientIp } = await import("@/lib/rate-limiter");
+    const req = new Request("http://localhost");
+    expect(extractClientIp(req)).toBe("unknown");
+  });
+});
