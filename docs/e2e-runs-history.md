@@ -65,6 +65,45 @@
 
 ## Runs
 
+### Run 2026-05-27 20:56 — operator: Claude (Sonnet) — env: local
+
+- **Plan dir**: `plans/260527-2056-e2ctotal-local-run/`
+- **Branch / HEAD**: `feature/sprint-03-hardening` @ post-fix
+- **App version local**: `v0.3.0-rc.1` + commit `41d429c` + fix Redis timeout
+- **Plan version**: `1.0`
+- **Duración total**: ~18 min
+- **Modo**: smoke focal local (Fase 01 expandida con descubrimiento de bug)
+- **Resultado**: 🟢 **PASS con FIX in-session** — bug HIGH encontrado y cerrado
+
+#### Hallazgo clave
+
+`/e2etotal --env local` detectó un **bug HIGH real en `rate-limiter.ts`** que el run VPS NO pudo ver (VPS no tenía `41d429c` desplegado):
+
+- **Bug**: ioredis ECONNRESET dejaba `loginAction` colgado >1.5min porque `pipe.exec()` no tenía timeout duro.
+- **Fix**: `Promise.race()` con timeout 100ms — fail-open inmediato si Redis no responde.
+- **Test añadido**: simula `pipe.exec()` como promise que nunca resuelve, verifica elapsed entre 90-500ms.
+
+#### Bugs encontrados
+
+**Cerrados in-session** (commit pendiente):
+
+- `BUG-RLM-01-HIGH-redis-econnreset-blocks-auth` — fix `src/lib/rate-limiter.ts` + test `tests/unit/rate-limiter.test.ts`.
+
+**Abiertos**: ninguno nuevo del run local.
+
+#### Métricas
+
+- Tests Vitest: 235 → 236 verdes (+1 nuevo timeout fail-open)
+- TypeCheck: 🟢
+- Lint baseline: preservado
+- Worst-case latency `rateLimit()`: 1.5min → 100ms (mejora 900x)
+
+#### Link al INFORME-FINAL
+
+[`plans/260527-2056-e2ctotal-local-run/INFORME-FINAL.md`](../plans/260527-2056-e2ctotal-local-run/INFORME-FINAL.md)
+
+---
+
 ### Run 2026-05-27 19:43 — operator: Claude (Sonnet) — env: vps
 
 - **Plan dir**: `plans/260527-1943-e2etotal-run/`
@@ -118,15 +157,15 @@
 
 ## Estadísticas globales acumuladas
 
-- **Runs totales**: 1
-- **Entornos cubiertos**: vps (1)
+- **Runs totales**: 2 (vps + local)
+- **Entornos cubiertos**: vps, local
 - **Entidades testeadas (única)**: 0/12 (smoke focal saltó Fase 03)
 - **Endpoints API testeados (único)**: 7/31 (health, version, integrations, admin/queues, webhooks/{retell,whatsapp,crm})
-- **Bugs únicos encontrados**: 3 (1 HIGH + 2 MED)
-- **Bugs cerrados in-session histórico**: 0
-- **Bugs abiertos pendientes**: 3
-- **Tiempo total invertido en E2E full**: 42min
-- **Última cobertura completa (todas las fases verdes)**: nunca (run inaugural smoke)
+- **Bugs únicos encontrados**: 4 (2 HIGH + 2 MED)
+- **Bugs cerrados in-session histórico**: 1 (`BUG-RLM-01` fix Redis timeout)
+- **Bugs abiertos pendientes**: 3 (`E2E-260527-001/002/003`)
+- **Tiempo total invertido en E2E full**: 60min (42 vps + 18 local)
+- **Última cobertura completa (todas las fases verdes)**: nunca (smoke focal)
 
 ## Observaciones inter-run (aprendizajes acumulados)
 

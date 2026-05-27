@@ -61,6 +61,18 @@ export interface RateLimitResult {
 }
 
 /**
+ * Timeout duro para operaciones Redis. Si ioredis no responde en este tiempo
+ * (ej. ECONNRESET con retryStrategy reconectando), `rateLimit()` hace fail-open
+ * inmediato — NUNCA bloquea al usuario > 100ms.
+ *
+ * Detectado en /e2etotal local 27-05-2026 (run 260527-2056): Redis ECONNRESET
+ * dejó loginAction colgado >1.5min porque ioredis reconectaba bloqueante.
+ * El comportamiento fail-open conceptualmente correcto necesitaba timeout
+ * duro para garantizar UX.
+ */
+const RATE_LIMIT_TIMEOUT_MS = 100;
+
+/**
  * Aplica un rate limit y retorna si la request actual está dentro del límite.
  *
  * Si Redis falla (conexión caída, timeout), retorna `{ allowed: true }` — fail-open.
@@ -86,7 +98,18 @@ export async function rateLimit(
     const pipe = redis.pipeline();
     pipe.incr(windowKey);
     pipe.pexpire(windowKey, ttlMs);
-    const results = await pipe.exec();
+
+    // Promise.race con timeout duro: si Redis reconecta o tarda > RATE_LIMIT_TIMEOUT_MS,
+    // forzamos fail-open inmediato. Detectado en /e2etotal local 27-05-2026 cuando
+    // ioredis ECONNRESET dejaba loginAction colgado >1.5min reintentando reconexión.
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`rate-limit timeout >${RATE_LIMIT_TIMEOUT_MS}ms`)),
+        RATE_LIMIT_TIMEOUT_MS
+      )
+    );
+
+    const results = await Promise.race([pipe.exec(), timeoutPromise]);
     const count = (results?.[0]?.[1] as number) ?? 1;
 
     return {
@@ -96,7 +119,7 @@ export async function rateLimit(
       limit,
     };
   } catch (err) {
-    // Fail-open: NO bloquear al usuario si el rate limiter está caído.
+    // Fail-open: NO bloquear al usuario si el rate limiter está caído O lento.
     console.warn(
       `[rate-limiter] check failed for ${key}, allowing through:`,
       err instanceof Error ? err.message : err

@@ -92,6 +92,25 @@ describe("rate-limiter", () => {
     const incrCall = pipelineMock.incr.mock.calls[0]?.[0] as string;
     expect(incrCall).toMatch(/^rl:user:abc:\d+$/);
   });
+
+  it("fail-open con timeout duro 100ms si Redis cuelga (BUG-RLM-01 /e2etotal 27-05-2026)", async () => {
+    // Simula Redis colgado: pipe.exec() nunca resuelve (ioredis ECONNRESET reconnecting).
+    // Sin timeout duro la auth quedaría bloqueada >1.5min (bug real detectado en local).
+    pipelineMock.exec.mockImplementationOnce(
+      () => new Promise(() => {}) // promise que nunca resuelve
+    );
+
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const start = Date.now();
+    const result = await rateLimit("test:hang", 5, 60_000);
+    const elapsed = Date.now() - start;
+
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(5);
+    // Debe responder en ~100ms + epsilon, NUNCA > 500ms.
+    expect(elapsed).toBeLessThan(500);
+    expect(elapsed).toBeGreaterThanOrEqual(90);
+  });
 });
 
 describe("extractClientIp", () => {
