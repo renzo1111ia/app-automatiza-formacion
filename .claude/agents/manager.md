@@ -82,16 +82,19 @@ Usa `Task` con estos `subagent_type` para delegar trabajo (namespace `af-agents`
 
 ## Cómo delegar
 
-```
+```ts
 // Delegar a un agente
-Task(subagent_type="af-agents:database", prompt="Crear tabla leads (SQL migration Supabase + Zod schema + repository)...")
+Task(
+  (subagent_type = "af-agents:database"),
+  (prompt = "Crear tabla leads (SQL migration Supabase + Zod schema + repository)...")
+);
 
 // Delegar en paralelo (agentes independientes)
-Task(subagent_type="af-agents:database", prompt="...")
-Task(subagent_type="af-agents:api", prompt="...")
+Task((subagent_type = "af-agents:database"), (prompt = "..."));
+Task((subagent_type = "af-agents:api"), (prompt = "..."));
 
 // Delegar en background
-Task(subagent_type="af-agents:testing", prompt="...", run_in_background=true)
+Task((subagent_type = "af-agents:testing"), (prompt = "..."), (run_in_background = true));
 ```
 
 ## Archivos clave del proyecto
@@ -146,12 +149,17 @@ Task(subagent_type="af-agents:testing", prompt="...", run_in_background=true)
 
 ### Fin de fase (Phase Completion Protocol — automático)
 
-1. Delegar a `af-agents:testing` — typecheck + lint + build + unit tests + (browser tests si UI).
-2. Delegar a `af-agents:security` — RLS verify + OWASP + secrets scan.
-3. Delegar a `af-agents:review` — code review.
-4. Si todo OK: delegar a `af-agents:git` para PR de `feature/*` → `developer`.
-5. Generar reporte con `@productivity`.
-6. **Bump SemVer** según convención: sprint cerrado → `v0.x.0`; patch → `v0.0.x`.
+Secuencia OBLIGATORIA. Cada paso solo arranca si el anterior cerró en verde:
+
+1. **CLOSE-1** — Delegar a `af-agents:testing`: typecheck + lint + build + unit tests + (browser tests si UI). Si rojo → bloquear y arreglar antes de continuar.
+2. **CLOSE-1.5 (Security delta — PROACTIVO)** — Delegar a `af-agents:security` con modo `delta` (default) sobre `git diff developer..HEAD --name-only -- src/ supabase/migrations/ .env.example`. Si el cierre es de un bump `v0.X.0` con X distinto al último tag, o es un `rc.*`, o es `staging → main` → invocar en modo `full-scan`. **Findings críticos BLOQUEAN cierre** — abrir BUG-X y delegar fix a `af-agents:code` antes de continuar. Findings altos generan BUG-X para próximo sprint pero no bloquean. Findings medios/bajos al backlog.
+3. **CLOSE-2** — E2C local Playwright (UI flujos del sprint + WCAG 2.2 AA rutas clave). Si rojo → bloquear.
+4. **CLOSE-4** — Bug fixes detectados en CLOSE-1/1.5/2. Re-run del paso afectado hasta verde.
+5. **CLOSE-5** — Delegar a `af-agents:review` (code review) → si OK delegar a `af-agents:git` para PR `feature/*` → `developer`. **NO mergear** sin orden explícita del usuario.
+6. Generar reporte con `@productivity`.
+7. **Bump SemVer** según convención: sprint cerrado → `v0.x.0`; patch → `v0.0.x`.
+
+**Regla de oro:** `af-agents:security` se invoca **automáticamente** en cada CLOSE — el usuario NO tiene que pedirlo. Esta es la regla del proyecto desde Sprint 3 (SP-4-SEC-PROACTIVE 27-05-2026).
 
 ## Reglas globales del proyecto
 

@@ -225,34 +225,36 @@ Triggers de escalado **preventivo** (antes de empezar la tarea, sin esperar a fa
 Al cerrar fase/sprint, ejecutar SIN preguntar y EN ESTE ORDEN ESTRICTO. Cada paso solo arranca si el anterior cerró en verde. Si algo falla, se itera fix + re-run del paso fallido (no se salta):
 
 1. **Auto test (CLOSE-1)** — `npm run typecheck` + `npm run lint` + `npm run build` + `npm test` (unit + integration). Delegado a `af-agents:testing`. Verde obligatorio para seguir.
-2. **E2C local (CLOSE-2)** — Claude abre navegador con Playwright contra `localhost:8500` y recorre los flujos implementados en el sprint + WCAG 2.2 AA en rutas clave. Capturas en `docs/screenshots/`. Verde obligatorio para seguir.
-3. **Corrección de bugs (CLOSE-4)** — Cualquier bug detectado en CLOSE-1 o CLOSE-2 se corrige aquí y se re-corre el paso afectado hasta verde.
-4. **Push a GitHub (parte de CLOSE-5)** — `git push` de la rama `feature/sprint-NN-<slug>`. Solo después de que CLOSE-1/2/4 estén 🟢.
-5. **PR a `developer` (parte de CLOSE-5)** — Crear PR. NO mergear sin orden explícita del usuario (regla absoluta del proyecto). El merge a `developer` lo confirma el usuario manualmente.
-6. **CONDICIONAL — E2E VPS (parte de CLOSE-5)** — **SOLO si el proyecto ya está desplegado en el VPS Easypanel del cliente**: Claude ejecuta los specs Playwright contra la URL del VPS (no localhost). Si NO hay despliegue VPS todavía (estado actual: local-first), este paso se omite y se difiere su contenido al hand-off a `SP-4B phase-NN`.
-7. **Informe al usuario** — Resumen: tests passed/failed/fixed + diff de lo implementado + invitación a probar manualmente si aplica (UI visible o flujo de cara al usuario).
+2. **Security delta (CLOSE-1.5) — PROACTIVO desde 27-05-2026 (SP-4-SEC-PROACTIVE)** — Delegado a `af-agents:security` con modo `delta` sobre `git diff developer..HEAD --name-only -- src/ supabase/migrations/ .env.example`. Genera report en `plans/reports/security-delta-{sprint}-{YYYYMMDD}.md` con findings clasificados OWASP 2021 (A01..A10) mapeados al stack AF (RLS multi-tenant, OAuth tokens cifrados, webhooks HMAC, Server Actions LLM, widget público). **Findings críticos BLOQUEAN cierre** — abrir BUG-X y delegar fix a `af-agents:code` antes de continuar al paso 3. Altos generan BUG-X para próximo sprint pero no bloquean. Medios/bajos al backlog. Modo `full-scan` SOLO si: bump `v0.X.0` con X distinto al último tag, o release candidate `rc.*`, o promoción `staging → main`. El usuario NO tiene que pedirlo — es automático y obligatorio.
+3. **E2C local (CLOSE-2)** — Claude abre navegador con Playwright contra `localhost:8500` y recorre los flujos implementados en el sprint + WCAG 2.2 AA en rutas clave. Capturas en `docs/screenshots/`. Verde obligatorio para seguir.
+4. **Corrección de bugs (CLOSE-4)** — Cualquier bug detectado en CLOSE-1 / 1.5 / 2 se corrige aquí y se re-corre el paso afectado hasta verde.
+5. **Push a GitHub (parte de CLOSE-5)** — `git push` de la rama `feature/sprint-NN-<slug>`. Solo después de que CLOSE-1/1.5/2/4 estén 🟢.
+6. **PR a `developer` (parte de CLOSE-5)** — Crear PR. NO mergear sin orden explícita del usuario (regla absoluta del proyecto). El merge a `developer` lo confirma el usuario manualmente.
+7. **CONDICIONAL — E2E VPS (parte de CLOSE-5)** — **SOLO si el proyecto ya está desplegado en el VPS Dokploy del cliente**: Claude ejecuta los specs Playwright contra la URL del VPS (no localhost). Si NO hay despliegue VPS todavía (estado actual: local-first), este paso se omite y se difiere su contenido al hand-off a `SP-4B phase-NN`.
+8. **Informe al usuario** — Resumen: tests passed/failed/fixed + findings security delta (críticos/altos/medios/bajos) + diff de lo implementado + invitación a probar manualmente si aplica (UI visible o flujo de cara al usuario).
 
-### Detector "VPS desplegado" (cuándo activar paso 6)
+### Detector "VPS desplegado" (cuándo activar paso 7)
 
-El paso 6 (E2E VPS) se activa SOLO si se cumplen TODAS estas condiciones:
+El paso 7 (E2E VPS) se activa SOLO si se cumplen TODAS estas condiciones:
 
 - Existe variable `NEXT_PUBLIC_VPS_URL` en `.env.example` con valor distinto a placeholder.
 - El staging branch ha sido promovido al menos una vez (verificable con `git log staging`).
 - El usuario ha confirmado explícitamente que el VPS está en marcha (memoria persistente o nota en RoadMap).
 
-Si cualquier condición falla → paso 6 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E VPS diferido — pre-deploy VPS no realizado todavía". El `roadmap-keeper` no bloquea el cierre por esto.
+Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E VPS diferido — pre-deploy VPS no realizado todavía". El `roadmap-keeper` no bloquea el cierre por esto.
 
 ### Mapping protocolo → subtareas CLOSE-1..5
 
-| Paso protocolo | Subtarea RoadMap                                  | Ejecutor                         |
-| -------------- | ------------------------------------------------- | -------------------------------- |
-| 1              | `SP-N-CLOSE-1` Auto test                          | `af-agents:testing`              |
-| 2              | `SP-N-CLOSE-2` E2C Local + WCAG 2.2 AA            | `af-agents:testing` + Playwright |
-| 3              | `SP-N-CLOSE-4` Corrección de bugs                 | Claude orquestador               |
-| 4              | `SP-N-CLOSE-5` paso 1 (push)                      | `af-agents:git`                  |
-| 5              | `SP-N-CLOSE-5` paso 2 (PR a developer, sin merge) | `af-agents:git`                  |
-| 6 (condic.)    | `SP-N-CLOSE-5` paso 3 E2E VPS                     | `af-agents:testing` contra VPS   |
-| 7              | Informe final al usuario                          | Claude orquestador               |
+| Paso protocolo | Subtarea RoadMap                                  | Ejecutor                                                         |
+| -------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
+| 1              | `SP-N-CLOSE-1` Auto test                          | `af-agents:testing`                                              |
+| 2              | `SP-N-CLOSE-1.5` Security delta (OWASP 2021)      | `af-agents:security` (modo delta default, full-scan en releases) |
+| 3              | `SP-N-CLOSE-2` E2C Local + WCAG 2.2 AA            | `af-agents:testing` + Playwright                                 |
+| 4              | `SP-N-CLOSE-4` Corrección de bugs                 | Claude orquestador                                               |
+| 5              | `SP-N-CLOSE-5` paso 1 (push)                      | `af-agents:git`                                                  |
+| 6              | `SP-N-CLOSE-5` paso 2 (PR a developer, sin merge) | `af-agents:git`                                                  |
+| 7 (condic.)    | `SP-N-CLOSE-5` paso 3 E2E VPS                     | `af-agents:testing` contra VPS                                   |
+| 8              | Informe final al usuario                          | Claude orquestador                                               |
 
 `SP-N-CLOSE-3` (test manual del dev) NO entra en este protocolo automático — está diferido a SP-4B para sprints MVP (ver sección siguiente).
 
