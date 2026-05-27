@@ -600,6 +600,13 @@ flowchart LR
   <div class="callout ok">
     <p>El Auditor recomienda <b>mantener auto-hospedado el core</b> (Postgres, PostgREST, GoTrue, Storage, Redis, BullMQ, Sentry/GlitchTip). Las razones: control de datos del cliente, pricing predictible, evitar lock-in. La complejidad operativa adicional se compensa con el ahorro y la propiedad de los datos.</p>
     <p><b>Sí externalizar:</b> Anthropic/OpenAI/Gemini (proveedores LLM — no replicables), Retell/Ultravox (voz outbound — proveedores especializados), WhatsApp Cloud API (Meta, monopolio).</p>
+    <p><b>📌 Nota sobre privacidad de la inferencia LLM (variante privativa)</b>: si la clienta o un tenant final exige que <b>los datos de la conversación NO salgan de su nube</b> (caso típico en formación regulada, sanidad, banca), los tres LLM se pueden consumir en modo "privativo" alojando la inferencia en hyperscaler con SLA empresarial:</p>
+    <ul style="margin-bottom:0">
+      <li><b>Anthropic Claude</b> → <a href="https://aws.amazon.com/bedrock/anthropic/" target="_blank" rel="noopener">AWS Bedrock</a> · <a href="https://learn.microsoft.com/azure/ai-services/foundry-models/concepts/models-featured#anthropic" target="_blank" rel="noopener">Azure AI Foundry</a> · <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude" target="_blank" rel="noopener">Google Vertex AI</a>. Misma API, los prompts/respuestas no salen del cloud contratado, BAAs disponibles.</li>
+      <li><b>OpenAI GPT</b> → <a href="https://learn.microsoft.com/azure/ai-services/openai/overview" target="_blank" rel="noopener">Azure OpenAI Service</a> (sigue siendo OpenAI pero con SLA Azure + residencia de datos EU/US a elegir + sin uso para entrenamiento).</li>
+      <li><b>Google Gemini</b> → <a href="https://cloud.google.com/vertex-ai" target="_blank" rel="noopener">Vertex AI</a> nativo (Gemini Pro/Flash dentro de Google Cloud, datos no usados para entrenamiento por defecto).</li>
+    </ul>
+    <p style="margin-top:.6em"><b>Implicación</b>: usar la variante privativa de un LLM <b>cuesta ~15-30% más por token</b> que el API pública del proveedor, pero entrega cumplimiento contractual con clientes corporativos. La decisión arquitectónica (qué provider y en qué cloud) es la misma que la del programa cloud que se acepte (Bloque 4 Fase 3.bis): si se acoge Microsoft for Startups → usar Azure OpenAI y Azure AI Foundry; AWS Activate → Bedrock; Google for Startups → Vertex.</p>
   </div>
 </section>
 

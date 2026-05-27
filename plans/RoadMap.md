@@ -1,26 +1,32 @@
 ---
-title: "RoadMap dashboard-af"
-audience: equipo de desarrollo
+title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: af-agents:roadmap-keeper
 last_updated: 2026-05-27
-last_updated_by: Javi HP
 project_version: v0.3.0-rc.1
-mvp_target_version: v0.3.0
-mvp_target_date: 2026-06-22
+mvp_target: v0.3.0
+mvp_date: 2026-06-22
 excluded_from: [staging, main]
-notes: "Detalle de estado por sprint en la sección 'Sprint Tracker (resumen)' más abajo. Mapa de versiones, progreso histórico, ratios reales vs estimados y notas de cada sprint cerrado viven en tablas legibles, no en este frontmatter."
 ---
 
-<!-- Histórico detallado movido del frontmatter el 2026-05-27 para legibilidad del preview Markdown.
-La info de sprint_*_progress / versioning_policy vive ahora en: el "Sprint Tracker (resumen)" más abajo,
-las tablas detalladas por sprint, memory/MEMORY.md y los RELEASE-NOTES-vX.Y.Z.md de cada sprint. -->
+<!-- Detalle por sprint en "Sprint Tracker (resumen)" más abajo + tablas por sprint + memory/MEMORY.md + RELEASE-NOTES-vX.Y.Z.md. -->
 
-# 🗺️ RoadMap — dashboard-af
+<div align="center">
 
-| 📌 Versión actual | 🎯 MVP target | 📅 Fecha objetivo | 🌿 Excluido       |
-| ----------------- | ------------- | ----------------- | ----------------- |
-| `v0.3.0-rc.1`     | `v0.3.0` GA   | **22-jun-2026**   | `staging`, `main` |
+# 🗺️ RoadMap — `dashboard-af`
+
+![Versión](https://img.shields.io/badge/versión-v0.3.0--rc.1-5b6cff?style=for-the-badge&logo=semver&logoColor=white)
+![MVP GA](https://img.shields.io/badge/MVP%20GA-v0.3.0-1faa66?style=for-the-badge&logo=target&logoColor=white)
+![Fecha](https://img.shields.io/badge/Objetivo-22--jun--2026-e5a93b?style=for-the-badge&logo=calendar&logoColor=white)
+![Excluido](https://img.shields.io/badge/NO%20promocionar-staging%20%7C%20main-e23b3b?style=for-the-badge&logo=git&logoColor=white)
+
+<sub>**Audiencia**: equipo de desarrollo · **Mantiene**: `af-agents:roadmap-keeper` · **Última actualización**: `2026-05-27` por Javi HP</sub>
+
+</div>
+
+> ⚠️ **Documento vivo**. NO editar directamente sin orden del lead — pide al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md) que lo haga.
+>
+> 💡 Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
 
 ## 🏁 Mapa de versiones vigente (2026-05-27)
 
@@ -36,10 +42,6 @@ las tablas detalladas por sprint, memory/MEMORY.md y los RELEASE-NOTES-vX.Y.Z.md
 | Sprint Costes-LLM   | `v0.4.1`            | 🔘 Pendiente              | Tracking de tokens LLM · post-Sheets                       |
 | Sprint Refinamiento | `v0.4.2`            | 🔘 Pendiente              | Simulator + lanzador /calls Retell (Renzo)                 |
 | Sprints 5..9        | `v0.5.0+`           | 🔘 Backlog                | Salesforce → GoHighLevel → ActiveCampaign → generalización |
-
-> ⚠️ **Documento vivo**. Mantenido proactivamente por el agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md). NO editar directamente sin orden del lead — pide al agente que lo haga.
->
-> Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
 
 ---
 
