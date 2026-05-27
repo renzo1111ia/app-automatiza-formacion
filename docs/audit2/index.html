@@ -82,6 +82,9 @@
 
   /* ---------- Grids stats ---------- */
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:16px 0 22px}
+  .stats.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:880px){.stats.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:560px){.stats.cols-3{grid-template-columns:1fr}}
   .stat{background:linear-gradient(135deg,#f5f6fb 0%,#eef0fa 100%);border:1px solid var(--line);border-radius:12px;padding:16px}
   .stat .val{font-size:1.9rem;font-weight:700;color:var(--ink);line-height:1}
   .stat .lbl{font-size:.82rem;color:var(--ink-soft);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
@@ -92,24 +95,29 @@
   .stat.info .val{color:var(--info)}
 
   /* ---------- Charts ---------- */
-  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;margin:14px 0 12px}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;margin:14px 0 12px;align-items:stretch}
   .charts.cols-2{grid-template-columns:repeat(2,1fr)}
   @media (max-width:760px){.charts.cols-2{grid-template-columns:1fr}}
-  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column}
   .chart-card.chart-full{margin:14px 0 12px}
   .chart-card h4{margin:0 0 8px;color:var(--ink);text-transform:none;letter-spacing:0;font-size:.95rem;font-weight:600}
   .chart-card .legend-note{font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+  /* Igualar altura de gráficas en grids de 2 columnas */
+  .charts.aligned .chart-card{min-height:360px}
+  .charts.aligned .chart-card > canvas{flex:1 1 auto;max-height:240px;width:100%!important}
+  .charts.aligned .chart-card > .legend-note{margin-top:auto}
 
   /* ---------- Chart full-width con leyenda lateral ---------- */
-  .chart-with-legend{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start}
-  @media (max-width:900px){.chart-with-legend{grid-template-columns:1fr}}
-  .chart-canvas-wrap{min-height:240px;position:relative}
-  .chart-legend{background:#f9fafe;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.84rem}
-  .chart-legend h5{margin:0 0 8px;font-size:.85rem;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600}
-  .chart-legend dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
-  .chart-legend dt{font-weight:600;color:var(--brand-dark);white-space:nowrap}
-  .chart-legend dd{margin:0;color:var(--ink-soft);font-size:.82rem}
-  .chart-legend .legend-foot{margin:10px 0 0;padding-top:8px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--ink-soft)}
+  .chart-with-legend{display:flex;flex-direction:column;gap:18px;align-items:stretch}
+  .chart-canvas-wrap{width:100%;min-height:320px;position:relative}
+  .chart-legend{width:100%;background:#f9fafe;border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:.86rem}
+  .chart-legend h5{margin:0 0 10px;font-size:.9rem;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600}
+  .chart-legend .legend-grid{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 28px}
+  .chart-legend .legend-item{display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:4px 12px;align-items:start}
+  .chart-legend .legend-item .term{font-weight:600;color:var(--brand-dark)}
+  .chart-legend .legend-item .def{color:var(--ink-soft);font-size:.84rem}
+  @media (max-width:720px){.chart-legend .legend-grid{grid-template-columns:1fr}}
+  .chart-legend .legend-foot{margin:14px 0 0;padding-top:10px;border-top:1px dashed var(--line);font-size:.82rem;color:var(--ink-soft)}
 
   /* ---------- Tables ---------- */
   table{width:100%;border-collapse:collapse;margin:14px 0}
@@ -216,7 +224,7 @@
     <li><a href="#b4" class="nav-link">Escalado y riesgos</a></li>
     <li><a href="#b5" class="nav-link">Decisiones cliente</a></li>
     <li><a href="#b6" class="nav-link">Equipo de desarrollo</a></li>
-    <li><a href="#b7" class="nav-link">Test /e2etotal</a></li>
+    <li><a href="#b7" class="nav-link">Test /e2ctotal y /e2etotal</a></li>
     <li><a href="#b8" class="nav-link">Tiempos hasta MVP</a></li>
   </ol>
   <div class="sidebar-meta">
@@ -247,31 +255,31 @@
     <div class="stat warn"><div class="val">−92%</div><div class="lbl">Ratio real vs estimado</div><div class="sub">~43h reales vs ~541-574h estimadas</div></div>
     <div class="stat info"><div class="val">11</div><div class="lbl">ADRs aprobados</div><div class="sub">+ 25 R-XXX en decision log</div></div>
     <div class="stat warn"><div class="val">24</div><div class="lbl">Vulns npm activas</div><div class="sub">0 critical · 11 high · 13 moderate</div></div>
-    <div class="stat info"><div class="val">60.139</div><div class="lbl">Líneas de código</div><div class="sub">src/ sin tests (35% en src/lib)</div></div>
+    <div class="stat info"><div class="val">~14.500 → 60.139</div><div class="lbl">Líneas de código (src/)</div><div class="sub">V1: ~14.500 (informe inicial "~15.000") · V2: 60.139 · <b>+45.669 netas</b> escritas en 10 días (sin contar tests)</div></div>
     <div class="stat info"><div class="val">15</div><div class="lbl">PRs mergeados</div><div class="sub">a developer · 0 a staging/main</div></div>
-    <div class="stat info"><div class="val">48,8% / 71,8% / 77,2%</div><div class="lbl">Cobertura tests</div><div class="sub">statements · branches · functions</div></div>
-    <div class="stat info"><div class="val">+45.669</div><div class="lbl">Líneas netas</div><div class="sub">+71.659 / −25.990 en 15 PRs</div></div>
+    <div class="stat info"><div class="val">48,8%</div><div class="lbl">Cobertura de tests (statements)</div><div class="sub">V1: 0% · V2: 48,8% statements, 71,8% branches, 77,2% functions — % del código cubierto por Vitest</div></div>
+    <div class="stat info"><div class="val">+71.659 / −25.990</div><div class="lbl">Diff acumulado 15 PRs</div><div class="sub">Líneas añadidas vs eliminadas (incluye refactors). Neto: +45.669.</div></div>
   </div>
 
-  <div class="charts">
+  <div class="charts cols-2 aligned">
     <div class="chart-card">
       <h4>Severidad de findings: V1 vs V2</h4>
-      <canvas id="cSeverityBA" height="200"></canvas>
+      <canvas id="cSeverityBA"></canvas>
       <p class="legend-note">Critical y High se han reducido de forma drástica. La auditoría V1 reportó 132 hallazgos consolidados (65 quick + 67 deep); V2 verifica el estado actual.</p>
     </div>
     <div class="chart-card">
       <h4>Estado de las correcciones</h4>
-      <canvas id="cCorrecciones" height="200"></canvas>
+      <canvas id="cCorrecciones"></canvas>
       <p class="legend-note">Cierre estructural (no parches). Las pendientes están planificadas en Sprint 3.</p>
     </div>
     <div class="chart-card">
       <h4>Commits por día (10 días)</h4>
-      <canvas id="cCommitsDay" height="200"></canvas>
+      <canvas id="cCommitsDay"></canvas>
       <p class="legend-note">Picos en cierres de Sprint 0 (22-may), Sprint 1 (24-may) y Sprint 2/2B (24-25 may).</p>
     </div>
     <div class="chart-card">
       <h4>Versiones publicadas</h4>
-      <canvas id="cReleases" height="200"></canvas>
+      <canvas id="cReleases"></canvas>
       <p class="legend-note">Cadencia de release: ~1 cada 1-2 días en cierres de sprint.</p>
     </div>
   </div>
@@ -378,7 +386,7 @@ flowchart LR
 
   <h3>3.1 · La auditoría inicial (V1, 18-may-2026) en un párrafo</h3>
   <div class="callout">
-    <p>La auditoría V1 fue un análisis exhaustivo de descubrimiento sobre ~15.000 líneas de código. Cubrió 5 fases (estructura, orquestador BullMQ, stack LLM, capa de datos, seguridad/dependencias) y un deep audit complementario (DA-1 concurrencia, DA-2 auth/RLS, DA-3 security, DA-4 LLM/voz, DA-5 accesibilidad). Identificó <b>132 hallazgos consolidados</b> distribuidos en <b>23 Critical + 24 High + 18 Medium + 7 Low</b> (quick) más ~67 deep. Los hallazgos críticos confirmaban tres capas de vulnerabilidad reforzándose entre sí: (1) autenticación y aislamiento multi-tenant rotos estructuralmente; (2) flujo multi-día BullMQ inoperativo en producción; (3) seguridad perimetral con 7 endpoints abiertos sin auth y 0 validaciones HMAC en webhooks. La V1 produjo el <a href="../audit/findings-summary.md" target="_blank">findings-summary.md</a>, el <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank">deep summary</a>, el <a href="../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank">informe ejecutivo cliente</a>, el <a href="../audit/STACK-TECNOLOGICO.md" target="_blank">stack confirmado</a> y las 13 decisiones del Auditor R-013..R-025 en el <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank">decision log</a>.</p>
+    <p>La auditoría V1 fue un análisis exhaustivo de descubrimiento sobre ~15.000 líneas de código. Cubrió 5 fases (estructura, orquestador BullMQ, stack LLM, capa de datos, seguridad/dependencias) y un deep audit complementario (DA-1 concurrencia, DA-2 auth/RLS, DA-3 security, DA-4 LLM/voz, DA-5 accesibilidad). Identificó <b>132 hallazgos consolidados</b> distribuidos en <b>23 Critical + 24 High + 18 Medium + 7 Low</b> (quick) más ~67 deep. Los hallazgos críticos confirmaban tres capas de vulnerabilidad reforzándose entre sí: (1) autenticación y aislamiento multi-tenant rotos estructuralmente; (2) flujo multi-día BullMQ inoperativo en producción; (3) seguridad perimetral con 7 endpoints abiertos sin auth y 0 validaciones HMAC en webhooks. La V1 produjo el <a href="anexos/findings-summary.html" target="_blank" rel="noopener">findings-summary.md</a>, el <a href="anexos/deep-findings-summary.html" target="_blank" rel="noopener">deep summary</a>, el <a href="anexos/executive-summary-for-client.html" target="_blank" rel="noopener">informe ejecutivo cliente</a>, el <a href="anexos/stack-tecnologico.html" target="_blank" rel="noopener">stack confirmado</a> y las 13 decisiones del Auditor R-013..R-025 en el <a href="anexos/decisiones-auditor.html" target="_blank" rel="noopener">decision log</a>.</p>
   </div>
 
   <h3>3.2 · Resumen comparativo visual V1 vs V2</h3>
@@ -389,18 +397,18 @@ flowchart LR
       <div class="chart-canvas-wrap"><canvas id="cCategorias" height="120"></canvas></div>
       <aside class="chart-legend">
         <h5>¿Qué representa cada categoría?</h5>
-        <dl>
-          <dt>Credenciales</dt><dd>JWT service_role, anon key y passwords hardcodeadas en código fuente.</dd>
-          <dt>RLS Multi-tenant</dt><dd>Aislamiento entre tenants en Postgres (Row Level Security). Sin esto, un cliente puede ver datos de otro.</dd>
-          <dt>Auth/Endpoints</dt><dd>API routes y server actions sin verificación de sesión/rol/ownership.</dd>
-          <dt>Webhooks HMAC</dt><dd>Validación de firma criptográfica en webhooks externos (Retell, WhatsApp, CRM).</dd>
-          <dt>XSS/Injection</dt><dd>Inyección de scripts en HTML servido (widget embed) o SQL.</dd>
-          <dt>SSRF</dt><dd>Server-Side Request Forgery: hacer que nuestro servidor consulte URLs internas atacante-controladas.</dd>
-          <dt>Priv. Escalation</dt><dd>Usuario normal escalando a admin via <code>user_metadata</code> editable o tabla <code>tenants</code> abierta.</dd>
-          <dt>Deps CVE</dt><dd>Vulnerabilidades conocidas en dependencias npm (next, axios, etc).</dd>
-          <dt>Crypto OAuth</dt><dd>Cifrado AES-256-GCM de tokens OAuth en base de datos.</dd>
-          <dt>Rate limiting</dt><dd>Limitar peticiones por usuario/IP para prevenir abuse y DoS.</dd>
-        </dl>
+        <div class="legend-grid">
+          <div class="legend-item"><span class="term">Credenciales</span><span class="def">JWT service_role, anon key y passwords hardcodeadas en código fuente.</span></div>
+          <div class="legend-item"><span class="term">RLS Multi-tenant</span><span class="def">Aislamiento entre tenants en Postgres (Row Level Security). Sin esto, un cliente puede ver datos de otro.</span></div>
+          <div class="legend-item"><span class="term">Auth/Endpoints</span><span class="def">API routes y server actions sin verificación de sesión/rol/ownership.</span></div>
+          <div class="legend-item"><span class="term">Webhooks HMAC</span><span class="def">Validación de firma criptográfica en webhooks externos (Retell, WhatsApp, CRM).</span></div>
+          <div class="legend-item"><span class="term">XSS/Injection</span><span class="def">Inyección de scripts en HTML servido (widget embed) o SQL.</span></div>
+          <div class="legend-item"><span class="term">SSRF</span><span class="def">Server-Side Request Forgery: hacer que nuestro servidor consulte URLs internas atacante-controladas.</span></div>
+          <div class="legend-item"><span class="term">Priv. Escalation</span><span class="def">Usuario normal escalando a admin via <code>user_metadata</code> editable o tabla <code>tenants</code> abierta.</span></div>
+          <div class="legend-item"><span class="term">Deps CVE</span><span class="def">Vulnerabilidades conocidas en dependencias npm (next, axios, etc).</span></div>
+          <div class="legend-item"><span class="term">Crypto OAuth</span><span class="def">Cifrado AES-256-GCM de tokens OAuth en base de datos.</span></div>
+          <div class="legend-item"><span class="term">Rate limiting</span><span class="def">Limitar peticiones por usuario/IP para prevenir abuse y DoS.</span></div>
+        </div>
         <p class="legend-foot">📌 V1 (rojo) = findings abiertos al cierre de la auditoría inicial. V2 (verde) = findings todavía abiertos hoy.</p>
       </aside>
     </div>
@@ -410,7 +418,7 @@ flowchart LR
     <div class="chart-card">
       <h4>🛡️ Cobertura de Seguridad básica (hardening)</h4>
       <canvas id="cSecBasica" height="220"></canvas>
-      <p class="legend-note">Mide cuántas de las medidas obligatorias de <a href="../security/hardening-policy.md" target="_blank" rel="noopener">docs/security/hardening-policy.md</a> están activas. Ver detalle en Bloque 4.</p>
+      <p class="legend-note">Mide cuántas de las medidas obligatorias de <a href="anexos/hardening-policy.html" target="_blank" rel="noopener">docs/security/hardening-policy.md</a> están activas. Ver detalle en Bloque 4.</p>
     </div>
     <div class="chart-card">
       <h4>♿ Cobertura WCAG 2.2 AA</h4>
@@ -469,7 +477,7 @@ flowchart LR
     <li>Bump a <b>v0.3.0 GA</b> al firmar verde SP-4B (22-jun-2026 según ratio actual).</li>
   </ul>
 
-  <p style="margin-top:18px"><b>Auditoría V2 completa en markdown:</b> <a href="./audit-v2.md" target="_blank">audit-v2.md</a></p>
+  <p style="margin-top:18px"><b>Auditoría V2 completa en HTML:</b> <a href="anexos/audit-v2.html" target="_blank" rel="noopener">audit-v2 (anexo HTML)</a></p>
 </section>
 
 <!-- ============================ BLOQUE 4 ============================ -->
@@ -649,7 +657,7 @@ flowchart LR
     <p><b>Sí externalizar:</b> Anthropic/OpenAI/Gemini (proveedores LLM — no replicables), Retell/Ultravox (voz outbound — proveedores especializados), WhatsApp Cloud API (Meta, monopolio).</p>
     <p><b>📌 Nota sobre privacidad de la inferencia LLM (variante privativa)</b>: si la clienta o un tenant final exige que <b>los datos de la conversación NO salgan de su nube</b> (caso típico en formación regulada, sanidad, banca), los tres LLM se pueden consumir en modo "privativo" alojando la inferencia en hyperscaler con SLA empresarial:</p>
     <ul style="margin-bottom:0">
-      <li><b>Anthropic Claude</b> → <a href="https://aws.amazon.com/bedrock/anthropic/" target="_blank" rel="noopener">AWS Bedrock</a> · <a href="https://learn.microsoft.com/azure/ai-services/foundry-models/concepts/models-featured#anthropic" target="_blank" rel="noopener">Azure AI Foundry</a> · <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude" target="_blank" rel="noopener">Google Vertex AI</a>. Misma API, los prompts/respuestas no salen del cloud contratado, BAAs disponibles.</li>
+      <li><b>Anthropic Claude</b> → <a href="https://aws.amazon.com/bedrock/anthropic/" target="_blank" rel="noopener">AWS Bedrock</a> · <a href="https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-models/" target="_blank" rel="noopener">Azure AI Foundry</a> · <a href="https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude" target="_blank" rel="noopener">Google Vertex AI</a>. Misma API, los prompts/respuestas no salen del cloud contratado, BAAs disponibles.</li>
       <li><b>OpenAI GPT</b> → <a href="https://learn.microsoft.com/azure/ai-services/openai/overview" target="_blank" rel="noopener">Azure OpenAI Service</a> (sigue siendo OpenAI pero con SLA Azure + residencia de datos EU/US a elegir + sin uso para entrenamiento).</li>
       <li><b>Google Gemini</b> → <a href="https://cloud.google.com/vertex-ai" target="_blank" rel="noopener">Vertex AI</a> nativo (Gemini Pro/Flash dentro de Google Cloud, datos no usados para entrenamiento por defecto).</li>
     </ul>
@@ -708,11 +716,11 @@ flowchart LR
   <ul>
     <li>📚 <a href="../../CLAUDE.md" target="_blank" rel="noopener"><code>CLAUDE.md</code></a> — instrucciones específicas del proyecto + protocolo de cierre de sprint.</li>
     <li>🗺️ <a href="../../plans/RoadMap.md" target="_blank" rel="noopener"><code>plans/RoadMap.md</code></a> — RoadMap vivo con tracking por tarea (frontmatter ya legible tras fix 27-may).</li>
-    <li>📦 <a href="../audit/STACK-TECNOLOGICO.md" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a> — stack confirmado.</li>
-    <li>🧠 <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a> — R-013..R-025.</li>
-    <li>🛡️ <a href="../audit/findings-summary.md" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a> — 65 findings V1 consolidados.</li>
-    <li>🔐 <a href="../security/hardening-policy.md" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> <span class="tag ok">NUEVO V2</span> — política formal de hardening: 49 medidas con estado · checklist pre-deploy · threat model STRIDE · respuesta a incidentes.</li>
-    <li>🔬 <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a> — deep audit V1 (DA-1..DA-5).</li>
+    <li>📦 <a href="anexos/stack-tecnologico.html" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a> — stack confirmado.</li>
+    <li>🧠 <a href="anexos/decisiones-auditor.html" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a> — R-013..R-025.</li>
+    <li>🛡️ <a href="anexos/findings-summary.html" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a> — 65 findings V1 consolidados.</li>
+    <li>🔐 <a href="anexos/hardening-policy.html" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> <span class="tag ok">NUEVO V2</span> — política formal de hardening: 49 medidas con estado · checklist pre-deploy · threat model STRIDE · respuesta a incidentes.</li>
+    <li>🔬 <a href="anexos/deep-findings-summary.html" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a> — deep audit V1 (DA-1..DA-5).</li>
     <li>🧪 <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> — plan maestro de los comandos <code>/e2ctotal</code> (local) y <code>/e2etotal</code> (VPS/staging/prod).</li>
     <li>🏷️ <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank" rel="noopener"><code>plans/RELEASE-NOTES-v0.1.0.md</code></a> + RELEASE-NOTES por sprint en cada carpeta de plan.</li>
     <li>🤝 <a href="../dev-onboarding.md" target="_blank" rel="noopener"><code>docs/dev-onboarding.md</code></a> — onboarding del equipo dev.</li>
@@ -749,7 +757,7 @@ flowchart LR
   <details class="doc-card" open>
     <summary>🔐 V2 · docs/security/hardening-policy.md — Política formal de hardening <span class="tag ok" style="margin-left:auto">NUEVO V2</span></summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../security/hardening-policy.md" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> (v1.0 · 2026-05-27)</div>
+      <div class="src-link">📄 Fuente: <a href="anexos/hardening-policy.html" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> (v1.0 · 2026-05-27)</div>
       <p><b>Creado por esta auditoría V2</b> tras detectar que las medidas de seguridad ya implementadas en código no estaban consolidadas en un único documento. Sirve como punto único de verdad para "¿qué seguridad tiene el proyecto?".</p>
       <h5>10 secciones de hardening · 49 medidas verificables</h5>
       <ul>
@@ -786,7 +794,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🛡️ V1 · findings-summary.md — 65 findings quick scan consolidados</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/findings-summary.md" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/findings-summary.html" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a></div>
       <h5>Distribución por severidad (V1)</h5>
       <ul>
         <li><b>16 Critical</b> — seguridad activa, bugs bloqueantes, violaciones negocio.</li>
@@ -812,7 +820,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🔬 V1 · DEEP-FINDINGS-SUMMARY.md — +67 findings profundos (DA-1..DA-5)</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/deep-findings-summary.html" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a></div>
       <h5>5 ejes de profundización</h5>
       <ul>
         <li><b>DA-1 Concurrencia / orchestrator BullMQ</b> — 8 findings (5 High). Doble Redis, N supabase clients por job, jobs fantasma.</li>
@@ -835,7 +843,7 @@ flowchart LR
   <details class="doc-card">
     <summary>📦 V1 · STACK-TECNOLOGICO.md — Stack actual vs objetivo</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/STACK-TECNOLOGICO.md" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/stack-tecnologico.html" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a></div>
       <h5>Frontend</h5>
       <p>Next.js 16.2.6 (App Router) · React 19 · TypeScript 5 · Tailwind 4 · shadcn/ui + Radix · Zustand · Framer Motion · @xyflow/react workflow builder · Zod · Recharts · lucide-react · Mermaid.</p>
       <h5>Backend / Data</h5>
@@ -855,7 +863,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🧠 V1 · DECISIONES-AUDITOR-JAVIER-HP.md — 13 R-XXX cerradas</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/decisiones-auditor.html" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a></div>
       <h5>13 decisiones cerradas + 7 derivadas</h5>
       <ul>
         <li><b>R-013</b> Cadencia 24h+3h × 3 días + franja 09-21h hora lead + festivos país lead.</li>
@@ -877,7 +885,7 @@ flowchart LR
   <details class="doc-card">
     <summary>👥 V1 · EXECUTIVE-SUMMARY-FOR-CLIENT.md — Resumen no-técnico para clienta</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank" rel="noopener"><code>docs/audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/executive-summary-for-client.html" target="_blank" rel="noopener"><code>docs/audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md</code></a></div>
       <h5>3 tipos de problemas comunicados</h5>
       <ol>
         <li><b>Seguridad urgente</b>: puertas abiertas a datos de clientes (✅ resuelto).</li>
@@ -900,7 +908,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🧪 V1 · gap-analysis-spec-vs-code.md — Spec clienta vs implementación real</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/gap-analysis-spec-vs-code.md" target="_blank" rel="noopener"><code>docs/audit/gap-analysis-spec-vs-code.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/gap-analysis-spec-vs-code.html" target="_blank" rel="noopener"><code>docs/audit/gap-analysis-spec-vs-code.md</code></a></div>
       <p>Análisis fila a fila de los <b>documentos oficiales de la clienta</b> (Bea + diagramas oficiales + PDF de reunión inicial Fathom) vs lo que el código realmente hacía. Identificó las divergencias clave que motivaron las decisiones R-013..R-016 del Auditor.</p>
       <h5>Top divergencias detectadas</h5>
       <ul>
@@ -916,7 +924,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🧾 V1 · STACK-DECISION-DRIZZLE-MIGRATION.md — Propuesta Drizzle, SUPERSEDED</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuente: <a href="../audit/STACK-DECISION-DRIZZLE-MIGRATION.md" target="_blank" rel="noopener"><code>docs/audit/STACK-DECISION-DRIZZLE-MIGRATION.md</code></a></div>
+      <div class="src-link">📄 Fuente: <a href="anexos/stack-decision-drizzle-migration.html" target="_blank" rel="noopener"><code>docs/audit/STACK-DECISION-DRIZZLE-MIGRATION.md</code></a></div>
       <p><b>Estado: SUPERSEDED.</b> La propuesta inicial era introducir Drizzle ORM. Tras research multi-fuente se descartó por: (1) duplicación de capa con Supabase SDK, (2) coste de migración no justificado vs ganancia, (3) riesgo de incompatibilidades con RLS multi-tenant.</p>
       <p>Decisión vigente: <b>sin ORM nuevo</b> · <code>@supabase/ssr</code> + Zod + Repository pattern. Ver <a href="../adr/ADR-019-refactor-queries-as-any-incremental-migration.md" target="_blank" rel="noopener">ADR-019</a> para migración incremental del tipado.</p>
     </div>
@@ -925,7 +933,7 @@ flowchart LR
   <details class="doc-card">
     <summary>🤝 V1 · RESPUESTAS-CLIENTA-JAVIER-HP.md + PREGUNTAS-PARA-LA-CLIENTE.md</summary>
     <div class="doc-body">
-      <div class="src-link">📄 Fuentes: <a href="../audit/PREGUNTAS-PARA-LA-CLIENTE.md" target="_blank" rel="noopener"><code>docs/audit/PREGUNTAS-PARA-LA-CLIENTE.md</code></a> · <a href="../audit/RESPUESTAS-CLIENTA-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/RESPUESTAS-CLIENTA-JAVIER-HP.md</code></a></div>
+      <div class="src-link">📄 Fuentes: <a href="anexos/preguntas-para-la-cliente.html" target="_blank" rel="noopener"><code>docs/audit/PREGUNTAS-PARA-LA-CLIENTE.md</code></a> · <a href="anexos/respuestas-cliente.html" target="_blank" rel="noopener"><code>docs/audit/RESPUESTAS-CLIENTA-JAVIER-HP.md</code></a></div>
       <p>25 preguntas formuladas por el Auditor a la clienta tras la V1. Cubrieron: cadencia multi-día, reglas cualificación A/B/C, nomenclatura variables, integraciones CRM, agente Virginia IA, equipo y método, hosting. Las respuestas decantaron las 13 R-XXX del decision log.</p>
       <p><b>Inspiración para el Bloque 5</b> de esta auditoría V2: igual que la V1 formuló preguntas a la clienta antes de cerrar decisiones, la V2 expone 18 decisiones del Auditor para que la clienta confirme o pida cambios (formulario interactivo con export JSON).</p>
     </div>
@@ -1001,7 +1009,7 @@ flowchart LR
     <span class="block-num">BLOQUE 7</span>
     <h2>Tests /e2ctotal (local) y /e2etotal (VPS) — sistema E2E/E2C exhaustivo</h2>
   </div>
-  <p class="block-lead">Tests maestros de regresión reusables, ahora separados en dos comandos por entorno (regla 27-may-2026: "llamar cada cosa por su nombre"). Run #1 ejecutado 2026-05-27 12:35-12:52 UTC contra local (<code>localhost:8500</code>) — commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener"><code>4c32701</code></a>.</p>
+  <p class="block-lead">Tests maestros de regresión reusables, ahora separados en dos comandos por entorno (regla 27-may-2026: "llamar cada cosa por su nombre"). Run #1 ejecutado 2026-05-27 12:35-12:52 UTC contra local (<code>localhost:8500</code>) — commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener" title="Repositorio privado — requiere acceso del equipo"><code>4c32701</code></a> <span class="tag info" style="font-size:.7rem">repo privado</span>.</p>
 
   <div class="src-link">📄 Fuente: <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener">docs/e2e-full-test-plan.md</a> (plan maestro v1.2) · <a href="../e2e-runs-history.md" target="_blank" rel="noopener">docs/e2e-runs-history.md</a> (histórico) · <a href="../../plans/260527-1235-e2etotal-run/INFORME-FINAL.md" target="_blank" rel="noopener">plans/260527-1235-e2etotal-run/INFORME-FINAL.md</a> (run #1) · comandos: <a href="../../.claude/commands/e2ctotal.md" target="_blank" rel="noopener"><code>.claude/commands/e2ctotal.md</code></a> · <a href="../../.claude/commands/e2etotal.md" target="_blank" rel="noopener"><code>.claude/commands/e2etotal.md</code></a></div>
 
@@ -1047,7 +1055,7 @@ flowchart LR
 /e2etotal --no-cleanup                     # deja entidades test (NO hacer en prod)</pre>
 
   <h3>7.3 · Resumen ejecutivo del run #1 (2026-05-27)</h3>
-  <div class="stats" style="margin-top:8px">
+  <div class="stats cols-3" style="margin-top:8px">
     <div class="stat info"><div class="val">8 / 8</div><div class="lbl">Fases ejecutadas</div><div class="sub">00 a 08 sin abortos</div></div>
     <div class="stat info"><div class="val">17 min</div><div class="lbl">Duración total</div><div class="sub">12:35 → 12:52 UTC</div></div>
     <div class="stat ok"><div class="val">26 / 28</div><div class="lbl">Rutas dashboard navegables</div><div class="sub">25/25 redirigen a /login sin sesión</div></div>
@@ -1056,15 +1064,15 @@ flowchart LR
     <div class="stat warn"><div class="val">~9-10h</div><div class="lbl">Tiempo estimado fix</div><div class="sub">3 P0 + 2 P1 + 1 P2</div></div>
   </div>
 
-  <div class="charts">
+  <div class="charts cols-2 aligned">
     <div class="chart-card">
       <h4>Resultado por fase</h4>
-      <canvas id="cE2EFases" height="220"></canvas>
+      <canvas id="cE2EFases"></canvas>
       <p class="legend-note">Fases 02, 03, 04, 05, 06 con bugs detectados. Fases 00, 01, 07, 08 limpias. Auth + RBAC pasan al 100%.</p>
     </div>
     <div class="chart-card">
       <h4>Distribución severidad bugs run #1</h4>
-      <canvas id="cE2ESeveridad" height="220"></canvas>
+      <canvas id="cE2ESeveridad"></canvas>
       <p class="legend-note">3 CRIT bloquean release. Patrón sistémico: 3 bugs comparten raíz (handlers no validan auth como primer paso).</p>
     </div>
   </div>
@@ -1173,9 +1181,37 @@ flowchart LR
     <li>✅ <b>Skip-link WCAG (DA-5-017)</b> verificado funcional en <code>/login</code>.</li>
   </ul>
 
-  <h3>7.6 · Recomendaciones del Auditor al equipo de desarrollo sobre /e2etotal</h3>
+  <h3>7.6 · Recomendaciones del Auditor al equipo de desarrollo sobre <code>/e2ctotal</code> y <code>/e2etotal</code></h3>
+
   <div class="callout">
-    <p><b>📌 Pautas para sacar partido a <code>/e2etotal</code> en cada sprint:</b></p>
+    <p><b>🔤 Qué es cada comando — diferencia clave</b></p>
+    <table style="margin:8px 0 4px">
+      <thead>
+        <tr><th style="width:14%">Comando</th><th style="width:18%">Significado</th><th style="width:18%">Destino</th><th>Para qué se usa</th><th style="width:14%">Cuándo lanzarlo</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/e2ctotal</code></td>
+          <td><b>E2C</b> = <b>E</b>nd-to-<b>C</b>asa<br><span class="legend-note">(End-to-end en local, "en casa")</span></td>
+          <td><code>http://localhost:8500</code><br>(<code>npm run dev</code>)</td>
+          <td>Test E2E exhaustivo contra el entorno de desarrollo del propio dev. Mismo plan maestro que <code>/e2etotal</code> pero ejecutado en local. Más rápido (no toca red ni VPS), sin riesgo de corromper datos del cliente, ideal para iterar.</td>
+          <td>Antes de cada PR. Antes del test manual humano (CLOSE-3 / SP-4B). Tras cada hotfix CRIT como regresión.</td>
+        </tr>
+        <tr>
+          <td><code>/e2etotal</code></td>
+          <td><b>E2E</b> = <b>E</b>nd-to-<b>E</b>nd real<br><span class="legend-note">(End-to-end real, contra servidor desplegado)</span></td>
+          <td><code>https://dev.automatizaformacion.com</code> (VPS Dokploy) · staging · prod read-only</td>
+          <td>Mismo plan maestro que <code>/e2ctotal</code> pero contra el VPS desplegado. Valida que el build de producción, las migraciones SQL, las env vars, Sentry y las integraciones (HubSpot/Zoho/Retell/WhatsApp) funcionan en el entorno real del cliente.</td>
+          <td>Tras promover a developer/staging. Antes de promover a main. En SP-4B (Renzo) como gate manual previo al MVP.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px"><b>📌 ¿Por qué dos comandos en lugar de un flag <code>--env</code>?</b> Antes existía un solo <code>/e2etotal --env local|vps</code>, pero el flag se olvidaba con frecuencia y podía lanzarse contra el VPS por error. Desde 27-may-2026 el nombre del comando codifica el destino: <b>E2C nunca sale del localhost</b>, <b>E2E nunca pega contra localhost</b>. Si por error alguien lanza <code>/e2etotal --env local</code>, el comando avisa y recomienda usar <code>/e2ctotal</code>.</p>
+    <p><b>🔁 Regla de oro</b>: <code>/e2ctotal</code> verde es prerrequisito para empezar a pensar en <code>/e2etotal</code>. Si falla en local, va a fallar en VPS — no gastes el run lento del VPS hasta tener el local en verde.</p>
+  </div>
+
+  <div class="callout">
+    <p><b>📌 Pautas para sacar partido a <code>/e2ctotal</code> y <code>/e2etotal</code> en cada sprint:</b></p>
     <ol>
       <li><b>Vigilar las ejecuciones en el navegador</b>. Cuando el agente corre Playwright con MCP browser, mira la ventana del navegador en vivo: muchos bugs se ven antes de que el agente los capture (warnings de hidratación, flashes de contenido, transiciones rotas). Si ves algo raro, anótalo y pásaselo al agente — él lo añade al informe.</li>
       <li><b>Mantener vivo el plan maestro</b> <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> tras cada sprint. Cuando termines un sprint, añade verificaciones que el plan no hacía (ej. nuevos endpoints, nuevas entidades CRUD, nuevos webhooks). Bump del campo <code>Versión plan</code> en la cabecera.</li>
@@ -1198,7 +1234,7 @@ flowchart LR
 
   <h3>7.8 · Histórico breve de runs</h3>
   <ul>
-    <li><b>2026-05-27 12:35-12:52 UTC</b> — Run #1 detection sweep · 9 bugs (3 CRIT + 4 HIGH + 2 MED) · plan v1.1 · commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener"><code>4c32701</code></a> · ver <a href="../../plans/260527-1235-e2etotal-run/INFORME-FINAL.md" target="_blank" rel="noopener">INFORME-FINAL.md</a>.</li>
+    <li><b>2026-05-27 12:35-12:52 UTC</b> — Run #1 detection sweep · 9 bugs (3 CRIT + 4 HIGH + 2 MED) · plan v1.1 · commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener" title="Repositorio privado — requiere acceso del equipo"><code>4c32701</code></a> <span class="tag info" style="font-size:.7rem">repo privado</span> · ver <a href="../../plans/260527-1235-e2etotal-run/INFORME-FINAL.md" target="_blank" rel="noopener">INFORME-FINAL.md</a>.</li>
     <li><b>Anteriores</b>: ver <a href="../e2e-runs-history.md" target="_blank" rel="noopener">docs/e2e-runs-history.md</a>.</li>
   </ul>
 </section>
