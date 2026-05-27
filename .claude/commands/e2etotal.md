@@ -27,7 +27,11 @@ Ejecutar en una sola pasada y reportar tabla:
 3. `git rev-parse --short HEAD` — capturar SHA.
 4. `curl -fsSL $TARGET_URL/api/health` — 200 esperado.
 5. `curl -fsSL $TARGET_URL/api/version` — capturar versión app.
-6. Verificar `.env.local` (o env del shell) tiene `NEW_ADMIN_PASSWORD` o equivalente del target.
+6. **Detectar acceso a creds admin** (CRÍTICO — sandbox bloquea `.env.local` por defecto). Probar las 3 vías en orden y reportar cuál está activa:
+   - **6a (recomendada)**: `Bash` → `if [ -n "$NEW_ADMIN_PASSWORD" ]; then echo "ENV_SHELL=ok"; else echo "ENV_SHELL=missing"; fi`. Si `ok` → usar esta vía, no leer disco.
+   - **6b (fallback)**: `Read .env.local` — si el sandbox lo permite, extraer `NEW_ADMIN_PASSWORD`. Si devuelve `permission denied / directory denied` → pasar a 6c.
+   - **6c (último recurso)**: pedir al usuario con `AskUserQuestion` que pegue el password en chat. Avisar que queda en transcript.
+   - **Si las 3 fallan**: abortar con mensaje "Sin acceso a creds admin. Opciones: (1) `$env:NEW_ADMIN_PASSWORD = '<pwd>'` antes de relanzar Claude, (2) permitir Read de `.env.local`, (3) ejecutar `/e2etotal --skip-fase 01,02,03,04` para correr solo fases sin login". Ver sección "Acceso a credenciales en sandbox Claude Code" del plan maestro.
 7. `npx playwright --version` — debe responder.
 8. Si target=local: `npm run db:status` debe mostrar Supabase running.
 
@@ -88,7 +92,7 @@ Ejecutar las 8 fases del plan en orden, según las especificaciones del [plan ma
 
 Estructura completa generada (ver detalle en plan maestro sección "Output del run"):
 
-```
+```text
 plans/{YYMMDD-HHmm}-e2etotal-run/
 ├── phase-00..08-*.md
 ├── INFORME-FINAL.md

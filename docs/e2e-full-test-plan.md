@@ -4,7 +4,7 @@
 
 ## Cabecera
 
-- **Versión plan**: 1.0
+- **Versión plan**: 1.1 (2026-05-27 — añadida sección "Acceso a credenciales en sandbox Claude Code" tras run abortado por bloqueo Read de `.env.local`).
 - **Última ejecución**: ver [`e2e-runs-history.md`](./e2e-runs-history.md)
 - **Activación**:
   - Slash command: `/e2etotal` (ver [`.claude/commands/e2etotal.md`](../.claude/commands/e2etotal.md))
@@ -22,6 +22,29 @@
   - Para refresh creds: `npx tsx scripts/show-demo-credentials.ts`.
 - **Stack browser**: Playwright (ya instalado, `playwright.config.ts`, chromium only en MVP; firefox/webkit en Sprint 3+).
 - **Test runner E2E existente**: `tests/e2e/` (core + sprint-N-close). El comando `/e2etotal` añade specs **NO destructivos** en `tests/e2e/total/` y aprovecha specs ya existentes.
+
+### Acceso a credenciales en sandbox Claude Code (CRÍTICO)
+
+Claude Code corre en sandbox que **bloquea por defecto la lectura de `.env.local`** y otros archivos sensibles. Por eso el operador (Claude) NO puede leer el `NEW_ADMIN_PASSWORD` directamente del disco. Esto es feature, no bug — los secretos no deben filtrarse al contexto del modelo sin consentimiento explícito.
+
+**Tres vías válidas para que `/e2etotal` obtenga las creds (ordenadas de más a menos recomendada):**
+
+1. **Variable de entorno del shell (recomendada)** — antes de abrir Claude Code, exportar en PowerShell:
+
+   ```powershell
+   $env:NEW_ADMIN_PASSWORD = "<password real>"
+   $env:DEMO_USER_PASSWORD = "<password tenant user>"
+   claude
+   ```
+
+   Claude lee con `$env:NEW_ADMIN_PASSWORD` desde Bash tool (no toca `.env.local`). El secreto vive en la sesión de shell, no en el contexto del modelo persistente.
+
+2. **Permission allow puntual** — el usuario aprueba un Read de `.env.local` cuando aparezca el prompt. Cred queda en contexto del modelo durante el run. Aceptable para sesiones cortas, no para auto-ejecución.
+3. **Paste in-chat** — usuario pega el password en un mensaje. Cred queda en contexto del modelo + transcript. Solo si las otras vías fallan.
+
+**Pre-check 6 del run** debe detectar cuál vía está disponible y abortar pronto si ninguna lo está (mejor que parar en Fase 01).
+
+**Fallback si nada disponible:** el operador propone ejecución parcial — solo fases que NO requieren login (`00 pre-checks`, `05 webhooks HMAC`, `06 widget público`, partes de `07 observability anon`).
 
 ## Propósito + Objetivo final
 
