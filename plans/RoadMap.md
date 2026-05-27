@@ -24,6 +24,15 @@ excluded_from: [staging, main]
 
 </div>
 
+<table>
+  <tr>
+    <td align="center" width="25%">📌 Versión<br><code>v0.3.0-rc.1</code></td>
+    <td align="center" width="25%">🎯 MVP GA<br><code>v0.3.0</code></td>
+    <td align="center" width="25%">📅 Fecha objetivo<br><b>22-jun-2026</b></td>
+    <td align="center" width="25%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
+  </tr>
+</table>
+
 > ⚠️ **Documento vivo**. NO editar directamente sin orden del lead — pide al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md) que lo haga.
 >
 > 💡 Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.

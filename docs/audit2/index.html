@@ -48,9 +48,12 @@
   pre{background:#0d142e;color:#e9ecff;padding:14px 16px;border-radius:10px;overflow:auto;font-family:var(--mono);font-size:.85rem}
 
   /* ---------- Top bar ---------- */
-  .topbar{background:linear-gradient(135deg,#0b1230 0%,#1f2a6e 100%);color:#fff;padding:18px 24px;position:sticky;top:0;z-index:30;box-shadow:0 2px 14px rgba(0,0,0,.18)}
-  .topbar-inner{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .topbar{background:linear-gradient(135deg,#0b1230 0%,#1f2a6e 100%);color:#fff;padding:14px 24px;position:sticky;top:0;z-index:30;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+  .topbar-inner{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .topbar h1{color:#fff;font-size:1.15rem;margin:0;font-weight:600}
+  .topbar .brand-logo{height:42px;width:auto;background:#fff;padding:6px 10px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .topbar .brand-text{display:flex;flex-direction:column;gap:1px}
+  .topbar .brand-org{font-size:.72rem;opacity:.7;letter-spacing:.06em;text-transform:uppercase}
   .topbar .badge{background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px;font-size:.78rem;letter-spacing:.05em}
   .topbar .spacer{flex:1}
   .topbar .small{opacity:.75;font-size:.85rem}
@@ -90,9 +93,23 @@
 
   /* ---------- Charts ---------- */
   .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;margin:14px 0 12px}
+  .charts.cols-2{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:760px){.charts.cols-2{grid-template-columns:1fr}}
   .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .chart-card.chart-full{margin:14px 0 12px}
   .chart-card h4{margin:0 0 8px;color:var(--ink);text-transform:none;letter-spacing:0;font-size:.95rem;font-weight:600}
   .chart-card .legend-note{font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+
+  /* ---------- Chart full-width con leyenda lateral ---------- */
+  .chart-with-legend{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start}
+  @media (max-width:900px){.chart-with-legend{grid-template-columns:1fr}}
+  .chart-canvas-wrap{min-height:240px;position:relative}
+  .chart-legend{background:#f9fafe;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.84rem}
+  .chart-legend h5{margin:0 0 8px;font-size:.85rem;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600}
+  .chart-legend dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
+  .chart-legend dt{font-weight:600;color:var(--brand-dark);white-space:nowrap}
+  .chart-legend dd{margin:0;color:var(--ink-soft);font-size:.82rem}
+  .chart-legend .legend-foot{margin:10px 0 0;padding-top:8px;border-top:1px dashed var(--line);font-size:.78rem;color:var(--ink-soft)}
 
   /* ---------- Tables ---------- */
   table{width:100%;border-collapse:collapse;margin:14px 0}
@@ -176,7 +193,11 @@
 
 <header class="topbar">
   <div class="topbar-inner">
-    <h1>📊 Auditoría V2 · dashboard-af</h1>
+    <img src="../../public/logo.png" alt="Automatiza Formación SL" class="brand-logo" onerror="this.style.display='none'">
+    <div class="brand-text">
+      <h1>📊 Auditoría V2 · dashboard-af</h1>
+      <span class="brand-org">Automatiza Formación SL</span>
+    </div>
     <span class="badge">Medio proyecto</span>
     <span class="badge">v0.3.0-rc.1</span>
     <div class="spacer"></div>
@@ -361,14 +382,40 @@ flowchart LR
   </div>
 
   <h3>3.2 · Resumen comparativo visual V1 vs V2</h3>
+
+  <div class="chart-card chart-full">
+    <h4>Findings cerrados por categoría (Critical + High en V1)</h4>
+    <div class="chart-with-legend">
+      <div class="chart-canvas-wrap"><canvas id="cCategorias" height="120"></canvas></div>
+      <aside class="chart-legend">
+        <h5>¿Qué representa cada categoría?</h5>
+        <dl>
+          <dt>Credenciales</dt><dd>JWT service_role, anon key y passwords hardcodeadas en código fuente.</dd>
+          <dt>RLS Multi-tenant</dt><dd>Aislamiento entre tenants en Postgres (Row Level Security). Sin esto, un cliente puede ver datos de otro.</dd>
+          <dt>Auth/Endpoints</dt><dd>API routes y server actions sin verificación de sesión/rol/ownership.</dd>
+          <dt>Webhooks HMAC</dt><dd>Validación de firma criptográfica en webhooks externos (Retell, WhatsApp, CRM).</dd>
+          <dt>XSS/Injection</dt><dd>Inyección de scripts en HTML servido (widget embed) o SQL.</dd>
+          <dt>SSRF</dt><dd>Server-Side Request Forgery: hacer que nuestro servidor consulte URLs internas atacante-controladas.</dd>
+          <dt>Priv. Escalation</dt><dd>Usuario normal escalando a admin via <code>user_metadata</code> editable o tabla <code>tenants</code> abierta.</dd>
+          <dt>Deps CVE</dt><dd>Vulnerabilidades conocidas en dependencias npm (next, axios, etc).</dd>
+          <dt>Crypto OAuth</dt><dd>Cifrado AES-256-GCM de tokens OAuth en base de datos.</dd>
+          <dt>Rate limiting</dt><dd>Limitar peticiones por usuario/IP para prevenir abuse y DoS.</dd>
+        </dl>
+        <p class="legend-foot">📌 V1 (rojo) = findings abiertos al cierre de la auditoría inicial. V2 (verde) = findings todavía abiertos hoy.</p>
+      </aside>
+    </div>
+  </div>
+
   <div class="charts">
     <div class="chart-card">
-      <h4>Findings cerrados por categoría</h4>
-      <canvas id="cCategorias" height="220"></canvas>
+      <h4>🛡️ Cobertura de Seguridad básica (hardening)</h4>
+      <canvas id="cSecBasica" height="220"></canvas>
+      <p class="legend-note">Mide cuántas de las medidas obligatorias de <a href="../security/hardening-policy.md" target="_blank" rel="noopener">docs/security/hardening-policy.md</a> están activas. Ver detalle en Bloque 4.</p>
     </div>
     <div class="chart-card">
-      <h4>Cobertura WCAG 2.2 AA</h4>
+      <h4>♿ Cobertura WCAG 2.2 AA</h4>
       <canvas id="cWcag" height="220"></canvas>
+      <p class="legend-note">V1: 24 findings DA-5 NON-COMPLIANT · V2: 9 corregidos + 2 parciales + 13 pendientes diferidos post-MVP.</p>
     </div>
   </div>
 
@@ -664,6 +711,7 @@ flowchart LR
     <li>📦 <a href="../audit/STACK-TECNOLOGICO.md" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a> — stack confirmado.</li>
     <li>🧠 <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a> — R-013..R-025.</li>
     <li>🛡️ <a href="../audit/findings-summary.md" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a> — 65 findings V1 consolidados.</li>
+    <li>🔐 <a href="../security/hardening-policy.md" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> <span class="tag ok">NUEVO V2</span> — política formal de hardening: 49 medidas con estado · checklist pre-deploy · threat model STRIDE · respuesta a incidentes.</li>
     <li>🔬 <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a> — deep audit V1 (DA-1..DA-5).</li>
     <li>🧪 <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> — plan maestro de los comandos <code>/e2ctotal</code> (local) y <code>/e2etotal</code> (VPS/staging/prod).</li>
     <li>🏷️ <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank" rel="noopener"><code>plans/RELEASE-NOTES-v0.1.0.md</code></a> + RELEASE-NOTES por sprint en cada carpeta de plan.</li>
@@ -697,6 +745,43 @@ flowchart LR
 
   <h3>6.5 · Documentos enlazados — resumen visual</h3>
   <p>Cada documento clave del proyecto aquí desplegado en formato resumen. Clic para expandir. Al inicio de cada uno aparece la <b>URL fuente en Markdown</b> para acceso directo.</p>
+
+  <details class="doc-card" open>
+    <summary>🔐 V2 · docs/security/hardening-policy.md — Política formal de hardening <span class="tag ok" style="margin-left:auto">NUEVO V2</span></summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../security/hardening-policy.md" target="_blank" rel="noopener"><code>docs/security/hardening-policy.md</code></a> (v1.0 · 2026-05-27)</div>
+      <p><b>Creado por esta auditoría V2</b> tras detectar que las medidas de seguridad ya implementadas en código no estaban consolidadas en un único documento. Sirve como punto único de verdad para "¿qué seguridad tiene el proyecto?".</p>
+      <h5>10 secciones de hardening · 49 medidas verificables</h5>
+      <ul>
+        <li><b>3.1 Auth/Autorización</b> (7 medidas) — JWT sin hardcoded, requireApi*, admin solo de <code>app_metadata</code>.</li>
+        <li><b>3.2 RLS multi-tenant</b> (8 medidas) — patrón <code>owner_or_admin</code> en 8 migrations.</li>
+        <li><b>3.3 Webhooks HMAC</b> (6 medidas) — Retell, WhatsApp, CRM, Workflow firmados.</li>
+        <li><b>3.4 Cifrado</b> (5 medidas) — AES-256-GCM tokens OAuth + API keys LLM.</li>
+        <li><b>3.5 Security Headers HTTP</b> (6 medidas) — CSP, HSTS, X-Frame, etc.</li>
+        <li><b>3.6 Validación entrada</b> (5 medidas) — Zod en webhooks, widget UUID regex, SSRF allowlist.</li>
+        <li><b>3.7 Rate limiting</b> (5 medidas) — sliding-window Redis + HOF withRateLimit.</li>
+        <li><b>3.8 Observabilidad + PII scrubbing</b> (7 medidas) — Pino redact + Sentry filter.</li>
+        <li><b>3.9 Dependencias + Supply chain</b> (7 medidas) — npm audit, husky, ESLint no-any.</li>
+        <li><b>3.10 Infraestructura VPS</b> (7 medidas) — SSH ed25519, requirepass, backups.</li>
+      </ul>
+      <h5>Estado V2</h5>
+      <ul>
+        <li>🟢 <b>36 medidas ACTIVAS</b> (verificables con grep / curl / psql).</li>
+        <li>🟡 <b>9 medidas PARCIALES</b> (con tarea abierta para cerrar).</li>
+        <li>🔘 <b>4 medidas PENDIENTES</b> (planificadas SP-4B / pre-deploy).</li>
+        <li><b>Cobertura ≈ 73%</b> sobre el total de 49.</li>
+      </ul>
+      <h5>Incluye además</h5>
+      <ul>
+        <li><b>Checklist pre-deploy</b> con 7 comandos verificables (sección 4).</li>
+        <li><b>Threat model STRIDE</b> simplificado (sección 5).</li>
+        <li><b>Procedimiento de respuesta a incidentes</b> con SLA por severidad (sección 6).</li>
+        <li><b>Cumplimiento RGPD/LOPDGDD</b> baseline (sección 8).</li>
+      </ul>
+      <h5>Aplicabilidad</h5>
+      <p>Obligatoria para cualquier release que pase a <code>staging</code> o <code>main</code>. Revisión pre-cada-sprint + tras cada incidente + semestral con auditoría externa.</p>
+    </div>
+  </details>
 
   <details class="doc-card">
     <summary>🛡️ V1 · findings-summary.md — 65 findings quick scan consolidados</summary>
@@ -1329,17 +1414,37 @@ new Chart(document.getElementById('cReleases'), {
   }
 });
 
-// Categorías cerradas (Bloque 3) — fuente: scout inventory tabla resumen por categoría
+// Categorías cerradas (Bloque 3) — fuente: scout inventory · Headers OWASP eliminado (era 1 finding Low en V1, no entra en Critical+High)
 new Chart(document.getElementById('cCategorias'), {
   type:'bar',
   data:{
-    labels:['Credenciales','RLS Multi-tenant','Auth/Endpoints','Webhooks HMAC','XSS/Injection','SSRF','Priv. Escalation','Deps CVE','Headers OWASP','Crypto OAuth','Rate limiting'],
+    labels:['Credenciales','RLS Multi-tenant','Auth/Endpoints','Webhooks HMAC','XSS/Injection','SSRF','Priv. Escalation','Deps CVE','Crypto OAuth','Rate limiting'],
     datasets:[
-      {label:'V1 (Critical+High)', data:[5,9,8,4,2,2,2,4,0,1,1], backgroundColor:palette.bad},
-      {label:'V2 abiertos', data:[0,1,0,0,0,0,0,1,0,0,0], backgroundColor:palette.ok}
+      {label:'V1 (Critical+High)', data:[5,9,8,4,2,2,2,4,1,1], backgroundColor:palette.bad},
+      {label:'V2 abiertos', data:[0,1,0,0,0,0,0,1,0,0], backgroundColor:palette.ok}
     ]
   },
-  options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+});
+
+// Bloque 3 — Cobertura Seguridad básica (hardening policy)
+// Fuente: docs/security/hardening-policy.md sección 3 (49 medidas totales)
+// Estado actual: 36 ACTIVAS + 9 PARCIALES + 4 PENDIENTES (sobre 49)
+new Chart(document.getElementById('cSecBasica'), {
+  type:'bar',
+  data:{
+    labels:['V1 baseline (~15%)','V2 actual (73%)','Objetivo MVP SP-4B (95%)'],
+    datasets:[{
+      label:'% medidas hardening activas',
+      data:[15, 73, 95],
+      backgroundColor:[palette.bad, palette.warn, palette.ok]
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.parsed.x}%`}}, subtitle:{display:true, text:'49 medidas en docs/security/hardening-policy.md · 36 activas + 9 parciales + 4 pendientes'}},
+    scales:{x:{min:0,max:100, ticks:{callback:v=>v+'%'}}}
+  }
 });
 
 // Bloque 7 — Resultado por fase (run #1 e2etotal)
