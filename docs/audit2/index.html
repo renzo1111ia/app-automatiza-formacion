@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Auditoría V2 — dashboard-af · Medio Proyecto · 27-05-2026</title>
+<meta name="description" content="Informe de avances del proyecto dashboard-af. Auditoría V2 (medio proyecto). Comparativa V1 vs V2, escalado, plan cliente, plan equipo, e2etotal, tiempos hasta MVP.">
+<!-- Self-contained: Chart.js + Mermaid via CDN, todo lo demás inline. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "default", gantt: { useWidth: 1200 } });
+  window.__mermaid = mermaid;
+</script>
+
+<style>
+  /* ---------- Tema base ---------- */
+  :root{
+    --bg:#0b1020;
+    --bg-soft:#121a36;
+    --panel:#ffffff;
+    --panel-alt:#f6f7fb;
+    --ink:#11183a;
+    --ink-soft:#4a5577;
+    --line:#e3e6f0;
+    --brand:#5b6cff;
+    --brand-dark:#2a3aff;
+    --ok:#1faa66;
+    --warn:#e5a93b;
+    --bad:#e23b3b;
+    --info:#2a8de5;
+    --shadow:0 8px 24px rgba(20,30,80,.08);
+    --radius:14px;
+    --maxw:1200px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--panel-alt);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+  a{color:var(--brand-dark);text-decoration:none}
+  a:hover{text-decoration:underline}
+  h1,h2,h3,h4{color:var(--ink);margin:0 0 .4em}
+  h1{font-size:2rem;letter-spacing:-.02em}
+  h2{font-size:1.5rem;letter-spacing:-.01em;border-bottom:2px solid var(--line);padding-bottom:.3em;margin-top:0}
+  h3{font-size:1.15rem;margin-top:1.4em}
+  h4{font-size:.98rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+  p{margin:0 0 .9em}
+  code{font-family:var(--mono);background:#eef0fa;padding:.1em .35em;border-radius:5px;font-size:.9em}
+  pre{background:#0d142e;color:#e9ecff;padding:14px 16px;border-radius:10px;overflow:auto;font-family:var(--mono);font-size:.85rem}
+
+  /* ---------- Top bar ---------- */
+  .topbar{background:linear-gradient(135deg,#0b1230 0%,#1f2a6e 100%);color:#fff;padding:18px 24px;position:sticky;top:0;z-index:30;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+  .topbar-inner{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .topbar h1{color:#fff;font-size:1.15rem;margin:0;font-weight:600}
+  .topbar .badge{background:rgba(255,255,255,.15);padding:4px 10px;border-radius:20px;font-size:.78rem;letter-spacing:.05em}
+  .topbar .spacer{flex:1}
+  .topbar .small{opacity:.75;font-size:.85rem}
+
+  /* ---------- Nav lateral ---------- */
+  .layout{max-width:var(--maxw);margin:0 auto;display:grid;grid-template-columns:240px 1fr;gap:24px;padding:24px}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;padding:14px}}
+  nav.sidebar{position:sticky;top:84px;align-self:start;background:var(--panel);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);max-height:calc(100vh - 110px);overflow:auto}
+  nav.sidebar h4{margin-top:0}
+  nav.sidebar ol{margin:0;padding:0;list-style:none;counter-reset:item}
+  nav.sidebar li{counter-increment:item;margin:.3em 0}
+  nav.sidebar li::before{content:counter(item) ".";color:var(--brand);font-weight:700;margin-right:6px}
+  nav.sidebar a{display:inline-block;color:var(--ink);padding:4px 6px;border-radius:6px;font-size:.92rem}
+  nav.sidebar a:hover{background:#eef0fa;text-decoration:none}
+  nav.sidebar a.active{background:var(--brand);color:#fff;font-weight:600}
+  .sidebar-meta{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:.78rem;color:var(--ink-soft)}
+  .sidebar-meta b{color:var(--ink)}
+
+  main{min-width:0}
+
+  /* ---------- Bloques ---------- */
+  section.block{background:var(--panel);border-radius:var(--radius);padding:28px;margin-bottom:28px;box-shadow:var(--shadow);scroll-margin-top:90px}
+  section.block .block-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  section.block .block-num{font-weight:800;color:var(--brand);font-size:1rem;letter-spacing:.05em}
+  section.block .block-lead{color:var(--ink-soft);font-size:.95rem;margin-bottom:18px}
+
+  /* ---------- Grids stats ---------- */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:16px 0 22px}
+  .stat{background:linear-gradient(135deg,#f5f6fb 0%,#eef0fa 100%);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .stat .val{font-size:1.9rem;font-weight:700;color:var(--ink);line-height:1}
+  .stat .lbl{font-size:.82rem;color:var(--ink-soft);margin-top:6px;text-transform:uppercase;letter-spacing:.04em}
+  .stat .sub{font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+  .stat.ok .val{color:var(--ok)}
+  .stat.warn .val{color:var(--warn)}
+  .stat.bad .val{color:var(--bad)}
+  .stat.info .val{color:var(--info)}
+
+  /* ---------- Charts ---------- */
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;margin:14px 0 12px}
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .chart-card h4{margin:0 0 8px;color:var(--ink);text-transform:none;letter-spacing:0;font-size:.95rem;font-weight:600}
+  .chart-card .legend-note{font-size:.78rem;color:var(--ink-soft);margin-top:8px}
+
+  /* ---------- Tables ---------- */
+  table{width:100%;border-collapse:collapse;margin:14px 0}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top;font-size:.9rem}
+  thead th{background:#f0f2fa;color:var(--ink);font-weight:600}
+  tbody tr:nth-child(even){background:#fafbfe}
+  .tag{display:inline-block;padding:2px 9px;border-radius:11px;font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .tag.ok{background:#dff5e9;color:#0a6e3f}
+  .tag.warn{background:#fff1d6;color:#7a4d05}
+  .tag.bad{background:#fdd9d9;color:#7a0a0a}
+  .tag.info{background:#dfeefd;color:#0a4778}
+  .tag.muted{background:#e8eaf1;color:#4a5577}
+
+  /* ---------- Antes / Después ---------- */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}
+  @media (max-width:780px){.ba{grid-template-columns:1fr}}
+  .ba > div{padding:18px;border-radius:12px;border:1px solid var(--line)}
+  .ba .before{background:#fff8f8;border-color:#fad7d7}
+  .ba .after{background:#f5fbf6;border-color:#cfe8d7}
+  .ba .before h4{color:var(--bad)}
+  .ba .after h4{color:var(--ok)}
+
+  /* ---------- Callouts ---------- */
+  .callout{padding:14px 16px;border-radius:10px;margin:14px 0;border-left:4px solid var(--brand);background:#eef0fa}
+  .callout.warn{border-color:var(--warn);background:#fff7e3}
+  .callout.bad{border-color:var(--bad);background:#fdebeb}
+  .callout.ok{border-color:var(--ok);background:#e5f6ee}
+  .callout p:last-child{margin-bottom:0}
+
+  /* ---------- Bloque 5 interactivo ---------- */
+  .deci{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
+  .deci h4{margin:0 0 6px;color:var(--ink);text-transform:none;letter-spacing:0;font-size:1.02rem;font-weight:600}
+  .deci .deci-body{color:var(--ink-soft);font-size:.92rem;margin-bottom:10px}
+  .deci .deci-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .deci .opts{display:flex;gap:8px}
+  .deci .opt{background:#eef0fa;color:var(--ink);border:2px solid transparent;border-radius:8px;padding:6px 14px;cursor:pointer;font-size:.88rem;font-weight:600}
+  .deci .opt:hover{background:#dfe2f3}
+  .deci .opt[aria-pressed="true"][data-val="true"]{background:#dff5e9;color:#0a6e3f;border-color:#0a6e3f}
+  .deci .opt[aria-pressed="true"][data-val="false"]{background:#fdd9d9;color:#7a0a0a;border-color:#7a0a0a}
+  .deci textarea{display:none;width:100%;min-height:60px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical}
+  .deci.has-false textarea{display:block}
+  .toolbar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;margin:24px -28px -28px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-radius:0 0 var(--radius) var(--radius)}
+  .toolbar button{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:600}
+  .toolbar button:hover{background:var(--brand-dark)}
+  .toolbar .summary{color:var(--ink-soft);font-size:.88rem}
+
+  /* ---------- Mermaid ---------- */
+  .mermaid{background:#fff;padding:14px;border-radius:10px;border:1px solid var(--line);margin:14px 0;overflow:auto}
+
+  /* ---------- Print ---------- */
+  @media print{
+    .topbar,nav.sidebar,.toolbar{display:none}
+    .layout{grid-template-columns:1fr;padding:0}
+    section.block{box-shadow:none;page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1>📊 Auditoría V2 · dashboard-af</h1>
+    <span class="badge">Medio proyecto</span>
+    <span class="badge">v0.3.0-rc.1</span>
+    <div class="spacer"></div>
+    <span class="small">27-05-2026 · Auditor Javi HP</span>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="sidebar" aria-label="Índice">
+  <h4>Índice</h4>
+  <ol>
+    <li><a href="#b1" class="nav-link">Resumen y avances</a></li>
+    <li><a href="#b2" class="nav-link">Roadmap antes/después</a></li>
+    <li><a href="#b3" class="nav-link">Comparativa V1 ↔ V2</a></li>
+    <li><a href="#b4" class="nav-link">Escalado y riesgos</a></li>
+    <li><a href="#b5" class="nav-link">Decisiones cliente</a></li>
+    <li><a href="#b6" class="nav-link">Equipo de desarrollo</a></li>
+    <li><a href="#b7" class="nav-link">Test /e2etotal</a></li>
+    <li><a href="#b8" class="nav-link">Tiempos hasta MVP</a></li>
+  </ol>
+  <div class="sidebar-meta">
+    <b>Ventana</b><br>18-may → 27-may-2026<br>
+    <b>10 días</b> · 168 commits<br>
+    <b>15 PRs</b> mergeados a developer<br>
+    <b>6 releases</b> · 5 sprints cerrados<br>
+    <b>Rama</b> <code>auditoria-v2-medio-proyecto</code>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================ BLOQUE 1 ============================ -->
+<section class="block" id="b1">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 1</span>
+    <h2>Resumen ejecutivo y gráficas de avances</h2>
+  </div>
+  <p class="block-lead">9 días de desarrollo intensivo desde el cierre de la auditoría V1. Lo que hemos hecho, en una pantalla.</p>
+
+  <div class="stats">
+    <div class="stat ok"><div class="val">23 / 23</div><div class="lbl">Findings Critical V1 cerrados</div><div class="sub">100% resueltos estructuralmente</div></div>
+    <div class="stat ok"><div class="val">168</div><div class="lbl">Commits válidos</div><div class="sub">Renzo+Ai2You desde 18-may (10 días)</div></div>
+    <div class="stat info"><div class="val">6</div><div class="lbl">Releases SemVer</div><div class="sub">v0.1.0 → v0.2.9 (+rc.1 sin tag)</div></div>
+    <div class="stat info"><div class="val">5</div><div class="lbl">Sprints cerrados</div><div class="sub">0, 1, 2, 2B, 3 (PR #14 mergeado 26-may)</div></div>
+    <div class="stat ok"><div class="val">228+</div><div class="lbl">Tests Vitest</div><div class="sub">+ 8 Playwright E2E (15 verdes VPS)</div></div>
+    <div class="stat warn"><div class="val">−92%</div><div class="lbl">Ratio real vs estimado</div><div class="sub">~43h reales vs ~541-574h estimadas</div></div>
+    <div class="stat info"><div class="val">11</div><div class="lbl">ADRs aprobados</div><div class="sub">+ 25 R-XXX en decision log</div></div>
+    <div class="stat warn"><div class="val">24</div><div class="lbl">Vulns npm activas</div><div class="sub">0 critical · 11 high · 13 moderate</div></div>
+    <div class="stat info"><div class="val">60.139</div><div class="lbl">Líneas de código</div><div class="sub">src/ sin tests (35% en src/lib)</div></div>
+    <div class="stat info"><div class="val">15</div><div class="lbl">PRs mergeados</div><div class="sub">a developer · 0 a staging/main</div></div>
+    <div class="stat info"><div class="val">48,8% / 71,8% / 77,2%</div><div class="lbl">Cobertura tests</div><div class="sub">statements · branches · functions</div></div>
+    <div class="stat info"><div class="val">+45.669</div><div class="lbl">Líneas netas</div><div class="sub">+71.659 / −25.990 en 15 PRs</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <h4>Severidad de findings: V1 vs V2</h4>
+      <canvas id="cSeverityBA" height="200"></canvas>
+      <p class="legend-note">Critical y High se han reducido de forma drástica. La auditoría V1 reportó 132 hallazgos consolidados (65 quick + 67 deep); V2 verifica el estado actual.</p>
+    </div>
+    <div class="chart-card">
+      <h4>Estado de las correcciones</h4>
+      <canvas id="cCorrecciones" height="200"></canvas>
+      <p class="legend-note">Cierre estructural (no parches). Las pendientes están planificadas en Sprint 3.</p>
+    </div>
+    <div class="chart-card">
+      <h4>Commits por día (10 días)</h4>
+      <canvas id="cCommitsDay" height="200"></canvas>
+      <p class="legend-note">Picos en cierres de Sprint 0 (22-may), Sprint 1 (24-may) y Sprint 2/2B (24-25 may).</p>
+    </div>
+    <div class="chart-card">
+      <h4>Versiones publicadas</h4>
+      <canvas id="cReleases" height="200"></canvas>
+      <p class="legend-note">Cadencia de release: ~1 cada 1-2 días en cierres de sprint.</p>
+    </div>
+  </div>
+
+  <h3>Avances destacados</h3>
+  <ul>
+    <li><b>Sprint 0 (hotfixes seguridad)</b> · v0.1.0 · 4 vulnerabilidades RLS multi-tenant + tokens OAuth + Kong EOL + JWT hardcoded → resueltos. ~11h reales vs 118h estimadas.</li>
+    <li><b>Sprint 1 (capa de datos)</b> · v0.2.0 · Repository pattern + Zod + RLS hardening + cifrado AES-256-GCM de tokens OAuth. 6 ADRs (014-019). ~12h vs ~205h estimadas.</li>
+    <li><b>Sprint 2 (adapter HubSpot + Zoho)</b> · v0.2.7 · Public App OAuth + Zoho multi-DC (9 datacenters) + WriteGuard + audit log. 170 tests verdes. 5/5 E2E VPS verdes.</li>
+    <li><b>Sprint 2B (dashboard KPIs MVP)</b> · v0.2.8/v0.2.9 · KPI Builder + charts + WCAG fixes + 15/15 Playwright E2E VPS verdes.</li>
+    <li><b>Sentry validado VPS end-to-end</b> (26-may) — observabilidad de errores en producción.</li>
+    <li><b>Sistema E2E /e2etotal</b> documentado y ejecutándose (en curso).</li>
+  </ul>
+</section>
+
+<!-- ============================ BLOQUE 2 ============================ -->
+<section class="block" id="b2">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 2</span>
+    <h2>Roadmap — estado anterior vs estado actual</h2>
+  </div>
+  <p class="block-lead">El antes y el después del proyecto. Visualmente.</p>
+
+  <div class="ba">
+    <div class="before">
+      <h4>🔴 Antes (V1 — 18-may-2026)</h4>
+      <ul>
+        <li>Versión: <b>v0.0.0</b> sin releases ni tags.</li>
+        <li><b>132 findings</b> de auditoría (65 quick + 67 deep).</li>
+        <li><b>23 Critical</b> + 24 High abiertos.</li>
+        <li>Flujo multi-día roto en producción (F-02-001).</li>
+        <li>Credenciales JWT hardcoded en 9 puntos del código.</li>
+        <li>Cross-tenant data leak en fetchCalls y AppointmentWatchdog.</li>
+        <li>7 endpoints de orquestación sin autenticación.</li>
+        <li>0 tests automatizados.</li>
+        <li>0 ADRs documentados.</li>
+        <li>Stack a confirmar: ORM por decidir, hosting por decidir.</li>
+        <li>WCAG 2.2 AA: ~5% cumplimiento — NON-COMPLIANT (DA-5: 24 findings a11y).</li>
+        <li>Sin observabilidad en producción.</li>
+      </ul>
+    </div>
+    <div class="after">
+      <h4>🟢 Después (V2 — 27-may-2026)</h4>
+      <ul>
+        <li>Versión: <b>v0.3.0-rc.1</b> · MVP GA target 22-jun-2026.</li>
+        <li><b>0 Critical abiertos</b> · <b>4 High</b> en curso (Sprint 3).</li>
+        <li>Flujo multi-día operativo + tests integration.</li>
+        <li>Tokens AES-256-GCM cifrados (ADR-017) + env vars + .env.example.</li>
+        <li>Repository pattern multi-tenant con RLS hardened.</li>
+        <li>Middleware requireAuth + requireAdmin en endpoints sensibles.</li>
+        <li><b>228+ tests Vitest + 18 Playwright E2E</b> (15 verdes VPS).</li>
+        <li><b>11 ADRs</b> aprobados (014..023 + 002).</li>
+        <li>Stack confirmado: Supabase self-hosted en Dokploy + sin ORM nuevo.</li>
+        <li>WCAG 2.2 AA: ~40% cumplimiento (parcial) — objetivo 95% al cierre SP-4B.</li>
+        <li>Sentry validado end-to-end en VPS.</li>
+        <li>2 CRM adapters MVP entregados (HubSpot + Zoho multi-DC).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Mapa de versiones publicadas</h3>
+  <table>
+    <thead>
+      <tr><th>Versión</th><th>Sprint</th><th>Fecha</th><th>Highlights</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>v0.1.0</code></td><td>Sprint 0</td><td>22-05-2026</td><td>Hotfixes seguridad · RLS multi-tenant · tokens OAuth · Kong EOL · JWT rotation</td></tr>
+      <tr><td><code>v0.2.0</code></td><td>Sprint 1</td><td>23-05-2026</td><td>Capa de datos · Repository pattern · Zod · ADR-017 AES-256-GCM · 6 ADRs</td></tr>
+      <tr><td><code>v0.2.5</code></td><td>Sprint 2 (parcial)</td><td>24-05-2026</td><td>HubSpot Public App OAuth · Zoho multi-DC base</td></tr>
+      <tr><td><code>v0.2.7</code></td><td>Sprint 2 (final)</td><td>24-05-2026</td><td>Hotfix BUG-2-01 slug conflict · 5/5 E2E VPS verdes</td></tr>
+      <tr><td><code>v0.2.8</code></td><td>Sprint 2B</td><td>25-05-2026</td><td>Dashboard KPIs MVP · KPI Builder · 15/15 Playwright VPS</td></tr>
+      <tr><td><code>v0.2.9</code></td><td>Sprint 2B post-fix</td><td>25-05-2026</td><td>Alturas reales + viewport 100% + Bloques E2E B-G</td></tr>
+      <tr><td><code>v0.3.0-rc.1</code></td><td>Sprint 3 (mergeado PR #14)</td><td>26-05-2026</td><td>Hardening: Pino + Sentry + rate limiting + Node 22 + AWS removal · tag git pendiente</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Roadmap visual hasta MVP</h3>
+  <div class="mermaid">
+flowchart LR
+  classDef done fill:#d3f1e0,stroke:#1faa66,color:#0a4d2e
+  classDef cur fill:#fff1c4,stroke:#e5a93b,color:#7a4d05
+  classDef pend fill:#e7eaf6,stroke:#6b7693,color:#3a4262
+  classDef mvp fill:#dfeafe,stroke:#2a8de5,color:#0a4778,font-weight:bold
+
+  S0[Sprint 0<br/>Hotfixes seguridad<br/>v0.1.0]:::done
+  S1[Sprint 1<br/>Capa de datos<br/>v0.2.0]:::done
+  S2[Sprint 2<br/>CRM HubSpot+Zoho<br/>v0.2.7]:::done
+  S2B[Sprint 2B<br/>Dashboard KPIs<br/>v0.2.9]:::done
+  S3[Sprint 3<br/>Hardening<br/>v0.3.0-rc.1 mergeado]:::done
+  S4B[SP-4B<br/>Validación Renzo<br/>v0.3.0 GA]:::cur
+  MVP[🎯 MVP GA<br/>22-jun-2026]:::mvp
+
+  S0 --> S1 --> S2 --> S2B --> S3 --> S4B --> MVP
+  </div>
+</section>
+
+<!-- ============================ BLOQUE 3 ============================ -->
+<section class="block" id="b3">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 3</span>
+    <h2>Auditoría V1 inicial + Comparativa V1↔V2 + Auditoría V2 condensada</h2>
+  </div>
+  <p class="block-lead">Una página con todo: el resumen de la V1, qué ha cambiado, y la V2 en formato síntesis.</p>
+
+  <h3>3.1 · La auditoría inicial (V1, 18-may-2026) en un párrafo</h3>
+  <div class="callout">
+    <p>La auditoría V1 fue un análisis exhaustivo de descubrimiento sobre ~15.000 líneas de código. Cubrió 5 fases (estructura, orquestador BullMQ, stack LLM, capa de datos, seguridad/dependencias) y un deep audit complementario (DA-1 concurrencia, DA-2 auth/RLS, DA-3 security, DA-4 LLM/voz, DA-5 accesibilidad). Identificó <b>132 hallazgos consolidados</b> distribuidos en <b>23 Critical + 24 High + 18 Medium + 7 Low</b> (quick) más ~67 deep. Los hallazgos críticos confirmaban tres capas de vulnerabilidad reforzándose entre sí: (1) autenticación y aislamiento multi-tenant rotos estructuralmente; (2) flujo multi-día BullMQ inoperativo en producción; (3) seguridad perimetral con 7 endpoints abiertos sin auth y 0 validaciones HMAC en webhooks. La V1 produjo el <a href="../audit/findings-summary.md" target="_blank">findings-summary.md</a>, el <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank">deep summary</a>, el <a href="../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank">informe ejecutivo cliente</a>, el <a href="../audit/STACK-TECNOLOGICO.md" target="_blank">stack confirmado</a> y las 13 decisiones del Auditor R-013..R-025 en el <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank">decision log</a>.</p>
+  </div>
+
+  <h3>3.2 · Resumen comparativo visual V1 vs V2</h3>
+  <div class="charts">
+    <div class="chart-card">
+      <h4>Findings cerrados por categoría</h4>
+      <canvas id="cCategorias" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <h4>Cobertura WCAG 2.2 AA</h4>
+      <canvas id="cWcag" height="220"></canvas>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Indicador</th><th>V1 (18-may)</th><th>V2 (27-may)</th><th>Δ</th></tr></thead>
+    <tbody>
+      <tr><td>Versión proyecto</td><td>v0.0.0 (no releases)</td><td><code>v0.3.0-rc.1</code></td><td><span class="tag ok">+6 releases</span></td></tr>
+      <tr><td>Findings Critical abiertos</td><td>23</td><td>0</td><td><span class="tag ok">−23 (100%)</span></td></tr>
+      <tr><td>Findings High abiertos</td><td>24</td><td>4</td><td><span class="tag ok">−20 (83%)</span></td></tr>
+      <tr><td>Tests automatizados</td><td>0</td><td>228+ Vitest · 18+ Playwright</td><td><span class="tag ok">+246</span></td></tr>
+      <tr><td>ADRs documentados</td><td>0</td><td>11</td><td><span class="tag ok">+11</span></td></tr>
+      <tr><td>Vulns npm high+critical</td><td>~30</td><td>11 (0 critical)</td><td><span class="tag ok">−63%</span></td></tr>
+      <tr><td>Cobertura WCAG 2.2 AA</td><td>~5% (NON-COMPLIANT)</td><td>~40% (parcial)</td><td><span class="tag warn">+35pp · sigue mejorando Sprint 3+SP-4B</span></td></tr>
+      <tr><td>Sprints completados</td><td>0</td><td>4 (0, 1, 2, 2B)</td><td><span class="tag ok">+4</span></td></tr>
+      <tr><td>Días con actividad commit</td><td>0</td><td>10 / 10 (100%)</td><td><span class="tag ok">10 días</span></td></tr>
+      <tr><td>Cifrado tokens OAuth</td><td>JSONB plano</td><td>AES-256-GCM (ADR-017)</td><td><span class="tag ok">resuelto</span></td></tr>
+      <tr><td>RLS multi-tenant</td><td>4 fallos USING(true)</td><td>hardened + tests</td><td><span class="tag ok">resuelto</span></td></tr>
+      <tr><td>Webhooks con firma HMAC</td><td>0 / 6</td><td>6 / 6</td><td><span class="tag ok">resuelto</span></td></tr>
+      <tr><td>Observabilidad producción</td><td>ninguna</td><td>Sentry validado VPS</td><td><span class="tag ok">resuelto</span></td></tr>
+      <tr><td>Stack data layer</td><td>por decidir</td><td>@supabase/ssr + Zod + Repository (sin ORM)</td><td><span class="tag info">decidido</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 · Auditoría V2 condensada (1 página)</h3>
+  <p><b>Veredicto V2:</b> el proyecto ha desactivado la crisis V1 de forma estructural (no parches), entrega de RC v0.3.0 en plazo, y arquitectura objetivo materializada según ADRs aprobados.</p>
+
+  <h4>Top 5 logros estructurales</h4>
+  <ol>
+    <li><b>Capa de datos sin ORM heavyweight</b> — Repository pattern + Zod + RLS hardening. Decisión clave: rechazar Drizzle/Prisma. ADR-019 documenta migración incremental.</li>
+    <li><b>OAuth cifrado AES-256-GCM</b> (ADR-017) — tokens de HubSpot/Zoho/Google nunca en plano. Refresh + dedup en token-manager.</li>
+    <li><b>2 CRM adapters MVP</b> — HubSpot Public App OAuth + Zoho multi-DC (9 datacenters). WriteGuard + audit log.</li>
+    <li><b>Test pyramid funcional</b> — 228 Vitest + 18 Playwright + script <code>/e2etotal</code> de regresión total.</li>
+    <li><b>Tracking riguroso de productividad</b> — RoadMap.md vivo con tiempos reales por tarea, ratio efectividad medido por sprint, 11 ADRs y RELEASE-NOTES profesionales por release.</li>
+  </ol>
+
+  <h4>Top riesgos vivos (ver Bloque 4 para detalle)</h4>
+  <ol>
+    <li>🟡 <b>24 vulnerabilidades npm</b> — 0 critical, gestionables. Sprint 3 task 4-02 bumps masivos. Recomendación: añadir Dependabot.</li>
+    <li>🟡 <b>Plan Sentry Free 5k events/mes</b> — insuficiente para producción multi-tenant. Decisión: upgrade plan o auto-hosting.</li>
+    <li>🟡 <b>Supabase self-hosted single-node</b> — sin estrategia de escalado horizontal documentada.</li>
+    <li>🟡 <b>1 test fallando</b> en <code>token-crypto</code> (authTag GCM) — <b>bloquea v0.3.0 GA</b>, arreglar en Sprint 3 antes del cierre.</li>
+    <li>🟡 <b>Redis sin <code>requirepass</code> en VPS</b> — pendiente verificar configuración Dokploy.</li>
+    <li>🟡 <b>13 findings WCAG diferidos post-MVP</b> — riesgo legal en UE (WCAG 2.2 AA obligatorio para apps profesionales).</li>
+    <li>🟡 <b>95 errores ESLint <code>no-explicit-any</code></b> residuales (de 426 V1) — tarea SP-4-LINT-ZERO abierta.</li>
+  </ol>
+
+  <h4>Cierres a corto plazo</h4>
+  <ul>
+    <li>Sprint 3 hardening (en curso) cierra los 4 High abiertos restantes.</li>
+    <li>SP-4B (Renzo) valida regresión completa V1 + manual humano en VPS.</li>
+    <li>Bump a <b>v0.3.0 GA</b> al firmar verde SP-4B (22-jun-2026 según ratio actual).</li>
+  </ul>
+
+  <p style="margin-top:18px"><b>Auditoría V2 completa en markdown:</b> <a href="./audit-v2.md" target="_blank">audit-v2.md</a></p>
+</section>
+
+<!-- ============================ BLOQUE 4 ============================ -->
+<section class="block" id="b4">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 4</span>
+    <h2>Puntos críticos de escalado y recomendaciones de cara al crecimiento</h2>
+  </div>
+  <p class="block-lead">Qué servicios saturarán primero, dónde estarán los costes y qué externalizar (o NO).</p>
+
+  <h3>4.1 · Supabase self-hosted (Dokploy en Hetzner) — el core</h3>
+  <div class="callout warn">
+    <p><b>Riesgo:</b> el VPS actual ejecuta en un único nodo el Postgres + Kong + PostgREST + GoTrue + Storage + Next.js + BullMQ workers + Redis. Toda la pila compite por los mismos cores/RAM/disco.</p>
+    <p><b>Carga proyectada al cierre del MVP:</b> 5-10 tenants × 100-500 leads/día × N agentes IA conversacionales × M webhooks Retell/WhatsApp/CRM. Tráfico burst en horas pico (10:00 ES, 18:00 ES).</p>
+  </div>
+
+  <h4>Sub-riesgos concretos</h4>
+  <table>
+    <thead><tr><th>Servicio</th><th>Punto saturación</th><th>Síntoma esperado</th><th>Recomendación</th></tr></thead>
+    <tbody>
+      <tr><td>Postgres</td><td>~200-500 conexiones simultáneas (pool por defecto 100)</td><td>Latencias &gt;500ms, errores <code>too many connections</code></td><td>Activar <b>PgBouncer</b> en transaction mode. Sprint pre-deploy.</td></tr>
+      <tr><td>PostgREST</td><td>CPU-bound en queries complejas</td><td>Timeouts en endpoints REST de Supabase</td><td>Cache de respuestas idempotentes + uso preferente del SDK desde server (no REST directo).</td></tr>
+      <tr><td>GoTrue (auth)</td><td>Login bursts (mañanas)</td><td>JWT issuance lento, registros fallidos</td><td>Front rate-limiting + monitorización.</td></tr>
+      <tr><td>BullMQ + Redis</td><td>Backlog si workers no escalan</td><td>Leads esperando outbound &gt;30min</td><td>Workers en proceso separado (no embebidos en Next.js). Métricas Bull-Board ya planificadas Sprint 3.</td></tr>
+      <tr><td>Next.js + ORM-lite (Repository)</td><td>N+1 si crece dataset por tenant</td><td>Página tarda &gt;2s en cargar listas largas</td><td>Pagination obligatoria + indexes Postgres + revisión queries Sprint 3.</td></tr>
+      <tr><td>Storage Supabase</td><td>Disco VPS limitado</td><td>Cierre de uploads, errores 507</td><td>Plan migración a S3 self-hosted (MinIO) o S3 AWS managed cuando &gt;50 GB.</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Recomendación estratégica (Auditor)</h4>
+  <div class="callout">
+    <p><b>Fase 1 (pre-MVP, opcional):</b> mantener single-node, activar PgBouncer, instrumentar métricas (Sentry Performance + logs Pino agregados).</p>
+    <p><b>Fase 2 (post-MVP, primeros 50-100 leads/día reales):</b> separar Postgres a su propio nodo (read-replica para queries pesadas), workers BullMQ a su propio nodo, Next.js a un tercer nodo. Hetzner permite VPS dedicados con red privada gratuita.</p>
+    <p><b>Fase 3 (escala &gt;500 leads/día):</b> Postgres con réplica + connection pooling externo. Considerar mover storage a S3 managed. Mantener el stack auto-hospedado salvo storage.</p>
+    <p><b>NO recomendado por el Auditor:</b> migrar a Supabase Cloud managed pagado — pierdes control, depende de su pricing y de su roadmap (lo que ya descartó Sprint 0 cuando se cerró R-023).</p>
+  </div>
+
+  <h3>4.2 · Sentry — limitación plan Free 5k events/mes</h3>
+  <div class="callout warn">
+    <p><b>Estado actual:</b> Sentry validado en VPS 26-may con plan Developer Free (5.000 events/mes, retención 30 días, 1 usuario).</p>
+    <p><b>Riesgo:</b> en producción multi-tenant los 5k/mes se agotan en horas. Un solo bucle JS no-capturado en frontend puede generar 200-500 events/min. Un cron que falla en bucle = noche perdida + alertas off.</p>
+  </div>
+
+  <h4>Opciones</h4>
+  <table>
+    <thead><tr><th>Opción</th><th>Coste</th><th>Pros</th><th>Contras</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sentry Team plan (gestionado)</b></td><td>~26 USD/mes (50k events)</td><td>Sin mantenimiento. Alerting + integraciones.</td><td>Escala lineal con eventos. 100k = 80 USD, 250k = 200 USD/mes. <b>Coste creciente con escala.</b></td></tr>
+      <tr><td><b>Sentry self-hosted (Docker)</b></td><td>VPS dedicado (~10-20 USD/mes Hetzner)</td><td>Coste plano. Sin límite de events. Datos propios.</td><td>Requiere mantenimiento (upgrades, BD, storage). Stack pesado (Kafka, ClickHouse, Postgres).</td></tr>
+      <tr><td><b>Alternativa: GlitchTip (open-source)</b></td><td>Self-host barato (~5 USD/mes)</td><td>Compatible con SDK de Sentry. Stack ligero.</td><td>Menos features que Sentry. Comunidad menor.</td></tr>
+      <tr><td><b>Alternativa: logs estructurados Pino + Loki/Grafana</b></td><td>VPS pequeño</td><td>Coste plano. Control total.</td><td>No reemplaza tracking de errores con stacktrace + breadcrumbs.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><b>Recomendación Auditor:</b> <b>NO externalizar Sentry pagado</b> en cuanto haya tráfico real. Migrar a <b>Sentry self-hosted</b> en VPS dedicado (mismo Hetzner) o <b>GlitchTip</b> si se prioriza simplicidad. Mantener el plan Free actual SOLO durante MVP / pre-deploy de validación.</p>
+  </div>
+
+  <h3>4.3 · Servicios externos sujetos a coste por uso</h3>
+  <table>
+    <thead><tr><th>Servicio</th><th>Tier actual</th><th>Punto de coste</th><th>Recomendación</th></tr></thead>
+    <tbody>
+      <tr><td><b>Anthropic (Claude)</b></td><td>API directa pay-per-use</td><td>~$0.003-0.015 / 1k tokens según modelo</td><td>Mover modelos baratos (Haiku) para tareas mecánicas. Activar Sprint Costes-LLM (v0.4.1) cuanto antes — no esperar a Sheets.</td></tr>
+      <tr><td><b>OpenAI</b></td><td>API directa pay-per-use</td><td>~$0.005-0.020 / 1k tokens GPT-4o-mini</td><td>Idem. Tracker en <code>chat_messages.token_usage</code> (task C-03, 5h).</td></tr>
+      <tr><td><b>Google Gemini</b></td><td>Free tier hasta 50 req/día</td><td>Sobrecarga rápida en producción</td><td>Plan pagado obligatorio antes de release.</td></tr>
+      <tr><td><b>Retell (voz outbound)</b></td><td>$0.07-0.15 / min llamada</td><td>3 días × 27h cadence × N llamadas/lead</td><td>Configurar tope diario por tenant. Alertas en dashboard.</td></tr>
+      <tr><td><b>Ultravox</b> (alt voice)</td><td>Implementación parcial</td><td>Tarifa similar a Retell</td><td>Mantener como fallback / A/B test. R-016 establece abstracción común.</td></tr>
+      <tr><td><b>WhatsApp Cloud API (Meta)</b></td><td>Free tier limitado en marketing templates</td><td>Conversaciones &gt;1000/mes son de pago</td><td>Modelar coste por tenant. Considerar plantillas de utilidad (más baratas).</td></tr>
+      <tr><td><b>Hetzner VPS</b></td><td>~10-40 EUR/mes según nodo</td><td>Lineal con escalado horizontal</td><td>Plan presupuestario por tenant.</td></tr>
+      <tr><td><b>Calendarific / Nager.Date</b></td><td>Free tier suficiente</td><td>Holidays look-up</td><td>Cache local en <code>holidays_per_country</code> ya planificado.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.4 · ¿Qué NO externalizar?</h3>
+  <div class="callout ok">
+    <p>El Auditor recomienda <b>mantener auto-hospedado el core</b> (Postgres, PostgREST, GoTrue, Storage, Redis, BullMQ, Sentry/GlitchTip). Las razones: control de datos del cliente, pricing predictible, evitar lock-in. La complejidad operativa adicional se compensa con el ahorro y la propiedad de los datos.</p>
+    <p><b>Sí externalizar:</b> Anthropic/OpenAI/Gemini (proveedores LLM — no replicables), Retell/Ultravox (voz outbound — proveedores especializados), WhatsApp Cloud API (Meta, monopolio).</p>
+  </div>
+</section>
+
+<!-- ============================ BLOQUE 5 ============================ -->
+<section class="block" id="b5">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 5</span>
+    <h2>Decisiones estratégicas del Auditor — informe para la clienta</h2>
+  </div>
+  <p class="block-lead">Durante el desarrollo, el Auditor (Javi HP) ha tomado decisiones que afectan a cómo funciona la aplicación. Aquí están en lenguaje sencillo. Marca <b>Sí</b> si estás de acuerdo, <b>No</b> si no — y deja una nota cuando dudes. Al final puedes exportar tus respuestas en un archivo JSON y enviárnoslo.</p>
+
+  <div class="callout">
+    <p>📋 <b>Cómo usar este formulario:</b> Pulsa el botón verde "Sí" si te parece bien la decisión, o el rojo "No" si quieres cambiarla. Si pulsas "No", se abre un cuadro para que nos cuentes por qué. Tus respuestas se guardan automáticamente en este navegador. Cuando termines, pulsa "Exportar mis respuestas" abajo del todo para descargar un archivo y enviárnoslo.</p>
+  </div>
+
+  <div id="decisionsContainer"></div>
+
+  <div class="toolbar">
+    <button id="btnExport">📥 Exportar mis respuestas (JSON)</button>
+    <button id="btnClear" style="background:#888">Borrar todo</button>
+    <span class="summary" id="decisionsSummary">Empieza marcando las decisiones de arriba.</span>
+  </div>
+</section>
+
+<!-- ============================ BLOQUE 6 ============================ -->
+<section class="block" id="b6">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 6</span>
+    <h2>Informe para el equipo de desarrollo</h2>
+  </div>
+  <p class="block-lead">Avances y decisiones técnicas relevantes. Enlaces a la documentación viva del proyecto.</p>
+
+  <h3>6.1 · Decisiones técnicas (ADRs aprobados)</h3>
+  <table>
+    <thead><tr><th>ADR</th><th>Título</th><th>Sprint</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../adr/ADR-002-next-upgrade-16-2-6.md" target="_blank">ADR-002</a></td><td>Next.js upgrade 16.1.6 → 16.2.6 (CVEs)</td><td>Sprint 0</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-014-politica-handoff-humano.md" target="_blank">ADR-014</a></td><td>Política handoff humano</td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-015-orchestrator-doble-personalidad.md" target="_blank">ADR-015</a></td><td>Orchestrator doble personalidad</td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-016-supabase-ssr-upgrade-0-10-3.md" target="_blank">ADR-016</a></td><td>Supabase SSR upgrade 0.10.3</td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-017-cifrado-tokens-oauth-aes-256-gcm.md" target="_blank">ADR-017</a></td><td><b>Cifrado tokens OAuth AES-256-GCM</b></td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-018-hardening-deps-deferred-post-mvp.md" target="_blank">ADR-018</a></td><td>Hardening deps diferido post-MVP</td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-019-refactor-queries-as-any-incremental-migration.md" target="_blank">ADR-019</a></td><td>Refactor 426 <code>as any</code> incremental</td><td>Sprint 1</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-020-msw-v2-vitest-mocking.md" target="_blank">ADR-020</a></td><td>MSW v2 + Vitest mocking</td><td>Sprint 2</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-021-hubspot-public-app-multi-tenant.md" target="_blank">ADR-021</a></td><td>HubSpot Public App multi-tenant</td><td>Sprint 2</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-022-write-policy-semantics.md" target="_blank">ADR-022</a></td><td>Write-policy semantics (append-only / overwrite-with-audit)</td><td>Sprint 2</td><td><span class="tag ok">Aprobado</span></td></tr>
+      <tr><td><a href="../adr/ADR-023-token-manager-dedup.md" target="_blank">ADR-023</a></td><td>Token-manager dedup + writeback</td><td>Sprint 2</td><td><span class="tag ok">Aprobado</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 · Documentación clave del proyecto</h3>
+  <ul>
+    <li>📚 <a href="../../CLAUDE.md" target="_blank">CLAUDE.md</a> — instrucciones específicas del proyecto + protocolo de cierre de sprint.</li>
+    <li>🗺️ <a href="../../plans/RoadMap.md" target="_blank">plans/RoadMap.md</a> — RoadMap vivo con tracking por tarea (frontmatter ya legible tras fix 27-may).</li>
+    <li>📦 <a href="../audit/STACK-TECNOLOGICO.md" target="_blank">docs/audit/STACK-TECNOLOGICO.md</a> — stack confirmado.</li>
+    <li>🧠 <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank">docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</a> — R-013..R-025.</li>
+    <li>🛡️ <a href="../audit/findings-summary.md" target="_blank">docs/audit/findings-summary.md</a> — 65 findings V1 consolidados.</li>
+    <li>🔬 <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank">docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</a> — deep audit V1 (DA-1..DA-5).</li>
+    <li>🧪 <a href="../e2e-full-test-plan.md" target="_blank">docs/e2e-full-test-plan.md</a> — plan maestro <code>/e2etotal</code>.</li>
+    <li>🏷️ <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank">plans/RELEASE-NOTES-v0.1.0.md</a> + RELEASE-NOTES por sprint en cada carpeta de plan.</li>
+    <li>🤝 <a href="../dev-onboarding.md" target="_blank">docs/dev-onboarding.md</a> — onboarding del equipo dev.</li>
+  </ul>
+
+  <h3>6.3 · Avances técnicos por sprint (síntesis)</h3>
+  <table>
+    <thead><tr><th>Sprint</th><th>Logros técnicos clave</th><th>Tests</th><th>Ratio real/estim</th></tr></thead>
+    <tbody>
+      <tr><td>Sprint 0</td><td>JWT rotation · RLS hardening · Kong upgrade plan · .env.example · Next 16.2.6</td><td>24 E2E + 5 WCAG</td><td>−91%</td></tr>
+      <tr><td>Sprint 1</td><td>Repository pattern · Zod runtime + tipos · AES-256-GCM tokens · 6 ADRs</td><td>105 Vitest</td><td>−94%</td></tr>
+      <tr><td>Sprint 2</td><td>HubSpot Public App OAuth · Zoho multi-DC (9 datacenters) · WriteGuard · audit log</td><td>170 Vitest + 5 E2E VPS</td><td>−94%</td></tr>
+      <tr><td>Sprint 2B</td><td>Dashboard KPIs · KPI Builder C + SummaryManager · campaigns + funnel UI</td><td>193 Vitest + 15 E2E VPS</td><td>−86%</td></tr>
+      <tr><td>Sprint 3 (curso)</td><td>Pino structured logging · Sentry · BullMQ bull-board · rate limiting · Node 22 · WCAG 2.2 AA · AWS removal</td><td>228+ Vitest (en aumento)</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.4 · Sistema de tracking propio (sin Linear/Jira)</h3>
+  <p>El proyecto utiliza un sistema de tracking propio en <code>plans/RoadMap.md</code> mantenido por el agente <code>af-agents:roadmap-keeper</code>. Cada tarea tiene estado (🔘🟡🟠🔵🟢), estimación, tiempo real (⏱ Push y ⏱ Cierre), y notas. El hook <code>af-productivity-logger.cjs</code> actualiza el RoadMap automáticamente al detectar cambios de estado. Este sistema reemplaza herramientas externas y queda versionado en git.</p>
+
+  <h3>6.5 · Convenciones y reglas operativas</h3>
+  <ul>
+    <li><b>Co-authorship</b>: nunca Claude/Anthropic/IA como co-autor. Solo humanos. Sin excepciones.</li>
+    <li><b>Push protegido</b>: nunca a <code>staging</code> ni <code>main</code> sin orden explícita.</li>
+    <li><b>Dependencias</b>: toda nueva dependencia de producción pasa por <code>af-agents:adr</code>. Hook <code>af-deps-guard.cjs</code> bloquea bypass.</li>
+    <li><b>Tests con BD real</b> en integración. NO mocks de Supabase ni de RLS.</li>
+    <li><b>Tracking de tiempos</b>: horas y minutos (<code>2h 30min</code>), nunca decimales.</li>
+    <li><b>Branches</b>: desde Sprint 1 <code>feature/sprint-NN-&lt;slug&gt;</code> con 2 dígitos.</li>
+    <li><b>Releases GitHub</b>: cuerpo profesional obligatorio (highlights + breaking + migraciones + env vars + commits + próximos pasos).</li>
+    <li><b>Screenshots</b>: solo en <code>docs/screenshots/</code>. Nunca en raíz ni en <code>src/</code>.</li>
+  </ul>
+</section>
+
+<!-- ============================ BLOQUE 7 ============================ -->
+<section class="block" id="b7">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 7</span>
+    <h2>Test /e2etotal — sistema E2E exhaustivo</h2>
+  </div>
+  <p class="block-lead">Test maestro de regresión total reusable, ejecutado al cierre de la auditoría V2.</p>
+
+  <h3>7.1 · Qué es /e2etotal</h3>
+  <p><code>/e2etotal</code> es un comando custom del proyecto que ejecuta una batería E2E exhaustiva sobre todo el sistema. No es un test puntual: es un audit completo reusable que incluye:</p>
+  <ul>
+    <li><b>Smoke tests</b> sobre todas las rutas públicas y autenticadas.</li>
+    <li><b>Tests funcionales</b> de flujos críticos: login, gestión de leads, integraciones CRM, OAuth, configuración tenant.</li>
+    <li><b>Validación WCAG 2.2 AA</b> con axe-core sobre las páginas principales.</li>
+    <li><b>Validación de rendimiento</b> básico (Core Web Vitals locales).</li>
+    <li><b>Inspección de network</b>: detección de requests fallidos, latencias anómalas, errores en consola.</li>
+    <li><b>Documentación automática</b> del resultado en <code>docs/e2e-runs-history.md</code> con histórico de ejecuciones.</li>
+  </ul>
+
+  <h3>7.2 · Comando y parámetros</h3>
+  <pre>/e2etotal                          # ejecución completa con defaults
+/e2etotal --quick                  # solo smoke tests
+/e2etotal --area=leads             # solo área leads
+/e2etotal --area=crm               # solo integraciones CRM
+/e2etotal --vps                    # contra VPS en lugar de localhost
+/e2etotal --skip-wcag              # omitir axe-core
+/e2etotal --report=html            # exportar HTML resumen</pre>
+  <p>Plan maestro: <a href="../e2e-full-test-plan.md" target="_blank">docs/e2e-full-test-plan.md</a>. Histórico de ejecuciones: <a href="../e2e-runs-history.md" target="_blank">docs/e2e-runs-history.md</a>.</p>
+
+  <h3>7.3 · Resultados del run actual</h3>
+  <div class="callout warn">
+    <p>🟡 <b>Pendiente de rellenar:</b> el usuario está ejecutando <code>/e2etotal</code> en paralelo a esta auditoría V2. Este bloque se actualizará cuando termine la ejecución actual (<code>plans/260527-1235-e2etotal-run/</code>).</p>
+  </div>
+
+  <h3>7.4 · Bugs detectados — tabla (a rellenar)</h3>
+  <table>
+    <thead><tr><th>BUG-ID</th><th>Área</th><th>Descripción</th><th>Severidad</th><th>Sprint plan</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px"><i>Pendiente del resultado del run actual de <code>/e2etotal</code>. Se rellenará al cerrar la ejecución.</i></td></tr>
+    </tbody>
+  </table>
+
+  <h3>7.5 · Histórico breve de runs</h3>
+  <ul>
+    <li><b>2026-05-27 ~12:35</b> — Run en curso (rama <code>docs/roadmap-frontmatter-readable</code>, capturas iniciales en <code>docs/screenshots/e2e-01..05.png</code>).</li>
+    <li><b>Anteriores</b> — Ver <a href="../e2e-runs-history.md" target="_blank">docs/e2e-runs-history.md</a>.</li>
+  </ul>
+</section>
+
+<!-- ============================ BLOQUE 8 ============================ -->
+<section class="block" id="b8">
+  <div class="block-head">
+    <span class="block-num">BLOQUE 8</span>
+    <h2>Tiempos estimados hasta el MVP</h2>
+  </div>
+  <p class="block-lead">Sprints pendientes hasta v0.3.0 GA. Estimaciones realistas basadas en el ratio real de los Sprints 0/1/2/2B (−92,5% sobre estimación inicial gracias a orquestación multi-agente).</p>
+
+  <h3>8.1 · Diagrama Gantt — hasta MVP</h3>
+  <div class="mermaid">
+gantt
+  title Camino al MVP v0.3.0 GA (estimado vs ratio real)
+  dateFormat YYYY-MM-DD
+  axisFormat %d-%m
+  todayMarker stroke-width:3px,stroke:#e23b3b,opacity:0.7
+
+  section Sprint 3 — Hardening
+  Pino + Sentry + bull-board       :s3a, 2026-05-27, 1d
+  Rate limiting + sec headers       :s3b, after s3a, 1d
+  Node 22 LTS migration             :s3c, after s3b, 1d
+  WCAG 2.2 AA + axe-core            :s3d, after s3c, 1d
+  Tests E2E + bumps deps            :s3e, after s3d, 1d
+  Bloque 3.B (NEW-09..12 features)  :s3f, after s3e, 2d
+  Sprint 3 CLOSE-1..5               :s3close, after s3f, 1d
+
+  section SP-4B — Validación Renzo
+  Validación Sprint 0 + 1           :sp4ba, 2026-06-08, 1d
+  Validación Sprint 2 + 2B          :sp4bb, after sp4ba, 1d
+  Validación Sprint 3 + E2E VPS     :sp4bc, after sp4bb, 2d
+  CLOSE-1..5 + bump v0.3.0 GA       :sp4bd, after sp4bc, 1d
+
+  section MVP GA
+  Tag v0.3.0 + Release notes        :milestone, mvp, 2026-06-22, 1d
+  </div>
+
+  <p style="font-size:.85rem;color:var(--ink-soft)">Nota: el diagrama usa fechas calendario optimistas para visualización. El plan real concentra Sprint 3 entre 27-may y 8-jun (5-7 días efectivos) y SP-4B entre 16-jun y 22-jun según planificación vigente del RoadMap.</p>
+
+  <h3>8.2 · Sprints, fases y tareas pendientes — estimaciones realistas</h3>
+
+  <h4>Sprint 3 — Hardening (en curso · v0.3.0-rc.1)</h4>
+  <table>
+    <thead><tr><th>Bloque / Tarea</th><th>Estim. original</th><th>Estim. realista (ratio −90%)</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>4-01 Update deps + bumps masivos</td><td>8-10h</td><td>1h 30min</td><td>Sprint 3 task abierta</td></tr>
+      <tr><td>4-02 Pino structured logging</td><td>6-8h</td><td>1h</td><td>Refactor logger ya iniciado</td></tr>
+      <tr><td>4-03 Sentry + bull-board (Pino done)</td><td>7-9h</td><td>1h 30min</td><td>Sentry validado VPS 26-may</td></tr>
+      <tr><td>SP-4-NODE-22 Node 22 LTS</td><td>4-6h</td><td>45min</td><td>Plan ya creado</td></tr>
+      <tr><td>4-05 WCAG 2.2 AA + axe-core</td><td>10-14h</td><td>2h</td><td>Cubre BUG-2B-08/09/10 diferidos</td></tr>
+      <tr><td>4-06 Security headers (CSP, HSTS, X-Frame)</td><td>4-6h</td><td>1h</td><td>—</td></tr>
+      <tr><td>4-07 Rate limiting (express-rate-limit + Redis)</td><td>6-8h</td><td>1h 15min</td><td>Bump pendiente (vuln high)</td></tr>
+      <tr><td>4-08 withRateLimit HOF</td><td>4-6h</td><td>45min</td><td>—</td></tr>
+      <tr><td>4-09 E2E Playwright sprint-3-close</td><td>8-12h</td><td>1h 30min</td><td>Ya hay 14/14 en suite</td></tr>
+      <tr><td><b>Bloque 3.B — Features Bea</b></td><td><b>19-25h</b></td><td><b>3-4h</b></td><td>NEW-09 campañas, NEW-10 festivos, NEW-11 rename, NEW-12 settings UX</td></tr>
+      <tr><td>SP-4-CLOSE-1..5 (cierre)</td><td>7h + bugs</td><td>2-3h</td><td>auto test + E2C + push + PR + hand-off SP-4B</td></tr>
+      <tr><td><b>TOTAL SPRINT 3</b></td><td><b>~93-119h dev + 19-25h Bea + 7h cierre = 119-151h</b></td><td><b>~15-20h efectivas</b></td><td>≈ 1,5-2 días efectivos</td></tr>
+    </tbody>
+  </table>
+
+  <h4>SP-4B — Validación Pre-MVP (Renzo, v0.3.0 GA)</h4>
+  <table>
+    <thead><tr><th>Phase</th><th>Estim. original</th><th>Estim. realista</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>Phase 01 — Validación Sprint 0</td><td>8-10h</td><td>4-6h</td><td>Plantilla ya rellenada</td></tr>
+      <tr><td>Phase 02 — Validación Sprint 1</td><td>8-10h</td><td>4-6h</td><td>Auto-fill en SP-2-CLOSE-5</td></tr>
+      <tr><td>Phase 03a — Validación Sprint 2 (v0.2.7)</td><td>5-7h</td><td>3-4h</td><td>Rellenada 24-may. BUG-2-01 + F-WG-1 + F-API-1/2 baseline</td></tr>
+      <tr><td>Phase 03b — Validación Sprint 2B (v0.2.9)</td><td>5-6h</td><td>3-4h</td><td>Skeleton creado, auto-fill pendiente</td></tr>
+      <tr><td>Phase 04 — Validación Sprint 3 + E2E VPS</td><td>10-12h</td><td>6-8h</td><td>Sprint más complejo (Node 22 + WCAG + Sentry)</td></tr>
+      <tr><td>CLOSE-1..5 SP-4B (bump v0.3.0 GA + release notes)</td><td>6-12h</td><td>3-4h</td><td>—</td></tr>
+      <tr><td><b>TOTAL SP-4B</b></td><td><b>~40-55h</b></td><td><b>~23-32h efectivas Renzo</b></td><td>≈ 3-4 días efectivos (8h/día Renzo)</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Resumen camino al MVP v0.3.0 GA</h4>
+  <table>
+    <thead><tr><th>Etapa</th><th>Fechas</th><th>Horas estim realistas</th><th>Responsable</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sprint 3 Hardening</b></td><td>27-may → 06-jun-2026</td><td>15-20h</td><td>Javi HP</td></tr>
+      <tr><td><b>Hand-off + buffer</b></td><td>07-jun → 15-jun-2026</td><td>—</td><td>—</td></tr>
+      <tr><td><b>SP-4B Validación</b></td><td>16-jun → 21-jun-2026</td><td>23-32h</td><td>Renzo + equipo</td></tr>
+      <tr><td><b>🎯 MVP GA v0.3.0</b></td><td><b>22-jun-2026</b></td><td><b>≈ 38-52h totales</b></td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>8.3 · Post-MVP — visión hasta v0.6+</h3>
+  <p>Tras el MVP, el orden vigente (decisión 24-may + 22-may) es:</p>
+  <ol>
+    <li><b>Sprint 4 — Google Sheets bidireccional</b> (<code>v0.4.0</code>) · ~60-100h estim · realista ~10-15h · Inicio Mar 23-06-2026.</li>
+    <li><b>Sprint Costes-LLM</b> (<code>v0.4.1</code>) · ~23-31h estim · realista ~5-7h · Inicio Lun 13-07-2026. <span class="tag warn">Recomendación V2: anticipar antes que Sheets</span> (justificación en Bloque 4).</li>
+    <li><b>Sprint Refinamiento Herramientas (Renzo)</b> (<code>v0.4.2</code>) · ~18-22h · Simulator + Lanzador <code>/calls</code> Retell.</li>
+    <li><b>Sprint 5 — Salesforce</b> (<code>v0.5.0</code>) · ~60-100h estim · realista ~12-18h.</li>
+    <li><b>Sprint 6 — GoHighLevel</b> (<code>v0.6.0</code>) · ~40-80h estim · foco Latam EduTech.</li>
+    <li><b>Sprint 7 — ActiveCampaign</b> (<code>v0.7.0</code>) · ~20-50h estim.</li>
+    <li><b>Sprint 8 — Adapter pattern generalization</b> (<code>v0.8.0</code>) · ~20-40h.</li>
+    <li><b>Sprint 9 — Tier 2 on-demand</b> (Clientify, Bitrix24, Pipedrive, Monday, Holded) · backlog bajo pedido.</li>
+  </ol>
+
+  <h3>8.4 · Por qué las estimaciones realistas son tan bajas</h3>
+  <div class="callout">
+    <p>Los Sprints 0/1/2/2B han cerrado con un ratio <b>−91% a −94%</b> sobre las estimaciones iniciales. Las razones (validadas en sesión 24-may con Javi HP):</p>
+    <ul>
+      <li><b>Orquestación multi-agente Claude Code</b>: tareas paralelas con subagentes especializados (database, security, frontend-developer, tester, code-reviewer) en lugar de secuencial.</li>
+      <li><b>Arquitectura de contexto madura</b>: skills + memorias persistentes + reports estructurados que evitan reexplicar contexto.</li>
+      <li><b>ADRs documentados</b>: las decisiones arquitectónicas no se revisan, solo se ejecutan.</li>
+      <li><b>Tracking riguroso</b>: el RoadMap.md detecta y corta scope creep en cuanto aparece.</li>
+      <li><b>Local-first</b>: validación E2C local antes de E2E VPS evita ciclos largos de despliegue.</li>
+    </ul>
+    <p>Las estimaciones realistas asumen mantenimiento de este patrón. Si el equipo se amplía con devs no-orquestados, los ratios subirán (estimar 50% del original como peor caso).</p>
+  </div>
+</section>
+
+<footer style="text-align:center;color:var(--ink-soft);font-size:.85rem;margin:30px 0">
+  Auditoría V2 generada 2026-05-27 · Auditor Javi HP · Rama <code>auditoria-v2-medio-proyecto</code> · No promocionar a <code>staging</code> ni <code>main</code> sin orden explícita.
+</footer>
+
+</main>
+</div>
+
+<!-- ===================== DATA + SCRIPTS ===================== -->
+<script>
+/* =====================================================
+   1) Highlight active nav-link on scroll
+===================================================== */
+(function(){
+  const links = Array.from(document.querySelectorAll('nav.sidebar a.nav-link'));
+  const sections = links.map(l => document.querySelector(l.getAttribute('href')));
+  function onScroll(){
+    const y = window.scrollY + 100;
+    let activeIdx = 0;
+    sections.forEach((s,i)=>{ if(s && s.offsetTop <= y) activeIdx = i; });
+    links.forEach(l=>l.classList.remove('active'));
+    if (links[activeIdx]) links[activeIdx].classList.add('active');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
+/* =====================================================
+   2) Charts
+===================================================== */
+const palette = {
+  bad:'#e23b3b', warn:'#e5a93b', ok:'#1faa66', info:'#2a8de5', brand:'#5b6cff', muted:'#a0a8c0'
+};
+Chart.defaults.font.family = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+Chart.defaults.color = '#4a5577';
+
+// Severity before/after (Bloque 1) — fuente: scout inventory (quick scan V1, 65 findings)
+new Chart(document.getElementById('cSeverityBA'), {
+  type:'bar',
+  data:{
+    labels:['Critical','High','Medium','Low'],
+    datasets:[
+      {label:'V1 (18-may)', data:[16,24,18,7], backgroundColor:palette.bad},
+      {label:'V2 (27-may)', data:[2,10,14,6], backgroundColor:palette.ok}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom'}, subtitle:{display:true, text:'Quick scan V1 (65 findings) — los Critical residuales son items diferidos a sprint Costes-LLM'}},
+    scales:{y:{beginAtZero:true,ticks:{precision:0}}}
+  }
+});
+
+// Estado correcciones (Bloque 1) — doughnut · quick scan V1 65 findings
+new Chart(document.getElementById('cCorrecciones'), {
+  type:'doughnut',
+  data:{
+    labels:['Corregidas (71%)','Mitigadas (6%)','Pendientes / diferidas (23%)'],
+    datasets:[{data:[46, 4, 15], backgroundColor:[palette.ok, palette.warn, palette.muted]}]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}, subtitle:{display:true, text:'Quick scan V1 = 65 findings. Deep audit (+67) tiene ratio menor (~30% corregido) por refactors diferidos.'}}}
+});
+
+// Commits por día (Bloque 1)
+new Chart(document.getElementById('cCommitsDay'), {
+  type:'line',
+  data:{
+    labels:['18-may','19-may','20-may','21-may','22-may','23-may','24-may','25-may','26-may','27-may'],
+    datasets:[{
+      label:'Commits válidos',
+      data:[17,6,4,33,34,9,39,16,11,1],
+      borderColor:palette.brand, backgroundColor:'rgba(91,108,255,.15)',
+      tension:.3, fill:true, pointRadius:4
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+});
+
+// Versiones publicadas (Bloque 1)
+new Chart(document.getElementById('cReleases'), {
+  type:'bar',
+  data:{
+    labels:['v0.1.0','v0.2.0','v0.2.5','v0.2.7','v0.2.8','v0.2.9','v0.3.0-rc.1'],
+    datasets:[{
+      label:'Día (mayo 2026)',
+      data:[22,23,24,24,25,25,26],
+      backgroundColor:[palette.ok,palette.ok,palette.info,palette.info,palette.info,palette.info,palette.warn]
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`Día ${c.parsed.x} mayo 2026`}}},
+    scales:{x:{min:18,max:28}}
+  }
+});
+
+// Categorías cerradas (Bloque 3) — fuente: scout inventory tabla resumen por categoría
+new Chart(document.getElementById('cCategorias'), {
+  type:'bar',
+  data:{
+    labels:['Credenciales','RLS Multi-tenant','Auth/Endpoints','Webhooks HMAC','XSS/Injection','SSRF','Priv. Escalation','Deps CVE','Headers OWASP','Crypto OAuth','Rate limiting'],
+    datasets:[
+      {label:'V1 (Critical+High)', data:[5,9,8,4,2,2,2,4,0,1,1], backgroundColor:palette.bad},
+      {label:'V2 abiertos', data:[0,1,0,0,0,0,0,1,0,0,0], backgroundColor:palette.ok}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+});
+
+// WCAG (Bloque 3) — gauge bar · fuente: scout inventory (24 findings DA-5)
+new Chart(document.getElementById('cWcag'), {
+  type:'bar',
+  data:{
+    labels:['V1 baseline (5%)','V2 actual (40%)','Objetivo MVP SP-4B (95%)'],
+    datasets:[{
+      label:'% cumplimiento WCAG 2.2 AA',
+      data:[5, 40, 95],
+      backgroundColor:[palette.bad, palette.warn, palette.ok]
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>`${c.parsed.x}%`}}, subtitle:{display:true, text:'V1: 24 findings DA-5 NON-COMPLIANT · V2: 9 corregidos + 2 parciales + 13 pendientes diferidos post-MVP'}},
+    scales:{x:{min:0,max:100, ticks:{callback:v=>v+'%'}}}
+  }
+});
+
+/* =====================================================
+   3) Bloque 5 — Decisiones interactivas
+===================================================== */
+const decisions = [
+  {
+    id:'D01', tema:'Arquitectura',
+    title:'Sin ORM nuevo (Prisma, Drizzle descartados)',
+    body:'El Auditor decidió no introducir un ORM grande como Prisma o Drizzle. La base de datos se accede con la librería oficial de Supabase + validaciones Zod + un patrón "Repository" (una capa fina por tipo de dato). Ventaja: control total y velocidad. Inconveniente: si en el futuro cambias de proveedor, tienes que reescribir esa capa.'
+  },
+  {
+    id:'D02', tema:'Hosting',
+    title:'Supabase auto-alojado en Dokploy (no Supabase Cloud)',
+    body:'En lugar de pagar Supabase Cloud, montamos nuestra propia copia en un servidor (VPS Hetzner) con Dokploy. Ventaja: control total, sin sustos de pricing, pertenencia de los datos. Inconveniente: nosotros mantenemos las actualizaciones (mensuales).'
+  },
+  {
+    id:'D03', tema:'CRMs MVP',
+    title:'MVP sólo con HubSpot y Zoho (no Salesforce ni Sheets)',
+    body:'De los 5 CRMs del top de tu sector, el MVP incluye sólo los 2 más usados: HubSpot y Zoho. Salesforce, GoHighLevel, ActiveCampaign y Google Sheets se hacen después del lanzamiento, no antes. Razón: no retrasar la primera versión usable.'
+  },
+  {
+    id:'D04', tema:'Sheets aplazado',
+    title:'Google Sheets bidireccional aplazado a post-MVP',
+    body:'La conexión bidireccional con Google Sheets (que pedisteis al principio) se hace en Sprint 4, después del lanzamiento del MVP. Hasta entonces, exportación manual a Sheets es posible pero no automática.'
+  },
+  {
+    id:'D05', tema:'Tokens cifrados',
+    title:'Tokens de acceso (HubSpot, Zoho, Google) cifrados con AES-256-GCM',
+    body:'Todos los tokens de los CRMs y de Google se cifran en la base de datos. Aunque alguien acceda a la BD, no puede usar esos tokens. Cumple normativa GDPR. Esto añade una variable de entorno (ENCRYPTION_KEY) que debéis custodiar como una contraseña.'
+  },
+  {
+    id:'D06', tema:'Política de escritura CRM',
+    title:'Append-only por defecto, sobrescritura solo con auditoría',
+    body:'Cuando el sistema escribe en vuestro CRM, por defecto AÑADE información (no sobrescribe). Si en algún caso necesita sobrescribir, queda un registro detallado de qué se cambió y cuándo. Así nunca se pierde información en el CRM por culpa de la automatización.'
+  },
+  {
+    id:'D07', tema:'Cadencia llamadas',
+    title:'Llamadas cada 24h+3h durante 3 días, en horario lectivo del lead',
+    body:'Si un lead no responde, se le vuelve a llamar 27 horas después (24+3), hasta 3 días. Sólo en horario 09:00-21:00 de su país. WhatsApp paralelo cada 24h. Si responde, se para todo y empieza la cualificación.'
+  },
+  {
+    id:'D08', tema:'Días festivos',
+    title:'Si una llamada cae en festivo del país del lead, se salta al siguiente día lectivo',
+    body:'Los días se cuentan naturales pero los festivos no consumen turno: si el día 2 es festivo en el país del lead, ese turno se mueve al siguiente día lectivo. Festivos nacionales + autonómicos del país del lead (no del centro).'
+  },
+  {
+    id:'D09', tema:'Cualificación',
+    title:'Umbral cualificación = 2 años de experiencia (no 3 como tenía el código)',
+    body:'El sistema marcaba como apto sólo a quien tuviera 3 años de experiencia. Lo hemos corregido a 2 años, que es lo que pone en vuestro documento original. También hemos unificado los formatos (antes había tres formas distintas de marcar "cualificado", ahora una sola).'
+  },
+  {
+    id:'D10', tema:'Pausa captación',
+    title:'Pausa total de captación de nuevos clientes 6-8 semanas',
+    body:'Durante el desarrollo y hasta el lanzamiento del MVP, NO se captan nuevos clientes. Esto evita que la base de datos crezca con datos mal aislados y permite reparar la separación entre clientes con calma.'
+  },
+  {
+    id:'D11', tema:'Equipo',
+    title:'Continuidad del equipo de desarrollo con 3 condiciones de método',
+    body:'Mantenemos al mismo equipo de desarrollo. A cambio: (1) tests obligatorios por cada arreglo, (2) revisión externa antes de merge, (3) comandos verificables. Esto asegura que los errores no se repiten.'
+  },
+  {
+    id:'D12', tema:'Voz',
+    title:'Retell + Ultravox como proveedores de voz, fallback automático',
+    body:'El sistema usa Retell (proveedor de voz outbound) pero Ultravox queda implementado como fallback. Si Retell tiene caída o quiere cambiarse de proveedor, no hace falta reescribir la lógica.'
+  },
+  {
+    id:'D13', tema:'Centro de costes LLM',
+    title:'Tracking de gasto en IA (Claude, GPT, Gemini) aplazado a post-MVP',
+    body:'Por petición vuestra, el dashboard de gastos de IA se hace después del MVP (Sprint Costes-LLM v0.4.1). El Auditor recomienda anticiparlo justo después del MVP (antes que Sheets) porque sin tracking de gasto, un error de configuración puede generar facturas grandes sin alerta.'
+  },
+  {
+    id:'D14', tema:'Sentry',
+    title:'Sentry plan Free para validación, auto-hosting cuando haya tráfico real',
+    body:'Para detectar errores en producción usamos Sentry. El plan gratuito da 5.000 errores/mes, suficiente para pruebas pero corto para producción. Recomendación: cuando empecéis a tener tráfico real (post-MVP), montar Sentry en nuestro VPS (gratis salvo coste del servidor) en vez de pagar plan caro.'
+  },
+  {
+    id:'D15', tema:'Festivos',
+    title:'Catálogo de festivos: Nager.Date (gratis) + opción premium Calendarific',
+    body:'Para saber qué días son festivos en cada país (necesario para D08), usamos Nager.Date (servicio gratuito). Si en algún país no funciona bien para autonómicos, podemos pagar Calendarific.'
+  },
+  {
+    id:'D16', tema:'Estados de lead',
+    title:'Estados oficiales: nuevo / contactado / interesado / cualificado / prematriculado / informado / matriculado / descartado',
+    body:'Definimos 8 estados oficiales por los que pasa un lead. Cada uno con triggers automáticos (qué hace que un lead pase de un estado a otro). Si necesitáis añadir estados intermedios, se puede.'
+  },
+  {
+    id:'D17', tema:'Sobrescritura datos',
+    title:'Migración de Airtable a Supabase del histórico de leads',
+    body:'Los leads que ya tenéis en Airtable se importan a Supabase al lanzamiento. El histórico se conserva. Tras la migración, Airtable se puede mantener como copia de seguridad o desactivar.'
+  },
+  {
+    id:'D18', tema:'Recordatorios cita',
+    title:'Recordatorios automáticos de cita: 24h + 4h + 1h antes',
+    body:'Cuando un lead agenda una cita, recibe 3 recordatorios automáticos: 24h, 4h y 1h antes. Por WhatsApp y/o email según preferencia del lead. Incluyen enlace para reagendar o cancelar.'
+  }
+];
+
+const KEY = 'audit-v2-decisions';
+
+function loadState(){
+  try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveState(state){
+  localStorage.setItem(KEY, JSON.stringify(state));
+  updateSummary(state);
+}
+function renderDecisions(){
+  const container = document.getElementById('decisionsContainer');
+  const state = loadState();
+  container.innerHTML = '';
+  decisions.forEach(d=>{
+    const div = document.createElement('div');
+    div.className = 'deci';
+    div.id = 'deci-'+d.id;
+    const cur = state[d.id] || {value:null, note:''};
+    if (cur.value === false) div.classList.add('has-false');
+    div.innerHTML = `
+      <h4>${d.id} · ${d.title} <span class="tag muted" style="font-weight:normal;text-transform:none;letter-spacing:0">${d.tema}</span></h4>
+      <div class="deci-body">${d.body}</div>
+      <div class="deci-controls">
+        <div class="opts" role="group" aria-label="Tu decisión para ${d.id}">
+          <button class="opt" data-val="true"  aria-pressed="${cur.value===true}">Sí · de acuerdo</button>
+          <button class="opt" data-val="false" aria-pressed="${cur.value===false}">No · cambiar</button>
+        </div>
+        <span class="summary" id="deci-status-${d.id}">${cur.value===true?'✅ Aprobada':cur.value===false?'❌ Pendiente de revisar':'⏳ Sin marcar'}</span>
+      </div>
+      <textarea placeholder="¿Por qué quieres cambiar esta decisión? Explícanos qué prefieres y por qué..." data-id="${d.id}">${cur.note||''}</textarea>
+    `;
+    container.appendChild(div);
+
+    div.querySelectorAll('.opt').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const val = btn.dataset.val === 'true';
+        const st = loadState();
+        st[d.id] = st[d.id] || {value:null, note:''};
+        st[d.id].value = val;
+        saveState(st);
+        // UI
+        div.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.val === btn.dataset.val)));
+        div.classList.toggle('has-false', val===false);
+        document.getElementById('deci-status-'+d.id).textContent = val ? '✅ Aprobada' : '❌ Pendiente de revisar';
+      });
+    });
+    div.querySelector('textarea').addEventListener('input', e=>{
+      const st = loadState();
+      st[d.id] = st[d.id] || {value:null, note:''};
+      st[d.id].note = e.target.value;
+      saveState(st);
+    });
+  });
+  updateSummary(state);
+}
+function updateSummary(state){
+  let yes=0, no=0, blank=0;
+  decisions.forEach(d=>{
+    const v = state[d.id] && state[d.id].value;
+    if (v===true) yes++;
+    else if (v===false) no++;
+    else blank++;
+  });
+  document.getElementById('decisionsSummary').textContent =
+    `${decisions.length} decisiones · ✅ ${yes} aprobadas · ❌ ${no} con cambios · ⏳ ${blank} sin marcar`;
+}
+document.getElementById('btnExport').addEventListener('click', ()=>{
+  const state = loadState();
+  const payload = {
+    project: 'dashboard-af',
+    audit_version: 'V2',
+    audit_date: '2026-05-27',
+    exported_at: new Date().toISOString(),
+    client: 'Automatiza Formación',
+    decisions: decisions.map(d=>({
+      id: d.id,
+      tema: d.tema,
+      title: d.title,
+      response: (state[d.id]?.value === true ? 'APROBADA' : state[d.id]?.value === false ? 'CAMBIO_SOLICITADO' : 'SIN_MARCAR'),
+      note: state[d.id]?.note || ''
+    }))
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `decisiones-clienta-auditV2-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  if (confirm('¿Borrar todas tus respuestas? Esta acción no se puede deshacer.')) {
+    localStorage.removeItem(KEY);
+    renderDecisions();
+  }
+});
+
+renderDecisions();
+</script>
+
+</body>
+</html>

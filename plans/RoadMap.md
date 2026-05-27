@@ -145,6 +145,27 @@ Mapa de versiones vigente (2026-05-27):
 
 ---
 
+## Estimaciones realistas V2 (basadas en ratio efectivo Sprints 0/1/2/2B/3 = −92%)
+
+> Cierre auditoría V2 (27-05-2026). Las estimaciones originales asumían desarrollo humano sin IA asistida. Ratio real medido: **~43h reales vs ~541-574h estimadas** sobre 5 sprints cerrados. Estas nuevas estimaciones aplican al trabajo **pendiente** (SP-4B y post-MVP) y son el input principal del Bloque 8 del informe V2 [`docs/audit2/index.html`](../docs/audit2/index.html).
+
+| Etapa pendiente                                                                 | Estim. original | Estim. realista V2 | Responsable     | Fecha objetivo           |
+| ------------------------------------------------------------------------------- | --------------- | ------------------ | --------------- | ------------------------ |
+| **SP-4B — Validación Pre-MVP** (Phases 01..04 + cierre)                         | 40-55h          | **23-32h**         | Renzo + equipo  | 16-jun → 21-jun-2026     |
+| **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
+| Sprint 4 — Google Sheets bidireccional (`v0.4.0`)                               | 60-100h         | **10-15h**         | Javi HP         | 23-jun → 30-jun-2026     |
+| Sprint Costes-LLM (`v0.4.1`) — recomendación V2: **adelantar antes que Sheets** | 23-31h          | **5-7h**           | Javi HP         | post-MVP, prioridad alta |
+| Sprint Refinamiento Herramientas (`v0.4.2`) — Renzo                             | 18-22h          | **12-15h**         | Renzo           | post-Costes-LLM          |
+| Sprint 5 — Salesforce (`v0.5.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Refinamiento        |
+| Sprint 6 — GoHighLevel (`v0.6.0`)                                               | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
+| Sprint 7 — ActiveCampaign (`v0.7.0`)                                            | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
+| Sprint 8 — Adapter pattern generalization (`v0.8.0`)                            | 20-40h          | **4-7h**           | Javi HP         | post-AC                  |
+| Sprint 9 — Tier 2 on-demand                                                     | 30-50h/CRM      | **6-10h/CRM**      | bajo pedido     | backlog                  |
+
+> **Nota Auditor V2**: estas estimaciones realistas **asumen mantenimiento del patrón de orquestación multi-agente** que ha producido el ratio −92%. Si el equipo se amplía con devs no-orquestados, recalcular al 50% del original como peor caso. Las estimaciones originales se mantienen en las tablas detalladas más abajo como referencia histórica y para hand-off a SP-4B.
+
+---
+
 ## Protocolo estándar de cierre de sprint (CLOSE-1..5 + paso 6 condicional)
 
 > **Aplicable a TODOS los sprints** del proyecto (MVP y post-MVP). Se ejecuta SIN preguntar al usuario en orden estricto. Sincronizado con [`CLAUDE.md` § "Phase/Sprint Completion Protocol"](../CLAUDE.md). Cada paso solo arranca si el anterior cerró en verde; si algo falla, se itera fix + re-run del paso fallido (no se salta).
