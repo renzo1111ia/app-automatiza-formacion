@@ -32,7 +32,16 @@ Esta auditoría V2 mide el estado del proyecto **9 días después** del cierre d
 
 ## 2. Resumen ejecutivo (1 párrafo)
 
-El proyecto ha avanzado de **v0.0.0 con 132 findings de auditoría → v0.3.0-rc.1 con 6 sprints cerrados** en 9 días naturales (170 commits, ~31h reales sumando trackers de Sprint 0/1/2/2B vs ~415h estimadas en plan original, ratio -91% a -94% gracias a orquestación multi-agente). Los 5 riesgos críticos comunicados a la cliente en V1 (claves expuestas, cross-tenant data leak, endpoints sin auth, flujo multi-día roto, criterios cualificación incorrectos) están **resueltos o mitigados estructuralmente**: capa de datos Repository + Zod + RLS hardening cerrada (Sprint 1), OAuth cifrado AES-256-GCM cerrado (ADR-017), 2 CRM adapters MVP entregados (HubSpot + Zoho con multi-DC, Sprint 2), dashboard KPIs MVP completo (Sprint 2B). Quedan riesgos vivos relevantes: **24 vulnerabilidades npm** (11 high + 13 moderate, ninguna critical), **Sentry plan free 5k events/mes** insuficiente para producción real, y **carga futura de Supabase self-hosted single-node** sin estrategia de escalado horizontal. El Sprint 3 (hardening — Pino + Sentry + rate limiting + WCAG 2.2 AA + Node 22) está en curso y cierra el RC v0.3.0 antes de la validación Renzo (SP-4B) que entrega el MVP GA v0.3.0 el 22-jun-2026.
+El proyecto ha avanzado de **v0.0.0 con 132 findings de auditoría → v0.3.0-rc.1 con 5 sprints cerrados** en 9 días naturales (168 commits válidos, ~43h reales sumando trackers de Sprint 0/1/2/2B/3 vs ~541-574h estimadas en plan original, ratio −92% gracias a orquestación multi-agente). Los 5 riesgos críticos comunicados a la cliente en V1 (claves expuestas, cross-tenant data leak, endpoints sin auth, flujo multi-día roto, criterios cualificación incorrectos) están **resueltos o mitigados estructuralmente**: capa de datos Repository + Zod + RLS hardening cerrada (Sprint 1), OAuth cifrado AES-256-GCM cerrado (ADR-017), 2 CRM adapters MVP entregados (HubSpot + Zoho con multi-DC, Sprint 2), dashboard KPIs MVP completo (Sprint 2B). **El Sprint 3 (hardening — Pino + Sentry + rate limiting + WCAG 2.2 AA + Node 22 + AWS removal) cerró con PR #14 mergeado a developer el 26-05-2026** (commit `550a5b9`, +12.979/−2.675 líneas), faltando solo el tag git `v0.3.0-rc.1`. Quedan riesgos vivos relevantes: **24 vulnerabilidades npm** (11 high + 13 moderate, ninguna critical), **Sentry plan free 5k events/mes** insuficiente para producción real, **carga futura de Supabase self-hosted single-node** sin estrategia de escalado horizontal, **1 test fallando** en `token-crypto` GCM authTag (bloquea v0.3.0 GA) y **9 bugs detectados por /e2ctotal run #1** (3 CRIT + 4 HIGH + 2 MED, estimación fix ~9-10h). El próximo hito es la **validación Renzo (SP-4B)** que entrega el MVP GA v0.3.0 el 22-jun-2026.
+
+### 2.1 · Comandos de testing exhaustivo
+
+Desde el 27-05-2026 el testing E2E está separado en dos comandos para evitar errores de concepto:
+
+- **`/e2ctotal`** — Test exhaustivo **EN LOCAL** (E2C = End-to-End **C**lient-side / "en Casa"). Contra `localhost:8500`. Recomendado en cada PR, antes del test manual humano y en cierre Sprint CLOSE-2. ~17 min, sin riesgo.
+- **`/e2etotal`** — Test exhaustivo **REMOTO** (VPS / staging / prod). Default `--env vps` contra `dev.automatizaformacion.com` (Dokploy). Para cierre Sprint CLOSE-5 paso 7 y SP-4B Validación Pre-MVP (Renzo). ~25-30 min.
+
+Plan maestro compartido en [`docs/e2e-full-test-plan.md`](../e2e-full-test-plan.md) (v1.2).
 
 ---
 
@@ -169,24 +178,27 @@ V1 detectó **24 findings de accesibilidad** (DA-5), 6 Critical (modales sin foc
 
 ## 5. Resumen del progreso (datos duros)
 
-| Métrica                              | V1 (18-may)                           | V2 (27-may)                                                                        | Δ              |
-| ------------------------------------ | ------------------------------------- | ---------------------------------------------------------------------------------- | -------------- |
-| Versión proyecto                     | v0.0.0 (sin releases)                 | v0.3.0-rc.1                                                                        | +6 releases    |
-| Sprints cerrados                     | 0                                     | 4 (0, 1, 2, 2B)                                                                    | +4             |
-| Tags SemVer                          | 0                                     | 6 (v0.1.0, v0.2.0, v0.2.5, v0.2.7, v0.2.8, v0.2.9)                                 | +6             |
-| Commits válidos (Renzo+Ai2You)       | baseline 0                            | 170 desde 18-may                                                                   | +170           |
-| Días con actividad                   | 0                                     | 10/10 (100%)                                                                       | —              |
-| Findings Critical abiertos           | 23                                    | 0                                                                                  | **−23 (100%)** |
-| Findings High abiertos               | 24                                    | 4 (16%)                                                                            | **−20 (83%)**  |
-| Tests Vitest                         | 0                                     | 228+                                                                               | +228           |
-| Tests Playwright E2E                 | 0                                     | 18+ (15 VPS verdes)                                                                | +18            |
-| ADRs                                 | 0 (audit decisiones R-XXX)            | 11 ADRs (002, 014..023)                                                            | +11            |
-| Vulnerabilidades npm (high+critical) | ~30 (incluye next 19 CVEs + axios 15) | 11 (sin critical)                                                                  | **−19 (63%)**  |
-| Cobertura WCAG 2.2 AA                | ~30% (baseline V1)                    | ~70%                                                                               | +40pp          |
-| Líneas src/\*_/_.ts(x) (no-test)     | ~15.000                               | ~33.000 estimadas                                                                  | +120%          |
-| Horas reales trackeadas              | 0                                     | ~31h (Sprint 0: 11h05min + Sprint 1: 12h + Sprint 2: 3h15min + Sprint 2B: 5h53min) | +31h           |
-| Horas estimadas en plan original     | —                                     | ~415h (Sprint 0: 118h + Sprint 1: 205h + Sprint 2: 74h + Sprint 2B: 16h30min)      | —              |
-| Ratio efectividad                    | —                                     | **−92.5% promedio** (orquestación multi-agente)                                    | —              |
+| Métrica                              | V1 (18-may)                           | V2 (27-may)                                                                                            | Δ                                  |
+| ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------- |
+| Versión proyecto                     | v0.0.0 (sin releases)                 | v0.3.0-rc.1 (Sprint 3 PR #14 mergeado 26-may)                                                          | +6 releases publicadas             |
+| Sprints cerrados                     | 0                                     | **5** (0, 1, 2, 2B, 3)                                                                                 | +5                                 |
+| Tags SemVer publicados               | 0                                     | 6 (v0.1.0, v0.2.0, v0.2.5, v0.2.7, v0.2.8, v0.2.9)                                                     | +6 · tag v0.3.0-rc.1 git pendiente |
+| Commits válidos (Renzo+Ai2You)       | baseline 0                            | 168 desde 18-may                                                                                       | +168                               |
+| PRs mergeados a developer            | 0                                     | 15                                                                                                     | +15                                |
+| Días con actividad                   | 0                                     | 10/10 (100%)                                                                                           | —                                  |
+| Findings Critical abiertos           | 23                                    | 0                                                                                                      | **−23 (100%)**                     |
+| Findings High abiertos               | 24                                    | 4 (16%)                                                                                                | **−20 (83%)**                      |
+| Tests Vitest                         | 0                                     | 228+ (227 pass · 1 fail token-crypto · 4 skip)                                                         | +228                               |
+| Tests Playwright E2E                 | 0                                     | 18+ (15 VPS verdes + 14 sprint-3-close + run #1 e2ctotal)                                              | +18                                |
+| ADRs                                 | 0 (audit decisiones R-XXX)            | 11 ADRs (002, 014..023)                                                                                | +11                                |
+| Vulnerabilidades npm (high+critical) | ~30 (incluye next 19 CVEs + axios 15) | 11 (sin critical)                                                                                      | **−19 (63%)**                      |
+| Cobertura WCAG 2.2 AA                | ~5% (NON-COMPLIANT)                   | ~40% (parcial · objetivo 95% SP-4B)                                                                    | +35pp                              |
+| Líneas src/\*_/_.ts(x) (no-test)     | ~15.000                               | **60.139**                                                                                             | +301%                              |
+| Cobertura tests                      | 0 %                                   | 48.8% statements · 71.8% branches · 77.2% functions                                                    | +48-77pp                           |
+| Horas reales trackeadas              | 0                                     | **~43h** (Sprint 0: 8h45min · Sprint 1: 12h · Sprint 2: 3h15min · Sprint 2B: 5h53min · Sprint 3: ~13h) | +43h                               |
+| Horas estimadas en plan original     | —                                     | ~541-574h                                                                                              | —                                  |
+| Ratio efectividad                    | —                                     | **−92% promedio** (orquestación multi-agente)                                                          | —                                  |
+| Bugs detectados /e2ctotal run #1     | n/a                                   | 9 (3 CRIT + 4 HIGH + 2 MED)                                                                            | estim fix ~9-10h                   |
 
 ---
 

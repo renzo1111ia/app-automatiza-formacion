@@ -4,18 +4,21 @@
 
 ## Cabecera
 
-- **Versión plan**: 1.1 (2026-05-27 — añadida sección "Acceso a credenciales en sandbox Claude Code" tras run abortado por bloqueo Read de `.env.local`).
+- **Versión plan**: 1.2 (2026-05-27 — split de comandos: `/e2ctotal` para local, `/e2etotal` para VPS/staging/prod. Regla del proyecto: llamar cada cosa por su nombre. Plan v1.1 añadió la sección "Acceso a credenciales en sandbox Claude Code" tras run abortado por bloqueo Read de `.env.local`).
 - **Última ejecución**: ver [`e2e-runs-history.md`](./e2e-runs-history.md)
 - **Activación**:
-  - Slash command: `/e2etotal` (ver [`.claude/commands/e2etotal.md`](../.claude/commands/e2etotal.md))
-  - Lenguaje natural: "ejecuta E2E total", "haz testing exhaustivo de la app", "audit completo CRUD".
+  - **`/e2ctotal`** — Ejecuta E2C (E2E **C**lient-side / local) contra `localhost:8500`. Ver [`.claude/commands/e2ctotal.md`](../.claude/commands/e2ctotal.md). Recomendado para cada PR + antes del test manual humano + cierre Sprint CLOSE-2.
+  - **`/e2etotal`** — Ejecuta E2E real contra VPS/staging/prod. Ver [`.claude/commands/e2etotal.md`](../.claude/commands/e2etotal.md). Para cierre Sprint CLOSE-5 paso 7 + SP-4B Validación.
+  - Lenguaje natural: "ejecuta E2C local", "ejecuta E2E VPS", "haz testing exhaustivo de la app", "audit completo CRUD".
 - **Entornos target**:
-  | Env | URL | Notas |
-  |---|---|---|
-  | `local` | `http://localhost:8500` | Default. Requiere `npm run dev` + Supabase local (`npm run db:up`) + Redis (`npm run redis:up`) |
-  | `vps` | `https://dev.automatizaformacion.com` | Cuando esté desplegado. Requiere variables Sentry/Sepay/etc. en Dokploy |
-  | `staging` | TBD | Solo cuando exista rama `staging` promovida |
-  | `prod` | TBD | NO ejecutar destructivos. Read-only + smoke |
+
+  | Env       | Comando recomendado                   | URL                                   | Notas                                                                                   |
+  | --------- | ------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------- |
+  | `local`   | `/e2ctotal`                           | `http://localhost:8500`               | Requiere `npm run dev` + Supabase local (`npm run db:up`) + Redis (`npm run redis:up`). |
+  | `vps`     | `/e2etotal`                           | `https://dev.automatizaformacion.com` | Requiere deploy Dokploy verde + variables Sentry/Sepay/etc. en panel.                   |
+  | `staging` | `/e2etotal --env staging`             | TBD                                   | Solo cuando exista rama `staging` promovida.                                            |
+  | `prod`    | `/e2etotal --env prod --vps-readonly` | TBD                                   | NO ejecutar destructivos. Read-only + smoke obligatorio (`--vps-readonly`).             |
+
 - **Cuentas test**:
   - **Admin**: `automatizaformacion@gmail.com` — password en `.env.local` (`NEW_ADMIN_PASSWORD`). VPS creds en `infra/supabase-vps/.vault/` (gitignored).
   - **Tenant user (non-admin)**: derivar con `scripts/create-demo-user.ts` o usar `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` de `.env.local`.

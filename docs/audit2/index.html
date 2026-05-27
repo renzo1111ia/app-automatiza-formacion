@@ -132,12 +132,34 @@
   .deci .opt:hover{background:#dfe2f3}
   .deci .opt[aria-pressed="true"][data-val="true"]{background:#dff5e9;color:#0a6e3f;border-color:#0a6e3f}
   .deci .opt[aria-pressed="true"][data-val="false"]{background:#fdd9d9;color:#7a0a0a;border-color:#7a0a0a}
+  .deci .opt-reset{background:transparent;color:var(--ink-soft);border:2px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.82rem;font-weight:500}
+  .deci .opt-reset:hover{background:#f3f5fc;color:var(--ink);border-color:var(--ink-soft)}
   .deci textarea{display:none;width:100%;min-height:60px;margin-top:8px;padding:8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:.9rem;resize:vertical}
   .deci.has-false textarea{display:block}
   .toolbar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 16px;margin:24px -28px -28px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-radius:0 0 var(--radius) var(--radius)}
   .toolbar button{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:9px 18px;cursor:pointer;font-weight:600}
   .toolbar button:hover{background:var(--brand-dark)}
   .toolbar .summary{color:var(--ink-soft);font-size:.88rem}
+
+  /* ---------- Source link ---------- */
+  .src-link{font-size:.82rem;color:var(--ink-soft);background:#f3f5fc;border:1px dashed #c8cee0;padding:8px 12px;border-radius:8px;margin:0 0 14px;font-family:var(--mono)}
+  .src-link a{font-family:inherit}
+
+  /* ---------- Prompt quote (B7 recomendaciones) ---------- */
+  .prompt-quote{display:block;background:#0d142e;color:#dfe7ff;padding:10px 14px;border-radius:8px;margin:6px 0;font-family:var(--mono);font-size:.85rem;border-left:3px solid var(--brand)}
+
+  /* ---------- Collapsible doc cards (B6) ---------- */
+  details.doc-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:0}
+  details.doc-card[open]{box-shadow:0 4px 16px rgba(20,30,80,.06)}
+  details.doc-card summary{padding:12px 16px;cursor:pointer;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px;list-style:none;border-radius:10px}
+  details.doc-card summary::-webkit-details-marker{display:none}
+  details.doc-card summary::before{content:"▶";color:var(--brand);font-size:.75rem;transition:transform .2s}
+  details.doc-card[open] summary::before{transform:rotate(90deg)}
+  details.doc-card summary:hover{background:#f3f5fc}
+  details.doc-card .doc-body{padding:0 16px 14px;border-top:1px solid var(--line)}
+  details.doc-card .doc-body h5{margin:14px 0 4px;color:var(--ink-soft);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em}
+  details.doc-card .doc-body ul{margin:.4em 0 .8em;padding-left:22px}
+  details.doc-card .doc-body li{margin:.2em 0}
 
   /* ---------- Mermaid ---------- */
   .mermaid{background:#fff;padding:14px;border-radius:10px;border:1px solid var(--line);margin:14px 0;overflow:auto}
@@ -430,12 +452,112 @@ flowchart LR
     </tbody>
   </table>
 
-  <h4>Recomendación estratégica (Auditor)</h4>
+  <h4>Recomendación estratégica del Auditor — 3 fases de escalado con pricing real (Contabo, Alemania)</h4>
+  <p style="font-size:.88rem;color:var(--ink-soft)">Pricing referencia: <a href="https://contabo.com/en/pricing/" target="_blank" rel="noopener">contabo.com/en/pricing</a> (datos 27-may-2026, sin IVA, datacenter Alemania). Contabo ofrece relación calidad/precio muy superior a Hetzner para servidores con mucha RAM (caso típico de Postgres + Redis + BullMQ).</p>
+
+  <h5 style="margin-top:14px;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">🟢 Fase 1 — Pre-MVP / MVP / primeros 10 tenants (recomendación inmediata)</h5>
+  <div class="callout ok">
+    <p><b>Plan recomendado: <a href="https://contabo.com/en/vps/vps-l-ssd/" target="_blank" rel="noopener">Contabo VPS 60</a></b> · 16 vCPU AMD EPYC · <b>96 GB RAM</b> · 1 TB NVMe · <b>~40 €/mes + IVA (~48 €/mes)</b> · datacenter Alemania.</p>
+    <p>Todo en un único VPS con Dokploy: Next.js + Postgres + PostgREST + GoTrue + Storage + Redis + BullMQ workers + Sentry self-hosted/GlitchTip. 96 GB de RAM es muy holgado para esta carga combinada en MVP.</p>
+    <p><b>Tareas operativas mínimas</b>: activar PgBouncer (transaction mode), instrumentar métricas Sentry Performance + logs Pino, snapshots semanales del VPS.</p>
+    <p><b>Coste total Fase 1: ~48 €/mes + IVA · ~575 €/año.</b></p>
+  </div>
+
+  <h5 style="color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">🟡 Fase 2 — Crecimiento (10-30 tenants · 50-100 leads/día reales)</h5>
+  <p>Empezar a separar servicios cuando el VPS único entra en swap o las queries pasan de 200ms p95. Pricing estimado partiendo del mismo catálogo Contabo:</p>
+  <table>
+    <thead><tr><th>Servicio</th><th>Plan Contabo sugerido</th><th>vCPU · RAM · SSD</th><th>Coste mes (sin IVA)</th><th>Por qué</th></tr></thead>
+    <tbody>
+      <tr><td><b>App principal (Next.js + Dokploy panel)</b></td><td>VPS 60</td><td>16 vCPU · 96 GB · 1 TB</td><td>~40 €</td><td>Frontend + SSR + middleware. RAM holgada para picos.</td></tr>
+      <tr><td><b>Postgres + PgBouncer</b></td><td>VPS 30</td><td>8 vCPU · 48 GB · 400 GB</td><td>~20 €</td><td>BD = RAM + IOPS. NVMe local mejor que red.</td></tr>
+      <tr><td><b>Redis + BullMQ workers</b></td><td>VPS 20</td><td>6 vCPU · 24 GB · 200 GB</td><td>~13 €</td><td>Redis cabe en RAM. Workers paralelos para outbound voz.</td></tr>
+      <tr><td><b>Sentry self-hosted / GlitchTip</b></td><td>VPS 20</td><td>6 vCPU · 24 GB · 200 GB</td><td>~13 €</td><td>Sentry stack pide ~16 GB. GlitchTip basta con 8.</td></tr>
+      <tr><td><b>Storage</b></td><td>Storage S3-compatible (MinIO en VPS 20 o Object Storage Contabo)</td><td>según necesidad</td><td>~7-15 €</td><td>Backups + media. Plano por TB.</td></tr>
+      <tr><td colspan="3"><b>Total Fase 2</b></td><td><b>~93-101 €/mes + IVA</b></td><td>~1.200-1.300 €/año</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.88rem;color:var(--ink-soft)">Red privada interna gratuita entre VPS del mismo datacenter Contabo. Latencia &lt;1ms entre nodos.</p>
+
+  <h5 style="color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">🔴 Fase 3 — Plan de negocio: 100 usuarios × 500 leads/día (servidor dedicado + sysadmin)</h5>
+  <div class="callout warn">
+    <p><b>Aviso del Auditor para el plan de negocio</b>: cuando la plataforma alcance <b>100 usuarios activos × 500 leads/día</b> (≈ 50.000 leads/día total · 1.5M/mes), el modelo VPS empieza a quedarse corto en aislamiento (vecinos ruidosos), garantías de IOPS sostenidas y cumplimiento contractual SLA. Es el momento de migrar al menos el nodo Postgres a <b>servidor dedicado físico</b>.</p>
+    <p><b>+ Contratar un administrador de sistemas, preferentemente con perfil de seguridad (CISSP / OSCP / equivalente)</b>. La razón: con 100 tenants pagando, una caída de 6h o un incidente de seguridad puede costar más en un día que el sueldo anual del sysadmin.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Componente</th><th>Plan sugerido</th><th>Recursos</th><th>Coste mes</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td><b>Postgres dedicado (BD core)</b></td><td><a href="https://contabo.com/en/dedicated-servers/" target="_blank" rel="noopener">Contabo Dedicated AMD EPYC</a> tipo medio</td><td>16 cores · 128 GB ECC · 2× 1.92 TB NVMe RAID 1</td><td>~150-200 €</td><td>BD core con réplica lectura. NVMe RAID 1 para durabilidad. IOPS garantizadas.</td></tr>
+      <tr><td><b>App + workers (cluster Next.js)</b></td><td>2× Contabo VPS 60</td><td>2× (16 vCPU · 96 GB)</td><td>~80 €</td><td>Cluster horizontal con load balancer. Workers BullMQ aparte.</td></tr>
+      <tr><td><b>Postgres réplica de lectura</b></td><td>VPS 60</td><td>16 vCPU · 96 GB · 1 TB</td><td>~40 €</td><td>Read replica para reporting + queries pesadas.</td></tr>
+      <tr><td><b>Redis + workers BullMQ</b></td><td>VPS 30</td><td>8 vCPU · 48 GB</td><td>~20 €</td><td>Redis con persistencia + cluster workers.</td></tr>
+      <tr><td><b>Sentry self-hosted</b></td><td>VPS 30</td><td>8 vCPU · 48 GB</td><td>~20 €</td><td>Stack Sentry completo (Kafka + ClickHouse + Postgres).</td></tr>
+      <tr><td><b>Storage S3 (AWS S3 o equivalente)</b></td><td>Managed S3</td><td>~500 GB inicial</td><td>~12-25 €</td><td>Backups + media. Mejor managed por durabilidad 11×9.</td></tr>
+      <tr><td><b>Sysadmin (perfil seguridad)</b></td><td>Freelance senior 8-12h/semana o full-time</td><td>—</td><td><b>2.500-5.000 €/mes</b></td><td>Mantenimiento, parches, auditorías, respuesta a incidentes. Sin esto, el riesgo operativo se come el ahorro de infra.</td></tr>
+      <tr><td colspan="3"><b>Total infra Fase 3</b></td><td><b>~322-405 €/mes + IVA</b></td><td>~4.500 €/año infra · <b>+ sueldo sysadmin</b></td></tr>
+    </tbody>
+  </table>
+
+  <h5 style="color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">📊 Tabla comparativa de fases</h5>
+  <table>
+    <thead><tr><th>Fase</th><th>Carga</th><th>Coste infra/mes</th><th>Coste personal/mes</th><th>Total/mes</th><th>Total/año</th></tr></thead>
+    <tbody>
+      <tr><td>Fase 1 — MVP / 10 tenants</td><td>10 tenants · 10-50 leads/día</td><td>~48 €</td><td>0 € (auto)</td><td>~48 €</td><td>~575 €</td></tr>
+      <tr><td>Fase 2 — Crecimiento</td><td>30 tenants · 100 leads/día</td><td>~93-101 €</td><td>0-1.000 € (freelance puntual)</td><td>~100-1.100 €</td><td>~1.200-13.000 €</td></tr>
+      <tr><td>Fase 3 — Negocio escalado</td><td>100 tenants · 500 leads/día</td><td>~322-405 €</td><td>2.500-5.000 € (sysadmin)</td><td>~2.800-5.400 €</td><td>~33.000-65.000 €</td></tr>
+    </tbody>
+  </table>
+
   <div class="callout">
-    <p><b>Fase 1 (pre-MVP, opcional):</b> mantener single-node, activar PgBouncer, instrumentar métricas (Sentry Performance + logs Pino agregados).</p>
-    <p><b>Fase 2 (post-MVP, primeros 50-100 leads/día reales):</b> separar Postgres a su propio nodo (read-replica para queries pesadas), workers BullMQ a su propio nodo, Next.js a un tercer nodo. Hetzner permite VPS dedicados con red privada gratuita.</p>
-    <p><b>Fase 3 (escala &gt;500 leads/día):</b> Postgres con réplica + connection pooling externo. Considerar mover storage a S3 managed. Mantener el stack auto-hospedado salvo storage.</p>
-    <p><b>NO recomendado por el Auditor:</b> migrar a Supabase Cloud managed pagado — pierdes control, depende de su pricing y de su roadmap (lo que ya descartó Sprint 0 cuando se cerró R-023).</p>
+    <p><b>Recomendación Auditor para el plan de negocio</b>: el salto Fase 2→3 NO es lineal. Pasar de 30 a 100 tenants <b>obliga</b> a contratar sysadmin (la complejidad operativa crece exponencialmente con tenants × incidentes posibles). Reservar en el modelo financiero <b>~3.000-5.500 €/mes</b> para infra+personal cuando se alcancen los 100 usuarios activos. Si el ticket medio del tenant es &gt;100 €/mes (50 tenants × 100 € = 5.000 €/mes), el sistema ya paga al sysadmin solo.</p>
+    <p><b>NO recomendado por el Auditor</b>: migrar a Supabase Cloud managed pagado — pierdes control, dependes de su pricing y de su roadmap. La decisión R-023 ya descartó esa vía en Sprint 0.</p>
+  </div>
+
+  <h5 style="color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">🌩️ Fase 3.bis — Alternativa cloud (Google Cloud / AWS / Azure) con programas para startups</h5>
+  <div class="callout">
+    <p><b>Punto de decisión estratégico</b>: cuando se llegue al límite del servidor dedicado (Fase 3), antes de comprar más hierro merece la pena <b>evaluar seriamente la migración a un cloud público</b> con su programa de apoyo para startups. Para una empresa joven como Automatiza Formación SL, los créditos iniciales suelen cubrir <b>1-2 años de infraestructura</b> y abren la puerta a servicios managed (BD, colas, observabilidad, ML) que en VPS hay que mantener a mano.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Programa</th><th>Crédito típico</th><th>Requisitos clave</th><th>Servicios equivalentes al stack actual</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b><a href="https://cloud.google.com/startup" target="_blank" rel="noopener">Google for Startups Cloud Program</a></b></td>
+        <td>2.000 - 350.000 USD según tier</td>
+        <td>Startup &lt;10 años · funding &lt;5M USD · partner aceleradora o aplicación directa</td>
+        <td>Cloud SQL (Postgres) · Cloud Run (Next.js) · Memorystore (Redis) · Cloud Tasks (BullMQ) · Cloud Logging (Pino) · Error Reporting (Sentry)</td>
+      </tr>
+      <tr>
+        <td><b><a href="https://aws.amazon.com/activate/" target="_blank" rel="noopener">AWS Activate</a></b></td>
+        <td>1.000 - 100.000 USD</td>
+        <td>Startup pre-Series B · tier Founder/Portfolio · aplicación online</td>
+        <td>RDS Postgres · ECS/Lambda · ElastiCache · SQS · CloudWatch · X-Ray</td>
+      </tr>
+      <tr>
+        <td><b><a href="https://www.microsoft.com/en-us/startups" target="_blank" rel="noopener">Microsoft for Startups Founders Hub</a></b></td>
+        <td>hasta 150.000 USD + 2.500 USD/año OpenAI/Anthropic via Azure AI</td>
+        <td>Sin requisitos de funding · idea elegible · aplicación online</td>
+        <td>Azure Database for PostgreSQL · App Service · Azure Cache for Redis · Service Bus · Application Insights</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <p><b>⚠️ Implicación clave para el plan de negocio</b>: esta migración <b>NO es gratis en horas de desarrollo</b>. Requiere adaptar el código actual (Supabase self-hosted + Dokploy + Docker compose) a los servicios cloud equivalentes (managed Postgres + auth propio o Firebase Auth + queue managed). Estimación realista a ratio actual:</p>
+    <ul style="margin-bottom:0">
+      <li>Refactor capa datos para usar Cloud SQL/RDS/Azure Postgres con pooling managed: <b>~20-30h</b>.</li>
+      <li>Reemplazar GoTrue (Supabase Auth) por <b>Firebase Auth</b> / <b>Cognito</b> / <b>Azure AD B2C</b>: <b>~25-40h</b> (decisión arquitectónica importante — abre ADR nuevo).</li>
+      <li>Migrar BullMQ a Cloud Tasks / SQS / Service Bus: <b>~15-25h</b>.</li>
+      <li>Migrar Sentry self-hosted a Error Reporting / CloudWatch / App Insights: <b>~8-12h</b>.</li>
+      <li>CI/CD + IaC (Terraform / Cloud Deployment Manager): <b>~20-30h</b>.</li>
+      <li>Tests de migración + cutover plan + rollback: <b>~15-20h</b>.</li>
+      <li><b>Total estimado: ~100-160h de desarrollo</b> (ratio realista, sin sysadmin).</li>
+    </ul>
+  </div>
+
+  <div class="callout ok">
+    <p><b>Recomendación Auditor sobre cloud</b>: <b>aplicar a los 3 programas a la vez en cuanto la app entre en producción real</b> (post-MVP, primer tenant pagando). Aceptar el que mejor encaje con tu equipo (Google si vas a usar Gemini intensivo · Azure si OpenAI vía Azure AI · AWS si prefieres ecosistema más amplio). Mientras los créditos cubran el coste, mantener Contabo Fase 1 como backup hot-spare. Cuando el crédito vaya por debajo del 30% restante, decidir si renovar (otro programa o partnership) o volver a Contabo/dedicado.</p>
+    <p><b>Plan de negocio recomendado</b>: incluir en el roadmap un <b>"Sprint Cloud Migration"</b> (estim. 100-160h, ~3-4 meses post-MVP con ratio efectivo) condicionado a la aprobación de uno de los 3 programas. Sin programa aprobado → mantener plan Fase 1 → Fase 2 → Fase 3 dedicado.</p>
   </div>
 
   <h3>4.2 · Sentry — limitación plan Free 5k events/mes</h3>
@@ -530,16 +652,26 @@ flowchart LR
 
   <h3>6.2 · Documentación clave del proyecto</h3>
   <ul>
-    <li>📚 <a href="../../CLAUDE.md" target="_blank">CLAUDE.md</a> — instrucciones específicas del proyecto + protocolo de cierre de sprint.</li>
-    <li>🗺️ <a href="../../plans/RoadMap.md" target="_blank">plans/RoadMap.md</a> — RoadMap vivo con tracking por tarea (frontmatter ya legible tras fix 27-may).</li>
-    <li>📦 <a href="../audit/STACK-TECNOLOGICO.md" target="_blank">docs/audit/STACK-TECNOLOGICO.md</a> — stack confirmado.</li>
-    <li>🧠 <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank">docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</a> — R-013..R-025.</li>
-    <li>🛡️ <a href="../audit/findings-summary.md" target="_blank">docs/audit/findings-summary.md</a> — 65 findings V1 consolidados.</li>
-    <li>🔬 <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank">docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</a> — deep audit V1 (DA-1..DA-5).</li>
-    <li>🧪 <a href="../e2e-full-test-plan.md" target="_blank">docs/e2e-full-test-plan.md</a> — plan maestro <code>/e2etotal</code>.</li>
-    <li>🏷️ <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank">plans/RELEASE-NOTES-v0.1.0.md</a> + RELEASE-NOTES por sprint en cada carpeta de plan.</li>
-    <li>🤝 <a href="../dev-onboarding.md" target="_blank">docs/dev-onboarding.md</a> — onboarding del equipo dev.</li>
+    <li>📚 <a href="../../CLAUDE.md" target="_blank" rel="noopener"><code>CLAUDE.md</code></a> — instrucciones específicas del proyecto + protocolo de cierre de sprint.</li>
+    <li>🗺️ <a href="../../plans/RoadMap.md" target="_blank" rel="noopener"><code>plans/RoadMap.md</code></a> — RoadMap vivo con tracking por tarea (frontmatter ya legible tras fix 27-may).</li>
+    <li>📦 <a href="../audit/STACK-TECNOLOGICO.md" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a> — stack confirmado.</li>
+    <li>🧠 <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a> — R-013..R-025.</li>
+    <li>🛡️ <a href="../audit/findings-summary.md" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a> — 65 findings V1 consolidados.</li>
+    <li>🔬 <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a> — deep audit V1 (DA-1..DA-5).</li>
+    <li>🧪 <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> — plan maestro de los comandos <code>/e2ctotal</code> (local) y <code>/e2etotal</code> (VPS/staging/prod).</li>
+    <li>🏷️ <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank" rel="noopener"><code>plans/RELEASE-NOTES-v0.1.0.md</code></a> + RELEASE-NOTES por sprint en cada carpeta de plan.</li>
+    <li>🤝 <a href="../dev-onboarding.md" target="_blank" rel="noopener"><code>docs/dev-onboarding.md</code></a> — onboarding del equipo dev.</li>
   </ul>
+
+  <div class="callout">
+    <p><b>📌 Recomendación del Auditor al equipo de desarrollo sobre testing</b></p>
+    <ol>
+      <li><b>Lanzar <code>/e2ctotal</code> antes de cada test manual humano</b> (CLOSE-3 o validación SP-4B). Detecta ~80% de los bugs en 15-20 min y libera al humano para los criterios visuales/UX.</li>
+      <li><b>Mantener vivo</b> <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> (ruta relativa al proyecto) tras cada sprint: añadir nuevas verificaciones, corregir lo que no funcione, bump versión en la cabecera.</li>
+      <li><b>Vigilar la ejecución del navegador</b> mientras el agente corre Playwright. Muchas anomalías visuales (flashes, hidratación rota, transiciones malas) se ven antes de que el agente las capture. Anótalas y pásaselas para que las añada al informe.</li>
+      <li><b>Prompt sugerido</b> para que el agente mantenga vivo el plan maestro tras cada sprint:<br><span class="prompt-quote">"Repasa <code>docs/e2e-full-test-plan.md</code>. Compara con el código actual (rutas <code>src/app/**/page.tsx</code> y endpoints <code>src/app/api/**/route.ts</code>). Si hay nuevas páginas o endpoints no cubiertos por el plan, añádelos a la fase correspondiente (00..08). Bump versión plan, deja un changelog corto en la cabecera y registra los cambios en <code>docs/e2e-runs-history.md</code>."</span></li>
+    </ol>
+  </div>
 
   <h3>6.3 · Avances técnicos por sprint (síntesis)</h3>
   <table>
@@ -556,7 +688,209 @@ flowchart LR
   <h3>6.4 · Sistema de tracking propio (sin Linear/Jira)</h3>
   <p>El proyecto utiliza un sistema de tracking propio en <code>plans/RoadMap.md</code> mantenido por el agente <code>af-agents:roadmap-keeper</code>. Cada tarea tiene estado (🔘🟡🟠🔵🟢), estimación, tiempo real (⏱ Push y ⏱ Cierre), y notas. El hook <code>af-productivity-logger.cjs</code> actualiza el RoadMap automáticamente al detectar cambios de estado. Este sistema reemplaza herramientas externas y queda versionado en git.</p>
 
-  <h3>6.5 · Convenciones y reglas operativas</h3>
+  <h3>6.5 · Documentos enlazados — resumen visual</h3>
+  <p>Cada documento clave del proyecto aquí desplegado en formato resumen. Clic para expandir. Al inicio de cada uno aparece la <b>URL fuente en Markdown</b> para acceso directo.</p>
+
+  <details class="doc-card">
+    <summary>🛡️ V1 · findings-summary.md — 65 findings quick scan consolidados</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/findings-summary.md" target="_blank" rel="noopener"><code>docs/audit/findings-summary.md</code></a></div>
+      <h5>Distribución por severidad (V1)</h5>
+      <ul>
+        <li><b>16 Critical</b> — seguridad activa, bugs bloqueantes, violaciones negocio.</li>
+        <li><b>24 High</b> — multi-tenancy roto, riesgos seguridad.</li>
+        <li><b>18 Medium</b> — deuda técnica, nomenclatura, observabilidad.</li>
+        <li><b>7 Low</b> — cosmético, docs, mejoras menores.</li>
+      </ul>
+      <h5>Top 3 problemas V1 más urgentes</h5>
+      <ol>
+        <li>JWT service_role hardcodeado en código (rotación urgente).</li>
+        <li><code>worker.js:58</code> firma incorrecta — flujo multi-día roto en producción.</li>
+        <li><code>fetchCalls</code> sin filtro <code>tenant_id</code> — cross-tenant data leak.</li>
+      </ol>
+      <h5>Distribución por área</h5>
+      <ul>
+        <li>Security: 20 · Multi-tenancy/RLS: 10 · LLM/Cualificación: 12 · Nomenclatura: 11 · Dependencias: 4 · Orchestrator: 14 · Arquitectura/Tests: 8 · Observabilidad: 2.</li>
+      </ul>
+      <h5>Estado V2 (27-may)</h5>
+      <p>46/65 corregidas estructuralmente · 4 mitigadas · 15 pendientes/diferidas. Los 16 Critical V1 están <b>todos cerrados</b>.</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🔬 V1 · DEEP-FINDINGS-SUMMARY.md — +67 findings profundos (DA-1..DA-5)</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/deep/DEEP-FINDINGS-SUMMARY.md" target="_blank" rel="noopener"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a></div>
+      <h5>5 ejes de profundización</h5>
+      <ul>
+        <li><b>DA-1 Concurrencia / orchestrator BullMQ</b> — 8 findings (5 High). Doble Redis, N supabase clients por job, jobs fantasma.</li>
+        <li><b>DA-2 Auth + RLS multi-tenant</b> — 10 findings (6 Critical). IDOR en 9 funciones inbox, privilege escalation via <code>user_metadata</code>.</li>
+        <li><b>DA-3 Seguridad perimetral</b> — 13 findings (3 Critical). 7 endpoints abiertos, SSRF confirmado, XSS widget.</li>
+        <li><b>DA-4 LLM + voz</b> — 11 findings (1 Critical). Webhooks Retell sin firma, prompt injection indirecto.</li>
+        <li><b>DA-5 Accesibilidad WCAG 2.1 AA</b> — 24 findings (NON-COMPLIANT global).</li>
+      </ul>
+      <h5>3 capas de vulnerabilidad reforzándose</h5>
+      <ol>
+        <li><b>Autenticación y aislamiento multi-tenant</b> rotos estructuralmente.</li>
+        <li><b>Orquestación BullMQ</b> con bug de firma y fallos silenciosos.</li>
+        <li><b>Seguridad perimetral</b> con endpoints abiertos y webhooks sin firma.</li>
+      </ol>
+      <h5>Estado V2</h5>
+      <p>~30% del deep audit cerrado (los Critical sí, los refactors complejos diferidos a sprints post-MVP).</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>📦 V1 · STACK-TECNOLOGICO.md — Stack actual vs objetivo</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/STACK-TECNOLOGICO.md" target="_blank" rel="noopener"><code>docs/audit/STACK-TECNOLOGICO.md</code></a></div>
+      <h5>Frontend</h5>
+      <p>Next.js 16.2.6 (App Router) · React 19 · TypeScript 5 · Tailwind 4 · shadcn/ui + Radix · Zustand · Framer Motion · @xyflow/react workflow builder · Zod · Recharts · lucide-react · Mermaid.</p>
+      <h5>Backend / Data</h5>
+      <p><b>Supabase self-hosted</b> en VPS Dokploy (decisión R-023) · <code>@supabase/ssr</code> + <code>pg</code>/<code>postgres</code> raw SQL · <b>SIN ORM nuevo</b> (rechazo explícito Prisma/Drizzle) · Repository pattern + Zod runtime + RLS hardened.</p>
+      <h5>IA y voz</h5>
+      <p>LangChain v1 · Anthropic + OpenAI + Google Genai · Retell SDK + Ultravox (abstracción R-016) · <b>AWS Bedrock descartado</b> 26-may.</p>
+      <h5>Hardening pendiente Sprint 0 (resuelto)</h5>
+      <ul>
+        <li>Rotación credenciales JWT (9 puntos) ✅</li>
+        <li>Fix bug Worker día 2-3 ✅</li>
+        <li>Auth en 7 API routes orquestación ✅</li>
+        <li>Verificación rol admin en CRUD tenants ✅</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🧠 V1 · DECISIONES-AUDITOR-JAVIER-HP.md — 13 R-XXX cerradas</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/DECISIONES-AUDITOR-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a></div>
+      <h5>13 decisiones cerradas + 7 derivadas</h5>
+      <ul>
+        <li><b>R-013</b> Cadencia 24h+3h × 3 días + franja 09-21h hora lead + festivos país lead.</li>
+        <li><b>R-014</b> Política write CRM: append-only por defecto, overwrite con audit.</li>
+        <li><b>R-016</b> Abstracción voz (Retell + Ultravox como providers).</li>
+        <li><b>R-020 + refinement-v2</b> 2 CRMs MVP (HubSpot + Zoho) · resto post-release.</li>
+        <li><b>R-021</b> Migrar Airtable → Supabase del histórico.</li>
+        <li><b>R-022</b> Equipo dev administra KB + modelo asesoría.</li>
+        <li><b>R-023</b> Hosting Supabase self-hosted (descartado managed).</li>
+        <li><b>R-023.c</b> Upgrade Kong 2.8.1 EOL + GoTrue/Postgres antiguos.</li>
+        <li><b>R-024</b> Continuidad equipo + 3 condiciones método (tests + revisión externa + grep verificable).</li>
+        <li><b>R-025</b> Pausa captación 6-8 semanas durante hardening.</li>
+      </ul>
+      <h5>Pendientes</h5>
+      <p>19 preguntas P-001..P-019 todavía abiertas (estados lead, optimización prompt Virginia, fase pruebas con leads reales).</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>👥 V1 · EXECUTIVE-SUMMARY-FOR-CLIENT.md — Resumen no-técnico para clienta</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank" rel="noopener"><code>docs/audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md</code></a></div>
+      <h5>3 tipos de problemas comunicados</h5>
+      <ol>
+        <li><b>Seguridad urgente</b>: puertas abiertas a datos de clientes (✅ resuelto).</li>
+        <li><b>Funcionalidades rotas en producción</b>: flujo multi-día, criterios cualificación (✅ resuelto).</li>
+        <li><b>Incumplimiento WCAG 2.1 AA</b>: discapacidad visual/motora/cognitiva (🟡 40% cubierto, 95% al cierre SP-4B).</li>
+      </ol>
+      <h5>5 riesgos críticos explicados sin tecnicismos</h5>
+      <ol>
+        <li>Claves de BD en el código (✅ resuelto Sprint 0).</li>
+        <li>Cualquier usuario podía ver/borrar datos de otros clientes (✅ resuelto Sprint 1).</li>
+        <li>7 páginas abiertas a internet sin contraseña (✅ resuelto Sprint 1).</li>
+        <li>Flujo de seguimiento multi-día no se ejecutaba (✅ resuelto Sprint 0).</li>
+        <li>Criterios cualificación incorrectos (3 años vs 2 años spec) (✅ resuelto Sprint 1).</li>
+      </ol>
+      <h5>Plan original V1: 55-74 días/dev</h5>
+      <p>Plan original estimaba 8-10 semanas. Ratio real ejecutado: <b>4 sprints en 9 días</b> (~43h reales) gracias a orquestación multi-agente.</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🧪 V1 · gap-analysis-spec-vs-code.md — Spec clienta vs implementación real</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/gap-analysis-spec-vs-code.md" target="_blank" rel="noopener"><code>docs/audit/gap-analysis-spec-vs-code.md</code></a></div>
+      <p>Análisis fila a fila de los <b>documentos oficiales de la clienta</b> (Bea + diagramas oficiales + PDF de reunión inicial Fathom) vs lo que el código realmente hacía. Identificó las divergencias clave que motivaron las decisiones R-013..R-016 del Auditor.</p>
+      <h5>Top divergencias detectadas</h5>
+      <ul>
+        <li>Cadencia llamadas: spec dice 27h x 3 días, código solo ejecutaba 1.</li>
+        <li>Umbral cualificación: spec dice ≥2 años, código aplicaba ≥3.</li>
+        <li>Campo <code>qualified</code> con 3 formatos divergentes en el código.</li>
+        <li>Nomenclatura variables: <code>curse_name</code> (spec) vs <code>course_name</code> (código), <code>user_profesion</code> sin s (código) vs <code>user_profession</code> (spec).</li>
+        <li>Typo <code>book_appointmen</code> en prompt Virginia (P-017 pendiente).</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🧾 V1 · STACK-DECISION-DRIZZLE-MIGRATION.md — Propuesta Drizzle, SUPERSEDED</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../audit/STACK-DECISION-DRIZZLE-MIGRATION.md" target="_blank" rel="noopener"><code>docs/audit/STACK-DECISION-DRIZZLE-MIGRATION.md</code></a></div>
+      <p><b>Estado: SUPERSEDED.</b> La propuesta inicial era introducir Drizzle ORM. Tras research multi-fuente se descartó por: (1) duplicación de capa con Supabase SDK, (2) coste de migración no justificado vs ganancia, (3) riesgo de incompatibilidades con RLS multi-tenant.</p>
+      <p>Decisión vigente: <b>sin ORM nuevo</b> · <code>@supabase/ssr</code> + Zod + Repository pattern. Ver <a href="../adr/ADR-019-refactor-queries-as-any-incremental-migration.md" target="_blank" rel="noopener">ADR-019</a> para migración incremental del tipado.</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🤝 V1 · RESPUESTAS-CLIENTA-JAVIER-HP.md + PREGUNTAS-PARA-LA-CLIENTE.md</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuentes: <a href="../audit/PREGUNTAS-PARA-LA-CLIENTE.md" target="_blank" rel="noopener"><code>docs/audit/PREGUNTAS-PARA-LA-CLIENTE.md</code></a> · <a href="../audit/RESPUESTAS-CLIENTA-JAVIER-HP.md" target="_blank" rel="noopener"><code>docs/audit/RESPUESTAS-CLIENTA-JAVIER-HP.md</code></a></div>
+      <p>25 preguntas formuladas por el Auditor a la clienta tras la V1. Cubrieron: cadencia multi-día, reglas cualificación A/B/C, nomenclatura variables, integraciones CRM, agente Virginia IA, equipo y método, hosting. Las respuestas decantaron las 13 R-XXX del decision log.</p>
+      <p><b>Inspiración para el Bloque 5</b> de esta auditoría V2: igual que la V1 formuló preguntas a la clienta antes de cerrar decisiones, la V2 expone 18 decisiones del Auditor para que la clienta confirme o pida cambios (formulario interactivo con export JSON).</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🧪 docs/e2e-full-test-plan.md — Plan maestro de testing reusable</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> (v1.2 — split <code>/e2ctotal</code> / <code>/e2etotal</code>)</div>
+      <h5>8 fases del plan</h5>
+      <ol>
+        <li>Pre-checks (5min, bloqueante).</li>
+        <li>Auth + RBAC matrix (10min, bloqueante).</li>
+        <li>RLS multi-tenant (15min, bloqueante).</li>
+        <li>CRUD por entidad — 12 entidades × C+R+U+D+Restore (60min, no-bloqueante por entidad).</li>
+        <li>Integraciones CRM OAuth (20min).</li>
+        <li>Webhooks firmados (10min).</li>
+        <li>Widget embed público (10min).</li>
+        <li>Observabilidad + Compliance (15min).</li>
+        <li>Cleanup + informe (5min, bloqueante).</li>
+      </ol>
+      <p>Activación: <code>/e2ctotal</code> (local) o <code>/e2etotal</code> (VPS). Histórico de runs vivo en <a href="../e2e-runs-history.md" target="_blank" rel="noopener"><code>docs/e2e-runs-history.md</code></a>.</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🗺️ plans/RoadMap.md — RoadMap vivo + Sprint Tracker</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../../plans/RoadMap.md" target="_blank" rel="noopener"><code>plans/RoadMap.md</code></a></div>
+      <p>Documento vivo mantenido por el agente <code>af-agents:roadmap-keeper</code>. Frontmatter compactado el 27-may para legibilidad del preview Markdown.</p>
+      <h5>Estado actual</h5>
+      <ul>
+        <li><b>Sprints cerrados</b>: 0, 1, 2, 2B, 3 (PR #14 mergeado 26-may).</li>
+        <li><b>Próximos hitos</b>: SP-4B Validación Renzo (16-21 jun) → <b>🎯 MVP v0.3.0 GA 22-jun-2026</b>.</li>
+        <li><b>Tracking de tiempos</b>: cada tarea con ⏱ Push (post-PR) + ⏱ Cierre (post-merge), en formato horas y minutos.</li>
+        <li><b>Estimaciones realistas V2</b>: tabla nueva al final del Sprint Tracker con ratio efectivo −92% aplicado a sprints pendientes.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🏷️ Releases — RELEASE-NOTES por sprint (6 versiones publicadas)</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuentes: <a href="../../plans/RELEASE-NOTES-v0.1.0.md" target="_blank" rel="noopener">v0.1.0</a> · <a href="../../plans/260524-1330-sprint-2-adapter-hubspot-zoho/RELEASE-NOTES-v0.2.5.md" target="_blank" rel="noopener">v0.2.5</a> · <a href="../../plans/260524-1330-sprint-2-adapter-hubspot-zoho/RELEASE-NOTES-v0.2.7.md" target="_blank" rel="noopener">v0.2.7</a> · <a href="../../plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/RELEASE-NOTES-v0.2.8.md" target="_blank" rel="noopener">v0.2.8</a> · <a href="../../plans/260522-1800-sprint-2b-dashboard-kpis-conjunto/RELEASE-NOTES-v0.2.9.md" target="_blank" rel="noopener">v0.2.9</a> · <a href="../../plans/260520-1342-sprint-3-hardening/RELEASE-NOTES-v0.3.0-rc.1.md" target="_blank" rel="noopener">v0.3.0-rc.1</a></div>
+      <p>Cada release notes incluye: highlights, breaking changes, migraciones SQL aplicadas, variables de entorno nuevas, tareas RoadMap cerradas, ADRs aprobados, contribuidores, commits incluidos, próximos pasos. Sin excepciones — protocolo definido en CLAUDE.md sección "GitHub Releases".</p>
+    </div>
+  </details>
+
+  <details class="doc-card">
+    <summary>🤝 docs/dev-onboarding.md — Onboarding del equipo de desarrollo</summary>
+    <div class="doc-body">
+      <div class="src-link">📄 Fuente: <a href="../dev-onboarding.md" target="_blank" rel="noopener"><code>docs/dev-onboarding.md</code></a></div>
+      <p>Setup local, ramas, <code>.env</code>, primer arranque y cómo trabajar con Claude Code en este proyecto. Cubre worktrees + husky + dev port 8500. Documento de entrada para cualquier nuevo dev.</p>
+    </div>
+  </details>
+
+  <h3>6.6 · Convenciones y reglas operativas</h3>
   <ul>
     <li><b>Co-authorship</b>: nunca Claude/Anthropic/IA como co-autor. Solo humanos. Sin excepciones.</li>
     <li><b>Push protegido</b>: nunca a <code>staging</code> ni <code>main</code> sin orden explícita.</li>
@@ -573,48 +907,207 @@ flowchart LR
 <section class="block" id="b7">
   <div class="block-head">
     <span class="block-num">BLOQUE 7</span>
-    <h2>Test /e2etotal — sistema E2E exhaustivo</h2>
+    <h2>Tests /e2ctotal (local) y /e2etotal (VPS) — sistema E2E/E2C exhaustivo</h2>
   </div>
-  <p class="block-lead">Test maestro de regresión total reusable, ejecutado al cierre de la auditoría V2.</p>
+  <p class="block-lead">Tests maestros de regresión reusables, ahora separados en dos comandos por entorno (regla 27-may-2026: "llamar cada cosa por su nombre"). Run #1 ejecutado 2026-05-27 12:35-12:52 UTC contra local (<code>localhost:8500</code>) — commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener"><code>4c32701</code></a>.</p>
 
-  <h3>7.1 · Qué es /e2etotal</h3>
-  <p><code>/e2etotal</code> es un comando custom del proyecto que ejecuta una batería E2E exhaustiva sobre todo el sistema. No es un test puntual: es un audit completo reusable que incluye:</p>
-  <ul>
-    <li><b>Smoke tests</b> sobre todas las rutas públicas y autenticadas.</li>
-    <li><b>Tests funcionales</b> de flujos críticos: login, gestión de leads, integraciones CRM, OAuth, configuración tenant.</li>
-    <li><b>Validación WCAG 2.2 AA</b> con axe-core sobre las páginas principales.</li>
-    <li><b>Validación de rendimiento</b> básico (Core Web Vitals locales).</li>
-    <li><b>Inspección de network</b>: detección de requests fallidos, latencias anómalas, errores en consola.</li>
-    <li><b>Documentación automática</b> del resultado en <code>docs/e2e-runs-history.md</code> con histórico de ejecuciones.</li>
-  </ul>
+  <div class="src-link">📄 Fuente: <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener">docs/e2e-full-test-plan.md</a> (plan maestro v1.2) · <a href="../e2e-runs-history.md" target="_blank" rel="noopener">docs/e2e-runs-history.md</a> (histórico) · <a href="../../plans/260527-1235-e2etotal-run/INFORME-FINAL.md" target="_blank" rel="noopener">plans/260527-1235-e2etotal-run/INFORME-FINAL.md</a> (run #1) · comandos: <a href="../../.claude/commands/e2ctotal.md" target="_blank" rel="noopener"><code>.claude/commands/e2ctotal.md</code></a> · <a href="../../.claude/commands/e2etotal.md" target="_blank" rel="noopener"><code>.claude/commands/e2etotal.md</code></a></div>
 
-  <h3>7.2 · Comando y parámetros</h3>
-  <pre>/e2etotal                          # ejecución completa con defaults
-/e2etotal --quick                  # solo smoke tests
-/e2etotal --area=leads             # solo área leads
-/e2etotal --area=crm               # solo integraciones CRM
-/e2etotal --vps                    # contra VPS en lugar de localhost
-/e2etotal --skip-wcag              # omitir axe-core
-/e2etotal --report=html            # exportar HTML resumen</pre>
-  <p>Plan maestro: <a href="../e2e-full-test-plan.md" target="_blank">docs/e2e-full-test-plan.md</a>. Histórico de ejecuciones: <a href="../e2e-runs-history.md" target="_blank">docs/e2e-runs-history.md</a>.</p>
+  <h3>7.1 · Dos comandos, un plan maestro</h3>
+  <p>Ambos comandos ejecutan el mismo plan de 8 fases (auth, RBAC, RLS multi-tenant, CRUD 12 entidades, OAuth CRM, webhooks firmados, widget público, observabilidad). Cambian solo el entorno target y los pre-requisitos:</p>
 
-  <h3>7.3 · Resultados del run actual</h3>
-  <div class="callout warn">
-    <p>🟡 <b>Pendiente de rellenar:</b> el usuario está ejecutando <code>/e2etotal</code> en paralelo a esta auditoría V2. Este bloque se actualizará cuando termine la ejecución actual (<code>plans/260527-1235-e2etotal-run/</code>).</p>
-  </div>
-
-  <h3>7.4 · Bugs detectados — tabla (a rellenar)</h3>
   <table>
-    <thead><tr><th>BUG-ID</th><th>Área</th><th>Descripción</th><th>Severidad</th><th>Sprint plan</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Comando</th><th>Entorno</th><th>URL</th><th>Cuándo usarlo</th></tr></thead>
     <tbody>
-      <tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:24px"><i>Pendiente del resultado del run actual de <code>/e2etotal</code>. Se rellenará al cerrar la ejecución.</i></td></tr>
+      <tr>
+        <td><code>/e2ctotal</code></td>
+        <td><b>Local (E2C)</b></td>
+        <td><code>http://localhost:8500</code></td>
+        <td>Cada PR · cierre Sprint CLOSE-2 · antes del test manual humano. Rápido (~17 min), sin riesgo, requiere <code>npm run dev</code> + Supabase local + Redis local.</td>
+      </tr>
+      <tr>
+        <td><code>/e2etotal</code></td>
+        <td><b>VPS / staging / prod (E2E)</b></td>
+        <td><code>dev.automatizaformacion.com</code> (default)</td>
+        <td>Cierre Sprint CLOSE-5 paso 7 · SP-4B Validación Pre-MVP (Renzo). Más lento (~25-30 min), valida que el deploy Dokploy funciona.</td>
+      </tr>
     </tbody>
   </table>
 
-  <h3>7.5 · Histórico breve de runs</h3>
+  <div class="callout">
+    <p><b>📌 Por qué dos comandos en lugar de un flag</b> — antes era un solo <code>/e2etotal</code> con <code>--env local|vps</code>, pero el flag se olvidaba con frecuencia. Desde 27-may-2026 los nombres reflejan el destino: <b>E2C = en Casa (local)</b>, <b>E2E = End-to-End real (VPS)</b>. Si por error alguien lanza <code>/e2etotal --env local</code>, el comando avisa y recomienda usar <code>/e2ctotal</code>.</p>
+  </div>
+
+  <h3>7.2 · Parámetros disponibles</h3>
+  <pre># LOCAL (E2C)
+/e2ctotal                                  # ejecución completa contra localhost:8500
+/e2ctotal --only-fase 03                   # solo Fase 03 (CRUD por entidad)
+/e2ctotal --skip-fase 04,06                # salta OAuth + widget
+/e2ctotal --apps leads,agents              # filtra Fase 03 a estas entidades
+/e2ctotal --no-cleanup                     # deja entidades test en DB
+/e2ctotal --ci                             # modo CI: headless + JUnit XML
+
+# REMOTO (E2E)
+/e2etotal                                  # default --env vps (dev.automatizaformacion.com)
+/e2etotal --env staging                    # cuando rama staging exista
+/e2etotal --env prod --vps-readonly        # producción, solo R (sin destructivos)
+/e2etotal --apps leads,agents              # filtra Fase 03
+/e2etotal --no-cleanup                     # deja entidades test (NO hacer en prod)</pre>
+
+  <h3>7.3 · Resumen ejecutivo del run #1 (2026-05-27)</h3>
+  <div class="stats" style="margin-top:8px">
+    <div class="stat info"><div class="val">8 / 8</div><div class="lbl">Fases ejecutadas</div><div class="sub">00 a 08 sin abortos</div></div>
+    <div class="stat info"><div class="val">17 min</div><div class="lbl">Duración total</div><div class="sub">12:35 → 12:52 UTC</div></div>
+    <div class="stat ok"><div class="val">26 / 28</div><div class="lbl">Rutas dashboard navegables</div><div class="sub">25/25 redirigen a /login sin sesión</div></div>
+    <div class="stat warn"><div class="val">9</div><div class="lbl">Bugs únicos detectados</div><div class="sub">3 CRIT · 4 HIGH · 2 MED</div></div>
+    <div class="stat ok"><div class="val">5 / 5</div><div class="lbl">Endpoints admin protegidos</div><div class="sub">401 sin auth (correcto)</div></div>
+    <div class="stat warn"><div class="val">~9-10h</div><div class="lbl">Tiempo estimado fix</div><div class="sub">3 P0 + 2 P1 + 1 P2</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-card">
+      <h4>Resultado por fase</h4>
+      <canvas id="cE2EFases" height="220"></canvas>
+      <p class="legend-note">Fases 02, 03, 04, 05, 06 con bugs detectados. Fases 00, 01, 07, 08 limpias. Auth + RBAC pasan al 100%.</p>
+    </div>
+    <div class="chart-card">
+      <h4>Distribución severidad bugs run #1</h4>
+      <canvas id="cE2ESeveridad" height="220"></canvas>
+      <p class="legend-note">3 CRIT bloquean release. Patrón sistémico: 3 bugs comparten raíz (handlers no validan auth como primer paso).</p>
+    </div>
+  </div>
+
+  <h3>7.4 · Catálogo de bugs detectados (tabla completa)</h3>
+  <table>
+    <thead>
+      <tr><th>BUG-ID</th><th>Sev.</th><th>Área</th><th>Descripción</th><th>Ubicación</th><th>Sprint plan / Owner</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-003-CRIT-csp-blocks-supabase-local.md" target="_blank" rel="noopener"><code>E2E-260527-003</code></a></td>
+        <td><span class="tag bad">CRIT</span></td>
+        <td>CSP / dev local</td>
+        <td>CSP <code>connect-src</code> bloquea Supabase local → queries client-side fallan en TODAS las páginas. Probable también en VPS.</td>
+        <td>middleware + Sentry CSP config</td>
+        <td>Sprint 3 hotfix · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-004-CRIT-orchestrator-react-hooks-error.md" target="_blank" rel="noopener"><code>E2E-260527-004</code></a></td>
+        <td><span class="tag bad">CRIT</span></td>
+        <td>UI / orchestrator</td>
+        <td>React "Rendered more hooks than during previous render" en <code>/dashboard/orchestrator</code> → workflow builder inaccesible.</td>
+        <td><code>src/app/dashboard/orchestrator/page.tsx</code></td>
+        <td>Sprint 3 hotfix · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-007-CRIT-whatsapp-webhook-503-info-leak.md" target="_blank" rel="noopener"><code>E2E-260527-007</code></a></td>
+        <td><span class="tag bad">CRIT</span></td>
+        <td>Webhook WhatsApp</td>
+        <td><code>/api/webhooks/whatsapp</code> retorna 503 con firma bogus + info leak de infra interna. Meta puede desactivar webhook por 503 sostenidos.</td>
+        <td><code>src/app/api/webhooks/whatsapp/route.ts</code></td>
+        <td>Sprint 3 hotfix · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-001-HIGH-leads-ingest-no-response.md" target="_blank" rel="noopener"><code>E2E-260527-001</code></a></td>
+        <td><span class="tag warn">HIGH</span></td>
+        <td>API leads</td>
+        <td><code>/api/leads/ingest</code> no responde (HTTP 000) — ingesta pública sin respuesta, vector DoS.</td>
+        <td><code>src/app/api/leads/ingest/route.ts</code></td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-006-HIGH-multiple-endpoints-no-response.md" target="_blank" rel="noopener"><code>E2E-260527-006</code></a></td>
+        <td><span class="tag warn">HIGH</span></td>
+        <td>API varios</td>
+        <td>3 endpoints públicos (leads/ingest, google/auth, widget/[id]) cuelgan sin respuesta.</td>
+        <td>varios</td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-008-HIGH-widget-embed-js-400.md" target="_blank" rel="noopener"><code>E2E-260527-008</code></a></td>
+        <td><span class="tag warn">HIGH</span></td>
+        <td>Widget público</td>
+        <td><code>/api/widget/embed.js</code> retorna 400 + <code>text/plain</code>. Embed no funcional + content-type incorrecto.</td>
+        <td><code>src/app/api/widget/embed.js/route.ts</code></td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-006-HIGH-multiple-endpoints-no-response.md" target="_blank" rel="noopener"><code>E2E-260527-006</code></a> (subcaso)</td>
+        <td><span class="tag warn">HIGH</span></td>
+        <td>Widget SSR</td>
+        <td><code>/widget/invalid-id-test</code> HTTP 000 en lugar de 404 — SSR crash, no usa <code>notFound()</code>.</td>
+        <td><code>src/app/widget/[id]/page.tsx</code></td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-002-MED-cron-reminders-503.md" target="_blank" rel="noopener"><code>E2E-260527-002</code></a></td>
+        <td><span class="tag info">MED</span></td>
+        <td>Cron / API</td>
+        <td><code>/api/cron/appointments/reminders</code> 503 unauth + info leak (mismo patrón que #007).</td>
+        <td><code>src/app/api/cron/appointments/reminders/route.ts</code></td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-005-MED-orchestrator-silent-redirect.md" target="_blank" rel="noopener"><code>E2E-260527-005</code></a></td>
+        <td><span class="tag info">MED</span></td>
+        <td>UX</td>
+        <td><code>/dashboard/orchestrator</code> redirige silenciosamente a <code>/onboarding</code> sin mensaje (consecuencia de #004).</td>
+        <td>consecuencia de #004</td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+      <tr>
+        <td><a href="../../plans/260527-1235-e2etotal-run/bugs/E2E-260527-009-MED-api-version-unknown-fields.md" target="_blank" rel="noopener"><code>E2E-260527-009</code></a></td>
+        <td><span class="tag info">MED</span></td>
+        <td>Observabilidad</td>
+        <td><code>/api/version</code> con <code>commit</code>/<code>branch</code>/<code>deployedAt</code> = "unknown" → imposible rastrear deploy.</td>
+        <td><code>src/app/api/version/route.ts</code></td>
+        <td>Sprint 3 · TBD</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout bad">
+    <p><b>🔍 Patrón sistémico detectado (raíz común de 3 bugs)</b></p>
+    <p>Los bugs <code>#001</code>, <code>#002</code> y <code>#007</code> comparten la misma raíz arquitectónica: <b>el handler intenta inicializar Redis/BullMQ/dependencia externa ANTES de validar auth o firma</b>. Cuando Redis está caído, responde 503 o cuelga (HTTP 000) sin distinguir entre "tu request es válido pero la infra está mal" y "tu request es inválido". <b>Fix recomendado:</b> refactor cross-handler para validar auth/firma como PRIMER paso en TODO handler de la app (~4h estim). <b>Esto cuenta como un único refactor, no como 3 bugs separados.</b></p>
+  </div>
+
+  <h3>7.5 · Hallazgos positivos del run #1</h3>
   <ul>
-    <li><b>2026-05-27 ~12:35</b> — Run en curso (rama <code>docs/roadmap-frontmatter-readable</code>, capturas iniciales en <code>docs/screenshots/e2e-01..05.png</code>).</li>
-    <li><b>Anteriores</b> — Ver <a href="../e2e-runs-history.md" target="_blank">docs/e2e-runs-history.md</a>.</li>
+    <li>✅ <b>Middleware auth funciona correctamente</b>: 25/25 rutas <code>/dashboard/*</code> redirigen 307 a <code>/login</code> sin sesión. No leaks.</li>
+    <li>✅ <b>Endpoints admin-only protegidos</b>: <code>/api/admin/*</code>, <code>/api/orchestration/*</code>, <code>/api/tenant/migrate</code>, <code>/api/integrations</code> → 401 sin auth.</li>
+    <li>✅ <b>Login admin funciona</b>: Supabase SSR + redirect + cookie <code>app_metadata.is_admin=true</code>.</li>
+    <li>✅ <b>Security headers completos</b>: HSTS preload, X-Frame DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy.</li>
+    <li>✅ <b>Webhook Retell HMAC funciona</b>: rechaza firma inválida con 401 (sin caer al backend).</li>
+    <li>✅ <b>Skip-link WCAG (DA-5-017)</b> verificado funcional en <code>/login</code>.</li>
+  </ul>
+
+  <h3>7.6 · Recomendaciones del Auditor al equipo de desarrollo sobre /e2etotal</h3>
+  <div class="callout">
+    <p><b>📌 Pautas para sacar partido a <code>/e2etotal</code> en cada sprint:</b></p>
+    <ol>
+      <li><b>Vigilar las ejecuciones en el navegador</b>. Cuando el agente corre Playwright con MCP browser, mira la ventana del navegador en vivo: muchos bugs se ven antes de que el agente los capture (warnings de hidratación, flashes de contenido, transiciones rotas). Si ves algo raro, anótalo y pásaselo al agente — él lo añade al informe.</li>
+      <li><b>Mantener vivo el plan maestro</b> <a href="../e2e-full-test-plan.md" target="_blank" rel="noopener"><code>docs/e2e-full-test-plan.md</code></a> tras cada sprint. Cuando termines un sprint, añade verificaciones que el plan no hacía (ej. nuevos endpoints, nuevas entidades CRUD, nuevos webhooks). Bump del campo <code>Versión plan</code> en la cabecera.</li>
+      <li><b>Prompt sugerido al agente para mantener el plan</b>: <br><span class="prompt-quote">"Repasa <code>docs/e2e-full-test-plan.md</code>. Compara con el código actual (rutas <code>src/app/**/page.tsx</code> y endpoints <code>src/app/api/**/route.ts</code>). Si hay nuevas páginas o endpoints no cubiertos por el plan, añádelos a la fase correspondiente (00..08), bump versión plan, y deja un changelog corto en la cabecera."</span></li>
+      <li><b>Lanzar <code>/e2ctotal</code> ANTES del test manual humano</b> (CLOSE-3 o SP-4B). El agente detecta el 80% de los bugs en 15-20 min. El humano se concentra en los bugs visuales, UX y de criterio que el agente no puede juzgar.</li>
+      <li><b>Tras un run con bugs CRIT</b>: NO promocionar a staging hasta que estén arreglados. Bugs HIGH pueden tolerarse si están planificados (ID + sprint asignado). Antes de promocionar a VPS, correr <code>/e2etotal</code> contra el deploy ya verde.</li>
+      <li><b>Re-correr el run completo</b> tras cada hotfix de bug CRIT del run anterior (regression check). 17 min en local es asumible.</li>
+      <li><b>Memoria persistente</b>: si dejas bugs CRIT/HIGH abiertos entre sesiones, el comando los guarda en <code>memory/e2e-bugs-pendientes-{YYMMDD}.md</code> para que el próximo Claude los retome.</li>
+    </ol>
+  </div>
+
+  <h3>7.7 · Pendientes/limitaciones del run #1</h3>
+  <ul>
+    <li>⏭️ <b>Fase 03 NO ejecutó CRUD real por entidad</b> (por instrucción "barrido único" del usuario). Cuando se quiera ese nivel, relanzar <code>/e2ctotal</code> sin flag de barrido — 12 entidades × C+R+U+D+Restore ≈ +3h adicionales.</li>
+    <li>⏭️ <b>Fase 02 NO creó segundo tenant</b> para verificar RLS cross-tenant (instrucción usuario). Quedó validado solo el aislamiento por auth (admin vs anon).</li>
+    <li>⏭️ <b>Webhooks con firma VÁLIDA no probados</b> (requiere generar HMAC con secret real, fuera del scope barrido).</li>
+    <li>⏭️ <b>Performance/load tests</b>: no aplicado en MVP. Sugerencia futura: añadir Fase 09 con k6 cuando MVP esté en prod.</li>
+    <li>⏭️ <b>Visual regression</b>: no aplicado. Sugerencia: Playwright <code>toHaveScreenshot()</code> para 5 rutas críticas.</li>
+  </ul>
+
+  <h3>7.8 · Histórico breve de runs</h3>
+  <ul>
+    <li><b>2026-05-27 12:35-12:52 UTC</b> — Run #1 detection sweep · 9 bugs (3 CRIT + 4 HIGH + 2 MED) · plan v1.1 · commit <a href="https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/commit/4c32701" target="_blank" rel="noopener"><code>4c32701</code></a> · ver <a href="../../plans/260527-1235-e2etotal-run/INFORME-FINAL.md" target="_blank" rel="noopener">INFORME-FINAL.md</a>.</li>
+    <li><b>Anteriores</b>: ver <a href="../e2e-runs-history.md" target="_blank" rel="noopener">docs/e2e-runs-history.md</a>.</li>
   </ul>
 </section>
 
@@ -728,8 +1221,14 @@ gantt
   </div>
 </section>
 
-<footer style="text-align:center;color:var(--ink-soft);font-size:.85rem;margin:30px 0">
-  Auditoría V2 generada 2026-05-27 · Auditor Javi HP · Rama <code>auditoria-v2-medio-proyecto</code> · No promocionar a <code>staging</code> ni <code>main</code> sin orden explícita.
+<footer style="margin:30px 0 10px;padding:18px 22px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);color:var(--ink-soft);font-size:.85rem;line-height:1.55">
+  <div style="text-align:center;font-weight:600;color:var(--ink);font-size:.92rem;margin-bottom:8px">🔒 Documento confidencial · Uso interno de Automatiza Formación SL</div>
+  <p style="margin:0 0 6px;text-align:center">
+    Este informe contiene información estratégica, técnica, comercial y financiera de carácter <b>confidencial</b> propiedad de <b>Automatiza Formación SL</b>. Prohibida su difusión, copia, distribución o uso por terceros sin autorización expresa por escrito. Cualquier acceso, lectura o tratamiento de este documento implica la aceptación íntegra de este deber de confidencialidad.
+  </p>
+  <p style="margin:0;text-align:center">
+    Auditoría V2 generada 2026-05-27 · Auditor <b>Javi HP</b> · Rama <code>auditoria-v2-medio-proyecto</code> · No promocionar a <code>staging</code> ni <code>main</code> sin orden explícita.
+  </p>
 </footer>
 
 </main>
@@ -834,6 +1333,29 @@ new Chart(document.getElementById('cCategorias'), {
     ]
   },
   options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}
+});
+
+// Bloque 7 — Resultado por fase (run #1 e2etotal)
+new Chart(document.getElementById('cE2EFases'), {
+  type:'bar',
+  data:{
+    labels:['00 Pre-checks','01 Auth','02 RLS','03 Sweep','04 OAuth','05 Webhooks','06 Widget','07 Observability','08 Informe'],
+    datasets:[
+      {label:'Pass',  data:[8,1,5,26,2,1,0,8,1], backgroundColor:palette.ok, stack:'s'},
+      {label:'Fail',  data:[0,0,2, 2,1,2,2,1,0], backgroundColor:palette.bad, stack:'s'}
+    ]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}
+});
+
+// Bloque 7 — Distribución severidad bugs
+new Chart(document.getElementById('cE2ESeveridad'), {
+  type:'doughnut',
+  data:{
+    labels:['CRIT (3)','HIGH (4)','MED (2)'],
+    datasets:[{data:[3,4,2], backgroundColor:[palette.bad, palette.warn, palette.info]}]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}, subtitle:{display:true, text:'9 bugs únicos · ~9-10h estim fix · 3 P0 bloquean release'}}}
 });
 
 // WCAG (Bloque 3) — gauge bar · fuente: scout inventory (24 findings DA-5)
@@ -976,6 +1498,7 @@ function renderDecisions(){
         <div class="opts" role="group" aria-label="Tu decisión para ${d.id}">
           <button class="opt" data-val="true"  aria-pressed="${cur.value===true}">Sí · de acuerdo</button>
           <button class="opt" data-val="false" aria-pressed="${cur.value===false}">No · cambiar</button>
+          <button class="opt-reset" data-action="reset" title="Borrar mi respuesta a esta decisión">↺ Reset</button>
         </div>
         <span class="summary" id="deci-status-${d.id}">${cur.value===true?'✅ Aprobada':cur.value===false?'❌ Pendiente de revisar':'⏳ Sin marcar'}</span>
       </div>
@@ -995,6 +1518,17 @@ function renderDecisions(){
         div.classList.toggle('has-false', val===false);
         document.getElementById('deci-status-'+d.id).textContent = val ? '✅ Aprobada' : '❌ Pendiente de revisar';
       });
+    });
+    div.querySelector('.opt-reset').addEventListener('click', ()=>{
+      const st = loadState();
+      if (st[d.id]) {
+        delete st[d.id];
+        saveState(st);
+      }
+      div.querySelectorAll('.opt').forEach(b=>b.setAttribute('aria-pressed','false'));
+      div.classList.remove('has-false');
+      div.querySelector('textarea').value = '';
+      document.getElementById('deci-status-'+d.id).textContent = '⏳ Sin marcar';
     });
     div.querySelector('textarea').addEventListener('input', e=>{
       const st = loadState();

@@ -12,28 +12,30 @@ excluded_from: [staging, main]
 notes: "Detalle de estado por sprint en la sección 'Sprint Tracker (resumen)' más abajo. Mapa de versiones, progreso histórico, ratios reales vs estimados y notas de cada sprint cerrado viven en tablas legibles, no en este frontmatter."
 ---
 
-<!--
-HISTÓRICO DETALLADO (movido fuera del frontmatter el 2026-05-27 para legibilidad del preview Markdown).
-La info que estaba en sprint_*_progress / versioning_policy / autoexec_plan_260524_progress vive ahora en:
-  - Sección "Sprint Tracker (resumen)" más abajo (tabla compacta).
-  - Tablas detalladas por sprint en "## Fase X — Sprint Y".
-  - Memorias persistentes del proyecto (memory/MEMORY.md).
-  - RELEASE-NOTES-vX.Y.Z.md de cada sprint cerrado.
+<!-- Histórico detallado movido del frontmatter el 2026-05-27 para legibilidad del preview Markdown.
+La info de sprint_*_progress / versioning_policy vive ahora en: el "Sprint Tracker (resumen)" más abajo,
+las tablas detalladas por sprint, memory/MEMORY.md y los RELEASE-NOTES-vX.Y.Z.md de cada sprint. -->
 
-Mapa de versiones vigente (2026-05-27):
-  Sprint 0     → v0.1.0       (Released)
-  Sprint 1     → v0.2.0       (Released)
-  Sprint 2     → v0.2.7       (Released — final con hotfix BUG-2-01)
-  Sprint 2B    → v0.2.8 / v0.2.9 (Released — v0.2.9 post-fix alturas+viewport)
-  Sprint 3     → v0.3.0-rc.1  (rc — release candidate)
-  SP-4B GA     → v0.3.0       (Validación pre-MVP)
-  Sprint 4     → v0.4.0       (Sheets bidireccional, post-MVP)
-  Sprint Costes-LLM → v0.4.1
-  Sprint Refinamiento → v0.4.2
-  Sprint 5..9  → v0.5.0+
--->
+# 🗺️ RoadMap — dashboard-af
 
-# RoadMap — dashboard-af
+| 📌 Versión actual | 🎯 MVP target | 📅 Fecha objetivo | 🌿 Excluido       |
+| ----------------- | ------------- | ----------------- | ----------------- |
+| `v0.3.0-rc.1`     | `v0.3.0` GA   | **22-jun-2026**   | `staging`, `main` |
+
+## 🏁 Mapa de versiones vigente (2026-05-27)
+
+| Sprint              | Versión             | Estado                    | Notas                                                      |
+| ------------------- | ------------------- | ------------------------- | ---------------------------------------------------------- |
+| Sprint 0            | `v0.1.0`            | 🟢 Released               | Hotfixes seguridad                                         |
+| Sprint 1            | `v0.2.0`            | 🟢 Released               | Capa de datos · Repository pattern · 6 ADRs                |
+| Sprint 2            | `v0.2.7`            | 🟢 Released               | HubSpot + Zoho multi-DC · final con hotfix BUG-2-01        |
+| Sprint 2B           | `v0.2.8` / `v0.2.9` | 🟢 Released               | Dashboard KPIs · v0.2.9 post-fix alturas+viewport          |
+| Sprint 3            | `v0.3.0-rc.1`       | 🟢 PR #14 mergeado 26-may | Hardening · Pino + Sentry + rate limiting + Node 22        |
+| SP-4B               | `v0.3.0` GA         | 🔘 Pendiente              | Validación pre-MVP (Renzo) · 16-21 jun                     |
+| Sprint 4            | `v0.4.0`            | 🔘 Pendiente              | Google Sheets bidireccional · post-MVP                     |
+| Sprint Costes-LLM   | `v0.4.1`            | 🔘 Pendiente              | Tracking de tokens LLM · post-Sheets                       |
+| Sprint Refinamiento | `v0.4.2`            | 🔘 Pendiente              | Simulator + lanzador /calls Retell (Renzo)                 |
+| Sprints 5..9        | `v0.5.0+`           | 🔘 Backlog                | Salesforce → GoHighLevel → ActiveCampaign → generalización |
 
 > ⚠️ **Documento vivo**. Mantenido proactivamente por el agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md). NO editar directamente sin orden del lead — pide al agente que lo haga.
 >
