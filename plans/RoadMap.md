@@ -3,8 +3,8 @@ title: "RoadMap dashboard-af"
 audience: equipo de desarrollo
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 26-05-2026 ~tracking sesión testing profundo Sprint 3
-last_updated_by: Javi HP (26-05-2026 — Sprint 3 testing profundo local: añadidas 13 filas SP-4-AWS-REMOVAL + SP-4-SIDEBAR-UX + SP-4-BUG-3-01..13 a tabla Sprint 3 (estado 🟡 En Desarrollo, ⏱ Push registrado, ⏱ Cierre pendiente push+PR+merge). Vitest 228/228 + TypeCheck 0 + Playwright sprint-3-close 14/14 + suite completa 41-43/43. Cambios SIN commitear todavía en feature/sprint-03-hardening. NO mergear sin orden explícita usuario)
+last_updated: 27-05-2026 ~spike paralelo Sprint 4 Sheets Pull-only
+last_updated_by: Javi HP (27-05-2026 — Spike paralelo Sprint 4 Sheets Pull-only sobre `feature/sprint-04-google-sheets` desde `developer`: 4 commits con backend completo (SQL migrations sheet_connections + sheet_row_processed + integrations.app_client_id/secret_cipher · types ColumnMapping con catalogo lead+lead_cualificacion+metadata · adapter readRows/writeCells/setupWatch · BullMQ queue+worker · webhook /api/webhooks/google-sheets · writeback helper · 8 server actions) + UI wizard 4 steps + Google Picker multi-sheet + mapping editor + docs guía Cloud Console tenant + tests 40/40 verdes + runbook E2E manual. Sin conflicto con chat 'experience': solo 1 directorio nuevo en src/app/dashboard/settings/integrations/google-sheets/. NO mergear sin orden explícita del usuario.)
 project_version: v0.2.7
 versioning_policy: "Rebajada 24-05-2026 por decisión Javi HP. Mapa nuevo: Sprint 0=v0.1.0, Sprint 1=v0.2.0, Sprint 2=v0.2.7 (final con hotfix BUG-2-01), Sprint 2B=v0.2.8 inicial + v0.2.9 post-fix (alturas reales + viewport 100% + E2E Bloques B-G), Sprint 3=v0.3.0-rc.1, SP-4B Validación MVP GA=v0.3.0, Sprint 4 Sheets=v0.4.0, Sprint Costes-LLM=v0.4.1, Sprint Refinamiento=v0.4.2, Sprint 5 Salesforce=v0.5.0, etc."
 sprint_0_progress: "✅ **Released v0.1.0 — Sprint 0 cerrado 22-05-2026 17:29 + cierre formal PR #4 a las 19:30** · Tag `v0.1.0` en commit `a387dfe` (merge PR #2) · DEV 🟢: 0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-07..1-27 (26 tareas locales). 1-03, 1-05 → 🟡 diferidas 100% VPS pre-deploy staging. Cierre completo: CLOSE-1 🟢 (~30min, DONE_WITH_CONCERNS aceptado, lint 118 err preexistentes), CLOSE-2 🟢 (~45min, 24/24 E2E + 5 WCAG findings + 2 bugs corregidos), CLOSE-3 🟢 (~1h 30min, análisis Bea+Renzo V1), CLOSE-4 🟢 (~25min, 2 bugs + 2 lint fixes), CLOSE-5 🟢 (~45min, CHANGELOG + RoadMap + PR #4 cierre formal). ⏱ **Total Sprint 0: ~11h 5min vs 118h estimadas (−91%)**. CHANGELOG.md publicado."
@@ -350,15 +350,22 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 ### Sprint 4 — Google Sheets bidireccional (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 4**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.5.0 · `feature/sprint-04-google-sheets` · … _ver nota↓_               |
-| ▸ Tareas de desarrollo (Fase 4)     | 🔘           | 60-100h         | —      | —        | 0/6 (5-01-a..5-01-f) · googleapis ya instalado                           |
-| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-d … _ver nota↓_ |
+| Item                                 | Estado         | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
+| ------------------------------------ | -------------- | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 4**                      | 🟡 SPIKE 27-05 | 60-100h         | ~6h    | —        | v0.5.0 · `feature/sprint-04-google-sheets` · … _ver nota↓_               |
+| ▸ Tareas de desarrollo (Fase 4)      | 🟡 SPIKE       | 60-100h         | ~5h    | —        | Spike Pull-only completo + UI multi-Picker · … _ver nota↓_               |
+| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5)  | 🔘             | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-d … _ver nota↓_ |
+| ▸ SP-4-SPIKE-PULL: end-to-end Sheets | 🟡 PR pending  | 18-22h          | ~6h    | —        | 4 commits sobre `feature/sprint-04-google-sheets` · … _ver nota↓_        |
 
-> **Nota fila `🚀 Sprint 4` · Notas**: v0.5.0 · `feature/sprint-04-google-sheets` · Inicio Mar 23-06-2026 (post-MVP, adelantado −7 sem 24-05 aplicando ratio real Sprints 0/1/2)
+> **Nota fila `🚀 Sprint 4` · Notas**: v0.5.0 · `feature/sprint-04-google-sheets` · Inicio formal Mar 23-06-2026 (post-MVP, adelantado −7 sem 24-05 aplicando ratio real Sprints 0/1/2). **Anticipo 27-05-2026**: spike paralelo Pull-only mientras chat 'experience' trabaja UI; sigue principios del plan oficial pero acotado.
+>
+> **Nota fila `▸ Tareas de desarrollo (Fase 4)` · Notas**: Spike Pull-only completo + UI multi-Picker + write-back framework + tests + docs. Falta integrar adapter pattern Sprint 2 si se decide.
 >
 > **Nota fila `▸ Cierre Sprint 4 (SP-5-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+>
+> **Nota fila `▸ SP-4-SPIKE-PULL: end-to-end Sheets` · Tarea**: end-to-end Sheets (Pull-only + UI wizard + write-back framework + tests). Rama: `feature/sprint-04-google-sheets`. Commits: `d639971` foundation (SQL+types+credentials+OAuth refactor), `f752b74` adapter+queue+worker+webhook+writeback+actions, `e1a3ec4` UI wizard 4 steps + Picker multi-sheet + mapping editor, `6de8045` docs guía tenant + 40 tests unit + runbook E2E manual.
+>
+> **Nota fila `▸ SP-4-SPIKE-PULL: end-to-end Sheets` · Notas**: 4 commits sobre `feature/sprint-04-google-sheets`. Tests Vitest 268/272 ✅. TypeCheck 🟢. **NO mergear a developer sin orden explícita del usuario** (regla del proyecto). PR a crear cuando se autorice push.
 
 ### Sprint Costes-LLM — Centro de costes LLM (post-Sheets, patch v0.5.1)
 
