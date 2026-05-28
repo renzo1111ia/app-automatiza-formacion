@@ -115,7 +115,7 @@ export async function connectSheetAction(
     const supabase = await getAdminSupabaseClient();
 
     // 1. Insert row sin watch (caso fallback) - aseguramos atomicidad luego.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const { data: inserted, error: insertErr } = await (
       supabase.from("sheet_connections" as any) as any
     )
@@ -133,6 +133,7 @@ export async function connectSheetAction(
       })
       .select("id")
       .single();
+    /* eslint-enable @typescript-eslint/no-explicit-any */
     if (insertErr || !inserted) {
       throw new Error(`Error creando connection: ${insertErr?.message ?? "unknown"}`);
     }
