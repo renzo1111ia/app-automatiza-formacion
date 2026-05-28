@@ -1,25 +1,56 @@
 ---
-title: "RoadMap dashboard-af"
-audience: equipo de desarrollo
+title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
-maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 26-05-2026 ~tracking sesión testing profundo Sprint 3
-last_updated_by: Javi HP (26-05-2026 — Sprint 3 testing profundo local: añadidas 13 filas SP-4-AWS-REMOVAL + SP-4-SIDEBAR-UX + SP-4-BUG-3-01..13 a tabla Sprint 3 (estado 🟡 En Desarrollo, ⏱ Push registrado, ⏱ Cierre pendiente push+PR+merge). Vitest 228/228 + TypeCheck 0 + Playwright sprint-3-close 14/14 + suite completa 41-43/43. Cambios SIN commitear todavía en feature/sprint-03-hardening. NO mergear sin orden explícita usuario)
-project_version: v0.2.7
-versioning_policy: "Rebajada 24-05-2026 por decisión Javi HP. Mapa nuevo: Sprint 0=v0.1.0, Sprint 1=v0.2.0, Sprint 2=v0.2.7 (final con hotfix BUG-2-01), Sprint 2B=v0.2.8 inicial + v0.2.9 post-fix (alturas reales + viewport 100% + E2E Bloques B-G), Sprint 3=v0.3.0-rc.1, SP-4B Validación MVP GA=v0.3.0, Sprint 4 Sheets=v0.4.0, Sprint Costes-LLM=v0.4.1, Sprint Refinamiento=v0.4.2, Sprint 5 Salesforce=v0.5.0, etc."
-sprint_0_progress: "✅ **Released v0.1.0 — Sprint 0 cerrado 22-05-2026 17:29 + cierre formal PR #4 a las 19:30** · Tag `v0.1.0` en commit `a387dfe` (merge PR #2) · DEV 🟢: 0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-07..1-27 (26 tareas locales). 1-03, 1-05 → 🟡 diferidas 100% VPS pre-deploy staging. Cierre completo: CLOSE-1 🟢 (~30min, DONE_WITH_CONCERNS aceptado, lint 118 err preexistentes), CLOSE-2 🟢 (~45min, 24/24 E2E + 5 WCAG findings + 2 bugs corregidos), CLOSE-3 🟢 (~1h 30min, análisis Bea+Renzo V1), CLOSE-4 🟢 (~25min, 2 bugs + 2 lint fixes), CLOSE-5 🟢 (~45min, CHANGELOG + RoadMap + PR #4 cierre formal). ⏱ **Total Sprint 0: ~11h 5min vs 118h estimadas (−91%)**. CHANGELOG.md publicado."
-sprint_1_progress: "MERGEADO a developer vía PR #5 (commit `94c035a`) · ⏱ Real efectivo ~12h vs ~205h estim (paralelismo orquestación). 24 tareas 🟢 Completada (Bloques 2.1, 2.2, 2.3, 2.6 completos · 2.5, 2.7, 2.8 parcial · 2.9 completo). 8 tareas 🟢 Diferida (2-19..2-22 a ADR-019; 2-31, 2-32, 2-34 a ADR-018; 2-36 a Sprint Costes-LLM; NEW-01 paso 3 a v0.5.3). 6 ADRs creados (014-019). SP-2-CLOSE-1..5 ✅ excepto CLOSE-3 diferido a SP-4B phase-02. ENCRYPTION_KEY env crítica para deploy. Resumen: `plans/260520-1342-sprint-1-capa-datos/SP-2-CLOSE-summary.md`."
-autoexec_plan_260524_progress: "✅ COMPLETADO 24-05-2026 ~11:30 (3 commits directos a developer + 1 commit cierre) · Plan `plans/260524-1020-doc-agent-empty-states-full/` ejecutado sin intervención post-/clear · Phase B `6701b74` (70 alerts→toast, EmptyState, web_widgets.updated_at + orchestrator flag migrations LOCAL+VPS) · Phase C `93cf858` (help_sections table + API + HelpPageShell + /dashboard/docs-admin + /dashboard/docs-clientes + 11 secciones seeded LOCAL+VPS) · Phase D `e0dda4c` (help-docs-keeper agent actualizado a 2 scopes + hook `af-docs-watcher.cjs` registrado y testeado) · Cierre `b0e6769`. VPS aplicado vía pg-meta REST (SSH key denegada, workaround documentado en `reference-vps-pg-meta.md`). 11/12 acceptance criteria · 1 diferido orgánicamente (screenshots WCAG-validated, los hace help-docs-keeper en próximos Edit/Write)."
-sprint_2_progress: "✅ **CERRADO v0.2.7 — Sprint 2 mergeado a developer 24-05-2026 19:55** · PR #12 mergeado (`a826fd6`) · Versión final `v0.2.7` (hotfix BUG-2-01 slug conflict incluido) · 170 tests Vitest verdes · 5/5 E2E VPS verdes contra `dev.automatizaformacion.com` · Bloques 3.0..3.7 🟢 Completados en bundle PR #12 · SP-3-CLOSE-1..5 🟢 · ⏱ Real push ~40min vs ~74h estim · ⏱ Cierre total ~3h 15min · Ratio −94%. Releases: [v0.2.5](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.5) + [v0.2.7](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.7)."
-sprint_2b_progress: "✅ **CERRADO v0.2.8** — Sprint 2B mergeado a developer 25-05-2026 07:27 UTC (PR #13 merge `17b2902`) · 7/7 phases 🟢 · 193/193 Vitest local · **15/15 Playwright E2E VPS verdes** contra `dev.automatizaformacion.com` (25-05 06:09 UTC, 1m 30s) · Dokploy autodeploy correcto (ETag `778yfwjt2f6lb`→`xpftxrxk886lb`, container swap OK ~6min) · 3 bugs resueltos pre-PR (BUG-2B-01/02/03) · SP-3B-CLOSE-1..5 todos 🟢 · CLOSE-3 diferido SP-4B phase-03b · ⏱ ~2h 23min real vs 16h 30min estim (ratio −86%) · RELEASE-NOTES-v0.2.8 redactadas · hand-off SP-4B phase-03b auto-filled · Nueva tarea SP-4-NEW-13 añadida a Sprint 3 (endpoints /api/health + /api/version tras detectar fricción ETag opaco)"
+maintained_by: af-agents:roadmap-keeper
+last_updated: 2026-05-27
+project_version: v0.3.0-rc.1
+mvp_target: v0.3.0
+mvp_date: 2026-06-22
 excluded_from: [staging, main]
 ---
 
-# RoadMap — dashboard-af
+<!-- Detalle por sprint en "Sprint Tracker (resumen)" más abajo + tablas por sprint + memory/MEMORY.md + RELEASE-NOTES-vX.Y.Z.md. -->
 
-> ⚠️ **Documento vivo**. Mantenido proactivamente por el agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md). NO editar directamente sin orden del lead — pide al agente que lo haga.
+<div align="center">
+
+# 🗺️ RoadMap — `dashboard-af`
+
+![Versión](https://img.shields.io/badge/versión-v0.3.0--rc.1-5b6cff?style=for-the-badge&logo=semver&logoColor=white)
+![MVP GA](https://img.shields.io/badge/MVP%20GA-v0.3.0-1faa66?style=for-the-badge&logo=target&logoColor=white)
+![Fecha](https://img.shields.io/badge/Objetivo-22--jun--2026-e5a93b?style=for-the-badge&logo=calendar&logoColor=white)
+![Excluido](https://img.shields.io/badge/NO%20promocionar-staging%20%7C%20main-e23b3b?style=for-the-badge&logo=git&logoColor=white)
+
+<sub>**Audiencia**: equipo de desarrollo · **Mantiene**: `af-agents:roadmap-keeper` · **Última actualización**: `2026-05-27` por Javi HP</sub>
+
+</div>
+
+<table>
+  <tr>
+    <td align="center" width="25%">📌 Versión<br><code>v0.3.0-rc.1</code></td>
+    <td align="center" width="25%">🎯 MVP GA<br><code>v0.3.0</code></td>
+    <td align="center" width="25%">📅 Fecha objetivo<br><b>22-jun-2026</b></td>
+    <td align="center" width="25%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
+  </tr>
+</table>
+
+> ⚠️ **Documento vivo**. NO editar directamente sin orden del lead — pide al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md) que lo haga.
 >
-> Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+> 💡 Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+
+## 🏁 Mapa de versiones vigente (2026-05-27)
+
+| Sprint              | Versión             | Estado                    | Notas                                                      |
+| ------------------- | ------------------- | ------------------------- | ---------------------------------------------------------- |
+| Sprint 0            | `v0.1.0`            | 🟢 Released               | Hotfixes seguridad                                         |
+| Sprint 1            | `v0.2.0`            | 🟢 Released               | Capa de datos · Repository pattern · 6 ADRs                |
+| Sprint 2            | `v0.2.7`            | 🟢 Released               | HubSpot + Zoho multi-DC · final con hotfix BUG-2-01        |
+| Sprint 2B           | `v0.2.8` / `v0.2.9` | 🟢 Released               | Dashboard KPIs · v0.2.9 post-fix alturas+viewport          |
+| Sprint 3            | `v0.3.0-rc.1`       | 🟢 PR #14 mergeado 26-may | Hardening · Pino + Sentry + rate limiting + Node 22        |
+| SP-4B               | `v0.3.0` GA         | 🔘 Pendiente              | Validación pre-MVP (Renzo) · 16-21 jun                     |
+| Sprint 4            | `v0.4.0`            | 🔘 Pendiente              | Google Sheets bidireccional · post-MVP                     |
+| Sprint Costes-LLM   | `v0.4.1`            | 🔘 Pendiente              | Tracking de tokens LLM · post-Sheets                       |
+| Sprint Refinamiento | `v0.4.2`            | 🔘 Pendiente              | Simulator + lanzador /calls Retell (Renzo)                 |
+| Sprints 5..9        | `v0.5.0+`           | 🔘 Backlog                | Salesforce → GoHighLevel → ActiveCampaign → generalización |
 
 ---
 
@@ -124,6 +155,27 @@ excluded_from: [staging, main]
 > **Nota fila `Versión objetivo MVP` · Valor**: `v0.3.0` GA (rebajada desde `v0.4.0` por decisión 24-05-2026) · Sprint 2 = `v0.2.5`, Sprint 2B = `v0.2.7`, Sprint 3 = `v0.3.0-rc.1`, SP-4B GA = `v0.3.0`
 
 > **Nota fechas internas (24-05-2026)**: las cabeceras `Inicio`/`Fin Est.` de cada Sprint individual (3, 4, 5, 6, 7, 8, 9, Costes-LLM, Refinamiento) mantienen las fechas del plan anterior y se recalcularán al arrancar cada sprint. Las fechas vigentes para planificación inmediata son: Sprint 2B Mar 26-05 → Jue 28-05-2026 · Sprint 3 Vie 29-05 → Vie 12-06-2026 · SP-4B Mar 16-06 → Vie 19-06-2026 · **MVP v0.3.0 GA Lun 22-06-2026**. Post-MVP se desplaza igualmente −7 sem aprox.
+
+---
+
+## Estimaciones realistas V2 (basadas en ratio efectivo Sprints 0/1/2/2B/3 = −92%)
+
+> Cierre auditoría V2 (27-05-2026). Las estimaciones originales asumían desarrollo humano sin IA asistida. Ratio real medido: **~43h reales vs ~541-574h estimadas** sobre 5 sprints cerrados. Estas nuevas estimaciones aplican al trabajo **pendiente** (SP-4B y post-MVP) y son el input principal del Bloque 8 del informe V2 [`docs/audit2/index.html`](../docs/audit2/index.html).
+
+| Etapa pendiente                                                                 | Estim. original | Estim. realista V2 | Responsable     | Fecha objetivo           |
+| ------------------------------------------------------------------------------- | --------------- | ------------------ | --------------- | ------------------------ |
+| **SP-4B — Validación Pre-MVP** (Phases 01..04 + cierre)                         | 40-55h          | **23-32h**         | Renzo + equipo  | 16-jun → 21-jun-2026     |
+| **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
+| Sprint 4 — Google Sheets bidireccional (`v0.4.0`)                               | 60-100h         | **10-15h**         | Javi HP         | 23-jun → 30-jun-2026     |
+| Sprint Costes-LLM (`v0.4.1`) — recomendación V2: **adelantar antes que Sheets** | 23-31h          | **5-7h**           | Javi HP         | post-MVP, prioridad alta |
+| Sprint Refinamiento Herramientas (`v0.4.2`) — Renzo                             | 18-22h          | **12-15h**         | Renzo           | post-Costes-LLM          |
+| Sprint 5 — Salesforce (`v0.5.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Refinamiento        |
+| Sprint 6 — GoHighLevel (`v0.6.0`)                                               | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
+| Sprint 7 — ActiveCampaign (`v0.7.0`)                                            | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
+| Sprint 8 — Adapter pattern generalization (`v0.8.0`)                            | 20-40h          | **4-7h**           | Javi HP         | post-AC                  |
+| Sprint 9 — Tier 2 on-demand                                                     | 30-50h/CRM      | **6-10h/CRM**      | bajo pedido     | backlog                  |
+
+> **Nota Auditor V2**: estas estimaciones realistas **asumen mantenimiento del patrón de orquestación multi-agente** que ha producido el ratio −92%. Si el equipo se amplía con devs no-orquestados, recalcular al 50% del original como peor caso. Las estimaciones originales se mantienen en las tablas detalladas más abajo como referencia histórica y para hand-off a SP-4B.
 
 ---
 

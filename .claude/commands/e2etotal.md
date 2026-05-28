@@ -1,10 +1,14 @@
 ---
-description: Test E2E exhaustivo y reusable de toda la app (auth, RBAC, RLS, CRUD 12 entidades, integrations, webhooks, widget, observabilidad). Abre navegador real, captura bugs, genera informe.
-argument-hint: [--env local|vps|staging|prod] [--only-fase N] [--skip-fase N,M] [--no-cleanup] [--apps slug1,slug2]
+description: Test E2E exhaustivo y reusable contra VPS (Dokploy, dev.automatizaformacion.com). Para local usar /e2ctotal. Cubre auth, RBAC, RLS, CRUD 12 entidades, integrations, webhooks, widget, observabilidad.
+argument-hint: [--env vps|staging|prod] [--only-fase N] [--skip-fase N,M] [--no-cleanup] [--apps slug1,slug2] [--vps-readonly]
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, TodoWrite, AskUserQuestion, Task]
 ---
 
-# /e2etotal — E2E Full Test Run
+# /e2etotal — E2E Full Test Run (entornos remotos: VPS / staging / prod)
+
+> **Desde 27-may-2026 este comando NO ejecuta contra local**. Para entorno local usar `/e2ctotal` (mismo plan, contra `localhost:8500`). Regla del proyecto: llamar cada cosa por su nombre — E2C = local, E2E = remoto.
+
+**Default `--env vps`** (`https://dev.automatizaformacion.com`). Si se pasa `--env local` el comando AVISA y redirige a usar `/e2ctotal` (no aborta — sigue siendo válido el override por compatibilidad temporal).
 
 **AUTONOMOUS EXECUTION**: no preguntar confirmación en cada paso. Solo pausar:
 
