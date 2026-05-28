@@ -83,6 +83,11 @@ const nextConfig: NextConfig = {
   // como external en server bundles (no pasar por webpack chunking) para evitar runtime errors.
   // Sprint 3 phase-02 Observabilidad (4-03).
   serverExternalPackages: ["pino", "pino-pretty"],
+  // Sprint 3 Hardening: fijar workspace root para Turbopack y silenciar el warning
+  // "We detected multiple lockfiles" causado por worktrees git con package-lock.json propio.
+  turbopack: {
+    root: process.cwd(),
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
@@ -134,5 +139,11 @@ export default withSentryConfig(nextConfig, {
     disable: false,
     deleteSourcemapsAfterUpload: true,
   },
-  disableLogger: true,
+  // Sprint 3 Hardening: reemplazo de `disableLogger: true` (deprecated en @sentry/nextjs 10.54.0+).
+  // Sentry recomienda mover la opción al árbol webpack.treeshake.
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });

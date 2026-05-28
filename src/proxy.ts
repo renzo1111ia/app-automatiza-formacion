@@ -2,7 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
 
-export async function middleware(request: NextRequest) {
+// Sprint 3 Hardening: renombrado de `middleware` a `proxy` (Next.js 16 convention).
+// El archivo `src/middleware.ts` quedó deprecated en Next.js 16.0.0 — la nueva convención
+// es `src/proxy.ts` con `export async function proxy(...)`. Runtime por defecto: Node.js
+// (vs Edge anterior), compatible con Supabase SSR `createServerClient` + cookies.
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = pathname.startsWith("/login");
@@ -34,7 +38,7 @@ export async function middleware(request: NextRequest) {
     const { data } = await supabase.auth.getUser();
     user = data.user;
   } catch (error) {
-    console.error("MIDDLEWARE AUTH ERROR:", error);
+    console.error("PROXY AUTH ERROR:", error);
     // Si hay error de auth y la ruta es protegida → redirigir al login
     if (isProtected) {
       const url = request.nextUrl.clone();
