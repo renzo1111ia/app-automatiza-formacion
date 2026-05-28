@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Database } from "@/types/database";
 import { verifyRetellWebhook } from "@/lib/api-auth";
 import { createLogger } from "@/lib/utils/logger";
+import { getAuthServiceRoleKey } from "@/lib/auth-config";
 
 const log = createLogger("webhook.retell");
 
@@ -152,11 +153,10 @@ export async function POST(req: Request) {
 // Ensure we have an admin client instance for the webhook
 function getAdminSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY; // Admin key
-
-  if (!url || !key) {
-    throw new Error("Missing Supabase configuration (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)");
+  if (!url) {
+    throw new Error("Missing Supabase configuration (SUPABASE_URL)");
   }
+  const key = getAuthServiceRoleKey();
 
   return createClient<Database>(url, key, {
     auth: {

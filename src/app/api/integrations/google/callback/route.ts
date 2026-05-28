@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAuthServiceRoleKey } from "@/lib/auth-config";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -21,10 +22,7 @@ export async function GET(request: Request) {
     const { tokens } = await oauth2Client.getToken(code);
 
     // Save tokens to Supabase
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createClient(process.env.SUPABASE_URL!, getAuthServiceRoleKey());
 
     // Fetch current config
     const { data: tenant } = await supabase

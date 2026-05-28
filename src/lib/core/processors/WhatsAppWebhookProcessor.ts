@@ -4,6 +4,7 @@ import { uploadToMinio } from "@/lib/integrations/minio";
 import axios from "axios";
 import { getLeadLocationData } from "@/lib/core/compliance";
 import { normalizeWhatsAppNumber, ensurePlusPrefix } from "@/lib/utils/phone-helper";
+import { getAuthServiceRoleKey } from "@/lib/auth-config";
 
 /**
  * WHATSAPP WEBHOOK PROCESSOR
@@ -303,11 +304,10 @@ export async function processIncomingWhatsApp(
 
 function getAdminSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error("Missing Supabase configuration (SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)");
+  if (!url) {
+    throw new Error("Missing Supabase configuration (SUPABASE_URL)");
   }
+  const key = getAuthServiceRoleKey();
 
   return createClient<Database>(url, key, {
     auth: {
