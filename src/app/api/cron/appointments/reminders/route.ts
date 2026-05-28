@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { AUTH_SUPABASE_URL, AUTH_SUPABASE_SERVICE_ROLE_KEY } from "@/lib/auth-config";
+import { AUTH_SUPABASE_URL, getAuthServiceRoleKey } from "@/lib/auth-config";
 import { whatsappBridge } from "@/lib/integrations/whatsapp";
 import { Database } from "@/types/database";
 import OpenAI from "openai";
@@ -58,7 +58,7 @@ export async function GET(req: Request) {
   if (cronGuard) return cronGuard;
 
   // We use the service role key to bypass RLS and reach all tenants
-  const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!);
+  const supabase = createClient<Database>(AUTH_SUPABASE_URL!, getAuthServiceRoleKey());
   const now = new Date().toISOString();
 
   try {

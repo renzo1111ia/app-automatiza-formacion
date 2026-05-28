@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { AUTH_SUPABASE_URL, AUTH_SUPABASE_SERVICE_ROLE_KEY } from "@/lib/auth-config";
+import { AUTH_SUPABASE_URL, getAuthServiceRoleKey } from "@/lib/auth-config";
 import { Orchestrator } from "@/lib/core/orchestrator";
 import { Database, PlannedAction } from "@/types/database";
 import { requireCronSecret } from "@/lib/api-auth";
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const cronGuard = requireCronSecret(req);
   if (cronGuard) return cronGuard;
 
-  const supabase = createClient<Database>(AUTH_SUPABASE_URL!, AUTH_SUPABASE_SERVICE_ROLE_KEY!);
+  const supabase = createClient<Database>(AUTH_SUPABASE_URL!, getAuthServiceRoleKey());
   const orchestrator = new Orchestrator();
 
   try {

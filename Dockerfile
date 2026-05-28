@@ -20,13 +20,12 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-# Build-time args para variables server-only que se evalúan a top-level en módulos
-# importados durante `next build` page-data collection (ej. src/lib/auth-config.ts).
-# Sin estas vars, next build falla con "Missing required environment variable".
-# En runtime, las envs reales del tab Environment de Dokploy sobrescriben estos
-# valores — así que pueden ser placeholders en CI si solo se necesita compilar.
-ARG SUPABASE_SERVICE_ROLE_KEY
-ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+# Sprint 3 Hardening: SUPABASE_SERVICE_ROLE_KEY ya NO se pasa como ARG/ENV en build.
+# auth-config.ts evalúa el key de forma LAZY vía getAuthServiceRoleKey() — la var solo
+# se necesita en runtime. Pasarla como ENV durante `docker build` dejaba el key (con
+# permisos admin que bypassan RLS) embebido en una capa de la imagen, visible vía
+# `docker history` o `docker inspect`. En runtime, Dokploy → Environment la inyecta
+# normalmente al contenedor sin tocar la imagen.
 
 # Aumentamos la memoria de Node para evitar el error de Out of Memory en Dokploy/VPS
 ENV NODE_OPTIONS="--max-old-space-size=4096"

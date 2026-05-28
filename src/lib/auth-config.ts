@@ -17,11 +17,11 @@
 // cualquier runtime — Node, Edge, browser).
 const PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-// Variables server-only: en Node runtime están disponibles en runtime; en Edge
-// runtime sólo si se declaran en next.config.js `env: {}`. Acceso directo igual.
+// Server-only URL: en Node runtime está disponible en runtime; en Edge
+// runtime sólo si se declara en next.config.js `env: {}`. Acceso directo igual.
+// SUPABASE_SERVICE_ROLE_KEY ya NO se lee aquí — usar getAuthServiceRoleKey()
+// (Sprint 3 Hardening: evita embebido en imagen Docker).
 const SERVER_SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVER_SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SERVER_SERVICE_ROLE_KEY = process.env.SERVICE_ROLE_KEY;
 
 const isServer = typeof window === "undefined";
 
@@ -56,8 +56,24 @@ export const AUTH_SUPABASE_ANON_KEY: string = (() => {
   return v;
 })();
 
-export const AUTH_SUPABASE_SERVICE_ROLE_KEY: string = (() => {
-  const v = pickFirstNonEmpty(SERVER_SUPABASE_SERVICE_ROLE_KEY, SERVER_SERVICE_ROLE_KEY);
+/**
+ * Lazy getter para el service role key.
+ *
+ * Sprint 3 Hardening: antes era una constante evaluada a top-level (IIFE)
+ * que obligaba a pasar `SUPABASE_SERVICE_ROLE_KEY` como `ARG/ENV` durante
+ * `docker build`, quedando embebida en una capa de la imagen runtime.
+ * Riesgo: `docker history` o `docker inspect` expone el key con permisos
+ * de admin (bypassa RLS) a cualquiera con acceso a la imagen.
+ *
+ * Ahora se evalúa SOLO en runtime cuando el caller lo necesita, leyendo
+ * `process.env` en ese momento. El key queda fuera de la imagen y solo
+ * existe en el entorno del proceso runtime (panel Dokploy → Environment).
+ *
+ * Migración para callers: reemplazar `AUTH_SUPABASE_SERVICE_ROLE_KEY` por
+ * `getAuthServiceRoleKey()`. Lanza el mismo Error si falta.
+ */
+export function getAuthServiceRoleKey(): string {
+  const v = pickFirstNonEmpty(process.env.SUPABASE_SERVICE_ROLE_KEY, process.env.SERVICE_ROLE_KEY);
   if (!v) {
     throw new Error(
       "Missing required env: SUPABASE_SERVICE_ROLE_KEY or SERVICE_ROLE_KEY. " +
@@ -65,4 +81,4 @@ export const AUTH_SUPABASE_SERVICE_ROLE_KEY: string = (() => {
     );
   }
   return v;
-})();
+}
