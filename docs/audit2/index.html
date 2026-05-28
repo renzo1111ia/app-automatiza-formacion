@@ -131,6 +131,10 @@
   .tag.info{background:#dfeefd;color:#0a4778}
   .tag.muted{background:#e8eaf1;color:#4a5577}
 
+  /* Catálogo de bugs (7.4) — evita que la última columna "Sprint plan / Owner" se rompa en vertical */
+  table.bugs-table td:last-child,
+  table.bugs-table th:last-child{white-space:nowrap;min-width:140px;font-size:.84rem;color:var(--ink-soft)}
+
   /* ---------- Antes / Después ---------- */
   .ba{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}
   @media (max-width:780px){.ba{grid-template-columns:1fr}}
@@ -1231,7 +1235,7 @@ flowchart LR
   </div>
 
   <h3>7.4 · Catálogo de bugs detectados (tabla completa)</h3>
-  <table>
+  <table class="bugs-table">
     <thead>
       <tr><th>BUG-ID</th><th>Sev.</th><th>Área</th><th>Descripción</th><th>Ubicación</th><th>Sprint plan / Owner</th></tr>
     </thead>

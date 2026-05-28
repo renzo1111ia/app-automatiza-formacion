@@ -1474,43 +1474,46 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 ---
 
-## Fase 4.5 — Sprint Costes-LLM (post-Sheets, patch v0.5.1)
+## Fase 4.5 — Sprint Costes-LLM con LiteLLM + Langfuse (post-Sheets, patch v0.5.1)
 
-| Campo                          | Valor                                                |
-| ------------------------------ | ---------------------------------------------------- |
-| **Sprint ID**                  | `SP-5B`                                              |
-| **Versión objetivo al cierre** | `v0.5.1` (patch tras Sheets `v0.5.0`)                |
-| **Estado del sprint**          | 🔘 Pendiente                                         |
-| **Estimación total**           | 23-31h dev + 5h 30min cierre ≈ ~28-37h               |
-| **Rama de trabajo sugerida**   | `feature/sprint-costes-llm-post-mvp`                 |
-| **Inicio**                     | Lun 24-08-2026 09:00 (post-Sprint 4 Sheets `v0.5.0`) |
-| **Fin Est.**                   | Jue 27-08-2026 19:00 (3-4 días lab)                  |
-| **Fin Real**                   | —                                                    |
+| Campo                          | Valor                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| **Sprint ID**                  | `SP-5B`                                                                              |
+| **Versión objetivo al cierre** | `v0.5.1` (patch tras Sheets `v0.5.0`)                                                |
+| **Estado del sprint**          | 🔘 Pendiente                                                                         |
+| **Estimación total**           | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista**                 |
+| **Rama de trabajo sugerida**   | `feature/sprint-costes-llm-post-mvp`                                                 |
+| **Inicio**                     | Lun 24-08-2026 09:00 (post-Sprint 4 Sheets `v0.5.0`)                                 |
+| **Fin Est.**                   | Jue 27-08-2026 19:00 (3-4 días lab — sin cambio de calendario)                       |
+| **Fin Real**                   | —                                                                                    |
+| **ADR vinculado**              | [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) |
 
 > **Asignado a:** Javi HP. **Orden fijo (22-05-2026, decisión clienta):** Sprint Costes-LLM va JUSTO DESPUÉS de Google Sheets, antes de Salesforce. Bloquea la fecha de inicio de Sprint 5 (Salesforce) por su duración (+4 días respecto plan original).
 >
 > **Origen del sprint (22-05-2026):** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.3.0`. Trabajo trasladado: parte de 4-03 (tabla `llm_usage_logs` + tracker LangChain) + 4-04 entera (dashboard Recharts) + 2-36 (token_usage en `chat_messages`).
-
-### Tareas de desarrollo (Fase 4.5) — DETALLADAS
-
-| ID                                 | Tarea                                                                    | Estimación  | Estado       | Refs origen                           | Notas                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------ | ----------- | ------------ | ------------------------------------- | ------------------------------------------------------------------- |
-| C-01                               | Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangC … _ver nota↓_ | 5-7h        | 🔘 Pendiente | Era parte de 4-03 (Sprint 3 phase-02) | Reusa `logger` Pino del Sprint 3. … _ver nota↓_                     |
-| C-02                               | Dashboard de costes LLM por tenant/proveedor (admin global … _ver nota↓_ | 16-22h      | 🔘 Pendiente | Era 4-04 (Sprint 3 phase-03)          | Bloqueado por C-01 (necesita tabla `llm_usage_logs`). … _ver nota↓_ |
-| C-03                               | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_ | 2h          | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04)          | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. … _ver nota↓_            |
-| **Subtotal Fase 4.5 — Desarrollo** |                                                                          | **~23-31h** |              |                                       | Objetivo base 27h. + 5h 30min cierre. Total 28-37h con cierre.      |
-
-> **Nota fila `C-01` · Tarea**: Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangChain CallbackHandler + helper `recordLlmUsage()` para call sites OpenAI directos
 >
-> **Nota fila `C-01` · Notas**: Reusa `logger` Pino del Sprint 3. Inventario obligatorio de los 5 call sites OpenAI directos (WhatsApp, RescueWorker, widget, FactExtractor, AIAnalysis) — incluido en estimación. Phase-01 sprint nuevo.
+> **Replanificación 28-05-2026 (decisión Javi HP, pendiente ratificación Bea):** sustituir el plan custom in-house original por adopción de **LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby**. Misma ventana de calendario, capacidades multiplicadas (tracing span-level + evals + prompt management + fallback runtime + virtual keys multi-tenant + replay). Detalle en [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) + plan SP-5B in-situ actualizado + bloque 4.0 de [auditoría V2](../docs/audit2/index.html).
+
+### Tareas de desarrollo (Fase 4.5) — REPLANIFICADAS 28-05-2026
+
+| ID                                 | Tarea                                                                         | Estim. nominal | Estim. realista | Estado       | Refs origen                                                        | Notas                                                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------- | -------------- | --------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| C-01-new                           | LiteLLM Proxy setup Dokploy + virtual keys + fallback runtime + … _ver nota↓_ | 8-14h          | 4-7h            | 🔘 Pendiente | Sustituye C-01 original (descartada)                               | Phase-01 sprint nuevo. SPOF mitigado con ramo de emergencia. _ver nota↓_                           |
+| C-02-new                           | Langfuse Cloud Hobby integration + masking PII + callbacks Lang … _ver nota↓_ | 14-20h         | 6-10h           | 🔘 Pendiente | Sustituye C-02 original (descartada)                               | Phase-02 sprint nuevo. PII crítico: tests sintéticos obligatorios. _ver nota↓_                     |
+| C-03                               | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_      | 2h             | 1-2h            | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04). PRESERVADA tras decisión 28-05-2026. | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Complementa Langfuse con vista por mensaje. _ver nota↓_ |
+| **Subtotal Fase 4.5 — Desarrollo** |                                                                               | **24-36h**     | **11-19h**      |              |                                                                    | Objetivo realista 15h. + 3-5h cierre. Total 14-24h con cierre.                                     |
+
+> **Nota fila `C-01-new` · Tarea**: LiteLLM Proxy setup Dokploy + virtual keys multi-tenant + fallback runtime cross-provider + ramo de emergencia + bootstrap tenants
 >
-> **Nota fila `C-02` · Tarea**: Dashboard de costes LLM por tenant/proveedor (admin global + vista tenant) con Recharts
+> **Nota fila `C-01-new` · Notas**: Phase-01 sprint nuevo. Contenedor `ghcr.io/berriai/litellm:main-stable` pineado. Schema Postgres `litellm_proxy` separado dentro cluster Supabase. SPOF mitigado con health-check + ramo de emergencia a SDK directo (~2h incluidas). Sustituye tabla `llm_usage_logs` custom + helper `recordLlmUsage()` del plan original (descartados — LiteLLM persiste nativamente).
 >
-> **Nota fila `C-02` · Notas**: Bloqueado por C-01 (necesita tabla `llm_usage_logs`). Precios actualizados mayo 2026 en `llm-pricing.ts` (cierra DA-4-005). Phase-02 sprint nuevo (la phase fue movida tal cual desde Sprint 3 phase-03).
+> **Nota fila `C-02-new` · Tarea**: Langfuse Cloud Hobby integration + masking PII + callbacks LangChain + wrappers SDK directos + prompt management
+>
+> **Nota fila `C-02-new` · Notas**: Phase-02 sprint nuevo. Cuenta Cloud Hobby gratis (50k units/mes cubre volumen MVP). Masking PII obligatorio desde día 1 (DNI, teléfonos, emails de leads). DPA con Langfuse Inc. Multi-tenant via tags + metadata. 3-5 prompts conversacionales migrados a UI Langfuse con versionado. Sustituye dashboard Recharts custom del plan original (descartado — Langfuse UI cubre nativamente).
 >
 > **Nota fila `C-03` · Tarea**: Persistir `completion.usage` en `chat_messages.metadata` para TODOS los consumidores OpenAI
 >
-> **Nota fila `C-03` · Notas**: Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Sin backfilling de chats históricos (OpenAI no expone usage retroactivo). Paralelizable con C-01. Phase-03 sprint nuevo.
+> **Nota fila `C-03` · Notas**: Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Sin backfilling de chats históricos (OpenAI no expone usage retroactivo). Paralelizable con C-01-new. Phase-03 sprint nuevo. **PRESERVADA** tras decisión 28-05-2026: complementa LiteLLM (call-level) + Langfuse (span-level) con vista por mensaje persistido (1:1 con Inbox CRM). Tres fuentes de verdad complementarias, no duplicadas.
 
 ### Tareas de cierre obligatorias (Sprint Costes-LLM)
 
