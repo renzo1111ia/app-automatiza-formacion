@@ -488,6 +488,159 @@ flowchart LR
   </div>
   <p class="block-lead">Qué servicios saturarán primero, dónde estarán los costes y qué externalizar (o NO).</p>
 
+  <h3>4.0 · Adopción post-MVP planificada: LiteLLM + Langfuse + Engram + Biome</h3>
+  <p>El equipo ha decidido (28-05-2026) reforzar el stack <b>justo después del MVP <code>v0.3.0</code> GA</b> con cuatro herramientas que cubren capas distintas: <b>gobernanza de llamadas LLM</b> (LiteLLM Proxy), <b>observabilidad y evaluación LLM</b> (Langfuse), <b>memoria persistente del proyecto para Claude Code</b> (Engram) y <b>toolchain de calidad de código</b> (Biome). El objetivo: convertir el actual logging custom de costes LLM en una plataforma de observabilidad real, blindar el multi-tenant frente a abuso de cuota, reducir consumo de tokens en el flujo de desarrollo con Claude Code y acelerar el ciclo de feedback de lint+format del repositorio.</p>
+
+  <div class="callout ok">
+    <p><b>Decisión consolidada:</b> sustituir el plan custom in-house del actual <b>Sprint Costes-LLM (SP-5B, <code>v0.5.1</code>)</b> por una implementación basada en LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby (con migración futura a self-hosted bajo condición). Engram se evaluará como piloto separado para el flujo de desarrollo del equipo.</p>
+    <p><b>Cuándo:</b> inmediatamente después del MVP. El sprint actual <code>SP-5B</code> ya está planificado en el RoadMap como patch <code>v0.5.1</code>, justo después de Google Sheets <code>v0.5.0</code> (Lun 24-08-2026 → Jue 27-08-2026 según fechas actuales). La ventana de implementación se respeta; cambia el alcance interno del sprint.</p>
+  </div>
+
+  <h4>¿Qué aporta cada pieza al proyecto?</h4>
+  <table>
+    <thead><tr><th>Herramienta</th><th>Capa que cubre</th><th>Capacidad ganada vs plan custom actual</th><th>Coste runtime mensual</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b><a href="https://github.com/BerriAI/litellm" target="_blank" rel="noopener">LiteLLM Proxy</a></b><br><span style="font-size:.85rem;color:var(--ink-soft)">MIT · v1.85.x · BerriAI (YC)</span></td>
+        <td>Gateway LLM unificado</td>
+        <td>Routing/fallback runtime entre Anthropic + OpenAI + Gemini · Virtual API keys por tenant · Budget caps + rate-limit per academia · Caching Redis · Audit log nativo · 1 SDK HTTP vs 3 SDKs nativos</td>
+        <td>~5-10 €/mes infra (2 vCPU · 4 GB en Contabo/Hetzner)</td>
+      </tr>
+      <tr>
+        <td><b><a href="https://github.com/langfuse/langfuse" target="_blank" rel="noopener">Langfuse</a></b><br><span style="font-size:.85rem;color:var(--ink-soft)">MIT · v3 · ~14k stars · YC W23</span></td>
+        <td>Observabilidad + evals LLM</td>
+        <td>Tracing span-level de cadenas LangChain · Prompt management versionado · LLM-as-judge evals · Replay de conversaciones · Cost tracking por tenant/agente/modelo · Datasets de regresión</td>
+        <td>0 € en Cloud Hobby (50k units/mes · 2-5k calls esperados encajan con holgura). Self-hosted Dokploy ~10-20 €/mes solo si compliance lo exige.</td>
+      </tr>
+      <tr>
+        <td><b><a href="https://github.com/Gentleman-Programming/engram" target="_blank" rel="noopener">Engram</a></b><br><span style="font-size:.85rem;color:var(--ink-soft)">MIT · v1.15.x · Go · 3.8k stars</span></td>
+        <td>Memoria persistente Claude Code (interna del equipo dev)</td>
+        <td>SQLite local + MCP server consultable por Claude Code on-demand · Sustituye lectura estática del <code>MEMORY.md</code> + 60 ficheros <code>.md</code> de contexto · Retrieval híbrido FTS5 + judging semántico · 100% local, sin cloud</td>
+        <td>0 € (binario local en máquina del dev)</td>
+      </tr>
+      <tr>
+        <td><b><a href="https://biomejs.dev/" target="_blank" rel="noopener">Biome</a></b><br><span style="font-size:.85rem;color:var(--ink-soft)">MIT + Apache-2.0 · v2.4.16 · Rust · 24.8k stars</span></td>
+        <td>Toolchain de calidad de código (linter + formatter)</td>
+        <td>Sustituye ESLint + Prettier + organize-imports en un único binario Rust · Pre-commit 10-25× más rápido · Type-aware sin dependencia de <code>tsc</code> · Mensajes diagnósticos estilo Rust · Zero-config con preset recommended · Convive con ESLint durante migración gradual</td>
+        <td>0 € (binario local en máquina del dev + binario en CI)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>Ventajas concretas mapeadas a la realidad del proyecto</h4>
+  <ul>
+    <li><b>Fallback automático Anthropic ↔ OpenAI ↔ Gemini</b> — hoy una caída de Claude implica reintentar manualmente; LiteLLM lo declara en YAML: <code>fallbacks: [["claude-3-5-sonnet", "gpt-4o", "gemini-2.0-flash"]]</code>. Resuelve el riesgo histórico de rate-limit en horas pico (10:00 ES / 18:00 ES).</li>
+    <li><b>Budget cap por academia</b> — virtual keys de LiteLLM permiten cortar gasto automáticamente si una academia consume más de X€/mes en LLMs (ahora hay que vigilar manualmente vía dashboard custom planificado en SP-5B).</li>
+    <li><b>Debug de un fallo en llamada Retell con un click</b> — Langfuse muestra el trace completo (intent → extraction → reply → summary) con I/O de cada step. Hoy con sólo Sentry esa cadena es invisible.</li>
+    <li><b>A/B de prompts en producción</b> — etiquetar <code>version=v2</code>, comparar score eval + coste + latencia entre cohortes. Sin redeploy. No alcanzable con plan custom SP-5B.</li>
+    <li><b>Cost tracking real por tenant + agente + modelo</b> — exactamente el entregable principal de SP-5B, pero gratis y mantenido por upstream.</li>
+    <li><b>Continuidad de contexto entre sesiones de Claude Code</b> — Engram reduce los ~30-50k tokens redundantes que se cargan en cada chat nuevo al releer <code>MEMORY.md</code> + ficheros <code>.md</code> enlazados. Ahorro estimado <b>~100-150 €/mes</b> en uso real del equipo si llega al 80% del claim del proyecto upstream.</li>
+  </ul>
+
+  <h4>Comparativa: plan actual SP-5B custom vs propuesta LiteLLM + Langfuse</h4>
+  <table>
+    <thead><tr><th>Capacidad</th><th>Plan actual SP-5B (custom)</th><th>Propuesta LiteLLM + Langfuse</th></tr></thead>
+    <tbody>
+      <tr><td>Cost tracking por tenant</td><td><span class="tag ok">Cubierto</span> (Recharts custom)</td><td><span class="tag ok">Cubierto</span> (nativo, sin código)</td></tr>
+      <tr><td>Tracing span-level cadenas LLM</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span></td></tr>
+      <tr><td>Prompt management versionado</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span></td></tr>
+      <tr><td>Evals LLM-as-judge automáticos</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span></td></tr>
+      <tr><td>Fallback runtime cross-provider</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span> (LiteLLM)</td></tr>
+      <tr><td>Virtual keys + budget cap per tenant</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span> (LiteLLM)</td></tr>
+      <tr><td>Replay de conversaciones para regresión</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span></td></tr>
+      <tr><td>Datasets de regresión desde traces reales</td><td><span class="tag warn">No cubierto</span></td><td><span class="tag ok">Cubierto</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Tiempos estimados y tiempos realistas — al ritmo real del equipo</h4>
+  <p style="font-size:.88rem;color:var(--ink-soft)">El proyecto lleva un patrón consistente de <b>ratio realista &lt; estimación nominal</b> (Sprint 1: ratio −86%; Sprint 2B: ratio −86% según notas del RoadMap). El equipo entrega rápido cuando las decisiones están cerradas. Estos rangos lo reflejan.</p>
+  <table>
+    <thead><tr><th>Tarea</th><th>Estimación nominal</th><th>Estimación realista (ritmo equipo)</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>Setup LiteLLM Proxy en Dokploy (Docker + Postgres schema + config YAML inicial)</td><td>4-6h</td><td>1-2h</td><td>Reaprovecha Dokploy panel + cluster Supabase existente.</td></tr>
+      <tr><td>Migración llamadas LangChain JS a <code>basePath</code> proxy (3 providers)</td><td>3-5h</td><td>1-2h</td><td>Cambio de config, no de lógica.</td></tr>
+      <tr><td>Mapping tenant → org/team/key + bootstrap script</td><td>4-6h</td><td>2-3h</td><td>RLS multi-tenant ya consolidado en Sprint 1.</td></tr>
+      <tr><td>Langfuse Cloud Hobby setup + LangChain callback handler</td><td>4-6h</td><td>1h</td><td>Plug-and-play. 1 línea por agente.</td></tr>
+      <tr><td>Wrappers SDK directos (Anthropic + OpenAI + Gemini call sites no-LangChain)</td><td>6-10h</td><td>2-3h</td><td>5 call sites identificados en audit (WhatsApp, RescueWorker, widget, FactExtractor, AIAnalysis).</td></tr>
+      <tr><td>Masking PII multi-tenant (LiteLLM + Langfuse) + tests</td><td>8-12h</td><td>3-5h</td><td>Crítico GDPR (transcripts con DNI, teléfonos, emails).</td></tr>
+      <tr><td>Dashboard mínimo admin global (vista tenant) — solo si Langfuse Cloud no basta</td><td>16-22h</td><td>3-6h</td><td>Si Langfuse cubre, este ítem se elimina y ahorra el grueso.</td></tr>
+      <tr><td>Persistir <code>completion.usage</code> en <code>chat_messages.metadata</code> (C-03 original)</td><td>2h</td><td>1h</td><td>Sigue siendo necesario (audit F-DA-4 + informe Renzo §3 ⚠️).</td></tr>
+      <tr><td>Documentación ADR-020 LLM Observability & Gateway + runbook</td><td>2-3h</td><td>1-2h</td><td>Plantilla ADR existente.</td></tr>
+      <tr><td><b>Subtotal LiteLLM + Langfuse</b></td><td><b>49-72h</b></td><td><b>15-25h</b></td><td>Cabe en la ventana SP-5B actual (Lun 24-08 → Jue 27-08-2026, ~30h netas dev).</td></tr>
+      <tr><td>Engram setup + migración memorias .md + plugin Claude Code</td><td>1-2h</td><td>30min-1h</td><td>Fuera de SP-5B (es del flujo dev interno, no del producto). Piloto separado.</td></tr>
+      <tr><td>Engram piloto monitorizado (1 semana, medir tokens antes/después)</td><td>—</td><td>~30min/día durante 5 días</td><td>Sin impacto en sprint del producto. Evaluación interna.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><b>Conclusión de tiempos:</b> la propuesta LiteLLM + Langfuse <b>cabe dentro del Sprint Costes-LLM actual sin desplazar el sprint Salesforce</b> (15-25h realistas vs ~30h netas disponibles en SP-5B). El plan custom original (28-37h nominales · ~5-10h realistas según el patrón del equipo) cubre menos capacidades por inversión similar. La decisión razonada: <b>misma ventana de calendario, mayor cobertura de funcionalidad por la misma quincena de trabajo</b>.</p>
+    <p><b>Riesgo único a vigilar:</b> Single Point of Failure del LiteLLM Proxy. Mitigación: ramo de emergencia en código que detecta proxy caído y llama directo a SDK del provider — añade ~2h de robustez ya incluidas en el subtotal.</p>
+  </div>
+
+  <h4>Engram — memoria persistente del flujo de desarrollo</h4>
+  <p>Engram es una herramienta <b>del flujo interno de desarrollo</b>, no del producto. Sustituye el sistema actual de auto-memoria estática de Claude Code (carga 200 líneas de <code>MEMORY.md</code> + ~60 ficheros <code>.md</code> enlazados al inicio de cada chat) por una base de conocimiento local en SQLite consultable bajo demanda mediante MCP. Beneficio directo: menos tokens consumidos al reanudar trabajo en chats nuevos, mayor continuidad de contexto entre sesiones de Javi HP y Renzo.</p>
+  <div class="callout">
+    <p><b>Modo de implementación:</b> piloto de 1 semana en máquina de Javi HP <b>después del MVP <code>v0.3.0</code> GA</b>. Si el ahorro de tokens medido se acerca al claim del upstream (~80-90% de reducción de contexto redundante), se documenta el setup y Renzo lo adopta a continuación.</p>
+    <p><b>Privacidad:</b> Engram es 100% local SQLite, cero datos a cloud, compatible con confidencialidad cliente y RGPD del proyecto. La memoria es por máquina del dev — cada uno tiene la suya y no se comparten automáticamente.</p>
+    <p><b>Riesgo declarado:</b> proyecto Engram es joven (3 meses, v1.15.x). Si se detectan breaking changes en upgrade, se mantiene en versión pineada hasta que estabilice. La capa <code>CLAUDE.md</code> + <code>MEMORY.md</code> actual se preserva como fallback.</p>
+  </div>
+
+  <h4>Biome — toolchain de calidad de código (linter + formatter)</h4>
+  <p>Biome es una herramienta <b>del flujo interno de desarrollo</b>, no del producto. Sustituye el dúo ESLint + Prettier por un único binario Rust que combina linter, formatter y organize-imports. Cobertura actual (v2.4.16, mayo 2026): ~502 reglas de lint, ~97% paridad Prettier en formato, ~85% paridad <code>typescript-eslint</code> en reglas type-aware. Casos reales de migración reportan reducciones de pre-commit del orden 10-25× (caso fireup.pro: 27.2s → 1.8s, 92.6% reducción).</p>
+
+  <h5 style="margin-top:14px;color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">Mejoras concretas para dashboard-af</h5>
+  <ul>
+    <li><b>Pre-commit hooks 10-25× más rápidos</b> — el repo tiene husky + lint-staged consolidado desde Sprint 0. En repos comparables (1-3k archivos TS) el feedback baja de ~10-15s a &lt;500ms. Con el ritmo del equipo (decenas de commits al día), el ahorro acumulado es real.</li>
+    <li><b>Una herramienta vs cinco</b> — hoy conviven ESLint + Prettier + <code>eslint-plugin-prettier</code> + <code>@typescript-eslint</code> + plugins. Biome consolida todo en un binario con un único <code>biome.json</code> de configuración.</li>
+    <li><b>Type-aware sin tsc</b> — reglas tipo <code>noFloatingPromises</code> ejecutan inferencia propia sin necesidad de compilar el proyecto completo (relevante para el código async-heavy con BullMQ + LangChain + Retell/Ultravox webhooks).</li>
+    <li><b>Auto-fix categorizado seguro/inseguro</b> — Biome marca explícitamente qué fixes son safe vs unsafe. Más limpio que el batch fixing actual de ESLint.</li>
+    <li><b>Diagnostics estilo compilador Rust</b> — mensajes contextualizados con span del error en el código (DX superior).</li>
+    <li><b>Binario único en CI</b> — sin <code>node_modules</code> necesario para lint+format si se cachea el binario; pipelines GitHub Actions más rápidos.</li>
+  </ul>
+
+  <h5 style="color:var(--ink);text-transform:none;letter-spacing:0;font-weight:600">Limitaciones a aceptar al migrar</h5>
+  <table>
+    <thead><tr><th>Regla / Plugin ESLint</th><th>Estado en Biome</th><th>Impacto dashboard-af</th></tr></thead>
+    <tbody>
+      <tr><td><code>next/no-html-link-for-pages</code></td><td>Ausente</td><td>Bajo (Next 16 App Router minimiza uso)</td></tr>
+      <tr><td><code>eslint-plugin-tailwindcss</code> (sort classes)</td><td><code>useSortedClasses</code> en nursery, fix unsafe</td><td>Medio — UI heavy Tailwind</td></tr>
+      <tr><td><code>eslint-plugin-testing-library</code></td><td>Ausente</td><td>Medio (Vitest + RTL)</td></tr>
+      <tr><td><code>@typescript-eslint/no-floating-promises</code></td><td>~75% paridad</td><td>Alto — código async-heavy (BullMQ, LangChain)</td></tr>
+      <tr><td><code>eslint-plugin-vitest</code></td><td>Ausente</td><td>Medio</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn">
+    <p><b>⚠️ Recomendación del Auditor sobre el timing — esto es lo que cambia respecto a las otras tres herramientas:</b></p>
+    <p><b>NO migrar a Biome durante el MVP en marcha (Sprints 0-3 + Sprint 4 Sheets + SP-5B Costes-LLM).</b> Razones operativas concretas:</p>
+    <ol>
+      <li><b>Invalida el baseline de <code>SP-4-LINT-ZERO</code></b> — el proyecto tiene 114 warnings ESLint pendientes con plan de bajar a 0 al cierre MVP. Biome NO traduce 1:1 ese baseline (cambian reglas, algunas desaparecen, otras nuevas afloran). Migrar antes obliga a rehacer el baseline desde cero.</li>
+      <li><b>Cobertura type-aware al 75-85%</b> en reglas como <code>noFloatingPromises</code> — perder ese 15% de cobertura en código con concurrencia BullMQ + LangChain + multi-LLM es regresión real de seguridad durante el MVP.</li>
+      <li><b>Tailwind sort en nursery con fix unsafe</b> — la UI del dashboard es Tailwind-heavy; no es momento de exponerse a fix automáticos potencialmente peligrosos.</li>
+      <li><b>Coste de oportunidad alto en MVP</b> — la migración cuesta ~13-17h nominales (~5-8h al ritmo del equipo), y esas horas tienen mejor retorno cerrando funcionalidad de cara a la clienta que cambiando toolchain interno.</li>
+    </ol>
+    <p><b>Cuándo SÍ migrar:</b> después de cerrar <code>SP-4-LINT-ZERO</code> (baseline en 0 con ESLint) y después del MVP <code>v0.3.0</code> GA. Ventana sugerida: <b>tras el sprint Refinamiento Herramientas (v0.5.2) o como sprint dedicado posterior</b>, condicionado a:</p>
+    <ul>
+      <li><code>useSortedClasses</code> sale de nursery con fix safe estable, o</li>
+      <li><code>noFloatingPromises</code> alcanza ≥95% paridad con <code>typescript-eslint</code>, o</li>
+      <li>aparece un <code>biome-plugin-next</code> oficial cubriendo las reglas Next.js que hoy faltan.</li>
+    </ul>
+    <p><b>Mientras tanto, mejora incremental sin riesgo (1-3h, recomendada YA):</b> migrar el <code>.eslintrc</code> legacy del proyecto a <code>eslint.config.js</code> flat config + activar caché ESLint (<code>--cache</code>) en husky. Da 5-10× de velocidad en runs incrementales sin cambiar de herramienta. Cero coste de baseline, cero riesgo.</p>
+  </div>
+
+  <h4>Resumen de la decisión</h4>
+  <table>
+    <thead><tr><th>Herramienta</th><th>Cuándo</th><th>Esfuerzo realista</th><th>Coste runtime</th><th>Modalidad</th></tr></thead>
+    <tbody>
+      <tr><td><b>LiteLLM Proxy</b></td><td>Sprint Costes-LLM SP-5B (post-Sheets)</td><td>~6-10h</td><td>~5-10 €/mes infra Dokploy</td><td>Self-hosted en VPS del cliente</td></tr>
+      <tr><td><b>Langfuse</b></td><td>Sprint Costes-LLM SP-5B (post-Sheets)</td><td>~9-15h (con masking + tests)</td><td>0 € (Cloud Hobby)</td><td>Cloud Hobby inicial · migración a self-hosted condicional</td></tr>
+      <tr><td><b>Engram</b></td><td>Piloto post-MVP <code>v0.3.0</code> GA (no parte del producto)</td><td>~1h setup + 1 semana piloto</td><td>0 € (local)</td><td>Local en máquina de cada dev</td></tr>
+      <tr><td><b>Biome</b></td><td>Post Sprint Refinamiento <code>v0.5.2</code> (no antes — invalida baseline lint MVP)</td><td>~5-8h migración + tests</td><td>0 € (local + CI)</td><td>Sprint dedicado tras MVP, condicionado a madurez upstream</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:.88rem;color:var(--ink-soft)">Cuando arranque el sprint SP-5B se redactará <b>ADR-020 LLM Observability & Gateway</b> consolidando la decisión sobre LiteLLM + Langfuse y se actualizarán las tareas C-01/C-02/C-03 del RoadMap reemplazándolas por las equivalentes. Engram y Biome se incorporan como tareas separadas del flujo dev interno (no del producto): Engram como piloto inmediato tras MVP, Biome como sprint dedicado posterior cuando la madurez upstream y el cierre de <code>SP-4-LINT-ZERO</code> lo permitan. El reporte consultivo completo que motiva estas decisiones está archivado en <code>plans/visuals/consultivo-stack-evaluacion-280526.md</code>.</p>
+
   <h3>4.1 · Supabase self-hosted (Dokploy en Hetzner) — el core</h3>
   <div class="callout warn">
     <p><b>Riesgo:</b> el VPS actual ejecuta en un único nodo el Postgres + Kong + PostgREST + GoTrue + Storage + Next.js + BullMQ workers + Redis. Toda la pila compite por los mismos cores/RAM/disco.</p>
