@@ -23,9 +23,9 @@ export async function GET() {
   return Response.json(
     {
       version: packageJson.version,
-      commit: process.env.GIT_COMMIT_SHA ?? "unknown",
-      branch: process.env.GIT_BRANCH ?? "unknown",
-      deployedAt: process.env.BUILD_TIMESTAMP ?? "unknown",
+      commit: process.env.GIT_COMMIT_SHA || "unknown",
+      branch: process.env.GIT_BRANCH || "unknown",
+      deployedAt: process.env.BUILD_TIMESTAMP || "unknown",
       nodeVersion: process.version,
     },
     {
