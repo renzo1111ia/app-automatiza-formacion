@@ -1,254 +1,230 @@
 ---
-title: "Phase 01 — Tabla llm_usage_logs + LangChain CostTrackingCallback (C-01)"
+title: "Phase 01 — LiteLLM Proxy setup en Dokploy + virtual keys multi-tenant + fallbacks"
 sprint: SP-5B
 phase: 1
-tasks: [C-01]
-effort: 5-7h
+tasks: [C-01-new]
+adr: ADR-024 (Draft)
+effort_nominal: 8-14h
+effort_realistic: 4-7h
 status: pending
-agents: [af-agents:database, af-agents:code]
+agents: [af-agents:deployment, af-agents:database, af-agents:code]
 ---
 
-# Phase 01 — Tabla `llm_usage_logs` + LangChain CostTrackingCallback
+# Phase 01 — LiteLLM Proxy setup en Dokploy + virtual keys multi-tenant + fallbacks
 
 ## Context Links
 
 - Plan overview: [plan.md](plan.md)
-- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-01)
-- **Origen del split (22-05-2026):** este contenido vivía dentro de Sprint 3 phase-02 (4-03). Se extrajo cuando la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`. La parte que SE QUEDA en MVP (Pino logger + métricas BullMQ + Sentry) sigue en Sprint 3 phase-02.
-- Researcher: `plans/reports/researcher-observability-d-20260520.md` §3.4 (LangChain CallbackHandler)
-- DA-4-005 audit: precios LLM hardcodeados obsoletos (GPT-4 2023) — se corrige en Ph2 (`llm-pricing.ts`)
-- F-DA-4 audit: token_usage no persistido en `chat_messages` — se cierra en Ph3
+- ADR-024 (Draft): [`docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md`](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md)
+- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-01 sustituida)
+- Reporte consultivo: [`plans/visuals/consultivo-stack-evaluacion-280526.md`](../visuals/consultivo-stack-evaluacion-280526.md) §4 LiteLLM
+- LiteLLM Proxy docs: <https://docs.litellm.ai/docs/simple_proxy>
+- LiteLLM multi-tenant: <https://docs.litellm.ai/docs/proxy/multi_tenant_architecture>
+- LiteLLM virtual keys: <https://docs.litellm.ai/docs/proxy/virtual_keys>
+- Sustituye contenido previo C-01 (custom `llm_usage_logs` + LangChain `CostTrackingCallback`) — ver §Histórico en plan.md
 
 ## Overview
 
 - **Priority:** P2
 - **Status:** Pendiente
-- **Descripción:** Crear la tabla `llm_usage_logs` con RLS multi-tenant y el LangChain `CostTrackingCallback` que captura tokens en cada llamada LLM (Anthropic, OpenAI, Google) y los persiste. Es la base de datos del dashboard de costes (Ph2). **Bedrock descartado del stack 26-05-2026** (orden usuario).
+- **Descripción:** Desplegar LiteLLM Proxy v1.85.x como contenedor Dokploy en el VPS Hetzner, provisionar schema Postgres `litellm_proxy` dentro del cluster Supabase existente, configurar `model_list` con Anthropic + OpenAI + Google Genai, declarar fallbacks runtime, y crear virtual keys + budgets per tenant. Reemplaza por completo la propuesta original de tabla custom `llm_usage_logs` + helper `recordLlmUsage()`.
 
 ## Key Insights
 
-- **Captura por LangChain CallbackHandler**: usa el patrón estándar de `BaseCallbackHandler` (parte de `@langchain/core`), no requiere dep nueva.
-- **Llamadas OpenAI directas** (no a través de LangChain) **NO son capturadas por el callback**. Hoy en día tenemos: `WhatsAppAIProcessor`, `RescueWorker`, `widget.ts` (server action), `FactExtractor`, `AIAnalysis`. Estas siguen registrando en `chat_messages.metadata.token_usage` (Ph3) PERO conviene también persistirlas en `llm_usage_logs` para que el dashboard tenga datos unificados. Decisión: en esta fase añadimos un helper `recordLlmUsage()` que cada call site OpenAI directo invoca tras `chat.completions.create()`. Es +30min por call site, ~3h total para los 5 call sites.
-- **Cálculo de costes**: se calcula en app al momento de persistir (no en BD) para facilitar actualización de precios. Tabla `src/lib/llm-pricing.ts` con precios mayo 2026 (DA-4-005 cerrado aquí).
-- **LangSmith descartado**: PII en payloads → no enviar a SaaS externo.
+- **Único modo viable**: el stack es Node.js/TypeScript. LiteLLM no tiene SDK JS oficial. Modo Proxy es la única opción técnica (consumimos REST API OpenAI-compatible).
+- **Persistencia nativa**: LiteLLM Proxy persiste cost tracking en su schema Postgres propio (`LiteLLM_SpendLogs`, `LiteLLM_VerificationToken`, etc.). No necesitamos tabla `llm_usage_logs` paralela.
+- **Multi-tenant mapping**: `tenant_id (academia) → Organization`, `user admin academia → Team`, `agente/feature (chat, extractor, resumen) → User`, `runtime key → Key`. Permite budget USD/mes por academia y rate-limit per feature.
+- **Fallback declarativo**: en el YAML se declara `fallbacks: [["claude-3-5-sonnet", "gpt-4o", "gemini-2.0-flash"]]`. Cero código de fallback en app. Resuelve riesgo histórico de rate-limit Anthropic en horas pico.
+- **Caching Redis**: respuestas idempotentes (extracción de hechos, resúmenes batch) cachean automáticamente. Ahorro 20-40% en cargas batch.
+- **SPOF mitigado**: si el contenedor LiteLLM Proxy se cae, todos los agentes fallan. Mitigación: detector de proxy down en código + ramo de emergencia que llama directo al SDK del provider. ~2h trabajo incluido en esta phase.
+- **Latencia añadida**: <2ms intra-VPS (mismo cluster Dokploy). Despreciable.
+- **Sin SDK Python ni Cloud**: el proyecto NO usa LiteLLM Cloud (vendor lock + datos sensibles fuera de UE) ni el SDK Python (stack TS).
 
 ## Requirements
 
 ### Funcionales
 
-- Tabla `llm_usage_logs` con columnas: `id`, `tenant_id`, `provider`, `model`, `prompt_tokens`, `completion_tokens`, `cost_usd`, `session_id`, `lead_id`, `action`, `created_at`.
-- RLS multi-tenant: SELECT solo para `tenant_id = jwt.tenant_id` o `is_admin=true`.
-- `src/lib/llm-cost-tracker.ts`: LangChain `BaseCallbackHandler` que en `handleLLMEnd` extrae `usage` + `model` + calcula `cost_usd` y hace INSERT en `llm_usage_logs`.
-- `src/lib/llm-pricing.ts`: constante con precios mayo 2026 por provider/model (input/output per 1M tokens).
-- Helper `recordLlmUsage()` para call sites OpenAI directos.
-- Aplicar el callback a la factory de LangChain (`src/lib/llm/agent-factory.ts` o equivalente).
-- Aplicar `recordLlmUsage()` en los 5 call sites OpenAI directos identificados.
+- Contenedor LiteLLM Proxy desplegado en Dokploy panel del VPS Hetzner:
+  - Imagen: `ghcr.io/berriai/litellm:main-stable` con tag SemVer concreto pineado (ej. `v1.85.x`, NO `latest`).
+  - Red interna Dokploy (sin exposición Traefik público).
+  - Healthcheck `/health/readiness` cada 30s.
+  - Recursos: 2 vCPU + 4 GB RAM. Cabe en VPS actual sin escalar.
+  - Variables de entorno: `LITELLM_MASTER_KEY` (generada con `crypto.randomBytes(32).toString('base64url')`), `DATABASE_URL` (apuntando a schema `litellm_proxy` del Supabase Postgres), `STORE_MODEL_IN_DB=true`, `LITELLM_LOG=INFO`.
+- Schema Postgres `litellm_proxy` provisionado en cluster Supabase existente:
+  - Migración SQL ad-hoc (NO en `supabase/migrations/` para no mezclar con migraciones del app).
+  - Schema separado: `CREATE SCHEMA IF NOT EXISTS litellm_proxy;` + LiteLLM ejecuta sus propias migraciones internas al arrancar.
+  - Sin acceso de la app dashboard-af a este schema (aislamiento estricto).
+- `config.yaml` del Proxy con:
+  - `model_list` cubriendo todos los modelos en uso por el proyecto (Anthropic Claude Opus/Sonnet/Haiku; OpenAI GPT-4o/4o-mini/o1; Google Gemini Flash/Pro).
+  - `fallbacks: [["claude-3-5-sonnet-20241022", "gpt-4o", "gemini-2.0-flash"]]` (orden por preferencia + coste).
+  - `litellm_settings.cache: true` con Redis (reutilizar el Redis ya existente del proyecto en otra DB).
+  - `general_settings.master_key`, `database_url` referenciadas vía env var.
+- Bootstrap script `scripts/setup-litellm-tenants.ts` que, dado el listado actual de tenants en Supabase, crea Organizations + Teams + Keys en LiteLLM Proxy via su admin REST API. Budgets iniciales conservadores (ej. 10 USD/mes per tenant, ajustables luego).
+- Ramo de emergencia en código:
+  - `src/lib/llm/litellm-client.ts`: cliente HTTP que apunta al proxy + health-check periódico (cada 60s).
+  - `src/lib/llm/emergency-fallback.ts`: si health-check falla 3 veces consecutivas, llamadas LLM caen a SDK directo del provider (Anthropic, OpenAI, Gemini).
+  - Sentry breadcrumb cuando se activa ramo de emergencia.
+- Migración config existente:
+  - `src/lib/llm/agent-factory.ts` (o equivalente): apuntar `ChatOpenAI` / `ChatAnthropic` / `ChatGoogleGenerativeAI` de LangChain con `baseURL: process.env.LITELLM_PROXY_URL` y `apiKey: tenant-specific-key`.
+  - 5 call sites OpenAI directos (WhatsAppAIProcessor, RescueWorker, widget.ts, FactExtractor, AIAnalysis): apuntar `openai.chat.completions.create()` al proxy con virtual key.
 
 ### No funcionales
 
-- **Failure mode**: si el INSERT a `llm_usage_logs` falla (BD caída, etc.), log warning y NO romper el flujo del LLM. La métrica es defense-in-depth, no la única fuente de verdad (la fuente principal es `chat_messages.metadata.token_usage` de Ph3).
-- Índices en `(tenant_id, created_at DESC)` y `(tenant_id, provider, created_at DESC)` para queries del dashboard.
-- Migración idempotente: `CREATE TABLE IF NOT EXISTS` + `DROP POLICY IF EXISTS` antes de cada CREATE POLICY.
+- **Failure mode**: si LiteLLM Proxy retorna 5xx, el cliente reintenta 2 veces con backoff antes de activar ramo de emergencia. Si ramo de emergencia falla, propagar error al caller normal.
+- **Variables `.env.example`** actualizadas con `LITELLM_PROXY_URL`, `LITELLM_MASTER_KEY` (placeholders).
+- **Documentación operativa**: runbook `runbook-litellm.md` en este mismo directorio con comandos para: añadir nuevo tenant, ajustar budget cap, ver logs del proxy, restart manual.
+- **Persistencia**: el schema `litellm_proxy` debe quedar fuera del backup automático de Supabase del proyecto principal (configurar política aparte). Razón: datos de cost tracking no son críticos para recuperar el sistema, restaurarlos sobreescribiría tracking real reciente.
 
 ## Architecture
 
-```
-Flujo LangChain:
-  AgentFactory.create(... { callbacks: [costTracker] })
-    → cada llamada LLM dispara handleLLMEnd(output)
-    → costTracker extrae usage.{prompt,completion}_tokens + model
-    → calcula cost_usd con llm-pricing.ts
-    → INSERT llm_usage_logs (tenant_id, provider, model, tokens, cost_usd, action, lead_id)
+```text
+                      ┌──────────────────────────┐
+                      │      VPS Hetzner         │
+                      │       (Dokploy)          │
+                      │                          │
+   Next.js  ──────►   │  LiteLLM Proxy :4000     │  ──────►  Anthropic API
+   (LangChain         │    ├ virtual keys        │  ──────►  OpenAI API
+    + SDK directo)    │    ├ budgets             │  ──────►  Google Genai API
+                      │    ├ fallback runtime    │
+                      │    ├ rate-limit          │
+                      │    └ cache (Redis)       │
+                      │             │            │
+                      │             ▼            │
+                      │   Postgres schema        │
+                      │   `litellm_proxy`        │
+                      │   (Supabase cluster)     │
+                      └──────────────────────────┘
 
-Flujo OpenAI directo (widget, WhatsApp, etc.):
-  const completion = await openai.chat.completions.create(...);
-  await recordLlmUsage({
-    tenantId, provider: 'openai', model: completion.model,
-    usage: completion.usage, action: 'widget.chat', leadId,
-  });
+   FALLBACK DE EMERGENCIA:
+   Si LiteLLM Proxy down (health-check fail 3x):
+       Next.js ──────►  SDK directo Anthropic/OpenAI/Gemini (sin proxy)
+       Sentry breadcrumb registrado para alerting
 ```
 
 ## Related Code Files
 
 ### Crear
 
-- `supabase/migrations/YYYYMMDD_llm_usage_logs.sql` — tabla + RLS + índices
-- `src/lib/llm-pricing.ts` — constante de precios mayo 2026
-- `src/lib/llm-cost-tracker.ts` — LangChain CallbackHandler + helper `recordLlmUsage()`
+- `infra/litellm-proxy/config.yaml` — configuración del proxy (model_list, fallbacks, cache).
+- `infra/litellm-proxy/docker-compose.dokploy.yml` — definición Dokploy del servicio.
+- `infra/litellm-proxy/migrations/001_init_schema.sql` — provisión schema vacío (LiteLLM ejecuta sus migrations al arrancar).
+- `scripts/setup-litellm-tenants.ts` — bootstrap de Organizations/Teams/Keys.
+- `src/lib/llm/litellm-client.ts` — cliente HTTP + health-check.
+- `src/lib/llm/emergency-fallback.ts` — ramo de emergencia a SDK directo.
+- `src/lib/llm/__tests__/emergency-fallback.test.ts` — tests del fallback.
+- `plans/260522-1430-sprint-costes-llm-post-mvp/runbook-litellm.md` — operativa.
 
 ### Modificar
 
-- `src/lib/llm/agent-factory.ts` (o equivalente que crea `ChatOpenAI`/`ChatAnthropic` LangChain) — inyectar `costTracker` como callback.
-- 5 call sites OpenAI directos: `WhatsAppAIProcessor.ts`, `AIRescueService.ts`, `src/lib/actions/widget.ts`, `FactExtractor.ts`, `AIAnalysis.ts` (o sus equivalentes) — invocar `recordLlmUsage()` tras `chat.completions.create()`.
+- `src/lib/llm/agent-factory.ts` (o equivalente) — apuntar LangChain chat models al proxy.
+- `src/lib/whatsapp/whatsapp-ai-processor.ts` — apuntar `openai.chat.completions.create()` al proxy con virtual key.
+- `src/lib/rescue/ai-rescue-service.ts` — idem.
+- `src/lib/actions/widget.ts` — idem.
+- `src/lib/extraction/fact-extractor.ts` — idem.
+- `src/lib/analysis/ai-analysis.ts` — idem.
+- `.env.example` — añadir `LITELLM_PROXY_URL`, `LITELLM_MASTER_KEY` placeholders.
+- `docs/dev-onboarding.md` — sección breve sobre cómo arrancar el proxy en local (modo desarrollo sin Dokploy).
+
+### Eliminar / no crear (vs plan original descartado)
+
+- ❌ `supabase/migrations/YYYYMMDD_llm_usage_logs.sql` (NO crear — tabla descartada).
+- ❌ `src/lib/llm-pricing.ts` (NO crear — pricing lo gestiona LiteLLM internamente).
+- ❌ `src/lib/llm-cost-tracker.ts` (NO crear — LiteLLM persiste nativamente).
+- ❌ Helper `recordLlmUsage()` (NO crear — innecesario).
 
 ## Implementation Steps
 
-1. **Migración SQL** (`af-agents:database`):
+1. **Setup Dokploy service** (~1-2h)
+   - Crear nueva app en Dokploy panel con imagen `ghcr.io/berriai/litellm:main-stable`.
+   - Configurar volúmenes para `/app/config.yaml` y persistir `litellm_proxy` schema en Postgres.
+   - Configurar red interna sin exposición Traefik público.
+   - Healthcheck Dokploy nativo apuntando a `/health/readiness`.
 
-   ```sql
-   CREATE TABLE IF NOT EXISTS llm_usage_logs (
-     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-     tenant_id UUID NOT NULL REFERENCES tenants(id),
-     provider TEXT NOT NULL,
-     model TEXT NOT NULL,
-     prompt_tokens INTEGER NOT NULL DEFAULT 0,
-     completion_tokens INTEGER NOT NULL DEFAULT 0,
-     cost_usd NUMERIC(10,6),
-     session_id UUID,
-     lead_id UUID REFERENCES lead(id) ON DELETE SET NULL,
-     action TEXT,
-     created_at TIMESTAMPTZ DEFAULT NOW()
-   );
+2. **Provisionar schema Postgres** (~30min)
+   - Conectar vía `psql` al Postgres del cluster Supabase.
+   - `CREATE SCHEMA IF NOT EXISTS litellm_proxy;`
+   - Configurar user dedicado `litellm_admin` con permisos solo sobre ese schema.
+   - Aislar de las políticas RLS del schema `public` del app.
 
-   ALTER TABLE llm_usage_logs ENABLE ROW LEVEL SECURITY;
+3. **Generar master key + config inicial** (~30min)
+   - Generar `LITELLM_MASTER_KEY` con `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`.
+   - Guardar en vault del proyecto (`.secrets/` gitignored).
+   - Editar `config.yaml` con `model_list` + `fallbacks` + `cache.redis`.
 
-   DROP POLICY IF EXISTS "tenant_isolation_select" ON llm_usage_logs;
-   CREATE POLICY "tenant_isolation_select" ON llm_usage_logs
-     FOR SELECT
-     USING (
-       tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
-       OR (auth.jwt() -> 'app_metadata' ->> 'is_admin')::boolean = true
-     );
+4. **Bootstrap tenants** (~1h)
+   - Ejecutar `scripts/setup-litellm-tenants.ts` que lee tenants actuales de Supabase y crea Organizations + budgets iniciales (10 USD/mes).
+   - Validar via REST API admin que las virtual keys existen.
 
-   -- INSERT solo desde service_role (callbacks + helpers internos)
-   DROP POLICY IF EXISTS "service_role_insert" ON llm_usage_logs;
-   CREATE POLICY "service_role_insert" ON llm_usage_logs
-     FOR INSERT
-     TO service_role
-     WITH CHECK (true);
+5. **Migrar call sites LangChain** (~1-2h)
+   - Apuntar `agent-factory.ts` al proxy con `baseURL`.
+   - Validar en logs LiteLLM admin que las llamadas pasan por el proxy.
 
-   CREATE INDEX IF NOT EXISTS idx_llm_usage_tenant_created
-     ON llm_usage_logs(tenant_id, created_at DESC);
-   CREATE INDEX IF NOT EXISTS idx_llm_usage_tenant_provider_created
-     ON llm_usage_logs(tenant_id, provider, created_at DESC);
-   ```
+6. **Migrar 5 call sites SDK directo** (~1h)
+   - Cambiar `openai.chat.completions.create()` para usar el proxy con virtual key tenant-specific.
 
-   Aplicar contra Supabase local (`docker exec ... psql ...`). Apply VPS diferido a pre-deploy.
+7. **Implementar ramo de emergencia** (~2h)
+   - Health-check periódico cada 60s.
+   - Si falla 3 veces → switch a SDK directo.
+   - Sentry breadcrumb + log estructurado.
+   - Tests: simular proxy down, validar fallback.
 
-2. **`src/lib/llm-pricing.ts`** (~30min):
+8. **Validar fallback runtime cross-provider** (~30min)
+   - Forzar 429 manual contra Claude → verificar que la llamada cae a OpenAI sin intervención del caller.
 
-   ```ts
-   export const LLM_PRICING_PER_1M_TOKENS = {
-     openai: {
-       "gpt-4o": { input: 2.5, output: 10.0 },
-       "gpt-4o-mini": { input: 0.15, output: 0.6 },
-       "gpt-4-turbo": { input: 10.0, output: 30.0 },
-       "gpt-3.5-turbo": { input: 0.5, output: 1.5 },
-     },
-     anthropic: {
-       "claude-3-5-sonnet-20241022": { input: 3.0, output: 15.0 },
-       "claude-3-5-haiku-20241022": { input: 0.8, output: 4.0 },
-       "claude-3-opus-20240229": { input: 15.0, output: 75.0 },
-     },
-     google: {
-       "gemini-1.5-pro": { input: 1.25, output: 5.0 },
-       "gemini-1.5-flash": { input: 0.075, output: 0.3 },
-     },
-   } as const;
+9. **Validar budget cap** (~30min)
+   - Configurar budget 0.10 USD para 1 tenant de prueba.
+   - Hacer N llamadas hasta superar el cap.
+   - Validar que LiteLLM devuelve 429 / `BudgetExceeded`.
 
-   export function calculateCostUsd(
-     provider: string,
-     model: string,
-     promptTokens: number,
-     completionTokens: number
-   ): number | null {
-     // ...lookup + cálculo
-   }
-   ```
-
-   **NOTA importante**: actualizar precios consultando docs oficiales OpenAI/Anthropic/Google en el momento de implementar (los precios cambian — los de aquí son aproximados mayo 2026).
-
-3. **`src/lib/llm-cost-tracker.ts`** (~2h):
-
-   ```ts
-   import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
-   import { logger } from "@/lib/logger";
-   import { getAdminSupabaseClient } from "@/lib/supabase/server";
-   import { calculateCostUsd } from "./llm-pricing";
-
-   export class CostTrackingCallback extends BaseCallbackHandler {
-     name = "CostTrackingCallback";
-     constructor(private ctx: { tenantId: string; leadId?: string; action: string }) {
-       super();
-     }
-
-     async handleLLMEnd(output: unknown): Promise<void> {
-       // Extraer usage + model (forma exacta depende de la versión LangChain — verificar)
-       // INSERT llm_usage_logs
-       // Fallback log + return en caso de error
-     }
-   }
-
-   export async function recordLlmUsage(params: {
-     tenantId: string;
-     provider: "openai" | "anthropic" | "google";
-     model: string;
-     usage: { prompt_tokens?: number; completion_tokens?: number };
-     action: string;
-     leadId?: string;
-     sessionId?: string;
-   }): Promise<void> {
-     try {
-       const supabase = await getAdminSupabaseClient();
-       const cost = calculateCostUsd(
-         params.provider,
-         params.model,
-         params.usage.prompt_tokens ?? 0,
-         params.usage.completion_tokens ?? 0
-       );
-       await supabase.from("llm_usage_logs").insert({
-         /* ... */
-       });
-     } catch (err) {
-       logger.warn({ err }, "[llm-cost-tracker] insert failed — non-fatal");
-     }
-   }
-   ```
-
-4. **Inyectar callback en LangChain factory** (~30min): localizar `AgentFactory.create` (o el wrapper que crea `ChatOpenAI`/`ChatAnthropic`) y añadir `callbacks: [new CostTrackingCallback({ tenantId, leadId, action })]` al constructor.
-
-5. **Wire OpenAI directos** (~3h, 5 call sites × 30min):
-   - `WhatsAppAIProcessor.ts` → `recordLlmUsage({ action: 'whatsapp.chat', ... })`
-   - `AIRescueService.ts` → `recordLlmUsage({ action: 'whatsapp.rescue', ... })`
-   - `src/lib/actions/widget.ts` → `recordLlmUsage({ action: 'widget.chat', ... })`
-   - `FactExtractor.ts` → `recordLlmUsage({ action: 'fact.extract', ... })`
-   - `AIAnalysis.ts` → `recordLlmUsage({ action: 'analysis.qualify', ... })`
-
-6. **Test mínimo**: provocar una llamada al widget (modo legacy del Sprint 0 1-27), confirmar que aparece una fila en `llm_usage_logs` con `cost_usd` calculado y `tenant_id` correcto.
+10. **Documentación runbook** (~30min)
+    - Comandos curl para admin API (añadir tenant, modificar budget, listar usage).
+    - Pasos para restart del proxy desde Dokploy.
 
 ## Todo List
 
-- [ ] C-01: Crear migración SQL `llm_usage_logs` + RLS + índices
-- [ ] C-01: Aplicar migración contra Supabase local
-- [ ] C-01: Crear `src/lib/llm-pricing.ts` con precios mayo 2026 (verificar docs oficiales)
-- [ ] C-01: Crear `src/lib/llm-cost-tracker.ts` con `CostTrackingCallback` + `recordLlmUsage()`
-- [ ] C-01: Inyectar callback en `AgentFactory` (o equivalente)
-- [ ] C-01: Wire 5 call sites OpenAI directos (`recordLlmUsage()` tras `chat.completions.create()`)
-- [ ] C-01: Test smoke — request al widget genera fila en `llm_usage_logs`
-- [ ] C-01: Typecheck + lint + build limpios
+- [ ] Servicio Dokploy LiteLLM Proxy levantado y healthy.
+- [ ] Schema Postgres `litellm_proxy` provisionado.
+- [ ] `config.yaml` con `model_list` + fallbacks + cache Redis.
+- [ ] Master key generada y guardada en vault.
+- [ ] Bootstrap tenants ejecutado, virtual keys creadas.
+- [ ] LangChain chat models apuntan al proxy.
+- [ ] 5 call sites SDK directos apuntan al proxy con virtual key.
+- [ ] Ramo de emergencia implementado y testeado (proxy down → SDK directo).
+- [ ] Fallback runtime cross-provider validado (Claude fail → OpenAI).
+- [ ] Budget cap validado (429 al superar threshold).
+- [ ] `.env.example` actualizado.
+- [ ] Runbook operativo `runbook-litellm.md` creado.
+- [ ] Sección breve en `docs/dev-onboarding.md` para arrancar proxy local.
+- [ ] PR phase-01 → branch `feature/sprint-costes-llm-post-mvp`.
 
 ## Success Criteria
 
-- `SELECT COUNT(*) FROM llm_usage_logs WHERE tenant_id = $JWT_TENANT` desde cliente autenticado → solo cuenta propias filas (RLS funcional).
-- Tras 1 chat de widget completo → 1 fila nueva en `llm_usage_logs` con `cost_usd > 0`.
-- Tras 1 conversación WhatsApp → 1 fila por cada llamada LLM (varias en flujos con tool calls).
-- `llm-pricing.ts` cubre OpenAI (4 modelos), Anthropic (3 modelos), Google (2 modelos) — sin gaps.
+- Todas las llamadas LLM del proyecto pasan por el proxy (verificable en LiteLLM admin logs).
+- Cost tracking visible en LiteLLM admin UI por tenant + modelo.
+- Fallback runtime funciona sin código adicional en app.
+- Budget cap activo y devuelve 429 al superar threshold.
+- Ramo de emergencia activa SDK directo si proxy cae 3x.
+- `npm run typecheck` + `lint` + `build` → 0 errores.
+- Tests `litellm-client.test.ts` y `emergency-fallback.test.ts` pasan.
 
 ## Risk Assessment
 
-| Riesgo                                                                                    | Prob  | Impacto | Mitigación                                                                                          |
-| ----------------------------------------------------------------------------------------- | ----- | ------- | --------------------------------------------------------------------------------------------------- |
-| LangChain version API cambió (`handleLLMEnd` signature) entre `@langchain/core` versiones | Media | Bajo    | Verificar al implementar; ajustar firma según versión exacta del package.json                       |
-| Llamadas OpenAI directas olvidadas (call site nuevo añadido después)                      | Media | Medio   | Documentar en `docs/architecture/llm-cost-tracking.md` el patrón obligatorio + check en code review |
-| INSERT a `llm_usage_logs` añade latencia perceptible al chat                              | Baja  | Bajo    | Fire-and-forget pattern: `void recordLlmUsage(...)` sin `await` en hot path, o usar `setImmediate`  |
+| Riesgo                                                            | Mitigación                                                                                                        |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Schema Postgres `litellm_proxy` conflicta con migraciones del app | Schema separado físicamente. User dedicado sin acceso a `public`.                                                 |
+| Master key filtrada en logs                                       | Variable de entorno, nunca en código. Sentry sanitize rules.                                                      |
+| Latencia añadida >10ms                                            | Medición en Ph2 (Langfuse mide latencia P50/P95). Si pasa, troubleshoot config Dokploy.                           |
+| Versión LiteLLM rompe API entre releases                          | Pinear tag SemVer concreto. No auto-update. Antes de upgrade, leer CHANGELOG y testear en local.                  |
+| Bootstrap tenants olvida alguno → llamadas fallan                 | Script idempotente + validación post-bootstrap (count Organizations vs count tenants en Supabase debe coincidir). |
 
 ## Security Considerations
 
-- `llm_usage_logs` no contiene el contenido de los prompts/responses — solo metadatos (tokens, model, cost, action). PII mínima (`lead_id` referencia FK, sin denormalizar email/teléfono).
-- RLS multi-tenant verificado: tests INSERT como tenant A → SELECT como tenant B = 0 filas.
-- El campo `action` puede contener strings descriptivos pero NO datos de usuario.
+- Master key generada con `crypto.randomBytes(32)`, persistida en vault (`.secrets/litellm-vault.env` gitignored).
+- Virtual keys per tenant nunca abandonan el VPS (red interna Dokploy).
+- `LITELLM_PROXY_URL` interno (`http://litellm-proxy:4000`), nunca expuesto a Internet.
+- Postgres user `litellm_admin` con privilegios mínimos solo sobre schema `litellm_proxy`.
+- Cache Redis comparte instancia con BullMQ pero usa DB distinta (configurar `REDIS_DB=1` o equivalente).
 
 ## Next Steps
 
-- → [Phase 02 — Dashboard costes LLM](phase-02-dashboard-costes-llm.md)
-- → [Phase 03 — token_usage en chat_messages](phase-03-token-usage-chat-messages.md) (paralelo a esta fase)
+→ Phase 02 — Langfuse integration + masking PII + callback handlers LangChain + wrappers SDK directos.

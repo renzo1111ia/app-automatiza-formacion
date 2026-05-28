@@ -1,128 +1,165 @@
 ---
-title: "Sprint Costes-LLM — Centro de costes LLM (post-Sheets, patch v0.5.1)"
-description: "Tracking de tokens y dashboard de costes LLM por tenant/proveedor. Reagrupa trabajo que originalmente vivía en Sprint 3 (4-03 parcial, 4-04) y Sprint 1 (2-36), movido fuera del MVP a petición de la clienta (22-05-2026). Orden definitivo: JUSTO DESPUÉS de Sprint 4 (Google Sheets v0.5.0), antes de Sprint 5 (Salesforce v0.6.0)."
+title: "Sprint Costes-LLM — LiteLLM Proxy + Langfuse Cloud Hobby (post-Sheets, patch v0.5.1)"
+description: "Adopción de LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby para cubrir cost tracking, tracing, evals, fallback runtime y virtual keys multi-tenant. Sustituye el plan custom in-house original (descartado 28-05-2026). Reagrupa también trabajo legacy 2-36 (token_usage en chat_messages). Orden definitivo: JUSTO DESPUÉS de Sprint 4 (Google Sheets v0.5.0), antes de Sprint 5 (Salesforce v0.6.0)."
 status: pending
 priority: P2
-effort: 23-31h base (+ 5h 30min cierre estándar)
+effort: 15-25h realistas (~28-37h nominales) + 5h 30min cierre estándar
 branch: feature/sprint-costes-llm-post-mvp
 sprint_id: SP-5B
 version_target: v0.5.1
+adr: ADR-024 (Draft)
 tags:
-  - observabilidad
-  - llm-costs
+  - observabilidad-llm
+  - llm-gateway
+  - langfuse
+  - litellm
   - tracking-tokens
-  - dashboard-admin
-  - langchain-callback
+  - prompt-management
+  - multi-tenant-budget
   - post-mvp
   - post-sheets
 created: 2026-05-22
-last_updated: 2026-05-22
+last_updated: 2026-05-28
 ---
 
-# Sprint Costes-LLM (post-Sheets v0.5.1)
+# Sprint Costes-LLM — LiteLLM + Langfuse (post-Sheets v0.5.1)
 
-> Ref: [RoadMap.md — Fase 4.5](../RoadMap.md#fase-45--sprint-costes-llm-post-sheets-patch-v051)
+> Ref: [RoadMap.md — Fase 4.5](../RoadMap.md#fase-45--sprint-costes-llm-post-sheets-patch-v051) · [ADR-024 (Draft)](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md)
 
 ## Origen del sprint
 
-**Decisión 22-05-2026** (clienta, confirmada por Javi HP): el centro de costes LLM **no es necesario para el MVP** (`v0.4.0`). Se extrae de Sprint 3 y se difiere a este sprint post-Sheets patch (`v0.5.1`), insertado entre Sprint 4 (Google Sheets `v0.5.0`) y Sprint 5 (Salesforce `v0.6.0`).
+**Decisión 22-05-2026** (clienta + Javi HP): el centro de costes LLM **no es necesario para el MVP** (`v0.4.0`). Trabajo diferido a este sprint post-Sheets (`v0.5.1`).
 
-**Orden definitivo** (decisión 22-05-2026 tarde): Sprint 3 (MVP) → Sprint 4 (Sheets) → **Sprint Costes-LLM** → Sprint 5 (Salesforce) → Sprint 6 (GHL) → Sprint 7 (AC) → Sprint 8 (generalización). Fechas Sprints 5-8 desplazadas +4 días respecto al plan original.
+**Decisión 28-05-2026** (Javi HP, pendiente ratificación Bea): sustituir la arquitectura custom in-house original por **LiteLLM Proxy + Langfuse**. Misma ventana de calendario, capacidades multiplicadas. Detalle en [ADR-024](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md).
 
-**Trabajo trasladado:**
+**Orden definitivo en el roadmap:** Sprint 3 (MVP) → Sprint 4 (Sheets) → **Sprint Costes-LLM** → Sprint 5 (Salesforce) → Sprint 6 (GHL) → Sprint 7 (AC) → Sprint 8 (generalización).
 
-| Origen                           | Tarea original                                                                           | Aquí |
-| -------------------------------- | ---------------------------------------------------------------------------------------- | ---- |
-| Sprint 3 phase-02 (4-03 parcial) | Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangChain CallbackHandler           | C-01 |
-| Sprint 3 phase-03 entera (4-04)  | Dashboard de costes LLM por tenant/proveedor (Recharts)                                  | C-02 |
-| Sprint 1 phase-04 (2-36)         | `token_usage` (`completion.usage`) en `chat_messages` para todos los consumidores OpenAI | C-03 |
+## Objetivos del sprint
 
-**Lo que SE QUEDA en MVP** (Sprint 3 phase-02 reducido):
+1. **Gobernanza de llamadas LLM multi-tenant** — virtual keys + budget caps + rate-limit per academia + fallback automático entre Anthropic / OpenAI / Gemini (LiteLLM Proxy).
+2. **Observabilidad span-level** — trace completo de cadenas LangChain (intent → extraction → reply → summary) + replay de conversaciones (Langfuse).
+3. **Cost tracking multi-fuente** — por tenant / agente / modelo / día, alimentado por LiteLLM Proxy (call-level) + Langfuse traces (span-level).
+4. **Prompt management versionado + A/B testing** — editar prompts en UI Langfuse sin redeploy (cache server + client).
+5. **Persistencia `completion.usage` en `chat_messages.metadata`** — vista por mensaje (1:1 con Inbox). Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Legacy preservada de C-03 original.
 
-- Pino logging estructurado en API Routes, Server Actions y BullMQ Workers
-- Métricas BullMQ vía bull-board (`/admin/queues`)
-- Sentry para captura de errores
-
-> El logging y las métricas de cola son necesarias para operar en producción y depurar incidencias. El tracking de costes LLM no — la cliente está de acuerdo en operar v0.4.0 sin visibilidad de costes y añadirla en v0.5.1.
-
-## Prerrequisito
+## Prerrequisitos
 
 - Sprint 3 cerrado (`v0.4.0` MVP) y mergeado a `developer`.
-- **Sprint 4 (Google Sheets `v0.5.0`) cerrado y mergeado a `developer`** — este sprint arranca tras Sheets, no antes.
-- Pino logger (`src/lib/logger.ts`) creado en Sprint 3 phase-02 — base sobre la que registrar los logs de los callbacks LLM.
+- **Sprint 4 (Google Sheets `v0.5.0`) cerrado y mergeado a `developer`** — este sprint arranca tras Sheets.
+- Cuenta Langfuse Cloud Hobby creada (gratis, 50k units/mes, 2 users) — Javi HP la registra cuando arranque el sprint.
+- ADR-024 promovido de `Draft` a `Accepted` tras revisión Bea.
+- Variables nuevas `.env.example` preparadas: `LITELLM_PROXY_URL`, `LITELLM_MASTER_KEY`, `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`.
 
 ## Fases
 
-| #   | Archivo                                                                        | Tareas RoadMap   | Est.            | Estado    |
-| --- | ------------------------------------------------------------------------------ | ---------------- | --------------- | --------- |
-| 1   | [phase-01-tabla-llm-usage-y-tracker.md](phase-01-tabla-llm-usage-y-tracker.md) | C-01             | 5-7h            | Pendiente |
-| 2   | [phase-02-dashboard-costes-llm.md](phase-02-dashboard-costes-llm.md)           | C-02             | 16-22h          | Pendiente |
-| 3   | [phase-03-token-usage-chat-messages.md](phase-03-token-usage-chat-messages.md) | C-03             | 2h              | Pendiente |
-| 4   | [phase-04-cierre-sprint.md](phase-04-cierre-sprint.md)                         | SP-5B-CLOSE-1..5 | 5h 30min + bugs | Pendiente |
+| #   | Archivo                                                                        | Tareas RoadMap    | Estim. nominal  | Estim. realista | Estado    |
+| --- | ------------------------------------------------------------------------------ | ----------------- | --------------- | --------------- | --------- |
+| 1   | [phase-01-litellm-proxy-setup.md](phase-01-litellm-proxy-setup.md)             | C-01 (sustituida) | 8-14h           | 4-7h            | Pendiente |
+| 2   | [phase-02-langfuse-integration.md](phase-02-langfuse-integration.md)           | C-02 (sustituida) | 14-20h          | 6-10h           | Pendiente |
+| 3   | [phase-03-token-usage-chat-messages.md](phase-03-token-usage-chat-messages.md) | C-03 (preservada) | 2h              | 1-2h            | Pendiente |
+| 4   | [phase-04-cierre-sprint.md](phase-04-cierre-sprint.md)                         | SP-5B-CLOSE-1..5  | 5h 30min + bugs | 3-5h + bugs     | Pendiente |
 
-**Total desarrollo:** 23-31h · **Total con cierre:** ~28-37h · **Objetivo:** 27h base
+**Total desarrollo:** 24-36h nominales · **11-19h realistas** al ritmo del equipo (patrón Sprint 1: ratio −86%, Sprint 2B: ratio −86%).
+**Total con cierre:** ~30-42h nominales · **14-24h realistas**.
+**Ventana disponible:** Lun 24-08-2026 09:00 → Jue 27-08-2026 19:00 = ~30h netas de Javi HP. Cabe holgadamente.
 
 ## Dependencias entre fases
 
-```
+```text
 PREREQUISITO GLOBAL:
   Sprint 3 (v0.4.0) cerrado y mergeado a developer
   Sprint 4 (Google Sheets v0.5.0) cerrado y mergeado a developer
+  ADR-024 promovido a Accepted
 
 ORDEN ÓPTIMO (1 dev):
-  Ph1 (tabla + tracker) → Ph3 (token_usage chat_messages)
-                       → Ph2 (dashboard Recharts) — depende de Ph1
-                       → Ph4 (cierre)
+  Ph1 (LiteLLM Proxy setup) →
+    Ph2 (Langfuse integration) — depende parcialmente de Ph1 (callsites ya migrados al proxy)
+    Ph3 (token_usage chat_messages) — independiente, paralelizable
+  → Ph4 (cierre)
 
 PARALELIZABLES (2+ devs):
-  Ph1 y Ph3 — tocan archivos distintos (Ph3 modifica server actions, Ph1 crea tabla nueva)
-  Ph2 — bloqueada por Ph1 (necesita tabla llm_usage_logs)
-
-DEPENDENCIAS INTERNAS:
-  Ph1 crea llm_usage_logs + tracker → Ph2 lee esa tabla
-  Ph3 backfilling no necesario — solo aplica a chats nuevos desde el deploy
+  Ph1 y Ph3 — tocan archivos distintos (Ph3 modifica server actions, Ph1 levanta servicio Dokploy)
+  Ph2 — empezar tras Ph1 (al menos el wrapping de cadenas LangChain al CallbackHandler de Langfuse asume que las llamadas pasan por LiteLLM Proxy o directo al SDK)
 ```
 
 ## Solapes con sprints anteriores
 
-| Sprint anterior          | Componente reutilizado                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
-| Sprint 3 (4-03 reducido) | Pino logger (`src/lib/logger.ts`) — se inyecta dentro del LangChain CallbackHandler               |
-| Sprint 1 (2-09)          | Zod schemas `ai_agent_variants` y `chat_messages` con whitelist `model_name` (2-35)               |
-| Sprint 0 (1-27)          | Patrón Server Action hardening — el endpoint de dashboard de costes va por `withRateLimit` (4-08) |
+| Sprint anterior          | Componente reutilizado                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| Sprint 3 (4-03 reducido) | Pino logger (`src/lib/logger.ts`) — sigue como logger app-level. Langfuse no lo sustituye.      |
+| Sprint 1 (2-09)          | Zod schemas `ai_agent_variants` y `chat_messages` con whitelist `model_name` (2-35)             |
+| Sprint 0 (1-27)          | Patrón Server Action hardening — endpoints que llaman LLM siguen pasando por `withRateLimit`    |
+| Sprint 3 (Sentry)        | Sentry sigue capturando errores app. Langfuse cubre traces LLM. Complementarios, no se solapan. |
 
 ## Criterios de éxito del Sprint
 
-- [ ] Tabla `llm_usage_logs` creada con RLS multi-tenant funcional (INSERT como tenant A no visible por tenant B)
-- [ ] `llm-cost-tracker.ts` LangChain CallbackHandler captura tokens en todas las llamadas OpenAI/Anthropic/Google (Bedrock descartado del stack 26-05-2026)
-- [ ] `chat_messages.metadata.token_usage` poblado para nuevos mensajes (WhatsApp, Widget, Rescue, FactExtractor)
-- [ ] Dashboard admin visible: gráfica costes por proveedor por mes + evolución por tenant por semana
-- [ ] Dashboard tenant visible: sólo costes del tenant activo
-- [ ] Precios actualizados de mayo 2026 (DA-4-005 corregido) — constante `src/lib/llm-pricing.ts`
-- [ ] `npm run typecheck` + `lint` + `build` → 0 errores
-- [ ] CHANGELOG entrada `## [v0.5.1]` completa
-- [ ] PR a `developer` con bump `v0.5.1`
+- [ ] LiteLLM Proxy operativo en Dokploy del VPS Hetzner (`http://litellm-proxy:4000` accesible solo desde red interna).
+- [ ] Schema `litellm_proxy` provisionado en cluster Supabase con virtual keys + budgets por tenant.
+- [ ] `fallbacks: [["claude-3-5-sonnet", "gpt-4o", "gemini-2.0-flash"]]` validado: tirar Claude → siguiente call cae a OpenAI sin intervención.
+- [ ] Todas las cadenas LangChain del proyecto apuntan a LiteLLM Proxy via `basePath` (validado en logs LiteLLM admin).
+- [ ] Langfuse Cloud Hobby recibe traces de TODAS las llamadas LLM (LangChain + 5 call sites SDK directos).
+- [ ] Masking PII validado: ningún DNI / teléfono / email aparece en traces Langfuse (test con lead sintético).
+- [ ] `chat_messages.metadata.token_usage` poblado para nuevos mensajes (WhatsApp, Widget, Rescue, FactExtractor, AIAnalysis).
+- [ ] Budget cap de prueba activado para 1 tenant: al superar 0.10 USD se devuelve 429 / `BudgetExceeded`.
+- [ ] Ramo de emergencia: si LiteLLM Proxy está down, los call sites caen a SDK directo y el flujo no se interrumpe (test forzando timeout).
+- [ ] Dashboard Langfuse muestra coste por tenant + modelo + día sin código custom.
+- [ ] `npm run typecheck` + `lint` + `build` → 0 errores.
+- [ ] `CHANGELOG.md` con entrada `## [v0.5.1]` completa.
+- [ ] PR a `developer` con bump `v0.5.1`.
+- [ ] ADR-024 promovido a `Accepted` con notas de implementación.
 
 ## Tracking de tiempos
 
 Logs en `plans/logs/sprint-costes-llm/C-XX.log.md` (misma estructura Sprints 1/2/3).
+Tabla de tracking `⏱ Push` y `⏱ Cierre` en RoadMap.md sección Fase 4.5.
 
-## Riesgos top-3
+## Riesgos top-5
 
-| Riesgo                                                                        | Prob  | Impacto | Mitigación                                                                                                                                                                                      |
-| ----------------------------------------------------------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| LangChain CallbackHandler no captura llamadas OpenAI **directas** (no por LC) | Alta  | Alto    | Inventario en Ph1: identificar todos los `openai.chat.completions.create()` directos y envolverlos en wrapper que también persista en `llm_usage_logs`. El widget (`widget.ts`) es uno de ellos |
-| Recharts pesa ~150KB extra en bundle del dashboard                            | Baja  | Bajo    | Recharts ya está en stack (Sprint 1/2), no es dep nueva                                                                                                                                         |
-| Precios LLM cambian entre v0.5.1 release y deploy real                        | Media | Bajo    | `llm-pricing.ts` es constante editable; commit + redeploy en <5min                                                                                                                              |
+| Riesgo                                                                                               | Prob  | Impacto | Mitigación                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single Point of Failure LiteLLM Proxy** — si el contenedor cae, todos los agentes fallan           | Media | Alto    | Health-check Dokploy + ramo de emergencia en código: detector de proxy down + fallback a SDK directo del provider. ~2h de robustez incluidos en Ph1         |
+| **PII leak en Langfuse Cloud** — DNI/teléfonos/emails en transcripts Retell/Ultravox enviados a SaaS | Alta  | Alto    | Masking obligatorio client-side + server-side desde día 1. Tests sintéticos con lead `00000000-X` antes de exponer producción. DPA con Langfuse Inc.        |
+| **Multi-tenant Langfuse no nativo** — un Project por tenant no escala con N academias                | Media | Medio   | Usar 1 Project por entorno + `tag` + `metadata.tenant_id`. Filtrado server-side via API REST cuando se necesite vista per-tenant en Langfuse UI             |
+| **Curva de aprendizaje LiteLLM + Langfuse** — el equipo no las ha usado antes                        | Media | Bajo    | 2-3h de familiarización incluidas en Ph1+Ph2. Docs oficiales + runbook local en `plans/260522-1430-.../runbook.md` (a crear en Ph1)                         |
+| **Volumen real supera Cloud Hobby free tier (50k units/mes)**                                        | Baja  | Medio   | Monitorear el dashboard "Usage" de Langfuse semana 1 post-deploy. Plan B: migración a self-hosted Dokploy (~10-20€/mes), exportable, sin pérdida histórica. |
 
 ## Orden fijo en el roadmap
 
-**Decisión clienta 22-05-2026 (tarde):** este sprint va JUSTO DESPUÉS de Sprint 4 (Google Sheets `v0.5.0`), antes de Sprint 5 (Salesforce `v0.6.0`). Inicio Lun 24-08-2026 09:00, fin estimado Jue 27-08-2026 19:00. Bloquea la fecha de inicio de Sprint 5 — se desplaza +4 días respecto al plan original.
+**Decisión clienta 22-05-2026 (tarde):** este sprint va JUSTO DESPUÉS de Sprint 4 (Google Sheets `v0.5.0`), antes de Sprint 5 (Salesforce `v0.6.0`). Inicio Lun 24-08-2026 09:00, fin estimado Jue 27-08-2026 19:00.
 
 ## Referencias
 
+- ADR-024 (Draft): [`docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md`](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md)
+- Reporte consultivo 28-05-2026: [`plans/visuals/consultivo-stack-evaluacion-280526.md`](../visuals/consultivo-stack-evaluacion-280526.md)
+- Auditoría V2 bloque 4.0: [`docs/audit2/index.html`](../../docs/audit2/index.html) §BLOQUE 4
 - RoadMap: [`plans/RoadMap.md`](../RoadMap.md) §Fase 4.5
+- LiteLLM Proxy docs: <https://docs.litellm.ai/docs/simple_proxy>
+- Langfuse docs: <https://langfuse.com/>
 - Researcher observabilidad: `plans/reports/researcher-observability-d-20260520.md` §4 (Dashboard costes)
 - DA-4 audit: `docs/audit/deep/DA-4-llm-voice-deep.md` — token_usage no persistido (F-DA-4)
 - Informe Renzo: `docs/Informes de programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf` §3 ⚠️ (widget mismo bug que WhatsApp)
-- Origen del split: Sprint 3 plan.md (4-04 movida) + Sprint 1 phase-04 (2-36 movida)
+
+---
+
+## Histórico: plan custom in-house descartado 28-05-2026
+
+Entre el 22-05-2026 y el 28-05-2026 este sprint estuvo planificado con una arquitectura custom in-house, que se descartó al evaluar el stack ampliado (reporte consultivo `plans/visuals/consultivo-stack-evaluacion-280526.md`). Se conserva este resumen como audit trail.
+
+### Arquitectura descartada
+
+| Tarea original        | Descripción                                                                                                                                                                                                                      | Estim. nominal |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **C-01 (descartada)** | Tabla `llm_usage_logs` custom con RLS multi-tenant + LangChain `CostTrackingCallback` + helper `recordLlmUsage()` + constante `src/lib/llm-pricing.ts` con precios mayo 2026.                                                    | 5-7h           |
+| **C-02 (descartada)** | Dashboard de costes LLM custom con Recharts (admin global + vista tenant) sobre la tabla `llm_usage_logs`.                                                                                                                       | 16-22h         |
+| **C-03 (preservada)** | Persistir `completion.usage` en `chat_messages.metadata` para los 5 call sites OpenAI directos. Se mantiene en Ph3 — Langfuse cubre vista por llamada LLM, `chat_messages.metadata.token_usage` cubre vista por mensaje (Inbox). | 2h             |
+
+### Razones del descarte
+
+1. **Mismo esfuerzo, menos capacidades** — el plan custom cubría solo cost tracking + dashboard. La propuesta LiteLLM + Langfuse cubre tracing span-level + evals + prompt versioning + fallback runtime + virtual keys + replay, dentro de la misma ventana de calendario.
+2. **Reinventar la rueda** — tanto LiteLLM como Langfuse son MIT, mantenidos por upstream activos (BerriAI YC, Langfuse YC W23), production-ready (Khan Academy, Twilio, Samsara usan Langfuse).
+3. **Vendor lock duro inexistente** — ambos exportables, self-hostables, sin riesgo de captura.
+
+### Documentos relacionados (no borrar)
+
+- ADR-024 contiene tabla completa de "Alternativas rechazadas" incluyendo este plan custom.
+- Las phase files `phase-01-litellm-proxy-setup.md` y `phase-02-langfuse-integration.md` reemplazan a las antiguas `phase-01-tabla-llm-usage-y-tracker.md` y `phase-02-dashboard-costes-llm.md` (los nombres antiguos se renombran in-situ al actualizar; no se conservan ficheros separados con sufijo DESCARTADO para mantener el path stable).

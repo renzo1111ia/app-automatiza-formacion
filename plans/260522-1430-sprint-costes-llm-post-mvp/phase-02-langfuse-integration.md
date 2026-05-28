@@ -1,259 +1,235 @@
 ---
-title: "Phase 02 — Dashboard de costes LLM por tenant/proveedor (C-02)"
+title: "Phase 02 — Langfuse Cloud Hobby integration + masking PII + callbacks LangChain + wrappers SDK directos"
 sprint: SP-5B
 phase: 2
-tasks: [C-02]
-effort: 16-22h
+tasks: [C-02-new]
+adr: ADR-024 (Draft)
+effort_nominal: 14-20h
+effort_realistic: 6-10h
 status: pending
-agents: [af-agents:code, af-agents:uxui]
+agents: [af-agents:code, af-agents:security, af-agents:testing]
 ---
 
-# Phase 02 — Dashboard de Costes LLM
+# Phase 02 — Langfuse Cloud Hobby integration + masking PII + callbacks LangChain + wrappers SDK directos
 
 ## Context Links
 
 - Plan overview: [plan.md](plan.md)
-- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-02)
-- **Origen del movimiento (22-05-2026):** esta fase vivía como Sprint 3 phase-03 (tarea 4-04). Se trasladó al Sprint Costes-LLM (post-MVP) cuando la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.4.0`.
-- Researcher report: [researcher-observability-d-20260520.md](../reports/researcher-observability-d-20260520.md) — sección 4
-- Phase 01 (este sprint): crea tabla `llm_usage_logs` y `llm-cost-tracker.ts` — **PREREQUISITO**
-- DA-4-005: precios LLM hardcodeados obsoletos (GPT-4 de 2023) — se corrigen en `llm-pricing.ts` (Ph1)
-- DA-4-010: API keys OpenAI visibles en UI dashboard — NO exponer en este dashboard
+- ADR-024 (Draft): [`docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md`](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md)
+- Phase 01: [phase-01-litellm-proxy-setup.md](phase-01-litellm-proxy-setup.md)
+- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-02 sustituida)
+- Reporte consultivo: [`plans/visuals/consultivo-stack-evaluacion-280526.md`](../visuals/consultivo-stack-evaluacion-280526.md) §3 Langfuse
+- Langfuse docs: <https://langfuse.com/>
+- LangChain integration cookbook: <https://langfuse.com/guides/cookbook/integration_langchain>
+- PII masking: <https://langfuse.com/docs/observability/features/masking>
+- Pricing Cloud: <https://langfuse.com/pricing>
+- Sustituye contenido previo C-02 (dashboard Recharts custom) — ver §Histórico en plan.md
 
 ## Overview
 
 - **Priority:** P2
-- **Status:** Pendiente (bloqueado por Ph1 — tabla `llm_usage_logs`)
-- **Descripción:** Implementar el dashboard de costes en el admin panel con Recharts, que consume la tabla `llm_usage_logs` creada en Ph1 de este sprint. La parte de tracking (LangChain CallbackHandler + `recordLlmUsage` helper) se hace en Ph1.
+- **Status:** Pendiente
+- **Descripción:** Conectar el proyecto a Langfuse Cloud Hobby (free 50k units/mes) para observabilidad LLM completa: tracing span-level de cadenas LangChain, captura automática de inputs/outputs/tokens/coste/latencia, masking PII obligatorio, prompt management versionado. Las llamadas LLM ya pasan por LiteLLM Proxy (Phase 01); aquí añadimos la capa de observabilidad encima. Reemplaza por completo el dashboard Recharts custom planificado originalmente.
 
 ## Key Insights
 
-- Recharts ya está en el stack (`recharts@^3.7.0`) — sin nuevas deps para UI
-- LangChain ya tiene `BaseCallbackHandler` — el callback tracker es código, no dependencia nueva
-- Precios actualizados (mayo 2026) documentados en researcher report — DA-4-005 requería esta corrección
-- **Dos vistas:** Admin global (todos los tenants) + Vista tenant (solo sus propios datos)
-- Los costes se calculan en app al momento de persistir (no en BD) para facilitar actualización de precios
-- LangSmith descartado: los datos de leads son PII sensible, no deben ir a SaaS externo
+- **Cloud Hobby gratis cubre volumen MVP**: 50k units/mes; volumen esperado academia mediana (2-5k calls × ~5 spans) = 25k units/mes. Sobra holgura para crecer a 2× sin overage.
+- **LangChain callback nativo**: integración 1 línea via `CallbackHandler` en `config.callbacks` de cualquier cadena `.invoke()/.stream()/.batch()`. Captura todo sin instrumentación adicional.
+- **5 call sites SDK directo**: requieren wrappers manuales (`langfuse.openai` o decorador `@observe()`). Mismas 5 ubicaciones que en Phase 01 (WhatsApp, RescueWorker, widget, FactExtractor, AIAnalysis).
+- **Multi-tenant via tags + metadata**: 1 Project Langfuse por entorno (dev/staging/prod), `tenant_id` como `tag` + en `metadata`. Filtrado server-side via API REST o filtros nativos de la UI.
+- **PII crítico**: transcripts Retell/Ultravox traen DNI, teléfonos, emails de leads. Función `mask()` client-side ANTES de enviar a Langfuse + regex server-side adicional. Tests con lead sintético antes de exponer producción real.
+- **Replay**: cada trace en Langfuse es replayable — ideal para detectar regresiones al cambiar modelo (ej. Claude Sonnet 3.5 → 4) o prompt.
+- **Prompt management**: prompts conversacionales (system messages largos) viven en Langfuse UI con versionado. App los recupera via `langfuse.getPrompt(name)` con cache server (5min) + client (sticky).
+- **Complementario con Sentry**: Sentry = errores app (excepciones, performance APM). Langfuse = traces LLM. No se solapan, ambos se mantienen.
 
 ## Requirements
 
 ### Funcionales
 
-- LangChain `CostTrackingCallback` captura tokens en CADA llamada LLM (Anthropic, OpenAI, Google) — Bedrock descartado del stack 26-05-2026
-- Tabla `llm_usage_logs` (creada en Ph1) recibe INSERT por cada LLM call con tenant_id, proveedor, modelo, tokens, cost_usd
-- Dashboard admin: gráfica de costes por proveedor por mes (BarChart)
-- Dashboard admin: evolución costes totales por tenant por semana (LineChart)
-- Dashboard tenant: solo sus propios costes, desglose por acción (qualification, chat, analysis)
-- Corregir precios hardcodeados desactualizados (DA-4-005): tabla de precios en constante, no en BD
+- Cuenta Langfuse Cloud Hobby creada por Javi HP con email `admin@automatizaformacion.com`.
+- 3 Projects creados: `dashboard-af-dev`, `dashboard-af-staging`, `dashboard-af-prod`.
+- Variables de entorno `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL=https://cloud.langfuse.com` (o `eu.langfuse.com` si EU). Guardadas en vault del proyecto + Dokploy.
+- `src/lib/observability/langfuse-client.ts`:
+  - Singleton del SDK `@langfuse/node` v3.x.
+  - `mask()` function obligatoria que aplica regex sobre payloads (DNI español 8 dígitos + letra, teléfonos +34 y 9 dígitos, emails RFC 5322).
+  - Helper `withLangfuseTags(tenantId, agentName, sessionId)` que devuelve `{ tags, metadata, userId }` consistente para todas las cadenas.
+- LangChain integration:
+  - `src/lib/llm/agent-factory.ts` (modificado en Phase 01): inyectar `langfuseCallback` en `config.callbacks` de cada cadena creada.
+  - Todas las cadenas reciben automáticamente `tenant_id` + `agent_name` como tags.
+- Wrappers SDK directos (5 call sites):
+  - WhatsAppAIProcessor: envolver llamada `openai.chat.completions.create()` con `langfuse.openai` wrapper.
+  - RescueWorker (`AIRescueService`): idem.
+  - `widget.ts` (server action): idem.
+  - FactExtractor: idem.
+  - AIAnalysis (`analyzeConversation`): idem.
+- Prompt management (migración mínima MVP):
+  - Identificar 3-5 prompts conversacionales largos en el código (system messages de WhatsApp + Widget + Rescue).
+  - Subirlos a Langfuse UI con nombre versionado (`whatsapp-system-v1`, `widget-system-v1`, etc.).
+  - Refactor: app los recupera via `langfuse.getPrompt('whatsapp-system')` con cache.
+- Tests obligatorios:
+  - Test masking: enviar payload con DNI `12345678X` + email `test@example.com` + tel `+34666123456` → validar que el trace en Langfuse contiene `[MASKED:DNI]`, `[MASKED:EMAIL]`, `[MASKED:PHONE]`.
+  - Test multi-tenant: 2 traces simultáneos de tenant A y tenant B → validar filtrado por `metadata.tenant_id`.
+  - Test prompt cache: `langfuse.getPrompt('x')` cacheado por 5min, no llama API en cada invocación.
 
 ### No funcionales
 
-- Cálculo de costes: `cost_usd = (prompt_tokens * input_price_per_1m / 1_000_000) + (completion_tokens * output_price_per_1m / 1_000_000)`
-- Actualizaciones de precios: editar constante en `src/lib/llm-pricing.ts`, no requiere migración BD
-- Dashboard no carga datos en tiempo real — refresh manual o cada 30min (no websockets)
+- **Failure mode**: si Langfuse Cloud down, las cadenas LLM NO deben fallar. SDK Langfuse hace background queue + retry con backoff. Si queda perdido un trace, log a Pino warn pero no romper flujo.
+- **Latencia añadida**: <50ms p99 (SDK Langfuse es async, no bloquea cadena).
+- **Coste runtime**: 0 € durante Cloud Hobby (cabe en free tier). Si pasa a 50k units/mes, planificar migración a self-hosted Dokploy en sprint posterior.
+- **DPA con Langfuse Inc.**: solicitar Data Processing Agreement antes de exponer producción con datos reales. Documentación legal en `docs/legal/dpa-langfuse.pdf` (a recibir).
+- **Documentación operativa**: `runbook-langfuse.md` con: cómo crear nuevo prompt, cómo añadir nuevo agente al dashboard, cómo invitar nuevo user al project.
 
 ## Architecture
 
-```
-Data flow costes LLM:
-  LangChain LLM call
-      │
-      ├─ CostTrackingCallback.handleLLMEnd()
-      │       │
-      │       ├─ Calcular cost_usd (tabla precios local)
-      │       └─ INSERT llm_usage_logs (Supabase, RLS multi-tenant)
-      │
-  PostgreSQL llm_usage_logs
-      │
-      ├─ API Route /api/admin/llm-costs (admin global)
-      │       └─ GROUP BY tenant, provider, month → Recharts data
-      │
-      └─ API Route /api/llm-costs (tenant view, RLS filtra)
-              └─ GROUP BY provider, action, month → Recharts data
-
-Dashboard UI:
-  /dashboard/admin/costs → Admin: todos los tenants
-  /dashboard/costs       → Tenant: solo mis costes
+```text
+   Next.js / LangChain                     Langfuse Cloud Hobby
+   ─────────────────────                   ──────────────────────
+                                           ┌─────────────────────┐
+   chain.invoke(input, {                   │ Project: prod       │
+     callbacks: [langfuseCB],              │  ├ Traces (spans)   │
+     metadata: { tenant_id, session }      │  ├ Prompts (vN)     │
+   })                                      │  ├ Evals (judge)    │
+       │                                   │  ├ Datasets         │
+       │  ┌─────────────────┐              │  └ Users (RBAC)     │
+       └─►│ mask()          │              │                     │
+          │ - DNI           │ ──────►      │ Filtros nativos:    │
+          │ - email         │  POST        │  tag=tenant_X       │
+          │ - phone +34     │  /api/public │  agent=whatsapp     │
+          └─────────────────┘  /traces     │  model=claude-sonnet│
+                                           │  date>2026-08-25    │
+   SDK directo:                            │                     │
+   const openai = wrapOpenAI(client,       │ Replay conversación │
+     { langfuseClient, tags, metadata })   │ A/B prompts         │
+                                           │ Cost per tenant     │
+                                           └─────────────────────┘
 ```
 
 ## Related Code Files
 
 ### Crear
 
-- `src/lib/llm-pricing.ts` — constante con precios actualizados por proveedor/modelo
-- `src/lib/llm-cost-tracker.ts` — LangChain BaseCallbackHandler (iniciado en Ph1)
-- `src/app/api/admin/llm-costs/route.ts` — endpoint admin costes agregados
-- `src/app/api/llm-costs/route.ts` — endpoint tenant costes propios
-- `src/app/dashboard/admin/costs/page.tsx` — admin dashboard UI
-- `src/components/costs/CostsByProviderChart.tsx` — BarChart proveedor/mes
-- `src/components/costs/CostsByTenantChart.tsx` — LineChart tenant evolution
-- `src/components/costs/CostsSummaryCard.tsx` — tarjeta resumen coste total mes
+- `src/lib/observability/langfuse-client.ts` — singleton SDK + `mask()` + `withLangfuseTags()` helper.
+- `src/lib/observability/pii-mask.ts` — regex DNI/teléfono/email + tests.
+- `src/lib/observability/__tests__/pii-mask.test.ts` — tests de masking con casos sintéticos.
+- `src/lib/observability/__tests__/langfuse-integration.test.ts` — test e2e contra Project `dashboard-af-dev`.
+- `plans/260522-1430-sprint-costes-llm-post-mvp/runbook-langfuse.md` — operativa Langfuse UI.
 
 ### Modificar
 
-- `src/lib/llm-factory.ts` (o equivalente) — inyectar `CostTrackingCallback` en cada chain LLM
-- `src/app/dashboard/settings/page.tsx` — añadir link a dashboard de costes tenant
-- `src/app/layout.tsx` — ruta `/dashboard/admin/costs` solo para admin
+- `src/lib/llm/agent-factory.ts` — inyectar `langfuseCallback` en `config.callbacks`.
+- `src/lib/whatsapp/whatsapp-ai-processor.ts` — usar `langfuse.openai` wrapper.
+- `src/lib/rescue/ai-rescue-service.ts` — idem.
+- `src/lib/actions/widget.ts` — idem.
+- `src/lib/extraction/fact-extractor.ts` — idem.
+- `src/lib/analysis/ai-analysis.ts` — idem.
+- `.env.example` — añadir `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`.
+- `package.json` — añadir dependencia `@langfuse/node` (versión pineada).
+- `docs/dev-onboarding.md` — sección breve "Cómo ver traces en Langfuse Cloud durante desarrollo".
+
+### Eliminar / no crear (vs plan original descartado)
+
+- ❌ Dashboard Recharts custom en `src/app/(dashboard)/admin/costs/page.tsx` (NO crear — Langfuse UI cubre).
+- ❌ Server actions `getCostsByTenant`, `getCostsByModel` custom (NO crear — Langfuse API REST cubre).
+- ❌ Components Recharts custom para gráficas de coste (NO crear).
+
+### Posible (opcional Sprint 3+)
+
+- 🟡 Embed Langfuse dashboard público iframe en `/admin/costs` del proyecto si la clienta quiere vista integrada (decisión a tomar en SP-5B según feedback Bea).
 
 ## Implementation Steps
 
-### Paso 1: Tabla de precios actualizada (fix DA-4-005)
+1. **Setup cuenta Langfuse Cloud Hobby** (~30min)
+   - Javi HP registra cuenta con `admin@automatizaformacion.com`.
+   - Crea 3 Projects: `dashboard-af-dev`, `dashboard-af-staging`, `dashboard-af-prod`.
+   - Genera 3 pares Public Key + Secret Key. Guarda en vault `.secrets/langfuse-keys.env`.
+   - Solicita DPA via support@langfuse.com.
 
-```typescript
-// src/lib/llm-pricing.ts
-// Precios en USD por 1M tokens — actualizado Mayo 2026
-export const LLM_PRICING: Record<string, { input: number; output: number }> = {
-  "anthropic/claude-3-5-sonnet": { input: 3.0, output: 15.0 },
-  "anthropic/claude-3-5-haiku": { input: 0.8, output: 4.0 },
-  "anthropic/claude-3-opus": { input: 15.0, output: 75.0 },
-  "openai/gpt-4o": { input: 2.5, output: 10.0 },
-  "openai/gpt-4o-mini": { input: 0.15, output: 0.6 },
-  "openai/gpt-4-turbo": { input: 10.0, output: 30.0 },
-  "google/gemini-1-5-pro": { input: 1.25, output: 5.0 },
-  "google/gemini-1-5-flash": { input: 0.075, output: 0.3 },
-  // Bedrock descartado del stack 26-05-2026 — pricing eliminado
-};
+2. **Instalar SDK + setup cliente singleton** (~1h)
+   - `npm install @langfuse/node@^3.x` (pineado).
+   - Crear `src/lib/observability/langfuse-client.ts` con instancia singleton.
+   - Configurar `LANGFUSE_BASE_URL` (Cloud EU si disponible, sino US).
 
-export function calculateCostUSD(
-  provider: string,
-  model: string,
-  promptTokens: number,
-  completionTokens: number
-): number {
-  const key = `${provider}/${model}`;
-  const pricing = LLM_PRICING[key];
-  if (!pricing) return 0; // modelo desconocido — log warning
-  return (
-    (promptTokens * pricing.input) / 1_000_000 + (completionTokens * pricing.output) / 1_000_000
-  );
-}
-```
+3. **Implementar masking PII** (~2-3h)
+   - `src/lib/observability/pii-mask.ts` con regex:
+     - DNI español: `/\b\d{8}[A-HJ-NP-TV-Z]\b/g`
+     - Teléfono ES: `/(\+34\s?)?[6-9]\d{8}/g`
+     - Email RFC 5322: regex estándar
+   - Tests sintéticos con 20+ casos edge.
+   - Función `mask(payload)` recorre objeto recursivamente y reemplaza in-place.
+   - Validar con un trace dummy contra Project dev.
 
-### Paso 2: LangChain CostTrackingCallback
+4. **Integrar callback handler en LangChain** (~1-2h)
+   - Modificar `agent-factory.ts` para inyectar `new CallbackHandler({ langfuseClient, tags, metadata })`.
+   - Helper `withLangfuseTags(tenantId, agentName, sessionId)` para consistencia.
+   - Validar en Project dev que un trace de chat WhatsApp aparece con todos los spans.
 
-```typescript
-// src/lib/llm-cost-tracker.ts
-import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
-import { LLMResult } from "@langchain/core/outputs";
-import { calculateCostUSD } from "./llm-pricing";
-import { createAdminClient } from "./supabase/admin";
+5. **Wrappers SDK directos en 5 call sites** (~2h)
+   - Usar `wrapOpenAI(openaiClient, { langfuseClient, tags: ['widget'], metadata: { tenant_id } })`.
+   - Cambio mecánico, 5 lugares.
 
-export class CostTrackingCallback extends BaseCallbackHandler {
-  name = "af-cost-tracker";
-  private tenantId: string;
-  private leadId?: string;
-  private action?: string;
-  private provider: string;
-  private model: string;
+6. **Migración 3-5 prompts a Langfuse UI** (~1h)
+   - Identificar prompts conversacionales largos del repo (system messages).
+   - Subir a Langfuse UI con nombre y versión v1.
+   - Refactor app: `const prompt = await langfuse.getPrompt('whatsapp-system'); chain.invoke({ ...prompt })`.
+   - Validar cache 5min (1 sola call API en N invocaciones).
 
-  constructor(opts: {
-    tenantId: string;
-    leadId?: string;
-    action?: string;
-    provider: string;
-    model: string;
-  }) {
-    super();
-    Object.assign(this, opts);
-  }
+7. **Tests automatizados** (~1-2h)
+   - PII masking 20 casos.
+   - Multi-tenant filter (traces de A no visibles en filtro de B).
+   - Prompt cache.
 
-  async handleLLMEnd(output: LLMResult): Promise<void> {
-    const usage = output.llmOutput?.tokenUsage || output.llmOutput?.usage;
-    const promptTokens = usage?.promptTokens ?? usage?.input_tokens ?? 0;
-    const completionTokens = usage?.completionTokens ?? usage?.output_tokens ?? 0;
-    const costUsd = calculateCostUSD(this.provider, this.model, promptTokens, completionTokens);
-
-    const supabase = createAdminClient();
-    await supabase.from("llm_usage_logs").insert({
-      tenant_id: this.tenantId,
-      provider: this.provider,
-      model: this.model,
-      prompt_tokens: promptTokens,
-      completion_tokens: completionTokens,
-      cost_usd: costUsd,
-      lead_id: this.leadId,
-      action: this.action,
-    });
-  }
-}
-```
-
-### Paso 3: Inyectar callback en LLM factory
-
-En el factory de LLM (donde se instancia ChatOpenAI, ChatAnthropic, etc.), añadir:
-
-```typescript
-const callbacks = [
-  new CostTrackingCallback({
-    tenantId,
-    leadId,
-    action,
-    provider: "anthropic",
-    model: "claude-3-5-sonnet",
-  }),
-];
-const llm = new ChatAnthropic({ callbacks /* ...existing config */ });
-```
-
-### Paso 4: API Routes de costes
-
-`/api/admin/llm-costs` — GROUP BY provider, DATE_TRUNC('month', created_at), solo admin.
-`/api/llm-costs` — GROUP BY provider, action, mes — filtrado por RLS (tenant actual).
-
-### Paso 5: Dashboard UI (Recharts)
-
-Tres componentes:
-
-1. `CostsByProviderChart` — BarChart stacked: eje X = mes, eje Y = cost_usd, series = providers
-2. `CostsByTenantChart` — LineChart: eje X = semana, líneas por tenant (solo admin global)
-3. `CostsSummaryCard` — tarjeta con coste total mes actual, delta vs mes anterior
-
-### Paso 6: Páginas
-
-- `/dashboard/admin/costs` — solo accesible a superadmin
-- Link desde `/dashboard/settings` para que el tenant vea sus propios costes
+8. **Runbook operativo** (~30min)
+   - Cómo añadir nuevo prompt al sistema.
+   - Cómo invitar nuevo user al project (RBAC).
+   - Cómo crear eval LLM-as-judge.
 
 ## Todo List
 
-- [ ] `src/lib/llm-pricing.ts` con precios actualizados (fix DA-4-005)
-- [ ] `src/lib/llm-cost-tracker.ts` — CostTrackingCallback completo
-- [ ] Verificar que Ph1 creó `llm_usage_logs` con RLS correcta
-- [ ] Inyectar CostTrackingCallback en LLM factory (todos los providers)
-- [ ] Test: llamada LLM real → INSERT en llm_usage_logs → verificar tokens y cost_usd
-- [ ] API Route `/api/admin/llm-costs` con agregaciones SQL
-- [ ] API Route `/api/llm-costs` (tenant, RLS)
-- [ ] Componente `CostsByProviderChart` (BarChart Recharts)
-- [ ] Componente `CostsSummaryCard`
-- [ ] Página `/dashboard/admin/costs`
-- [ ] Link en settings para tenants
-- [ ] Verificar que DA-4-010 no se viola: API keys NO visibles en dashboard costes
-- [ ] Typecheck + build sin errores
+- [ ] Cuenta Langfuse Cloud Hobby creada + 3 Projects + 3 pares de keys.
+- [ ] DPA solicitado a Langfuse Inc.
+- [ ] `@langfuse/node` instalado y pineado.
+- [ ] `langfuse-client.ts` singleton + helpers operativos.
+- [ ] `pii-mask.ts` con regex DNI/email/teléfono + tests verdes.
+- [ ] Callback handler inyectado en `agent-factory.ts`, traces visibles en dev project.
+- [ ] 5 call sites SDK directos usan `langfuse.openai` wrapper.
+- [ ] 3-5 prompts conversacionales migrados a Langfuse UI con versionado.
+- [ ] App recupera prompts vía `langfuse.getPrompt()` con cache.
+- [ ] Tests masking (20 casos) + multi-tenant filter + prompt cache → 🟢.
+- [ ] `.env.example` actualizado.
+- [ ] `runbook-langfuse.md` creado.
+- [ ] Sección breve en `docs/dev-onboarding.md` para devs.
+- [ ] PR phase-02 → branch `feature/sprint-costes-llm-post-mvp`.
 
 ## Success Criteria
 
-- Llamada LLM real genera INSERT en `llm_usage_logs` con `cost_usd > 0`
-- Dashboard admin muestra gráfica de costes por proveedor por mes
-- Vista tenant muestra solo sus propios costes (RLS verificado)
-- Precios obsoletos de DA-4-005 corregidos (GPT-4 precio actual, no 2023)
-- `npm run typecheck` sin errores en componentes nuevos
+- Todas las cadenas LangChain producen traces visibles en Project Langfuse correspondiente.
+- Los 5 call sites SDK directos producen traces vía wrapper.
+- Filtro `tag=tenant_X` muestra solo traces de ese tenant (multi-tenant validado).
+- Test sintético con DNI/email/teléfono confirma masking (no aparecen valores reales en Langfuse).
+- Dashboard Langfuse muestra cost per tenant + modelo + día sin código custom.
+- A/B prompt funcional: 2 versiones del mismo prompt comparables en UI.
+- `npm run typecheck` + `lint` + `build` → 0 errores.
 
 ## Risk Assessment
 
-| Riesgo                                                                     | Prob  | Impacto | Mitigación                                                                      |
-| -------------------------------------------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------- |
-| LangChain output format diferente por proveedor (tokenUsage path distinto) | Alta  | Medio   | Testear con CADA proveedor; múltiples paths en handler                          |
-| Precios LLM cambian frecuentemente                                         | Alta  | Bajo    | Tabla de precios en constante TypeScript (fácil editar), no en BD               |
-| Coste 0 en llamadas con streaming (no reportan tokens al final)            | Media | Medio   | Verificar si streaming llega a `handleLLMEnd` o requiere `handleLLMStreamEvent` |
+| Riesgo                                                    | Mitigación                                                                                         |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| PII leak a Langfuse Cloud sin masking correcto            | Tests sintéticos antes de exponer prod. Defense-in-depth: client mask + server mask. DPA firmado.  |
+| Volumen supera 50k units/mes Cloud Hobby                  | Monitor semanal `Usage` Langfuse. Plan B: migración self-hosted Dokploy (~10-20€/mes), exportable. |
+| Multi-tenant Langfuse no es nativo (1 Project ≠ 1 tenant) | Usar tags + metadata + filtrado server-side. RBAC granular solo en feature Enterprise.             |
+| Prompt cache desactualizado tras edit en UI               | Cache 5min + bust manual via `langfuse.refreshPrompt(name)` si cambio crítico.                     |
+| SDK rompe API entre versiones major                       | Pineado tag SemVer concreto. Antes de upgrade, leer CHANGELOG.                                     |
+| Latencia añadida por callback síncrono                    | SDK Langfuse es async background. Validar p99 <50ms con benchmarks.                                |
 
 ## Security Considerations
 
-- `llm_usage_logs` tiene RLS: tenant solo ve sus datos (confirmado en migración Ph1)
-- Admin view (`/api/admin/llm-costs`) solo accesible con `is_admin = true` en session
-- Los costes son información financiera sensible: no exponer en endpoints públicos
-- `cost_usd` calculado en app, no en BD — evita SQL injection en cálculos financieros
-- DA-4-010: las API keys de LLM NO deben aparecer en ningún response del dashboard de costes
+- Keys Langfuse en vault `.secrets/langfuse-keys.env` gitignored + Dokploy env vars.
+- `LANGFUSE_SECRET_KEY` solo accesible server-side (nunca expuesto a client browser).
+- Masking PII validado por tests automáticos antes de cualquier deploy.
+- DPA firmado con Langfuse Inc. antes de producción con datos reales.
+- Project per entorno: dev/staging/prod aislados (no fugar trazas dev a prod).
+- RBAC inicial: 2 users (Javi HP + Renzo). Sin acceso de la clienta al panel Langfuse en MVP (decisión SP-5B+1 si se quiere abrir).
 
 ## Next Steps
 
-- Los datos de `llm_usage_logs` pueden usarse en sprints futuros para alertas de coste (budget alerts por tenant)
-- Sprints futuros pueden migrar a LangSmith si el equipo escala y necesita debugging LLM avanzado
+→ Phase 03 — Persistir `completion.usage` en `chat_messages.metadata` (legacy C-03 preservada, complementa Langfuse con vista por mensaje).

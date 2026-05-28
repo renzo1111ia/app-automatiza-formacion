@@ -1,9 +1,11 @@
 ---
-title: "Phase 03 — token_usage en chat_messages todos los consumidores OpenAI (C-03)"
+title: "Phase 03 — token_usage en chat_messages todos los consumidores OpenAI (C-03 preservada)"
 sprint: SP-5B
 phase: 3
 tasks: [C-03]
-effort: 2h
+adr: ADR-024 (Draft)
+effort_nominal: 2h
+effort_realistic: 1-2h
 status: pending
 agents: [af-agents:code]
 ---
@@ -13,8 +15,12 @@ agents: [af-agents:code]
 ## Context Links
 
 - Plan overview: [plan.md](plan.md)
-- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-03)
-- **Origen del movimiento (22-05-2026):** esta tarea vivía como 2-36 en Sprint 1 phase-04. Se trasladó al Sprint Costes-LLM (post-MVP) cuando la clienta confirmó que el centro de costes LLM no es necesario en MVP — sin dashboard que lo consuma (Ph2 de este sprint), 2-36 no aportaba valor en `v0.4.0`.
+- ADR-024 (Draft): [`docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md`](../../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md)
+- Phase 01 (LiteLLM Proxy): [phase-01-litellm-proxy-setup.md](phase-01-litellm-proxy-setup.md)
+- Phase 02 (Langfuse): [phase-02-langfuse-integration.md](phase-02-langfuse-integration.md)
+- RoadMap: [RoadMap.md](../RoadMap.md) §Fase 4.5 (C-03 — única tarea preservada del plan original)
+- **Origen del movimiento (22-05-2026):** esta tarea vivía como 2-36 en Sprint 1 phase-04. Se trasladó al Sprint Costes-LLM (post-MVP) cuando la clienta confirmó que el centro de costes LLM no es necesario en MVP.
+- **Preservación tras decisión 28-05-2026:** al sustituir el plan custom in-house por LiteLLM + Langfuse (ADR-024), C-01 y C-02 se descartaron pero **C-03 se mantiene** porque cubre una vista distinta (por mensaje persistido) que ni LiteLLM ni Langfuse cubren nativamente.
 - Audit F-DA-4: `docs/audit/deep/DA-4-llm-voice-deep.md` — token_usage no persistido en `chat_messages`
 - Informe Renzo: `docs/Informes de programacion/Reporte-Modulo-Chatbot-Web-Renzo-V1.pdf` §3 ⚠️ — confirma el mismo bug para el widget
 
@@ -22,15 +28,20 @@ agents: [af-agents:code]
 
 - **Priority:** P2
 - **Status:** Pendiente
-- **Descripción:** Persistir `completion.usage` en `chat_messages.metadata` para TODOS los consumidores OpenAI (WhatsAppAIProcessor, RescueWorker, widget.ts, FactExtractor, AIAnalysis). Cambio mecánico de 2h. Complementa Ph1 (`llm_usage_logs`) — ambas fuentes alimentan Ph2 (dashboard).
+- **Descripción:** Persistir `completion.usage` en `chat_messages.metadata` para TODOS los consumidores OpenAI (WhatsAppAIProcessor, RescueWorker, widget.ts, FactExtractor, AIAnalysis). Cambio mecánico de 2h. Complementa Phase 01 (LiteLLM Proxy persiste call-level) y Phase 02 (Langfuse persiste span-level) con la vista por mensaje persistido (1:1 con Inbox del CRM).
 
 ## Key Insights
 
-- **Dos fuentes de verdad por diseño:**
-  - `llm_usage_logs` (Ph1): entrada granular por llamada LLM, incluida la llamada secundaria de los tool calls (Ph1 captura cada `chat.completions.create()`).
-  - `chat_messages.metadata.token_usage` (esta fase): entrada por mensaje persistido en el historial — coincide 1:1 con un mensaje de usuario en el Inbox.
-- **No es duplicación**: en flujos con tool calls (`AIRescueService` puede hacer 2-3 llamadas LLM por mensaje), `llm_usage_logs` tiene 2-3 filas pero `chat_messages` solo 1. El dashboard de Ph2 puede mostrar ambos ángulos: "coste por mensaje" (desde chat_messages) y "coste por llamada LLM" (desde llm_usage_logs).
+- **Tres fuentes de verdad por diseño** (complementarias, no duplicadas):
+  - **LiteLLM Proxy** (Ph1): entrada granular por llamada LLM saliente del proxy. Incluye la llamada secundaria de tool calls. Cost tracking con pricing oficial actualizado por upstream.
+  - **Langfuse traces** (Ph2): span-level con I/O completo de cada step de la cadena LangChain. Para debug + replay + evals.
+  - **`chat_messages.metadata.token_usage`** (esta fase): entrada por mensaje persistido en el historial — coincide 1:1 con un mensaje de usuario en el Inbox.
+- **No es duplicación**: en flujos con tool calls (`AIRescueService` puede hacer 2-3 llamadas LLM por mensaje), LiteLLM tiene 2-3 entradas en `LiteLLM_SpendLogs`, Langfuse tiene 1 trace con 2-3 spans, y `chat_messages` tiene 1 fila. Los 3 ángulos son útiles según el caso:
+  - "¿Cuánto coste tiene este mensaje del Inbox?" → `chat_messages.metadata.token_usage`
+  - "¿Cuántas calls LLM hizo este tenant este mes?" → LiteLLM admin
+  - "¿Qué pasó dentro de este chat (replay)?" → Langfuse trace
 - **Sin backfilling**: aplica solo a chats nuevos desde el deploy. Los chats históricos quedan sin `token_usage` (irrecuperable — OpenAI no expone usage retroactivo).
+- **Las llamadas ahora pasan por LiteLLM Proxy** (Phase 01): el campo `completion.usage` que llega al caller sigue presente (LiteLLM lo propaga transparentemente desde el provider). Sin cambio funcional respecto al plan original.
 
 ## Requirements
 
@@ -83,9 +94,11 @@ DESPUÉS:
 ## Implementation Steps
 
 1. **Inventario exacto** (15min):
+
    ```bash
    grep -rn "openai.chat.completions.create\|openai\.chat\.completions\.create" src/
    ```
+
    Cruzar con `grep -rn "chat_messages" src/lib/` para identificar qué call sites insertan tras la llamada LLM.
 
 2. **Cambio mecánico** (5 archivos × ~15min): en cada insert a `chat_messages` posterior a una llamada OpenAI, añadir `token_usage: completion.usage` al payload de `metadata`.
@@ -119,11 +132,11 @@ DESPUÉS:
 
 ## Risk Assessment
 
-| Riesgo | Prob | Impacto | Mitigación |
-|--------|------|---------|-----------|
-| `completion.usage` es `undefined` en algún flujo (modelo cambiado o error API) | Baja | Bajo | `token_usage: completion.usage ?? null` — opcional, no rompe la inserción |
-| El Zod schema rechaza el nuevo campo | Media | Bajo | Si 2-10 todavía no se hizo o usa schema estricto, ampliar `metadata: z.record(z.unknown())` |
-| Call site nuevo añadido después olvida el `token_usage` | Media | Bajo | Documentar en `docs/architecture/llm-cost-tracking.md` como patrón obligatorio + code review check |
+| Riesgo                                                                         | Prob  | Impacto | Mitigación                                                                                         |
+| ------------------------------------------------------------------------------ | ----- | ------- | -------------------------------------------------------------------------------------------------- |
+| `completion.usage` es `undefined` en algún flujo (modelo cambiado o error API) | Baja  | Bajo    | `token_usage: completion.usage ?? null` — opcional, no rompe la inserción                          |
+| El Zod schema rechaza el nuevo campo                                           | Media | Bajo    | Si 2-10 todavía no se hizo o usa schema estricto, ampliar `metadata: z.record(z.unknown())`        |
+| Call site nuevo añadido después olvida el `token_usage`                        | Media | Bajo    | Documentar en `docs/architecture/llm-cost-tracking.md` como patrón obligatorio + code review check |
 
 ## Security Considerations
 
