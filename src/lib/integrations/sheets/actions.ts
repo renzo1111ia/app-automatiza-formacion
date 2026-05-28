@@ -16,7 +16,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { requireCurrentTenant } from "./session";
-import { getAppCredentials, getSheetsIntegration, setAppCredentials } from "./credentials";
+import { getSheetsIntegration, setAppCredentials } from "./credentials";
 import { GoogleSheetsAdapter } from "./adapter";
 import {
   ColumnMapping,
