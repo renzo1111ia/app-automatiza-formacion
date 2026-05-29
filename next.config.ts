@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "node:path";
 
 /**
  * Path-prefix proxy a Supabase Kong para evitar subdominios dedicados.
@@ -91,6 +92,12 @@ const nextConfig: NextConfig = {
   // como external en server bundles (no pasar por webpack chunking) para evitar runtime errors.
   // Sprint 3 phase-02 Observabilidad (4-03).
   serverExternalPackages: ["pino", "pino-pretty"],
+  // Fijar root de Turbopack al directorio del proyecto. Sin esto, Next 16 detecta
+  // ambiguamente el workspace y resuelve `tailwindcss` desde el parent (donde no hay
+  // node_modules), provocando crash OOM en dev (29-05-2026).
+  turbopack: {
+    root: path.join(__dirname),
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
