@@ -2,7 +2,8 @@
 title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: af-agents:roadmap-keeper
-last_updated: 2026-05-27
+last_updated: 2026-05-28
+last_updated_by: roadmap-keeper (28-05-2026 — Sincronización estados reales tablas detalladas Fase 4 tras SPIKE Pull-only: filas 5-01-a..f y SP-5-CLOSE-1..5 actualizadas con cubrimiento honesto del SPIKE (12 commits feature/sprint-04-google-sheets). Tabla resumen H3 Sprint 4 ya estaba OK. Frontmatter simplificado del audit v2 PR #18/#19 respetado.)
 project_version: v0.3.0-rc.1
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
@@ -402,15 +403,32 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 ### Sprint 4 — Google Sheets bidireccional (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 4**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.5.0 · `feature/sprint-04-google-sheets` · … _ver nota↓_               |
-| ▸ Tareas de desarrollo (Fase 4)     | 🔘           | 60-100h         | —      | —        | 0/6 (5-01-a..5-01-f) · googleapis ya instalado                           |
-| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-d … _ver nota↓_ |
+| Item                                             | Estado         | Estim.          | ⏱ Push    | ⏱ Cierre | Notas                                                                                 |
+| ------------------------------------------------ | -------------- | --------------- | --------- | -------- | ------------------------------------------------------------------------------------- |
+| **🚀 Sprint 4**                                  | 🟡 SPIKE 27-05 | 60-100h         | 11h 10min | —        | v0.5.0 · `feature/sprint-04-google-sheets` · Draft PR #20 · … _ver nota↓_             |
+| ▸ Tareas de desarrollo (Fase 4)                  | 🟡 SPIKE       | 60-100h         | 10h       | —        | Spike Pull-only + UI multi-Picker + writeback + push + Draft PR · … _ver nota↓_       |
+| ▸ Cierre Sprint 4 (SP-5-CLOSE-1..5)              | 🔘             | 5h 30min + bugs | —         | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-d … _ver nota↓_              |
+| ▸ SP-4-SPIKE-PULL · 1 Foundation (SQL+OAuth)     | 🟢 Local OK    | 3-4h            | 1h 30min  | —        | Commit `d639971` · 2 migraciones + types + credentials + OAuth refactor               |
+| ▸ SP-4-SPIKE-PULL · 2 Backend (adapter+queue)    | 🟢 Local OK    | 4-5h            | 1h 45min  | —        | Commit `f752b74` · adapter + queue + worker + webhook + writeback + actions           |
+| ▸ SP-4-SPIKE-PULL · 3 UI wizard + Picker         | 🟢 Local OK    | 3-4h            | 1h 15min  | —        | Commit `e1a3ec4` · 4 steps + Google Picker multi-sheet + mapping editor               |
+| ▸ SP-4-SPIKE-PULL · 4 Docs + tests + runbook     | 🟢 Local OK    | 2-3h            | 1h        | —        | Commit `6de8045` · guía Cloud Console tenant + 40 tests + runbook E2E                 |
+| ▸ SP-4-SPIKE-PULL · 5 Writeback automation       | 🟢 Local OK    | 1-2h            | 50min     | —        | Commit `4cdb460` · trigger SQL + outbox + cron + 4 tests                              |
+| ▸ SP-4-SPIKE-PULL · 6 CSP fix + smoke test       | 🟢 Local OK    | 30min-1h        | 40min     | —        | Commit `2e8a199` · CSP permite Google Picker + Playwright MCP smoke test              |
+| ▸ SP-4-SPIKE-PULL · 7 Worktree + dev 8501        | 🟢 Operativo   | 30min-1h        | 40min     | —        | Worktree `worktrees/sprint-04-google-sheets/` · dev 8501 · `.secrets/` copy           |
+| ▸ SP-4-SPIKE-PULL · 8 Full E2E Google OAuth      | 🔘 Mañana      | 2-3h            | —         | —        | Crear app Google Cloud + ngrok + ejecutar runbook E2E real                            |
+| ▸ SP-4-SPIKE-PULL · 9 Push GitHub + Draft PR #20 | 🔵 Subida rama | 1-2h            | 1h 30min  | —        | Commits `a78830b` + `c9e6238` (fix lint no-explicit-any) · Draft PR #20 · _ver nota↓_ |
 
-> **Nota fila `🚀 Sprint 4` · Notas**: v0.5.0 · `feature/sprint-04-google-sheets` · Inicio Mar 23-06-2026 (post-MVP, adelantado −7 sem 24-05 aplicando ratio real Sprints 0/1/2)
+> **Nota fila `🚀 Sprint 4` · Notas**: v0.5.0 · `feature/sprint-04-google-sheets` · Inicio formal Mar 23-06-2026 (post-MVP, adelantado −7 sem 24-05 aplicando ratio real Sprints 0/1/2). **Anticipo 27/28-05-2026**: spike paralelo Pull-only mientras chat 'experience' trabaja UI; sigue principios del plan oficial pero acotado. Trabajo desde `worktrees/sprint-04-google-sheets/` para aislamiento total de rama.
 >
-> **Nota fila `▸ Cierre Sprint 4 (SP-5-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Tareas de desarrollo (Fase 4)` · Notas**: 10 commits cerrados (subtareas 1-7 + 9 con sus 2 fix lint). Pendiente subtarea 8 (Full E2E con OAuth real Google + ngrok). Tests Vitest 48/48 sheets verdes, 268/272 suite completa. TypeCheck 🟢. Husky pre-push 🟢 (typecheck + build + lint). Rama pusheada a origin.
+>
+> **Nota fila `▸ Cierre Sprint 4 (SP-5-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A. **NO mergear a developer ni push a GitHub sin orden explícita del usuario** (regla del proyecto + regla refuerzo 27-05-2026: preguntar 2 veces antes de cualquier acción GitHub).
+>
+> **Nota fila `▸ SP-4-SPIKE-PULL · 7 Worktree + dev 8501` · Notas**: Repo principal queda libre para chat 'experience' (rama actual `auditoria-v2-medio-proyecto` 28-05). Worktree dedicado evita los incidentes de cambio silencioso de rama. Dev server 8501 con CSP fix activo. `.env.local` y `.secrets/` copiados (no symlinks: Windows sin Developer Mode).
+>
+> **Nota fila `▸ SP-4-SPIKE-PULL · 8 Full E2E Google OAuth` · Tarea**: Crear app OAuth en Google Cloud Console con `ai2you.email@gmail.com` (Sheets API + Drive API + Picker API + consent screen External Testing + OAuth Client ID Web tipo `Web application` con redirect URI `http://localhost:8501/api/integrations/google/callback`). Pegar Client ID + Secret en `.secrets/google-test-account.env`. Sheet de pruebas con cabeceras Nombre/Apellidos/Email/Teléfono/Empresa/Cargo/Estado. Arrancar `ngrok http 8501` para que Drive notifique a localhost. Ejecutar runbook `tests/e2e/sheets/sheets-spike-manual-runbook.md` paso a paso. Reporte final con métricas reales.
+>
+> **Nota fila `▸ SP-4-SPIKE-PULL · 9 Push GitHub + Draft PR #20` · Notas**: Sesión 28-05-2026 cierre por orden explícita usuario. **Push 1 baltqy689 ❌** husky pre-push bloqueó por lint en `src/lib/integrations/sheets/actions.ts:120` (2 errores `no-explicit-any` + warning unused import `getAppCredentials` + directive eslint-disable inútil línea 118). **Fix 1 commit `a78830b`**: eliminado import unused + reformateo statement multilinea a una sola línea; prettier deshizo el reformateo, lint volvió a romper. **Fix 2 commit `c9e6238`**: block `/* eslint-disable @typescript-eslint/no-explicit-any */ ... /* eslint-enable */` acotado al statement insert sheet_connections (sobrevive a prettier porque es block-comment directiva, no line-comment). **Push 2 bl0jn8xki 🟢** husky verde (typecheck + build + lint). 10 commits en `origin/feature/sprint-04-google-sheets`. **Draft PR #20** creado vía `gh pr create --draft --base developer` con cuerpo profesional en `plans/260521-0000-sprint-4-google-sheets/PR-BODY-sprint-4-spike-pull.md` (Resumen + Highlights + Detalle backend/frontend/tests + Migraciones SQL + Env vars (ninguna) + 10 commits enumerados + Próximos pasos). URL: <https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/pull/20>. NO mergeado — Draft hasta cerrar SPIKE-PULL-8 + protocolo CLOSE-1..5.
 
 ### Sprint Costes-LLM — Centro de costes LLM (post-Sheets, patch v0.5.1)
 
@@ -1426,16 +1444,16 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 ## Fase 4 — Sprint 4: Google Sheets bidireccional
 
-| Campo                          | Valor                                       |
-| ------------------------------ | ------------------------------------------- |
-| **Sprint ID**                  | `SP-5`                                      |
-| **Versión objetivo al cierre** | `v0.5.0`                                    |
-| **Estado del sprint**          | 🔘 Pendiente (post-MVP, requiere v0.3.0 GA) |
-| **Estimación total**           | 60-100h                                     |
-| **Rama de trabajo sugerida**   | `feature/sprint-04-google-sheets`           |
-| **Inicio**                     | Mar 11-08-2026 09:00                        |
-| **Fin Est.**                   | Vie 21-08-2026 19:00                        |
-| **Fin Real**                   | —                                           |
+| Campo                          | Valor                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------- |
+| **Sprint ID**                  | `SP-5`                                                                             |
+| **Versión objetivo al cierre** | `v0.5.0`                                                                           |
+| **Estado del sprint**          | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) |
+| **Estimación total**           | 60-100h                                                                            |
+| **Rama de trabajo sugerida**   | `feature/sprint-04-google-sheets`                                                  |
+| **Inicio**                     | Mar 11-08-2026 09:00                                                               |
+| **Fin Est.**                   | Vie 21-08-2026 19:00                                                               |
+| **Fin Real**                   | —                                                                                  |
 
 > **Asignado a:** Javi HP (solo). 9 días lab × 10h/día = 90h. Estimación dentro del rango 60-100h.
 
@@ -1443,31 +1461,49 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 > Sincronización bidireccional Esden ↔ Google Sheets. Push via BullMQ. Pull via Drive push notifications. `googleapis@171.4.0` YA INSTALADO — cero deps nuevas.
 
-| ID                               | Tarea                                                                    | Estimación  | Estado       | Notas                                            |
-| -------------------------------- | ------------------------------------------------------------------------ | ----------- | ------------ | ------------------------------------------------ |
-| 5-01-a                           | DB migration: columnas Sheets (`spreadsheet_id`, … _ver nota↓_           | 4-6h        | 🔘 Pendiente | Sobre tabla `crm_connections`                    |
-| 5-01-b                           | `GoogleSheetsAdapter` + OAuth2 (refresh tokens, multi-tenant)            | 14-22h      | 🔘 Pendiente | `src/lib/integrations/sheets/*`                  |
-| 5-01-c                           | Push job (BullMQ) + idempotencia `_esden_updated_at` + batching          | 12-18h      | 🔘 Pendiente | Reutiliza patrón Sprint 2                        |
-| 5-01-d                           | Pull webhook `/api/webhooks/google-sheets` + Drive push no … _ver nota↓_ | 14-22h      | 🔘 Pendiente | TTL 7 días → renovación obligatoria              |
-| 5-01-e                           | UI admin: form conexión Sheets + plantilla maestra + field-mapper        | 10-18h      | 🔘 Pendiente | Extiende UI Sprint 2                             |
-| 5-01-f                           | Tests integración sandbox + auditoría `crm_write_audit`                  | 6-14h       | 🔘 Pendiente | OAuth real con cuenta test                       |
-| **Subtotal Fase 4 — Desarrollo** |                                                                          | **60-100h** |              | Reutiliza código OAuth previo (commit `63e1e6e`) |
+| ID                               | Tarea                                                                    | Estimación  | Estado real (28-05) | Notas                                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------ | ----------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5-01-a                           | DB migration: columnas Sheets (`spreadsheet_id`, … _ver nota↓_           | 4-6h        | 🟡 PARCIAL          | Spike creó tabla `sheet_connections` + trigger writeback; NO columnas en `crm_connections` (cambio diseño)                                            |
+| 5-01-b                           | `GoogleSheetsAdapter` + OAuth2 (refresh tokens, multi-tenant)            | 14-22h      | 🟢 Local OK         | Commits `d639971` + `f752b74` + `a78830b` + `c9e6238` — adapter completo + OAuth refactor + lint fix                                                  |
+| 5-01-c                           | Push job (BullMQ) + idempotencia `_esden_updated_at` + batching          | 12-18h      | 🟡 PARCIAL          | Queue + worker + writeback framework `f752b74` + `4cdb460`. Push efectivo Esden→Sheet no validado E2E (pende Sub 8)                                   |
+| 5-01-d                           | Pull webhook `/api/webhooks/google-sheets` + Drive push no … _ver nota↓_ | 14-22h      | 🟢 Local OK         | Webhook + setupWatch + cron outbox implementados y testados. Falta cuenta real Google (Sub 8)                                                         |
+| 5-01-e                           | UI admin: form conexión Sheets + plantilla maestra + field-mapper        | 10-18h      | 🟢 Local OK         | Commit `e1a3ec4` + `2e8a199` — wizard 4 pasos + Picker + SheetMappingEditor + CSP fix validado en navegador                                           |
+| 5-01-f                           | Tests integración sandbox + auditoría `crm_write_audit`                  | 6-14h       | 🟡 PARCIAL          | 48/48 tests unit verdes + runbook E2E escrito. Falta: OAuth real (Sub 8) + `crm_write_audit` no implementado (spike usa cola `sheet_writeback_queue`) |
+| **Subtotal Fase 4 — Desarrollo** |                                                                          | **60-100h** |                     | Reutiliza código OAuth previo (commit `63e1e6e`) · 3🟢 + 3🟡 a 28-05-2026                                                                             |
 
 > **Nota fila `5-01-a` · Tarea**: DB migration: columnas Sheets (`spreadsheet_id`, `gsheet_channel_id`, `gsheet_channel_expiry`, etc.)
+>
+> **Nota fila `5-01-a` · Estado real (28-05)**: 🟡 PARCIAL — commit `d639971` creó tabla `sheet_connections` nueva + añadió columnas `app_client_id_cipher`/`app_client_secret_cipher` en `integrations` + trigger `sheet_writeback_queue`. La tarea original especificaba columnas en `crm_connections` (cambio de diseño durante SPIKE: tabla propia `sheet_connections` en lugar de extender `crm_connections`). La migración existe y es funcional pero el diseño difiere del plan original.
+>
+> **Nota fila `5-01-b` · Estado real (28-05)**: 🟢 Local OK — `GoogleSheetsAdapter` completo con OAuth2 refresh tokens multi-tenant implementado en `src/lib/integrations/sheets/`. Fix lint resistente a prettier aplicado en commits `a78830b` + `c9e6238`.
+>
+> **Nota fila `5-01-c` · Estado real (28-05)**: 🟡 PARCIAL — BullMQ queue + worker + writeback automation (trigger SQL + outbox + cron) implementados en `f752b74` + `4cdb460`. El push efectivo de datos Esden → Sheet real no ha sido validado end-to-end (depende de Sub 8 Full E2E con cuenta Google real).
+>
+> **Nota fila `5-01-d` · Estado real (28-05)**: 🟢 Local OK — webhook `/api/webhooks/google-sheets` + `setupWatch()` en adapter + cron `/api/internal/sheets/cron` para outbox implementados y cubiertos con tests. Validación con cuenta Google real diferida a Sub 8.
+>
+> **Nota fila `5-01-e` · Estado real (28-05)**: 🟢 Local OK — wizard 4 pasos + Google Picker multi-sheet + `SheetMappingEditor` + fix CSP runtime (`2e8a199`) validados en navegador con screenshot Playwright MCP.
+>
+> **Nota fila `5-01-f` · Estado real (28-05)**: 🟡 PARCIAL — 48/48 tests unitarios sheets verdes + runbook E2E manual en `tests/e2e/sheets/sheets-spike-manual-runbook.md`. Pendiente: (1) OAuth real con cuenta test en Sub 8; (2) auditoría `crm_write_audit` no implementada — el SPIKE usa tabla `sheet_writeback_queue` propia, no la tabla `crm_write_audit` definida en la tarea original.
 >
 > **Nota fila `5-01-d` · Tarea**: Pull webhook `/api/webhooks/google-sheets` + Drive push notifications + canal renew cron
 
 ### Tareas de cierre obligatorias (Sprint 4)
 
-| ID                           | Tarea                                                                    | Estimación          | Estado       | Notas                                                                |
-| ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------ | -------------------------------------------------------------------- |
-| SP-5-CLOSE-1                 | Auto test                                                                | 1h 30min            | 🔘 Pendiente |                                                                      |
-| SP-5-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                             | 2h 30min            | 🔘 Pendiente | Flujo OAuth Google completo                                          |
-| SP-5-CLOSE-3                 | Test Manual del Dev                                                      | 1h                  | 🔘 Pendiente |                                                                      |
-| SP-5-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente |                                                                      |
-| SP-5-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.5.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente | Crear rama del Sprint Costes-LLM (siguiente en orden), … _ver nota↓_ |
-| **Subtotal cierre Sprint 4** |                                                                          | **5h 30min + bugs** |              |                                                                      |
+| ID                           | Tarea                                                                    | Estimación          | Estado real (28-05) | Notas                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------------- | ------------------------------------------------------------------------------------------------- |
+| SP-5-CLOSE-1                 | Auto test                                                                | 1h 30min            | 🔘 Pendiente        | Husky pre-push verde NO equivale a CLOSE-1 formal del protocolo                                   |
+| SP-5-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                             | 2h 30min            | 🔘 Pendiente        | Flujo OAuth Google completo — no ejecutado                                                        |
+| SP-5-CLOSE-3                 | Test Manual del Dev                                                      | 1h                  | 🔘 Pendiente        | No ejecutado                                                                                      |
+| SP-5-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente        | Los 2 fix lint pre-push (`a78830b`+`c9e6238`) son fixes técnicos de husky, NO bugs de CLOSE-1/2/3 |
+| SP-5-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.5.0` + crear … _ver nota↓_ | 30min               | 🟡 PARCIAL          | Push 🟢 + Draft PR #20 🟢 (Draft, no Ready) · NO bump SemVer · NO merge                           |
+| **Subtotal cierre Sprint 4** |                                                                          | **5h 30min + bugs** |                     | 0/5 completas · SP-5-CLOSE-5 parcial (solo push+Draft PR)                                         |
 
+> **Nota fila `SP-5-CLOSE-1` · Estado real (28-05)**: 🔘 Pendiente — el pre-push de husky ejecuta typecheck+build+lint pero NO es equivalente al protocolo CLOSE-1 formal (que incluye suite completa `npm run typecheck && npm run lint && npm run build && npm test`). El CLOSE-1 requiere ejecución explícita por `af-agents:testing`.
+>
+> **Nota fila `SP-5-CLOSE-4` · Estado real (28-05)**: 🔘 Pendiente — los commits `a78830b` + `c9e6238` corrigieron errores lint bloqueantes del pre-push (`no-explicit-any` + unused import en `actions.ts`). Son fixes técnicos de calidad de código, no bugs detectados en CLOSE-1/2/3. CLOSE-4 permanece pendiente hasta que existan bugs reportados por el protocolo de cierre.
+>
+> **Nota fila `SP-5-CLOSE-5` · Estado real (28-05)**: 🟡 PARCIAL — completado: push a `origin/feature/sprint-04-google-sheets` (11 commits, bl0jn8xki 🟢) + Draft PR #20 creado con cuerpo profesional completo. Pendiente: (1) cambiar Draft→Ready, (2) bump SemVer a `v0.5.0` en `package.json`, (3) merge a `developer` (requiere orden usuario). NO se puede marcar 🟢 hasta completar protocolo CLOSE-1..4 previo.
+>
 > **Nota fila `SP-5-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.5.0` + crear rama Sprint Costes-LLM
 >
 > **Nota fila `SP-5-CLOSE-5` · Notas**: Crear rama del Sprint Costes-LLM (siguiente en orden), no del Sprint 5 todavía

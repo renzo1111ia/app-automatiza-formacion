@@ -30,9 +30,12 @@ const SUPABASE_KONG_INTERNAL = process.env.SUPABASE_KONG_INTERNAL_URL ?? "http:/
 // Solo añadimos 'unsafe-eval' a script-src en NODE_ENV !== 'production'.
 // En prod build se mantiene la CSP estricta original.
 const IS_DEV = process.env.NODE_ENV !== "production";
+// Sprint 4: Google Picker requires loading apis.google.com (gapi loader) y
+// embedding docs.google.com iframe del Picker UI.
+const GOOGLE_PICKER_SCRIPT = "https://apis.google.com";
 const SCRIPT_SRC = IS_DEV
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-  : "script-src 'self' 'unsafe-inline'";
+  ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${GOOGLE_PICKER_SCRIPT}`
+  : `script-src 'self' 'unsafe-inline' ${GOOGLE_PICKER_SCRIPT}`;
 
 const securityHeaders = [
   {
@@ -56,8 +59,13 @@ const securityHeaders = [
         "https://accounts.zoho.com https://*.zohoapis.com https://*.zohoapis.eu",
         "https://graph.facebook.com",
         "https://api.sepay.vn",
+        // Sprint 4: Google Sheets / Drive / Picker / OAuth userinfo
+        "https://sheets.googleapis.com https://www.googleapis.com https://oauth2.googleapis.com https://accounts.google.com",
+        "https://content.googleapis.com",
       ].join(" "),
       "font-src 'self' data:",
+      // Sprint 4: el Google Picker carga su UI en un iframe servido por docs.google.com.
+      "frame-src https://docs.google.com https://accounts.google.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
