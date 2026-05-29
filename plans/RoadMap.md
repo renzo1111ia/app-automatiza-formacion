@@ -1,25 +1,57 @@
 ---
-title: "RoadMap dashboard-af"
-audience: equipo de desarrollo
+title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
-maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: 28-05-2026 — sync tablas detalladas Fase 4 tras SPIKE Pull-only
-last_updated_by: roadmap-keeper (28-05-2026 — Sincronización estados reales tablas detalladas `## Fase 4`: filas 5-01-a..f y SP-5-CLOSE-1..5 actualizadas con cubrimiento honesto del SPIKE Pull-only (11 commits origin/feature/sprint-04-google-sheets). Tabla resumen H3 Sprint 4 ya estaba OK desde sesión anterior — no tocada. Ver mapping commit→tarea y notas explicativas debajo de cada tabla.)
-project_version: v0.2.7
-versioning_policy: "Rebajada 24-05-2026 por decisión Javi HP. Mapa nuevo: Sprint 0=v0.1.0, Sprint 1=v0.2.0, Sprint 2=v0.2.7 (final con hotfix BUG-2-01), Sprint 2B=v0.2.8 inicial + v0.2.9 post-fix (alturas reales + viewport 100% + E2E Bloques B-G), Sprint 3=v0.3.0-rc.1, SP-4B Validación MVP GA=v0.3.0, Sprint 4 Sheets=v0.4.0, Sprint Costes-LLM=v0.4.1, Sprint Refinamiento=v0.4.2, Sprint 5 Salesforce=v0.5.0, etc."
-sprint_0_progress: "✅ **Released v0.1.0 — Sprint 0 cerrado 22-05-2026 17:29 + cierre formal PR #4 a las 19:30** · Tag `v0.1.0` en commit `a387dfe` (merge PR #2) · DEV 🟢: 0-00, 0-01, 1-01, 1-02, 1-04, 1-06, 1-07..1-27 (26 tareas locales). 1-03, 1-05 → 🟡 diferidas 100% VPS pre-deploy staging. Cierre completo: CLOSE-1 🟢 (~30min, DONE_WITH_CONCERNS aceptado, lint 118 err preexistentes), CLOSE-2 🟢 (~45min, 24/24 E2E + 5 WCAG findings + 2 bugs corregidos), CLOSE-3 🟢 (~1h 30min, análisis Bea+Renzo V1), CLOSE-4 🟢 (~25min, 2 bugs + 2 lint fixes), CLOSE-5 🟢 (~45min, CHANGELOG + RoadMap + PR #4 cierre formal). ⏱ **Total Sprint 0: ~11h 5min vs 118h estimadas (−91%)**. CHANGELOG.md publicado."
-sprint_1_progress: "MERGEADO a developer vía PR #5 (commit `94c035a`) · ⏱ Real efectivo ~12h vs ~205h estim (paralelismo orquestación). 24 tareas 🟢 Completada (Bloques 2.1, 2.2, 2.3, 2.6 completos · 2.5, 2.7, 2.8 parcial · 2.9 completo). 8 tareas 🟢 Diferida (2-19..2-22 a ADR-019; 2-31, 2-32, 2-34 a ADR-018; 2-36 a Sprint Costes-LLM; NEW-01 paso 3 a v0.5.3). 6 ADRs creados (014-019). SP-2-CLOSE-1..5 ✅ excepto CLOSE-3 diferido a SP-4B phase-02. ENCRYPTION_KEY env crítica para deploy. Resumen: `plans/260520-1342-sprint-1-capa-datos/SP-2-CLOSE-summary.md`."
-autoexec_plan_260524_progress: "✅ COMPLETADO 24-05-2026 ~11:30 (3 commits directos a developer + 1 commit cierre) · Plan `plans/260524-1020-doc-agent-empty-states-full/` ejecutado sin intervención post-/clear · Phase B `6701b74` (70 alerts→toast, EmptyState, web_widgets.updated_at + orchestrator flag migrations LOCAL+VPS) · Phase C `93cf858` (help_sections table + API + HelpPageShell + /dashboard/docs-admin + /dashboard/docs-clientes + 11 secciones seeded LOCAL+VPS) · Phase D `e0dda4c` (help-docs-keeper agent actualizado a 2 scopes + hook `af-docs-watcher.cjs` registrado y testeado) · Cierre `b0e6769`. VPS aplicado vía pg-meta REST (SSH key denegada, workaround documentado en `reference-vps-pg-meta.md`). 11/12 acceptance criteria · 1 diferido orgánicamente (screenshots WCAG-validated, los hace help-docs-keeper en próximos Edit/Write)."
-sprint_2_progress: "✅ **CERRADO v0.2.7 — Sprint 2 mergeado a developer 24-05-2026 19:55** · PR #12 mergeado (`a826fd6`) · Versión final `v0.2.7` (hotfix BUG-2-01 slug conflict incluido) · 170 tests Vitest verdes · 5/5 E2E VPS verdes contra `dev.automatizaformacion.com` · Bloques 3.0..3.7 🟢 Completados en bundle PR #12 · SP-3-CLOSE-1..5 🟢 · ⏱ Real push ~40min vs ~74h estim · ⏱ Cierre total ~3h 15min · Ratio −94%. Releases: [v0.2.5](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.5) + [v0.2.7](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.7)."
-sprint_2b_progress: "✅ **CERRADO v0.2.8** — Sprint 2B mergeado a developer 25-05-2026 07:27 UTC (PR #13 merge `17b2902`) · 7/7 phases 🟢 · 193/193 Vitest local · **15/15 Playwright E2E VPS verdes** contra `dev.automatizaformacion.com` (25-05 06:09 UTC, 1m 30s) · Dokploy autodeploy correcto (ETag `778yfwjt2f6lb`→`xpftxrxk886lb`, container swap OK ~6min) · 3 bugs resueltos pre-PR (BUG-2B-01/02/03) · SP-3B-CLOSE-1..5 todos 🟢 · CLOSE-3 diferido SP-4B phase-03b · ⏱ ~2h 23min real vs 16h 30min estim (ratio −86%) · RELEASE-NOTES-v0.2.8 redactadas · hand-off SP-4B phase-03b auto-filled · Nueva tarea SP-4-NEW-13 añadida a Sprint 3 (endpoints /api/health + /api/version tras detectar fricción ETag opaco)"
+maintained_by: af-agents:roadmap-keeper
+last_updated: 2026-05-28
+last_updated_by: roadmap-keeper (28-05-2026 — Sincronización estados reales tablas detalladas Fase 4 tras SPIKE Pull-only: filas 5-01-a..f y SP-5-CLOSE-1..5 actualizadas con cubrimiento honesto del SPIKE (12 commits feature/sprint-04-google-sheets). Tabla resumen H3 Sprint 4 ya estaba OK. Frontmatter simplificado del audit v2 PR #18/#19 respetado.)
+project_version: v0.3.0-rc.1
+mvp_target: v0.3.0
+mvp_date: 2026-06-22
 excluded_from: [staging, main]
 ---
 
-# RoadMap — dashboard-af
+<!-- Detalle por sprint en "Sprint Tracker (resumen)" más abajo + tablas por sprint + memory/MEMORY.md + RELEASE-NOTES-vX.Y.Z.md. -->
 
-> ⚠️ **Documento vivo**. Mantenido proactivamente por el agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md). NO editar directamente sin orden del lead — pide al agente que lo haga.
+<div align="center">
+
+# 🗺️ RoadMap — `dashboard-af`
+
+![Versión](https://img.shields.io/badge/versión-v0.3.0--rc.1-5b6cff?style=for-the-badge&logo=semver&logoColor=white)
+![MVP GA](https://img.shields.io/badge/MVP%20GA-v0.3.0-1faa66?style=for-the-badge&logo=target&logoColor=white)
+![Fecha](https://img.shields.io/badge/Objetivo-22--jun--2026-e5a93b?style=for-the-badge&logo=calendar&logoColor=white)
+![Excluido](https://img.shields.io/badge/NO%20promocionar-staging%20%7C%20main-e23b3b?style=for-the-badge&logo=git&logoColor=white)
+
+<sub>**Audiencia**: equipo de desarrollo · **Mantiene**: `af-agents:roadmap-keeper` · **Última actualización**: `2026-05-27` por Javi HP</sub>
+
+</div>
+
+<table>
+  <tr>
+    <td align="center" width="25%">📌 Versión<br><code>v0.3.0-rc.1</code></td>
+    <td align="center" width="25%">🎯 MVP GA<br><code>v0.3.0</code></td>
+    <td align="center" width="25%">📅 Fecha objetivo<br><b>22-jun-2026</b></td>
+    <td align="center" width="25%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
+  </tr>
+</table>
+
+> ⚠️ **Documento vivo**. NO editar directamente sin orden del lead — pide al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md) que lo haga.
 >
-> Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+> 💡 Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+
+## 🏁 Mapa de versiones vigente (2026-05-27)
+
+| Sprint              | Versión             | Estado                    | Notas                                                      |
+| ------------------- | ------------------- | ------------------------- | ---------------------------------------------------------- |
+| Sprint 0            | `v0.1.0`            | 🟢 Released               | Hotfixes seguridad                                         |
+| Sprint 1            | `v0.2.0`            | 🟢 Released               | Capa de datos · Repository pattern · 6 ADRs                |
+| Sprint 2            | `v0.2.7`            | 🟢 Released               | HubSpot + Zoho multi-DC · final con hotfix BUG-2-01        |
+| Sprint 2B           | `v0.2.8` / `v0.2.9` | 🟢 Released               | Dashboard KPIs · v0.2.9 post-fix alturas+viewport          |
+| Sprint 3            | `v0.3.0-rc.1`       | 🟢 PR #14 mergeado 26-may | Hardening · Pino + Sentry + rate limiting + Node 22        |
+| SP-4B               | `v0.3.0` GA         | 🔘 Pendiente              | Validación pre-MVP (Renzo) · 16-21 jun                     |
+| Sprint 4            | `v0.4.0`            | 🔘 Pendiente              | Google Sheets bidireccional · post-MVP                     |
+| Sprint Costes-LLM   | `v0.4.1`            | 🔘 Pendiente              | Tracking de tokens LLM · post-Sheets                       |
+| Sprint Refinamiento | `v0.4.2`            | 🔘 Pendiente              | Simulator + lanzador /calls Retell (Renzo)                 |
+| Sprints 5..9        | `v0.5.0+`           | 🔘 Backlog                | Salesforce → GoHighLevel → ActiveCampaign → generalización |
 
 ---
 
@@ -124,6 +156,27 @@ excluded_from: [staging, main]
 > **Nota fila `Versión objetivo MVP` · Valor**: `v0.3.0` GA (rebajada desde `v0.4.0` por decisión 24-05-2026) · Sprint 2 = `v0.2.5`, Sprint 2B = `v0.2.7`, Sprint 3 = `v0.3.0-rc.1`, SP-4B GA = `v0.3.0`
 
 > **Nota fechas internas (24-05-2026)**: las cabeceras `Inicio`/`Fin Est.` de cada Sprint individual (3, 4, 5, 6, 7, 8, 9, Costes-LLM, Refinamiento) mantienen las fechas del plan anterior y se recalcularán al arrancar cada sprint. Las fechas vigentes para planificación inmediata son: Sprint 2B Mar 26-05 → Jue 28-05-2026 · Sprint 3 Vie 29-05 → Vie 12-06-2026 · SP-4B Mar 16-06 → Vie 19-06-2026 · **MVP v0.3.0 GA Lun 22-06-2026**. Post-MVP se desplaza igualmente −7 sem aprox.
+
+---
+
+## Estimaciones realistas V2 (basadas en ratio efectivo Sprints 0/1/2/2B/3 = −92%)
+
+> Cierre auditoría V2 (27-05-2026). Las estimaciones originales asumían desarrollo humano sin IA asistida. Ratio real medido: **~43h reales vs ~541-574h estimadas** sobre 5 sprints cerrados. Estas nuevas estimaciones aplican al trabajo **pendiente** (SP-4B y post-MVP) y son el input principal del Bloque 8 del informe V2 [`docs/audit2/index.html`](../docs/audit2/index.html).
+
+| Etapa pendiente                                                                 | Estim. original | Estim. realista V2 | Responsable     | Fecha objetivo           |
+| ------------------------------------------------------------------------------- | --------------- | ------------------ | --------------- | ------------------------ |
+| **SP-4B — Validación Pre-MVP** (Phases 01..04 + cierre)                         | 40-55h          | **23-32h**         | Renzo + equipo  | 16-jun → 21-jun-2026     |
+| **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
+| Sprint 4 — Google Sheets bidireccional (`v0.4.0`)                               | 60-100h         | **10-15h**         | Javi HP         | 23-jun → 30-jun-2026     |
+| Sprint Costes-LLM (`v0.4.1`) — recomendación V2: **adelantar antes que Sheets** | 23-31h          | **5-7h**           | Javi HP         | post-MVP, prioridad alta |
+| Sprint Refinamiento Herramientas (`v0.4.2`) — Renzo                             | 18-22h          | **12-15h**         | Renzo           | post-Costes-LLM          |
+| Sprint 5 — Salesforce (`v0.5.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Refinamiento        |
+| Sprint 6 — GoHighLevel (`v0.6.0`)                                               | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
+| Sprint 7 — ActiveCampaign (`v0.7.0`)                                            | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
+| Sprint 8 — Adapter pattern generalization (`v0.8.0`)                            | 20-40h          | **4-7h**           | Javi HP         | post-AC                  |
+| Sprint 9 — Tier 2 on-demand                                                     | 30-50h/CRM      | **6-10h/CRM**      | bajo pedido     | backlog                  |
+
+> **Nota Auditor V2**: estas estimaciones realistas **asumen mantenimiento del patrón de orquestación multi-agente** que ha producido el ratio −92%. Si el equipo se amplía con devs no-orquestados, recalcular al 50% del original como peor caso. Las estimaciones originales se mantienen en las tablas detalladas más abajo como referencia histórica y para hand-off a SP-4B.
 
 ---
 
@@ -1457,43 +1510,46 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 ---
 
-## Fase 4.5 — Sprint Costes-LLM (post-Sheets, patch v0.5.1)
+## Fase 4.5 — Sprint Costes-LLM con LiteLLM + Langfuse (post-Sheets, patch v0.5.1)
 
-| Campo                          | Valor                                                |
-| ------------------------------ | ---------------------------------------------------- |
-| **Sprint ID**                  | `SP-5B`                                              |
-| **Versión objetivo al cierre** | `v0.5.1` (patch tras Sheets `v0.5.0`)                |
-| **Estado del sprint**          | 🔘 Pendiente                                         |
-| **Estimación total**           | 23-31h dev + 5h 30min cierre ≈ ~28-37h               |
-| **Rama de trabajo sugerida**   | `feature/sprint-costes-llm-post-mvp`                 |
-| **Inicio**                     | Lun 24-08-2026 09:00 (post-Sprint 4 Sheets `v0.5.0`) |
-| **Fin Est.**                   | Jue 27-08-2026 19:00 (3-4 días lab)                  |
-| **Fin Real**                   | —                                                    |
+| Campo                          | Valor                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------ |
+| **Sprint ID**                  | `SP-5B`                                                                              |
+| **Versión objetivo al cierre** | `v0.5.1` (patch tras Sheets `v0.5.0`)                                                |
+| **Estado del sprint**          | 🔘 Pendiente                                                                         |
+| **Estimación total**           | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista**                 |
+| **Rama de trabajo sugerida**   | `feature/sprint-costes-llm-post-mvp`                                                 |
+| **Inicio**                     | Lun 24-08-2026 09:00 (post-Sprint 4 Sheets `v0.5.0`)                                 |
+| **Fin Est.**                   | Jue 27-08-2026 19:00 (3-4 días lab — sin cambio de calendario)                       |
+| **Fin Real**                   | —                                                                                    |
+| **ADR vinculado**              | [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) |
 
 > **Asignado a:** Javi HP. **Orden fijo (22-05-2026, decisión clienta):** Sprint Costes-LLM va JUSTO DESPUÉS de Google Sheets, antes de Salesforce. Bloquea la fecha de inicio de Sprint 5 (Salesforce) por su duración (+4 días respecto plan original).
 >
 > **Origen del sprint (22-05-2026):** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.3.0`. Trabajo trasladado: parte de 4-03 (tabla `llm_usage_logs` + tracker LangChain) + 4-04 entera (dashboard Recharts) + 2-36 (token_usage en `chat_messages`).
-
-### Tareas de desarrollo (Fase 4.5) — DETALLADAS
-
-| ID                                 | Tarea                                                                    | Estimación  | Estado       | Refs origen                           | Notas                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------ | ----------- | ------------ | ------------------------------------- | ------------------------------------------------------------------- |
-| C-01                               | Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangC … _ver nota↓_ | 5-7h        | 🔘 Pendiente | Era parte de 4-03 (Sprint 3 phase-02) | Reusa `logger` Pino del Sprint 3. … _ver nota↓_                     |
-| C-02                               | Dashboard de costes LLM por tenant/proveedor (admin global … _ver nota↓_ | 16-22h      | 🔘 Pendiente | Era 4-04 (Sprint 3 phase-03)          | Bloqueado por C-01 (necesita tabla `llm_usage_logs`). … _ver nota↓_ |
-| C-03                               | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_ | 2h          | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04)          | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. … _ver nota↓_            |
-| **Subtotal Fase 4.5 — Desarrollo** |                                                                          | **~23-31h** |              |                                       | Objetivo base 27h. + 5h 30min cierre. Total 28-37h con cierre.      |
-
-> **Nota fila `C-01` · Tarea**: Tabla `llm_usage_logs` + RLS + `llm-cost-tracker.ts` LangChain CallbackHandler + helper `recordLlmUsage()` para call sites OpenAI directos
 >
-> **Nota fila `C-01` · Notas**: Reusa `logger` Pino del Sprint 3. Inventario obligatorio de los 5 call sites OpenAI directos (WhatsApp, RescueWorker, widget, FactExtractor, AIAnalysis) — incluido en estimación. Phase-01 sprint nuevo.
+> **Replanificación 28-05-2026 (decisión Javi HP, pendiente ratificación Bea):** sustituir el plan custom in-house original por adopción de **LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby**. Misma ventana de calendario, capacidades multiplicadas (tracing span-level + evals + prompt management + fallback runtime + virtual keys multi-tenant + replay). Detalle en [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) + plan SP-5B in-situ actualizado + bloque 4.0 de [auditoría V2](../docs/audit2/index.html).
+
+### Tareas de desarrollo (Fase 4.5) — REPLANIFICADAS 28-05-2026
+
+| ID                                 | Tarea                                                                         | Estim. nominal | Estim. realista | Estado       | Refs origen                                                        | Notas                                                                                              |
+| ---------------------------------- | ----------------------------------------------------------------------------- | -------------- | --------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| C-01-new                           | LiteLLM Proxy setup Dokploy + virtual keys + fallback runtime + … _ver nota↓_ | 8-14h          | 4-7h            | 🔘 Pendiente | Sustituye C-01 original (descartada)                               | Phase-01 sprint nuevo. SPOF mitigado con ramo de emergencia. _ver nota↓_                           |
+| C-02-new                           | Langfuse Cloud Hobby integration + masking PII + callbacks Lang … _ver nota↓_ | 14-20h         | 6-10h           | 🔘 Pendiente | Sustituye C-02 original (descartada)                               | Phase-02 sprint nuevo. PII crítico: tests sintéticos obligatorios. _ver nota↓_                     |
+| C-03                               | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_      | 2h             | 1-2h            | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04). PRESERVADA tras decisión 28-05-2026. | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Complementa Langfuse con vista por mensaje. _ver nota↓_ |
+| **Subtotal Fase 4.5 — Desarrollo** |                                                                               | **24-36h**     | **11-19h**      |              |                                                                    | Objetivo realista 15h. + 3-5h cierre. Total 14-24h con cierre.                                     |
+
+> **Nota fila `C-01-new` · Tarea**: LiteLLM Proxy setup Dokploy + virtual keys multi-tenant + fallback runtime cross-provider + ramo de emergencia + bootstrap tenants
 >
-> **Nota fila `C-02` · Tarea**: Dashboard de costes LLM por tenant/proveedor (admin global + vista tenant) con Recharts
+> **Nota fila `C-01-new` · Notas**: Phase-01 sprint nuevo. Contenedor `ghcr.io/berriai/litellm:main-stable` pineado. Schema Postgres `litellm_proxy` separado dentro cluster Supabase. SPOF mitigado con health-check + ramo de emergencia a SDK directo (~2h incluidas). Sustituye tabla `llm_usage_logs` custom + helper `recordLlmUsage()` del plan original (descartados — LiteLLM persiste nativamente).
 >
-> **Nota fila `C-02` · Notas**: Bloqueado por C-01 (necesita tabla `llm_usage_logs`). Precios actualizados mayo 2026 en `llm-pricing.ts` (cierra DA-4-005). Phase-02 sprint nuevo (la phase fue movida tal cual desde Sprint 3 phase-03).
+> **Nota fila `C-02-new` · Tarea**: Langfuse Cloud Hobby integration + masking PII + callbacks LangChain + wrappers SDK directos + prompt management
+>
+> **Nota fila `C-02-new` · Notas**: Phase-02 sprint nuevo. Cuenta Cloud Hobby gratis (50k units/mes cubre volumen MVP). Masking PII obligatorio desde día 1 (DNI, teléfonos, emails de leads). DPA con Langfuse Inc. Multi-tenant via tags + metadata. 3-5 prompts conversacionales migrados a UI Langfuse con versionado. Sustituye dashboard Recharts custom del plan original (descartado — Langfuse UI cubre nativamente).
 >
 > **Nota fila `C-03` · Tarea**: Persistir `completion.usage` en `chat_messages.metadata` para TODOS los consumidores OpenAI
 >
-> **Nota fila `C-03` · Notas**: Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Sin backfilling de chats históricos (OpenAI no expone usage retroactivo). Paralelizable con C-01. Phase-03 sprint nuevo.
+> **Nota fila `C-03` · Notas**: Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Sin backfilling de chats históricos (OpenAI no expone usage retroactivo). Paralelizable con C-01-new. Phase-03 sprint nuevo. **PRESERVADA** tras decisión 28-05-2026: complementa LiteLLM (call-level) + Langfuse (span-level) con vista por mensaje persistido (1:1 con Inbox CRM). Tres fuentes de verdad complementarias, no duplicadas.
 
 ### Tareas de cierre obligatorias (Sprint Costes-LLM)
 

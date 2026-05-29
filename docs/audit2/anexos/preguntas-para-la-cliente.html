@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Preguntas para la cliente — Sesión de validación · Auditoría V2 · dashboard-af</title>
+  <meta name="description" content="Cuestionario formal del auditor para cerrar requisitos ambiguos">
+  <link rel="stylesheet" href="../assets/anexo.css">
+</head>
+<body>
+<header class="anexo-head">
+  <div class="anexo-head-row">
+    <div class="anexo-brand">
+      <span class="anexo-brand-logo" aria-hidden="true">📚</span>
+      <div>
+        <div class="anexo-brand-title">Auditoría V2 · dashboard-af</div>
+        <div class="anexo-brand-sub">AUTOMATIZA FORMACIÓN SL · Anexo documental</div>
+      </div>
+    </div>
+    <div class="anexo-head-actions">
+      <a class="btn btn-ghost" href="../index.html">← Volver al informe</a>
+      <a class="btn btn-source" href="../../audit/PREGUNTAS-PARA-LA-CLIENTE.md" target="_blank" rel="noopener noreferrer">Ver fuente .md ↗</a>
+    </div>
+  </div>
+  <div class="anexo-title-wrap">
+    <h1>Preguntas para la cliente — Sesión de validación</h1>
+    <p class="anexo-subtitle">Cuestionario formal del auditor para cerrar requisitos ambiguos</p>
+    <p class="anexo-source-cite">
+      <b>📄 Fuente original:</b>
+      <code>../../audit/PREGUNTAS-PARA-LA-CLIENTE.md</code>
+      <a href="../../audit/PREGUNTAS-PARA-LA-CLIENTE.md" target="_blank" rel="noopener noreferrer" class="link-inline">[abrir .md en nueva ventana ↗]</a>
+    </p>
+  </div>
+</header>
+
+<main class="anexo-main">
+  <aside class="anexo-toc">
+    <h2>Índice del documento</h2>
+    <ol>
+      <li><a href="#para-que-sirve-este-documento">Para qué sirve este documento</a></li>
+      <li><a href="#bloque-1-preguntas-urgentes-bloquean-trabajo-de-esta-semana">🔴 Bloque 1 — Preguntas urgentes (bloquean trabajo de esta semana)</a></li>
+      <li class="toc-sub"><a href="#p-001-hay-clientes-reales-usando-el-sistema-en-este-momento">P-001 — ¿Hay clientes reales usando el sistema en este momento?</a></li>
+      <li class="toc-sub"><a href="#p-002-quien-tiene-o-ha-tenido-acceso-al-codigo-fuente-del-proyecto">P-002 — ¿Quién tiene o ha tenido acceso al código fuente del proyecto?</a></li>
+      <li class="toc-sub"><a href="#p-003-podemos-hacer-una-ventana-de-mantenimiento-de-30-minutos">P-003 — ¿Podemos hacer una ventana de mantenimiento de 30 minutos?</a></li>
+      <li><a href="#bloque-2-preguntas-sobre-las-reglas-de-negocio-cualificacion-de-leads">🟠 Bloque 2 — Preguntas sobre las reglas de negocio (cualificación de leads)</a></li>
+      <li class="toc-sub"><a href="#p-004-regla-b-2-o-3-anos-de-experiencia">P-004 — Regla B: ¿2 o 3 años de experiencia?</a></li>
+      <li class="toc-sub"><a href="#p-005-regla-c-existe-la-regla-sin-estudios-5-anos-de-experiencia">P-005 — Regla C: ¿existe la regla &quot;sin estudios + 5 años de experiencia&quot;?</a></li>
+      <li class="toc-sub"><a href="#p-006-exclusiones-de-profesiones-manuales-fontaneros-albaniles-etc">P-006 — Exclusiones de profesiones manuales (fontaneros, albañiles, etc.)</a></li>
+      <li class="toc-sub"><a href="#p-007-estado-prematriculado">P-007 — Estado &quot;prematriculado&quot;</a></li>
+      <li><a href="#bloque-3-como-se-llaman-las-cosas-nomenclatura">🟡 Bloque 3 — Cómo se llaman las cosas (nomenclatura)</a></li>
+      <li class="toc-sub"><a href="#p-008-userprofession-con-doble-s-o-userprofesion-sin-doble-s">P-008 — user_profession (con doble s) o user_profesion (sin doble s)</a></li>
+      <li class="toc-sub"><a href="#p-009-yearexperience-singular-o-yearsexperience-plural">P-009 — year_experience (singular) o years_experience (plural)</a></li>
+      <li class="toc-sub"><a href="#p-010-cursename-o-coursename">P-010 — curse_name o course_name</a></li>
+      <li class="toc-sub"><a href="#p-011-valores-aceptados-para-cualificado-aptono-apto-o-algo-distinto">P-011 — Valores aceptados para &quot;cualificado&quot;: ¿apto/no apto o algo distinto?</a></li>
+      <li class="toc-sub"><a href="#p-012-columna-nivelestudios-en-la-base-de-datos">P-012 — Columna nivel_estudios en la base de datos</a></li>
+      <li><a href="#bloque-4-como-se-hace-el-seguimiento-a-los-leads">🔵 Bloque 4 — Cómo se hace el seguimiento a los leads</a></li>
+      <li class="toc-sub"><a href="#p-013-protocolo-de-contacto-multi-dia-cuantos-contactos-en-que-intervalos">P-013 — Protocolo de contacto multi-día: ¿cuántos contactos, en qué intervalos?</a></li>
+      <li class="toc-sub"><a href="#p-014-sincronizacion-con-crm-externo-anadir-o-sobrescribir-datos">P-014 — Sincronización con CRM externo: ¿añadir o sobrescribir datos?</a></li>
+      <li class="toc-sub"><a href="#p-015-estados-informado-y-matriculado">P-015 — Estados &quot;informado&quot; y &quot;matriculado&quot;</a></li>
+      <li class="toc-sub"><a href="#p-016-llamadas-con-ultravox-analizamos-lo-que-se-dijo-al-final">P-016 — Llamadas con Ultravox: ¿analizamos lo que se dijo al final?</a></li>
+      <li><a href="#bloque-5-el-agente-virginia-la-ia">🟢 Bloque 5 — El agente Virginia (la IA)</a></li>
+      <li class="toc-sub"><a href="#p-017-el-typo-bookappointmen-sin-la-t-final">P-017 — El typo book_appointmen (sin la &#39;t&#39; final)</a></li>
+      <li class="toc-sub"><a href="#p-018-el-prompt-actual-de-virginia-es-la-version-definitiva">P-018 — ¿El prompt actual de Virginia es la versión definitiva?</a></li>
+      <li class="toc-sub"><a href="#p-019-pruebas-con-leads-reales-antes-de-ampliar">P-019 — Pruebas con leads reales antes de ampliar</a></li>
+      <li><a href="#bloque-6-integraciones-con-sistemas-externos">🟣 Bloque 6 — Integraciones con sistemas externos</a></li>
+      <li class="toc-sub"><a href="#p-020-que-crm-externo-es-el-destino-actual-respondida">P-020 — ¿Qué CRM externo es el destino actual? ✅ RESPONDIDA</a></li>
+      <li class="toc-sub"><a href="#p-021-datos-antiguos-en-airtable-respondida">P-021 — Datos antiguos en Airtable ✅ RESPONDIDA</a></li>
+      <li class="toc-sub"><a href="#p-022-variables-de-agenda-y-rag-knowledge-base-respondida">P-022 — Variables de agenda y RAG (Knowledge Base) ✅ RESPONDIDA</a></li>
+      <li><a href="#bloque-7-infraestructura-y-equipo">⚙️ Bloque 7 — Infraestructura y equipo</a></li>
+      <li class="toc-sub"><a href="#p-023-acceso-superuser-a-la-base-de-datos-postgres-respondida">P-023 — Acceso superuser a la base de datos Postgres ✅ RESPONDIDA</a></li>
+      <li class="toc-sub"><a href="#p-024-el-equipo-de-desarrollo-actual-continua">P-024 — ¿El equipo de desarrollo actual continúa?</a></li>
+      <li class="toc-sub"><a href="#p-025-pausa-en-ventas-durante-las-6-8-semanas-de-correcciones">P-025 — Pausa en ventas durante las 6-8 semanas de correcciones</a></li>
+      <li><a href="#resumen-ejecutivo-todas-las-preguntas-en-una-tabla">📋 Resumen ejecutivo — todas las preguntas en una tabla</a></li>
+      <li><a href="#bloque-8-decisiones-tomadas-resumen">🟢 Bloque 8 — Decisiones tomadas (resumen)</a></li>
+      <li class="toc-sub"><a href="#decisiones-tomadas-hasta-ahora">Decisiones tomadas hasta ahora</a></li>
+      <li class="toc-sub"><a href="#resueltas-previamente">Resueltas previamente</a></li>
+      <li><a href="#como-usar-este-documento">Cómo usar este documento</a></li>
+    </ol>
+  </aside>
+  <article class="anexo-body markdown-body">
+<section class="meta-card"><div class="meta-item"><span class="meta-key">Título</span><span class="meta-val">Preguntas pendientes para la cliente</span></div><div class="meta-item"><span class="meta-key">Fecha</span><span class="meta-val">2026-05-19</span></div><div class="meta-item"><span class="meta-key">Estado</span><span class="meta-val">LIVING_DOCUMENT</span></div></section>
+<h1>Preguntas pendientes para la cliente</h1>
+<h2 id="para-que-sirve-este-documento"><a class="anchor" href="#para-que-sirve-este-documento" aria-label="enlace">#</a> Para qué sirve este documento</h2>
+<p>Durante la auditoría del sistema hemos encontrado <strong>decisiones que el equipo técnico no puede tomar solo</strong> porque dependen de cómo funciona tu negocio en realidad, no de cómo está escrito el código. Este documento las recoge todas en lenguaje claro.</p>
+<p><strong>Cada pregunta tiene tres partes:</strong></p>
+<ol>
+<li><strong>La pregunta</strong> — qué necesitamos saber.</li>
+<li><strong>Por qué importa</strong> — qué pasa si la respuesta es A o B.</li>
+<li><strong>Cuándo necesitamos la respuesta</strong> — algunas bloquean trabajo urgente, otras pueden esperar.</li>
+</ol>
+<p><strong>Es un documento vivo:</strong> cuando tengamos una respuesta confirmada, la marcamos en el documento y se cierra la pregunta.</p>
+<hr>
+<h2 id="bloque-1-preguntas-urgentes-bloquean-trabajo-de-esta-semana"><a class="anchor" href="#bloque-1-preguntas-urgentes-bloquean-trabajo-de-esta-semana" aria-label="enlace">#</a> 🔴 Bloque 1 — Preguntas urgentes (bloquean trabajo de esta semana)</h2>
+<p>Estas tres preguntas necesitan respuesta antes de poder ejecutar las correcciones de seguridad. Sin respuesta, no podemos avanzar.</p>
+<h3 id="p-001-hay-clientes-reales-usando-el-sistema-en-este-momento"><a class="anchor" href="#p-001-hay-clientes-reales-usando-el-sistema-en-este-momento" aria-label="enlace">#</a> P-001 — ¿Hay clientes reales usando el sistema en este momento?</h3>
+<p><strong>Por qué importa:</strong> la auditoría ha encontrado problemas de seguridad que permiten que un usuario registrado vea o borre datos de otros clientes. Si hay clientes activos ahora mismo, hay que avisarles antes de tocar nada y actuar con más cuidado. Si todavía no hay clientes en producción, las correcciones pueden hacerse con menos restricciones y más rápido.</p>
+<p><strong>Necesitamos saber:</strong></p>
+<ul>
+<li>Cuántos clientes están dados de alta y entrando al sistema cada semana.</li>
+<li>Si alguno tiene leads reales (no de prueba) dentro.</li>
+<li>Si hay acuerdo de nivel de servicio (SLA) firmado con alguno.</li>
+</ul>
+<p><strong>Cuándo:</strong> <strong>antes de empezar Sprint 0</strong> (esta semana).</p>
+<hr>
+<h3 id="p-002-quien-tiene-o-ha-tenido-acceso-al-codigo-fuente-del-proyecto"><a class="anchor" href="#p-002-quien-tiene-o-ha-tenido-acceso-al-codigo-fuente-del-proyecto" aria-label="enlace">#</a> P-002 — ¿Quién tiene o ha tenido acceso al código fuente del proyecto?</h3>
+<p><strong>Por qué importa:</strong> las contraseñas que dan acceso de administrador a tu base de datos están escritas dentro del propio código. Eso quiere decir que <strong>cualquier persona que haya tenido acceso al repositorio en GitHub</strong> tiene acceso técnico a todos los datos de tus clientes hasta enero de 2030.</p>
+<p>Necesitamos hacer una lista de personas:</p>
+<ul>
+<li>Desarrolladores actuales del proyecto.</li>
+<li>Desarrolladores antiguos que ya no trabajan en él.</li>
+<li>Empresas o autónomos contratados puntualmente.</li>
+<li>Personas que hayan recibido el código en un archivo ZIP por correo o servicios de transferencia.</li>
+</ul>
+<p><strong>Por qué insisto:</strong> rotar las contraseñas (lo haremos en Sprint 0) invalida las antiguas. Pero <strong>si alguien las copió fuera del repositorio</strong> mientras eran válidas, puede que haya hecho copias de datos sin que nos enteremos. Saber a quién hay que confiar (y a quién no) cambia la urgencia.</p>
+<p><strong>Necesitamos saber:</strong></p>
+<ul>
+<li>Lista de personas con acceso al repositorio <code>renzo1111ia/dashboard-af</code> en GitHub.</li>
+<li>Lista de personas que han recibido el código por otro medio (ZIP, etc.).</li>
+<li>Si alguna de esas personas ya no debería tener acceso.</li>
+</ul>
+<p><strong>Cuándo:</strong> <strong>antes de la rotación de credenciales</strong> (Sprint 0, esta semana).</p>
+<hr>
+<h3 id="p-003-podemos-hacer-una-ventana-de-mantenimiento-de-30-minutos"><a class="anchor" href="#p-003-podemos-hacer-una-ventana-de-mantenimiento-de-30-minutos" aria-label="enlace">#</a> P-003 — ¿Podemos hacer una ventana de mantenimiento de 30 minutos?</h3>
+<p><strong>Por qué importa:</strong> rotar las contraseñas comprometidas requiere reiniciar la aplicación. Durante esos minutos, el sistema no responde. Si hay clientes usándolo ahora mismo, lo notarán.</p>
+<p><strong>Necesitamos saber:</strong></p>
+<ul>
+<li>Día y hora preferidos (por ejemplo, sábado madrugada).</li>
+<li>Si hay que avisar a clientes con antelación.</li>
+</ul>
+<p><strong>Cuándo:</strong> <strong>antes de ejecutar Sprint 0</strong>.</p>
+<hr>
+<h2 id="bloque-2-preguntas-sobre-las-reglas-de-negocio-cualificacion-de-leads"><a class="anchor" href="#bloque-2-preguntas-sobre-las-reglas-de-negocio-cualificacion-de-leads" aria-label="enlace">#</a> 🟠 Bloque 2 — Preguntas sobre las reglas de negocio (cualificación de leads)</h2>
+<p>El sistema decide si un lead es &quot;apto&quot; para entrar al curso/máster aplicando unas reglas. La auditoría ha encontrado que <strong>las reglas del código no coinciden con las que están escritas en tu documentación</strong>. Necesitamos confirmar cuál es la versión correcta.</p>
+<h3 id="p-004-regla-b-2-o-3-anos-de-experiencia"><a class="anchor" href="#p-004-regla-b-2-o-3-anos-de-experiencia" aria-label="enlace">#</a> P-004 — Regla B: ¿2 o 3 años de experiencia?</h3>
+<p><strong>Lo que dice tu documento del prompt de Virginia:</strong></p>
+<blockquote>
+<p>&quot;Si el lead tiene formación técnica/FP y <strong>2 años o más</strong> de experiencia relevante → APTO&quot;</p>
+</blockquote>
+<p><strong>Lo que hace el código:</strong></p>
+<blockquote>
+<p>&quot;Si el lead tiene formación técnica/FP y <strong>3 años o más</strong> de experiencia relevante → APTO&quot;</p>
+</blockquote>
+<p><strong>Consecuencia práctica:</strong> un lead que diga &quot;soy técnico con 2 años de experiencia&quot; debería ser apto según tu documento, pero el código lo está rechazando.</p>
+<p><strong>Pregunta:</strong> ¿el umbral correcto es <strong>2 años o 3 años</strong>?</p>
+<p><strong>Cuándo:</strong> antes del Sprint 0 (próximas 2 semanas).</p>
+<hr>
+<h3 id="p-005-regla-c-existe-la-regla-sin-estudios-5-anos-de-experiencia"><a class="anchor" href="#p-005-regla-c-existe-la-regla-sin-estudios-5-anos-de-experiencia" aria-label="enlace">#</a> P-005 — Regla C: ¿existe la regla &quot;sin estudios + 5 años de experiencia&quot;?</h3>
+<p><strong>Lo que hace el código:</strong> si un lead no tiene estudios pero tiene 5 o más años de experiencia, lo marca como apto.</p>
+<p><strong>Lo que dice tu documento:</strong> esa regla <strong>no aparece</strong>. Tu documento solo menciona Regla A (universitarios) y Regla B (técnicos con experiencia).</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Esa Regla C es legítima y olvidaste documentarla?</li>
+<li>¿O es un invento del programador y hay que eliminarla?</li>
+</ul>
+<p><strong>Por qué importa:</strong> si Regla C no es legítima, el sistema está aceptando leads que tú no consideras aptos para el curso.</p>
+<p><strong>Cuándo:</strong> antes del Sprint 0.</p>
+<hr>
+<h3 id="p-006-exclusiones-de-profesiones-manuales-fontaneros-albaniles-etc"><a class="anchor" href="#p-006-exclusiones-de-profesiones-manuales-fontaneros-albaniles-etc" aria-label="enlace">#</a> P-006 — Exclusiones de profesiones manuales (fontaneros, albañiles, etc.)</h3>
+<p><strong>Lo que dice tu documento:</strong></p>
+<blockquote>
+<p>&quot;Excluir leads cuya profesión sea de oficios manuales (fontanero, albañil, etc.).&quot;</p>
+</blockquote>
+<p><strong>Lo que hace el código:</strong> <strong>no aplica esta exclusión</strong>. Un fontanero con 3 años de experiencia técnica entraría como apto.</p>
+<p><strong>Pregunta:</strong> ¿confirmas que quieres aplicar esta exclusión y, si es así, cuál es la lista completa de profesiones a excluir?</p>
+<p><strong>Sugerencia:</strong> mejor pasar de &quot;lista de exclusión&quot; a &quot;lista de inclusión&quot; — más fácil de mantener y más justo. Pero es tu decisión.</p>
+<p><strong>Cuándo:</strong> antes del Sprint 0.</p>
+<hr>
+<h3 id="p-007-estado-prematriculado"><a class="anchor" href="#p-007-estado-prematriculado" aria-label="enlace">#</a> P-007 — Estado &quot;prematriculado&quot;</h3>
+<p><strong>Lo que dice tu documento:</strong> en la línea 73 del prompt de Virginia aparece un estado llamado &quot;prematriculado&quot;.</p>
+<p><strong>Lo que hace el código:</strong> no lo gestiona. Si un lead llega a ese estado, no pasa nada — se queda guardado pero no dispara ninguna acción.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Es un estado válido que sí debería existir y disparar algo (por ejemplo, recordatorio de pago)?</li>
+<li>¿O era un borrador del prompt que se quedó por descuido?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 0 o 2.</p>
+<hr>
+<h2 id="bloque-3-como-se-llaman-las-cosas-nomenclatura"><a class="anchor" href="#bloque-3-como-se-llaman-las-cosas-nomenclatura" aria-label="enlace">#</a> 🟡 Bloque 3 — Cómo se llaman las cosas (nomenclatura)</h2>
+<p>Esto suena menor, pero <strong>es lo que hace que tus datos pasen bien al CRM externo o no</strong>. Si en el código el campo se llama de una forma y en tu CRM (Zoho u otro) se llama de otra, los datos no se mapean.</p>
+<h3 id="p-008-userprofession-con-doble-s-o-userprofesion-sin-doble-s"><a class="anchor" href="#p-008-userprofession-con-doble-s-o-userprofesion-sin-doble-s" aria-label="enlace">#</a> P-008 — <code>user_profession</code> (con doble s) o <code>user_profesion</code> (sin doble s)</h3>
+<p><strong>El problema:</strong> en tus propios documentos aparecen las dos grafías.</p>
+<ul>
+<li>Tu documento <em>&quot;VARIABLES DEFINIDAS- TODO EL PROCESO ok.docx&quot;</em> usa <code>user_profession</code> (con doble s, inglés correcto).</li>
+<li>Tu documento <em>&quot;Promt-Virginia.md&quot;</em> usa <code>user_profesion</code> (sin doble s, parece spanglish).</li>
+</ul>
+<p>El código usa <code>USER_PROFESION</code> (sin doble s).</p>
+<p><strong>Pregunta:</strong> ¿cuál es la grafía oficial? Una vez decidida, <strong>se actualizan los tres documentos a la vez</strong> y se ajusta el código.</p>
+<p><strong>Importancia:</strong> afecta a la sincronización con cualquier CRM externo.</p>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<hr>
+<h3 id="p-009-yearexperience-singular-o-yearsexperience-plural"><a class="anchor" href="#p-009-yearexperience-singular-o-yearsexperience-plural" aria-label="enlace">#</a> P-009 — <code>year_experience</code> (singular) o <code>years_experience</code> (plural)</h3>
+<p><strong>El problema:</strong> la documentación oficial usa <code>year_experience</code> (singular), pero el prompt de Virginia usa <code>years_experience</code> (plural). El código tiene <strong>cuatro variantes diferentes</strong> que coexisten (<code>years_experience</code>, <code>YEARS_EXPERIENCE</code>, <code>YEARS_EXPERIENCIE</code> con typo, y <code>YEARS_ EXPERIENCIE</code> con un espacio en medio del nombre).</p>
+<p><strong>Pregunta:</strong> ¿cuál es la grafía correcta?</p>
+<p><strong>Recomendación técnica:</strong> <code>years_experience</code> (plural). Es la convención en inglés y es la que más usa el código.</p>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<hr>
+<h3 id="p-010-cursename-o-coursename"><a class="anchor" href="#p-010-cursename-o-coursename" aria-label="enlace">#</a> P-010 — <code>curse_name</code> o <code>course_name</code></h3>
+<p><strong>El problema:</strong> tu documento oficial usa <code>curse_name</code> (con &quot;u&quot;). Eso parece un typo del inglés correcto que es <code>course_name</code> (con &quot;ou&quot;). El código tiene las dos.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Mantener <code>curse_name</code> porque ya está así en tu CRM y cambiarlo rompería integraciones?</li>
+<li>¿O corregir a <code>course_name</code> (más correcto) y actualizar también el CRM?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 o 3. No es urgente, pero conviene cerrarlo antes de la sincronización con CRM externo.</p>
+<hr>
+<h3 id="p-011-valores-aceptados-para-cualificado-aptono-apto-o-algo-distinto"><a class="anchor" href="#p-011-valores-aceptados-para-cualificado-aptono-apto-o-algo-distinto" aria-label="enlace">#</a> P-011 — Valores aceptados para &quot;cualificado&quot;: ¿<code>apto</code>/<code>no apto</code> o algo distinto?</h3>
+<p><strong>Lo que dice tu documento del prompt Virginia:</strong></p>
+<blockquote>
+<p>El agente devuelve <code>qualified = &quot;apto&quot;</code> o <code>qualified = &quot;no apto&quot;</code> o <code>&quot;&quot;</code> (vacío si todavía está cualificando).</p>
+</blockquote>
+<p><strong>Lo que hace el código:</strong> tiene <strong>tres sistemas diferentes</strong> que coexisten:</p>
+<ul>
+<li>En unas partes guarda <code>&quot;si&quot;</code>, <code>&quot;no&quot;</code> o <code>&quot;anulado&quot;</code>.</li>
+<li>En otras partes guarda <code>&quot;SI&quot;</code>, <code>&quot;NO&quot;</code> o <code>&quot;PENDIENTE&quot;</code>.</li>
+<li>En otras partes guarda <code>&quot;cualificado&quot;</code> o <code>&quot;no cualificado&quot;</code>.</li>
+</ul>
+<p><strong>Ninguno</strong> de los tres coincide con lo que tu documento dice (<code>&quot;apto&quot;</code>/<code>&quot;no apto&quot;</code>).</p>
+<p><strong>Pregunta:</strong> ¿confirmas que los valores correctos son <code>&quot;apto&quot;</code> / <code>&quot;no apto&quot;</code> / <code>&quot;&quot;</code>?</p>
+<p><strong>Importancia: CRÍTICA.</strong> Esto está afectando ahora mismo a cómo se clasifican los leads en tu base de datos. El día que conectemos al CRM externo, ningún valor de los tres del código coincidirá con lo que el CRM espera.</p>
+<p><strong>Cuándo:</strong> lo antes posible. Idealmente en Sprint 0.</p>
+<hr>
+<h3 id="p-012-columna-nivelestudios-en-la-base-de-datos"><a class="anchor" href="#p-012-columna-nivelestudios-en-la-base-de-datos" aria-label="enlace">#</a> P-012 — Columna <code>nivel_estudios</code> en la base de datos</h3>
+<p><strong>El problema:</strong> en la base de datos existe una columna llamada <code>nivel_estudios</code> (con valores tipo &quot;FP&quot;, &quot;Grado universitario&quot;, &quot;Sin estudios&quot;). Pero la IA no la rellena nunca — los datos van a otro sitio.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Esa columna debe existir y la IA debe rellenarla?</li>
+<li>¿O era un experimento antiguo y se puede eliminar?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 (decisión de limpieza de base de datos).</p>
+<hr>
+<h2 id="bloque-4-como-se-hace-el-seguimiento-a-los-leads"><a class="anchor" href="#bloque-4-como-se-hace-el-seguimiento-a-los-leads" aria-label="enlace">#</a> 🔵 Bloque 4 — Cómo se hace el seguimiento a los leads</h2>
+<p>Aquí preguntamos sobre el flujo operativo. Cómo el sistema contacta a los leads, cuándo, en qué orden.</p>
+<h3 id="p-013-protocolo-de-contacto-multi-dia-cuantos-contactos-en-que-intervalos"><a class="anchor" href="#p-013-protocolo-de-contacto-multi-dia-cuantos-contactos-en-que-intervalos" aria-label="enlace">#</a> P-013 — Protocolo de contacto multi-día: ¿cuántos contactos, en qué intervalos?</h3>
+<p><strong>Lo que dice tu documento:</strong> el sistema debe contactar al lead varios días seguidos si no responde el primer día (llamada → WhatsApp → otra llamada al día siguiente, etc.).</p>
+<p><strong>Lo que hace el código:</strong> <strong>solo se ejecuta el contacto del primer día</strong>. Los contactos de día 2, día 3, etc. están técnicamente rotos por un bug y nunca se ejecutan en producción (ver finding F-02-001 en el informe).</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Cuántos contactos en total queremos hacer a un lead que no responde?</li>
+<li>¿En qué orden (llamada, WhatsApp, llamada de nuevo)?</li>
+<li>¿Con qué intervalo de tiempo entre cada uno?</li>
+</ul>
+<p><strong>Importancia:</strong> la respuesta define cómo configuramos el orquestador cuando arreglemos el bug.</p>
+<p><strong>Cuándo:</strong> Sprint 0.</p>
+<hr>
+<h3 id="p-014-sincronizacion-con-crm-externo-anadir-o-sobrescribir-datos"><a class="anchor" href="#p-014-sincronizacion-con-crm-externo-anadir-o-sobrescribir-datos" aria-label="enlace">#</a> P-014 — Sincronización con CRM externo: ¿añadir o sobrescribir datos?</h3>
+<p><strong>Lo que dice tu documento:</strong> &quot;Agregar al CRM, no sobrescribir lo que ya está.&quot;</p>
+<p><strong>Lo que hace el código:</strong> lo intenta, pero no está garantizado al 100%. En algunos casos puede sobrescribir.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>Si un lead ya existe en tu CRM con ciertos datos, y nuestro sistema tiene datos nuevos para ese lead, ¿qué pasa?<ul>
+<li><strong>Opción A:</strong> los datos nuevos se añaden como campos adicionales sin tocar los que ya estaban.</li>
+<li><strong>Opción B:</strong> los datos nuevos reemplazan a los antiguos.</li>
+<li><strong>Opción C:</strong> depende del campo (algunos sí, otros no).</li>
+</ul>
+</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1.</p>
+<hr>
+<h3 id="p-015-estados-informado-y-matriculado"><a class="anchor" href="#p-015-estados-informado-y-matriculado" aria-label="enlace">#</a> P-015 — Estados &quot;informado&quot; y &quot;matriculado&quot;</h3>
+<p><strong>Lo que dice tu documento:</strong> existen estados llamados &quot;informado&quot; y &quot;matriculado&quot;, pero no especifica si los actualiza un asesor humano manualmente o si el sistema lo hace automáticamente.</p>
+<p><strong>Lo que hace el código:</strong> <strong>no los gestiona</strong>. No existen en el orquestador.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Esos estados los rellena un asesor humano desde el panel?</li>
+<li>¿O queremos que el sistema los detecte automáticamente (por ejemplo, &quot;matriculado&quot; cuando se confirme el pago)?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<hr>
+<h3 id="p-016-llamadas-con-ultravox-analizamos-lo-que-se-dijo-al-final"><a class="anchor" href="#p-016-llamadas-con-ultravox-analizamos-lo-que-se-dijo-al-final" aria-label="enlace">#</a> P-016 — Llamadas con Ultravox: ¿analizamos lo que se dijo al final?</h3>
+<p><strong>Contexto:</strong> el sistema tiene dos proveedores de llamada de voz: Retell y Ultravox.</p>
+<p><strong>Lo que hace con Retell:</strong> cuando termina la llamada, recibe la transcripción, la analiza y actualiza el estado del lead (apto / no apto / etc.).</p>
+<p><strong>Lo que hace con Ultravox:</strong> la llamada se hace, pero <strong>nunca se analiza la transcripción</strong>. La llamada se &quot;olvida&quot; en cuanto cuelga.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Queremos que Ultravox haga lo mismo que Retell (analizar al final)?</li>
+<li>¿O Ultravox tiene un propósito diferente?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<hr>
+<h2 id="bloque-5-el-agente-virginia-la-ia"><a class="anchor" href="#bloque-5-el-agente-virginia-la-ia" aria-label="enlace">#</a> 🟢 Bloque 5 — El agente Virginia (la IA)</h2>
+<h3 id="p-017-el-typo-bookappointmen-sin-la-t-final"><a class="anchor" href="#p-017-el-typo-bookappointmen-sin-la-t-final" aria-label="enlace">#</a> P-017 — El typo <code>book_appointmen</code> (sin la &#39;t&#39; final)</h3>
+<p><strong>El problema:</strong> en tu documento del prompt de Virginia, la herramienta para agendar citas aparece dos veces como <code>book_appointmen</code> — le <strong>falta la &#39;t&#39; final</strong>. Lo correcto sería <code>book_appointment</code>.</p>
+<p>El código tiene <code>book_appointment</code> (correcto). Pero si en algún momento alguien actualiza el prompt desde tu documento (copiando y pegando), el typo entrará en la base de datos y <strong>las citas dejarán de agendarse automáticamente</strong>.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Corregimos el typo en tu documento fuente (<code>Promt-Virginia.md</code>) ahora para que no vuelva a entrar?</li>
+</ul>
+<p><strong>Recomendación: sí</strong>, es un cambio de 2 segundos y elimina una bomba de relojería.</p>
+<p><strong>Cuándo:</strong> ya. Solo necesitamos tu OK por escrito.</p>
+<hr>
+<h3 id="p-018-el-prompt-actual-de-virginia-es-la-version-definitiva"><a class="anchor" href="#p-018-el-prompt-actual-de-virginia-es-la-version-definitiva" aria-label="enlace">#</a> P-018 — ¿El prompt actual de Virginia es la versión definitiva?</h3>
+<p><strong>Contexto:</strong> el documento <code>Promt-Virginia.md</code> que nos entregaste tiene 945 líneas. Eso es <strong>mucho</strong> prompt para un agente de WhatsApp/voz — añade latencia (cada mensaje tarda más en responder), aumenta costes de OpenAI y dificulta el mantenimiento.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Has iterado y este es el resultado final, o todavía hay margen para acortar?</li>
+<li>¿Quieres que hagamos una propuesta de optimización (versión más corta, mismo comportamiento) para revisar?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<hr>
+<h3 id="p-019-pruebas-con-leads-reales-antes-de-ampliar"><a class="anchor" href="#p-019-pruebas-con-leads-reales-antes-de-ampliar" aria-label="enlace">#</a> P-019 — Pruebas con leads reales antes de ampliar</h3>
+<p><strong>Pregunta:</strong> ¿quieres que organicemos una fase de pruebas con un grupo pequeño y controlado de leads reales <strong>antes de escalar el sistema a más volumen</strong>?</p>
+<p><strong>Por qué importa:</strong> ahora mismo tenemos varios módulos rotos en silencio (ver findings). Hasta que se arreglen, escalar significa exponer más datos al problema. Una fase de pruebas controlada con 20-50 leads permitirá validar que las correcciones funcionan antes de procesar miles.</p>
+<p><strong>Cuándo:</strong> después de Sprint 0 (cuando los hotfixes de seguridad estén aplicados).</p>
+<hr>
+<h2 id="bloque-6-integraciones-con-sistemas-externos"><a class="anchor" href="#bloque-6-integraciones-con-sistemas-externos" aria-label="enlace">#</a> 🟣 Bloque 6 — Integraciones con sistemas externos</h2>
+<h3 id="p-020-que-crm-externo-es-el-destino-actual-respondida"><a class="anchor" href="#p-020-que-crm-externo-es-el-destino-actual-respondida" aria-label="enlace">#</a> P-020 — ¿Qué CRM externo es el destino actual? ✅ RESPONDIDA</h3>
+<p><strong>Lo que sabemos:</strong> el diagrama que entregaste menciona Airtable, pero en una conversación previa indicaste que <strong>Airtable era el CRM previo de Esden, no el actual</strong>. La auditoría confirma que el código <strong>no usa Airtable</strong> en ningún sitio.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Cuál es el CRM destino actual? ¿Zoho, HubSpot, Salesforce, otro?</li>
+<li>¿Cómo nos conectamos? ¿API REST, webhook, exportación manual?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 1 o 3.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-020" target="_blank" rel="noopener noreferrer">R-020 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h3 id="p-021-datos-antiguos-en-airtable-respondida"><a class="anchor" href="#p-021-datos-antiguos-en-airtable-respondida" aria-label="enlace">#</a> P-021 — Datos antiguos en Airtable ✅ RESPONDIDA</h3>
+<p><strong>Pregunta:</strong> los datos de leads que ya existían en Airtable cuando arrancó este proyecto:</p>
+<ul>
+<li>¿Se migraron al nuevo sistema?</li>
+<li>¿Siguen archivados solo en Airtable como histórico?</li>
+<li>¿Es información que queremos integrar en un futuro?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 2 o más adelante.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-021" target="_blank" rel="noopener noreferrer">R-021 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h3 id="p-022-variables-de-agenda-y-rag-knowledge-base-respondida"><a class="anchor" href="#p-022-variables-de-agenda-y-rag-knowledge-base-respondida" aria-label="enlace">#</a> P-022 — Variables de agenda y RAG (Knowledge Base) ✅ RESPONDIDA</h3>
+<p><strong>Contexto:</strong> el sistema tiene un &quot;Knowledge Base&quot; — un módulo que la IA usa para responder preguntas del lead consultando documentos PDF que tú subes al sistema (precios, temarios, modalidades).</p>
+<p>Tu propio documento marca estas variables como &quot;pendientes de definición&quot;:</p>
+<ul>
+<li>Slots disponibles para agendar (¿en qué franjas horarias?)</li>
+<li>Nombre del master/curso al que se redirige.</li>
+<li>Precio actualizado.</li>
+<li>Fechas de inicio del próximo curso.</li>
+</ul>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Tenemos esos datos ya definidos para los cursos actuales?</li>
+<li>¿Quién va a mantenerlos actualizados a futuro? ¿Lo subes tú al sistema o lo hace el equipo técnico?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 2.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-022" target="_blank" rel="noopener noreferrer">R-022 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h2 id="bloque-7-infraestructura-y-equipo"><a class="anchor" href="#bloque-7-infraestructura-y-equipo" aria-label="enlace">#</a> ⚙️ Bloque 7 — Infraestructura y equipo</h2>
+<h3 id="p-023-acceso-superuser-a-la-base-de-datos-postgres-respondida"><a class="anchor" href="#p-023-acceso-superuser-a-la-base-de-datos-postgres-respondida" aria-label="enlace">#</a> P-023 — Acceso superuser a la base de datos Postgres ✅ RESPONDIDA</h3>
+<p><strong>Por qué lo preguntamos:</strong> para arreglar correctamente el problema de seguridad de las contraseñas, necesitamos crear un usuario nuevo de base de datos con permisos limitados (en vez de usar el usuario &quot;superadministrador&quot; actual, que es demasiado poderoso).</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Tenemos acceso al panel de Supabase como propietario de la cuenta (no como miembro)?</li>
+<li>¿O necesitamos que alguien de Esden lo haga por nosotros?</li>
+</ul>
+<p><strong>Cuándo:</strong> Sprint 0.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-023" target="_blank" rel="noopener noreferrer">R-023 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h3 id="p-024-el-equipo-de-desarrollo-actual-continua"><a class="anchor" href="#p-024-el-equipo-de-desarrollo-actual-continua" aria-label="enlace">#</a> P-024 — ¿El equipo de desarrollo actual continúa?</h3>
+<p><strong>Esta es la pregunta más delicada del documento.</strong></p>
+<p>El programador actual ha entregado un informe técnico (v3.5) que afirma que el sistema está &quot;completamente balanceado, securizado y optimizado para producción&quot;. La auditoría externa ha encontrado que <strong>al menos 9 afirmaciones concretas de ese informe son demostrablemente falsas</strong> (cualquiera puede comprobarlo en 5 minutos con los comandos que están en el informe de comparativa).</p>
+<p>Esto no significa necesariamente que actuara con mala fe — puede ser falta de método (afirmar &quot;ya está hecho&quot; sin verificarlo). Pero el patrón es preocupante: las cosas que el informe declara como &quot;corregidas&quot; siguen estando rotas en producción ahora mismo.</p>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿El mismo equipo va a ejecutar las correcciones del Sprint 0 y la consolidación de la capa de datos (Fase 1, sin ORM nuevo — la propuesta original de Drizzle fue anulada el 20-05-2026)?</li>
+<li>¿O quieres contratar refuerzo externo / cambiar de equipo?</li>
+</ul>
+<p><strong>Si la respuesta es &quot;el mismo equipo continúa&quot;:</strong> recomendamos imponer <strong>3 condiciones de método</strong> para evitar que pase lo mismo:</p>
+<ol>
+<li>Tests automáticos obligatorios por cada finding cerrado.</li>
+<li>Revisión externa del código antes de marcar nada como &quot;terminado&quot;.</li>
+<li>Lista de comandos <code>grep</code> ejecutables que cualquiera puede correr para verificar.</li>
+</ol>
+<p><strong>Cuándo:</strong> <strong>antes de empezar Sprint 0</strong>.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-024" target="_blank" rel="noopener noreferrer">R-024 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h3 id="p-025-pausa-en-ventas-durante-las-6-8-semanas-de-correcciones"><a class="anchor" href="#p-025-pausa-en-ventas-durante-las-6-8-semanas-de-correcciones" aria-label="enlace">#</a> P-025 — Pausa en ventas durante las 6-8 semanas de correcciones</h3>
+<p><strong>Pregunta:</strong></p>
+<ul>
+<li>¿Aceptas pausar la captación de nuevos clientes durante las 6-8 semanas que durará el plan de correcciones (Sprint 0 + Sprint 0 + Sprint 1)?</li>
+</ul>
+<p><strong>Por qué importa:</strong> mientras el problema de aislamiento entre clientes esté abierto, cada cliente nuevo expone al resto. Cerrar la pausa demasiado pronto significa volver a tener el problema con más datos comprometidos.</p>
+<p><strong>Alternativa:</strong> mantener captación pero limitada a clientes piloto controlados, no a clientes productivos completos.</p>
+<p><strong>Cuándo:</strong> antes de Sprint 0.</p>
+<blockquote>
+<p>✅ <strong>Respondida 2026-05-19 por Javier HP (Auditor)</strong> — Ver <a href="decisiones-auditor.html#r-025" target="_blank" rel="noopener noreferrer">R-025 en el Registro de decisiones</a>.</p>
+</blockquote>
+<hr>
+<h2 id="resumen-ejecutivo-todas-las-preguntas-en-una-tabla"><a class="anchor" href="#resumen-ejecutivo-todas-las-preguntas-en-una-tabla" aria-label="enlace">#</a> 📋 Resumen ejecutivo — todas las preguntas en una tabla</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Pregunta</th>
+<th>Categoría</th>
+<th>Urgencia</th>
+<th>Bloquea</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P-001</td>
+<td>¿Hay clientes reales usando el sistema?</td>
+<td>Estado</td>
+<td>🔴 Urgente</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-002</td>
+<td>¿Quién tiene/tuvo acceso al repo de código?</td>
+<td>Seguridad</td>
+<td>🔴 Urgente</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-003</td>
+<td>¿Ventana de mantenimiento de 30 min?</td>
+<td>Operativa</td>
+<td>🔴 Urgente</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-004</td>
+<td>Regla B: ¿2 o 3 años?</td>
+<td>Negocio</td>
+<td>🟠 Alta</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-005</td>
+<td>¿Regla C (sin estudios + 5 años) es legítima?</td>
+<td>Negocio</td>
+<td>🟠 Alta</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-006</td>
+<td>¿Exclusiones de profesiones manuales?</td>
+<td>Negocio</td>
+<td>🟠 Alta</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-007</td>
+<td>Estado &quot;prematriculado&quot;: ¿válido o vestigio?</td>
+<td>Negocio</td>
+<td>🟡 Media</td>
+<td>Sprint 1</td>
+</tr>
+<tr>
+<td>P-008</td>
+<td><code>user_profession</code> o <code>user_profesion</code>?</td>
+<td>Nomenclatura</td>
+<td>🟡 Media</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-009</td>
+<td><code>year_experience</code> o <code>years_experience</code>?</td>
+<td>Nomenclatura</td>
+<td>🟡 Media</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-010</td>
+<td><code>curse_name</code> o <code>course_name</code>?</td>
+<td>Nomenclatura</td>
+<td>🟡 Media</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-011</td>
+<td>Valores de <code>qualified</code>: ¿<code>apto</code>/<code>no apto</code>?</td>
+<td>Nomenclatura</td>
+<td>🟠 Alta</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-012</td>
+<td>Columna <code>nivel_estudios</code>: ¿se usa?</td>
+<td>Nomenclatura</td>
+<td>🟡 Media</td>
+<td>Sprint 1</td>
+</tr>
+<tr>
+<td>P-013</td>
+<td>Protocolo multi-día: ¿cuántos contactos?</td>
+<td>Operativa</td>
+<td>🟠 Alta</td>
+<td>Sprint 0</td>
+</tr>
+<tr>
+<td>P-014</td>
+<td>Sync CRM: ¿añadir o sobrescribir?</td>
+<td>Integración</td>
+<td>🟡 Media</td>
+<td>Sprint 1</td>
+</tr>
+<tr>
+<td>P-015</td>
+<td>Estados &quot;informado&quot;/&quot;matriculado&quot;: ¿auto o manual?</td>
+<td>Operativa</td>
+<td>🟡 Media</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-016</td>
+<td>Ultravox: ¿analizar transcripción al final?</td>
+<td>Operativa</td>
+<td>🟡 Media</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-017</td>
+<td>Typo <code>book_appointmen</code>: ¿corregir en doc fuente?</td>
+<td>IA</td>
+<td>🟢 Baja</td>
+<td>Cualquier momento</td>
+</tr>
+<tr>
+<td>P-018</td>
+<td>¿Prompt Virginia es la versión definitiva?</td>
+<td>IA</td>
+<td>🟢 Baja</td>
+<td>Sprint 1-3</td>
+</tr>
+<tr>
+<td>P-019</td>
+<td>¿Fase de pruebas controlada antes de escalar?</td>
+<td>Operativa</td>
+<td>🟡 Media</td>
+<td>Post-Sprint 0</td>
+</tr>
+<tr>
+<td>P-020 ✅</td>
+<td>¿Qué CRM externo es el destino actual?</td>
+<td>Integración</td>
+<td>—</td>
+<td>Multi-CRM (5 conectores) — <a href="decisiones-auditor.html#r-020" target="_blank" rel="noopener noreferrer">R-020</a></td>
+</tr>
+<tr>
+<td>P-021 ✅</td>
+<td>Datos antiguos en Airtable: ¿migrar o archivar?</td>
+<td>Integración</td>
+<td>—</td>
+<td>Migrar a Supabase — <a href="decisiones-auditor.html#r-021" target="_blank" rel="noopener noreferrer">R-021</a></td>
+</tr>
+<tr>
+<td>P-022 ✅</td>
+<td>Variables agenda/RAG: ¿quién las mantiene?</td>
+<td>IA</td>
+<td>—</td>
+<td>Equipo dev — <a href="decisiones-auditor.html#r-022" target="_blank" rel="noopener noreferrer">R-022</a></td>
+</tr>
+<tr>
+<td>P-023 ✅</td>
+<td>¿Acceso superuser BD Postgres?</td>
+<td>Infraestructura</td>
+<td>—</td>
+<td>Self-hosted Coolify — <a href="decisiones-auditor.html#r-023" target="_blank" rel="noopener noreferrer">R-023</a></td>
+</tr>
+<tr>
+<td>P-024 ✅</td>
+<td>¿Mismo equipo de desarrollo continúa?</td>
+<td>Equipo</td>
+<td>—</td>
+<td>Sí, con condiciones — <a href="decisiones-auditor.html#r-024" target="_blank" rel="noopener noreferrer">R-024</a></td>
+</tr>
+<tr>
+<td>P-025 ✅</td>
+<td>¿Pausa de ventas 6-8 semanas?</td>
+<td>Negocio</td>
+<td>—</td>
+<td>Pausa completa — <a href="decisiones-auditor.html#r-025" target="_blank" rel="noopener noreferrer">R-025</a></td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="bloque-8-decisiones-tomadas-resumen"><a class="anchor" href="#bloque-8-decisiones-tomadas-resumen" aria-label="enlace">#</a> 🟢 Bloque 8 — Decisiones tomadas (resumen)</h2>
+<p>Las respuestas detalladas se mantienen en un documento separado: <a href="decisiones-auditor.html" target="_blank" rel="noopener noreferrer"><strong><code>DECISIONES-AUDITOR-JAVIER-HP.md</code></strong></a> — registro oficial firmado por el Auditor.</p>
+<h3 id="decisiones-tomadas-hasta-ahora"><a class="anchor" href="#decisiones-tomadas-hasta-ahora" aria-label="enlace">#</a> Decisiones tomadas hasta ahora</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Pregunta</th>
+<th>Decisión</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="decisiones-auditor.html#r-020" target="_blank" rel="noopener noreferrer">R-020</a> + <a href="decisiones-auditor.html#r-020-refinement-v2" target="_blank" rel="noopener noreferrer">v2</a></td>
+<td>Multi-CRM top 5 (HubSpot, Zoho, Salesforce, GHL, ActiveCampaign). <strong>MVP Fase 2 = HubSpot + Zoho</strong> (Google Sheets bidireccional aplazado a Fase 4 post-release)</td>
+<td>Fase 2 reducida a 2-3 sem; Sheets y resto del top 5 en Fase 4</td>
+</tr>
+<tr>
+<td><a href="decisiones-auditor.html#r-021" target="_blank" rel="noopener noreferrer">R-021</a></td>
+<td>Migrar leads de Airtable a Supabase</td>
+<td>Sub-proyecto en Sprint 1-3</td>
+</tr>
+<tr>
+<td><a href="decisiones-auditor.html#r-022" target="_blank" rel="noopener noreferrer">R-022</a></td>
+<td>Equipo dev mantiene contenido KB</td>
+<td>+5-7 días panel admin + carga operativa continua</td>
+</tr>
+<tr>
+<td><a href="decisiones-auditor.html#r-023" target="_blank" rel="noopener noreferrer">R-023</a></td>
+<td>Supabase self-hosted en Coolify</td>
+<td>3 sub-preguntas derivadas</td>
+</tr>
+<tr>
+<td><a href="decisiones-auditor.html#r-024" target="_blank" rel="noopener noreferrer">R-024</a></td>
+<td>Mismo equipo + 3 condiciones de método</td>
+<td>Tests + revisión externa + greps pre-merge</td>
+</tr>
+<tr>
+<td><a href="decisiones-auditor.html#r-025" target="_blank" rel="noopener noreferrer">R-025</a></td>
+<td>Pausa de ventas 6-8 semanas</td>
+<td>Sprint 0+1+2 sin clientes nuevos</td>
+</tr>
+</tbody></table></div>
+<h3 id="resueltas-previamente"><a class="anchor" href="#resueltas-previamente" aria-label="enlace">#</a> Resueltas previamente</h3>
+<p><strong>R-001 — Airtable como destino de datos:</strong> Airtable era el CRM previo. El sistema actual usa Supabase. La aparición de Airtable en el diagrama era residual. Confirmado en el cruce código + spec cliente del audit (gap G-07).</p>
+<hr>
+<h2 id="como-usar-este-documento"><a class="anchor" href="#como-usar-este-documento" aria-label="enlace">#</a> Cómo usar este documento</h2>
+<ol>
+<li><strong>Lee las preguntas del Bloque 1</strong> primero. Son las que bloquean Sprint 0.</li>
+<li><strong>Responde lo que puedas</strong> y déjanos saber qué necesitas consultar con tu equipo interno.</li>
+<li><strong>Las preguntas sin respuesta</strong> las marcamos en el documento — no asumimos.</li>
+<li><strong>Cuando una pregunta se resuelva</strong>, se mueve al Bloque 8 con la fecha y la decisión final.</li>
+</ol>
+<p><strong>Para responder, puede usar cualquier canal:</strong> correo, llamada, mensaje. Una vez respondida, el equipo técnico la documenta aquí.</p>
+<hr>
+<p><strong>Status:</strong> LIVING_DOCUMENT — se actualiza cuando llegan respuestas.
+<strong>Última revisión:</strong> 2026-05-19.
+<strong>Total preguntas:</strong> 25 + 7 derivadas nuevas = 32.
+<strong>Resueltas:</strong> 6 (P-020, P-021, P-022, P-023, P-024, P-025) — firmadas por Javier HP (Auditor).
+<strong>Pendientes:</strong> 19 originales + 7 derivadas = 26.</p>
+<blockquote>
+<p>📋 El detalle de cada respuesta con implicaciones está en <a href="decisiones-auditor.html" target="_blank" rel="noopener noreferrer"><code>DECISIONES-AUDITOR-JAVIER-HP.md</code></a>.</p>
+</blockquote>
+
+  </article>
+</main>
+
+<footer class="anexo-foot">
+  <div>📚 Anexo de la Auditoría V2 · dashboard-af · AUTOMATIZA FORMACIÓN SL</div>
+  <div>
+    <a href="../index.html">← Volver al informe principal</a> ·
+    <a href="../../audit/PREGUNTAS-PARA-LA-CLIENTE.md" target="_blank" rel="noopener noreferrer">Fuente .md original ↗</a>
+  </div>
+</footer>
+</body>
+</html>
