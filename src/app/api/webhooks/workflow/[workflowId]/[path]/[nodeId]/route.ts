@@ -33,13 +33,15 @@ async function handleWebhook(
     const supabase = await getAdminSupabaseClient();
 
     // 1. Validate Workflow & Get Tenant
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // orchestration_graphs uses workflow_id PK not in generated DB types; cast required.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const { data: workflow, error: wfError } = (await (
       supabase.from("orchestration_graphs" as any) as any
     )
       .select("tenant_id, graph_data")
       .eq("workflow_id", workflowId)
       .single()) as { data: WorkflowRecord | null; error: unknown };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     if (wfError || !workflow) {
       console.error(`[WEBHOOK] Workflow ${workflowId} not found in graphs`);
