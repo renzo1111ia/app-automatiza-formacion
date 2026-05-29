@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
 import { withRateLimit, type RateLimitedError } from "@/lib/api/with-rate-limit";
 import { extractClientIp } from "@/lib/rate-limiter";
+import { maskEmail } from "@/lib/security/pii-mask";
 import { getTenantByUserId, setTenantCookies } from "./tenant";
 
 /**
@@ -61,8 +62,10 @@ async function _loginAction(email: string, password: string) {
     },
   });
 
+  const emailTag = maskEmail(email);
+
   try {
-    console.log(`[AUTH] Intentando login para ${email} en ${AUTH_SUPABASE_URL}`);
+    console.log(`[AUTH] Intentando login para ${emailTag} en ${AUTH_SUPABASE_URL}`);
 
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
@@ -83,7 +86,7 @@ async function _loginAction(email: string, password: string) {
     }
 
     if (authData?.user) {
-      console.log(`[AUTH] Login inicial exitoso para ${email}, procesando perfil...`);
+      console.log(`[AUTH] Login inicial exitoso para ${emailTag}, procesando perfil...`);
 
       // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata.
       const user = authData.user;
@@ -102,7 +105,7 @@ async function _loginAction(email: string, password: string) {
         }
       }
 
-      console.log(`[AUTH] Login completado para ${email}. Redirigiendo...`);
+      console.log(`[AUTH] Login completado para ${emailTag}. Redirigiendo...`);
       redirect("/dashboard");
     }
   } catch (e: unknown) {

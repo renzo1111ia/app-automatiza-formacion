@@ -1,11 +1,26 @@
 import { NextResponse } from "next/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { orchestrator } from "@/lib/core/orchestrator";
+import { verifyHmacSignature } from "@/lib/security/webhook-hmac";
 import type { Lead } from "@/types/database";
 
 /**
- * DYNAMIC WEBHOOK HANDLER (v1.0)
+ * DYNAMIC WEBHOOK HANDLER (v1.1 — BUG-SEC-02 fix 29-05-2026)
  * Pattern: /api/webhooks/workflow/[workflowId]/[path]/[nodeId]
+ *
+ * Seguridad:
+ *   - Si el nodo `webhookTrigger` define `data.config.webhook_secret`, el handler
+ *     EXIGE firma HMAC-SHA256 del raw body en el header `X-Webhook-Signature`
+ *     (formato `sha256=<hex>`). Sin firma válida → 401.
+ *   - Si el secret NO está definido en el nodo:
+ *       · Cuando `process.env.WEBHOOK_WORKFLOW_REQUIRE_SECRET === "true"`
+ *         (recomendado en VPS público) → rechazo 401 explícito.
+ *       · En otro caso (dev local sin tráfico real) → permitido con WARN log.
+ *   - La respuesta NO devuelve `lead_id` (cierra INFO-02 del security delta).
+ *
+ * Compatibilidad backward: workflows ya creados sin `webhook_secret` siguen
+ * funcionando en local mientras `WEBHOOK_WORKFLOW_REQUIRE_SECRET` no esté a `true`.
+ * En el deploy VPS se activa el flag y los workflows han de migrar a secret.
  */
 
 interface WorkflowRecord {
@@ -17,6 +32,7 @@ interface WorkflowRecord {
       data?: {
         config?: {
           method?: string;
+          webhook_secret?: string;
         };
       };
     }>;
@@ -69,10 +85,49 @@ async function handleWebhook(
       );
     }
 
-    // 4. Extract Payload
+    // 4. Extract Payload + HMAC verification (BUG-SEC-02 fix)
+    //
+    // Para verificar HMAC necesitamos el RAW body exacto que el cliente firmó.
+    // `req.json()` consume el stream, así que leemos `req.text()` una sola vez
+    // y luego parseamos a JSON si procede. Si NO hay body (GET/HEAD/DELETE), el
+    // raw es "" y la firma se calcula sobre cadena vacía.
+    const rawBody = ["POST", "PUT", "PATCH"].includes(req.method)
+      ? await req.text().catch(() => "")
+      : "";
+
+    const nodeSecret = config.webhook_secret;
+    if (nodeSecret) {
+      const sigHeader =
+        req.headers.get("x-webhook-signature") ?? req.headers.get("X-Webhook-Signature");
+      if (!verifyHmacSignature(rawBody, nodeSecret, sigHeader)) {
+        console.warn(
+          `[WEBHOOK] HMAC signature invalid or missing for workflow ${workflowId} node ${nodeId}`
+        );
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
+    } else if (process.env.WEBHOOK_WORKFLOW_REQUIRE_SECRET === "true") {
+      console.warn(
+        `[WEBHOOK] Rejecting unsigned call: workflow ${workflowId} node ${nodeId} has no webhook_secret and WEBHOOK_WORKFLOW_REQUIRE_SECRET=true`
+      );
+      return NextResponse.json(
+        { error: "Webhook secret not configured for this node" },
+        { status: 401 }
+      );
+    } else {
+      console.warn(
+        `[WEBHOOK] Unauthenticated call accepted (dev mode): workflow ${workflowId} node ${nodeId}. Set webhook_secret in node config or WEBHOOK_WORKFLOW_REQUIRE_SECRET=true to enforce.`
+      );
+    }
+
     let payload: Record<string, unknown> = {};
     if (["POST", "PUT", "PATCH"].includes(req.method)) {
-      payload = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+      if (rawBody) {
+        try {
+          payload = JSON.parse(rawBody) as Record<string, unknown>;
+        } catch {
+          payload = {};
+        }
+      }
     } else {
       const { searchParams } = new URL(req.url);
       payload = Object.fromEntries(searchParams.entries());
@@ -128,10 +183,11 @@ async function handleWebhook(
         console.error("[WEBHOOK] Orchestration trigger failed:", err);
       });
 
+    // BUG-SEC-02 / INFO-02 fix: NO exponer `lead_id` interno en la respuesta.
+    // El caller solo necesita confirmación de que la automatización se disparó.
     return NextResponse.json({
       success: true,
       message: "Special automation link triggered",
-      lead_id: lead.id,
       node: nodeId,
     });
   } catch (error: unknown) {
