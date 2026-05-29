@@ -1,6 +1,6 @@
 # Fase 04 — Validación Sprint 3 (Hardening — release candidate v0.3.0-rc.1)
 
-> **Skeleton expandido 24-05-2026** tras research R3. Versión corregida `v0.4.0-rc.1` → `v0.3.0-rc.1` (RoadMap rebajada de versiones MVP). Estructura preparada con 5 subdominios técnicos de Sprint 3 para auto-fill en `SP-4-CLOSE-5`.
+> **Auto-fill completado 29-05-2026** en SP-4-CLOSE-1/1.5/2 por `roadmap-keeper`. Specs exactas, BUG-SEC detectados, vars VPS y notas deploy actualizados desde los resultados reales del cierre.
 
 ## Context Links
 
@@ -12,93 +12,111 @@
 - [Sprint 3 phase-04 WCAG](../260520-1342-sprint-3-hardening/phase-04-wcag-22-aa.md)
 - [Sprint 3 phase-05 Headers + Rate limits](../260520-1342-sprint-3-hardening/phase-05-hardening-headers-rate-limits.md)
 - [Sprint 3 phase-08 Features Bloque 3.B NEW-09..12](../260520-1342-sprint-3-hardening/phase-08-features-bloque-3b.md)
+- [Security delta report](../reports/security-delta-sprint-3-20260528.md)
 - [RoadMap Sprint 3](../RoadMap.md)
 
 ## Overview
 
-- **Sprint validado**: Sprint 3 — Hardening (SP-4, **v0.3.0-rc.1** release candidate, NO confundir con v0.4.0).
+- **Sprint validado**: Sprint 3 — Hardening (SP-4, **v0.3.0-rc.1** release candidate).
 - **Branch origen**: `feature/sprint-03-hardening` (mergeado a `developer` al cierre Sprint 3).
-- **Estado**: 🔘 **Plantilla expandida con 5 subdominios**. Se auto-fill en `SP-4-CLOSE-5`.
+- **Estado**: 📝 **Auto-fill completado 29-05-2026** en SP-4-CLOSE-1/1.5/2.
 - **Tester**: Renzo + equipo Renzo.
 - **Importancia especial**: esta fase cierra el camino al MVP GA (v0.3.0). El cierre de SP-4B (phase-05) detona el bump v0.3.0-rc.1 → v0.3.0.
 
-## Resumen del Sprint 3 a validar (auto-fill al cierre)
+## Resumen del Sprint 3 a validar
 
-<!-- AUTOFILL-START: Resumen Sprint 3 -->
+Sprint 3 Hardening entregó (real, no estimado):
 
-PENDIENTE — se rellena en SP-4-CLOSE-5 con los 5 subdominios + features Bloque 3.B:
+1. **E2E Playwright Sprint 3** — 3 specs de cierre: `health-version`, `security-headers`, `wcag-accessibility`. Suite completa 59/61 (1 flaky BUG-3-06 conocido en concurrencia 2 workers, 1 didn't-run colateral). Golden flows completos MVP DIFERIDOS a SP-4B.
+2. **Observabilidad** — Pino 10.3.1 + bull-board admin UI + Sentry v10.53.1. `llm_usage_logs` DIFERIDO a Sprint Costes-LLM.
+3. **Node 22 LTS** — `.nvmrc`, Dockerfile 3 stages, `engines: node ^22`, lint-staged 17 desbloqueado.
+4. **WCAG 2.2 AA** — BUG-2B-08/09/10 resueltos (aria-label, heading hierarchy, skip-link). Refactor masivo 24 findings DA-5 DIFERIDO post-MVP.
+5. **Security headers + Rate limits** — CSP completo, HSTS preload, X-Frame DENY, rate-limiter sliding-window Redis, `withRateLimit` HOF, auth rate-limit login/reset.
+6. **Bloque 3.B backend** — NEW-09 backend (campaigns tabla + Zod + Server Action + RLS), NEW-10 backend (tenant_holidays + helpers). UI partes DIFERIDAS backlog post-MVP (decisión Javi HP 29-05-2026).
+7. **Otros** — Lint 0 problems, AWS Bedrock removal, Sidebar UX, BUG-3-01..13, TS no-any standards, deprecations Next 16/Sentry 10, lazy SERVICE_ROLE_KEY, /api/health + /api/version, SP-4-INCIDENT-PAT-LEAK doc.
+8. **BUG-SEC detectados en CLOSE-1.5** — 2 altos (resolver pre-deploy VPS) + 2 medios (backlog). Ver sección 6b.
 
-1. **Phase-01 E2E Playwright completo** (32-36h): suite 6+ golden paths, coverage ≥80%.
-2. **Phase-02 Observabilidad** (7-9h): Pino + bull-board + Sentry. (`llm_usage_logs` MOVIDO a Sprint Costes-LLM v0.5.1).
-3. **Phase-03 Node 22 LTS** (4-6h): migración runtime VPS + local + `.nvmrc` actualizado.
-4. **Phase-04 WCAG 2.2 AA** (28-40h): 24 findings DA-5 resueltos.
-5. **Phase-05 Headers + Rate limits** (16-20h): CSP, HSTS, X-Frame, rate limit Redis, `withRateLimit` HOF Server Actions (4-08).
-6. **Phase-08 Features Bloque 3.B** (19-25h): NEW-09 Excel + filtros + cola, NEW-10 festivos manuales, NEW-11 rename Historial→Leads (PRIMERO), NEW-12 Settings UX.
-
-Total Sprint 3: 112-144h.
-
-<!-- AUTOFILL-END -->
+Total Sprint 3: ~21h reales vs 112-144h estimadas.
 
 ## 1. Test automático (código)
 
 ### 1.1 Node 22 LTS migration
 
 ```bash
-node --version   # debe devolver v22.13.x (no v20.x)
-nvm use          # selecciona automáticamente versión .nvmrc
-npm ci           # NO warnings EBADENGINE
+node --version   # debe devolver v22.x.x (no v20.x)
+nvm use          # selecciona automáticamente versión .nvmrc (22.22.3)
+npm ci           # 0 warnings EBADENGINE
 ```
 
 ### 1.2 Build + tests
 
 ```bash
-npm run typecheck                 # exit 0
-npm run lint                      # 0 errors, 0 warnings
-npm run build                     # exit 0
-npm run test                      # 250+ pass (170 Sprint 2 + ~10 Sprint 2B + ~70 Sprint 3)
-npm run test -- --coverage        # coverage report
+npm run typecheck                 # exit 0 — 0 errores
+npm run lint                      # 0 errors, 0 warnings (lint baseline = 0 desde SP-4-LINT-ZERO)
+npm run build                     # exit 0 — 42 rutas estáticas
+npm run test                      # 236/240 pass (4 skipped intencionalmente — integración VPS)
+npm run test -- --coverage        # coverage report — meta: lines >= 80%
 ```
 
-**Resultados esperados:**
+**Resultados reales CLOSE-1 (29-05-2026):**
 
-- Coverage `lines ≥ 80%`, `functions ≥ 80%`.
-- Build con tamaño bundle dentro presupuesto definido en phase-06.
-- 0 EBADENGINE warnings en `npm ci` VPS (Node 22 alpine + lint-staged 17 desbloqueado).
+- typecheck: 🟢 0 errores
+- lint: 🟢 0 problems (post SP-4-LINT-ZERO — baseline histórico 114 → 0)
+- build: 🟢 42 rutas compiladas
+- Vitest: 🟢 236/240 (4 skipped intencionalmente — tests de integración VPS que requieren credenciales reales)
 
 ## 2. Test E2C local (Playwright contra `localhost:8500`)
 
-### 2.1 Suite E2E Playwright completa (phase-01 Sprint 3)
+### 2.1 Specs Sprint 3 (cierre)
+
+Specs creados en Sprint 3 que Renzo debe ejecutar en local y en VPS:
 
 ```bash
-npm run dev
-PLAYWRIGHT_BASE_URL=http://localhost:8500 npx playwright test
+npm run dev   # http://localhost:8500
+
+# Specs Sprint 3 close (los 3 nuevos de este sprint)
+npx playwright test tests/e2e/sprint-3-close/health-version.spec.ts
+npx playwright test tests/e2e/sprint-3-close/security-headers.spec.ts
+npx playwright test tests/e2e/sprint-3-close/wcag-accessibility.spec.ts
+
+# Suite completa (todos los sprints)
+npx playwright test
 ```
 
-**Specs creados en Sprint 3 phase-01** (~6 golden paths):
+**Specs exactos añadidos en Sprint 3:**
 
-<!-- AUTOFILL-START: Specs phase-01 Sprint 3 -->
+| Archivo                                               | Descripción                                                                | Tests    |
+| ----------------------------------------------------- | -------------------------------------------------------------------------- | -------- |
+| `tests/e2e/sprint-3-close/health-version.spec.ts`     | `/api/health` 200 + `/api/version` campos version/commit/branch/deployedAt | ~4 specs |
+| `tests/e2e/sprint-3-close/security-headers.spec.ts`   | CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy presentes  | ~5 specs |
+| `tests/e2e/sprint-3-close/wcag-accessibility.spec.ts` | Skip-link, aria-labels, heading hierarchy en rutas MVP                     | ~5 specs |
 
-PENDIENTE — se auto-fill con paths exactos. Probable:
+**Helper reusable:**
 
-- `tests/e2e/dashboard/overview.spec.ts` (KPIs cross-canal cubre Sprint 2B también)
-- `tests/e2e/leads/leads-table.spec.ts` (rename NEW-11 ya aplicado)
-- `tests/e2e/conversaciones/inbox.spec.ts`
-- `tests/e2e/widget/embed-chat.spec.ts` (4-09)
-- `tests/e2e/voice-agents/retell-flow.spec.ts`
-- `tests/e2e/calendar/appointments.spec.ts` + festivos NEW-10
-- `tests/e2e/settings/crm-connection.spec.ts` (NEW-12 buscador + probar conexión)
-- `tests/e2e/campanas/import-excel.spec.ts` (NEW-09)
-- `tests/e2e/security/rate-limit.spec.ts` (phase-05)
-- `tests/e2e/security/csp-headers.spec.ts` (phase-05)
-<!-- AUTOFILL-END -->
+- `tests/e2e/utils/vps-version.ts` — `expectVpsServingCommit()` y `expectVpsHealthy()` para verificar deploy VPS post-merge.
 
-### 2.2 WCAG axe-core (phase-04 Sprint 3)
+**Resultados reales CLOSE-2 (29-05-2026):**
+
+- Sprint-3-close specs: 🟢 14/14 verdes
+- Suite completa: 59/61 (1 flaky BUG-3-06 en sprint-2-close VPS-04 — race concurrencia 2 workers, re-pasa ejecutado individualmente; 1 didn't-run colateral del flaky)
+
+### 2.2 Golden flows MVP (DIFERIDOS a SP-4B — ejecutar aquí)
+
+Estos specs NO existen todavía en el repo (diferidos de 4-01 y 4-09). Renzo debe crearlos o ejecutar manualmente:
+
+- Login → dashboard → leads CRUD
+- Widget embed → iframe → lead creado + dominio no whitelistado
+- Conversación WhatsApp → inbox → bot pausado/reanudado
+- Agendamiento → calendario → festivos NEW-10
+- CRM integration → HubSpot/Zoho connect + sync
+
+### 2.3 WCAG axe-core
 
 ```bash
-npx playwright test tests/e2e/a11y/
+npx playwright test tests/e2e/a11y/   # si existe directorio a11y
 ```
 
-Esperado: 0 violations critical, Lighthouse a11y ≥ 90 en todas las rutas MVP.
+Esperado: 0 violations critical. Los 3 bugs WCAG (BUG-2B-08/09/10) están resueltos en Sprint 3.
 
 ## 3. Test E2E VPS (Playwright contra `dev.automatizaformacion.com`)
 
@@ -106,141 +124,162 @@ Esperado: 0 violations critical, Lighthouse a11y ≥ 90 en todas las rutas MVP.
 PLAYWRIGHT_BASE_URL=https://dev.automatizaformacion.com npx playwright test
 ```
 
-### 3.1 Headers de seguridad
+### 3.1 Headers de seguridad (phase-05 Sprint 3)
 
-- [ ] `Content-Security-Policy` presente en respuestas (validar con `curl -I` o axe).
-- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains` presente.
-- [ ] `X-Frame-Options: DENY` o `SAMEORIGIN`.
-- [ ] `Referrer-Policy: strict-origin-when-cross-origin`.
-- [ ] `Permissions-Policy` configurado.
+Validar con `curl -I https://dev.automatizaformacion.com`:
+
+- [ ] `Content-Security-Policy` presente (CSP completo con LLM/Supabase/Sentry/CRM whitelisted)
+- [ ] `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- [ ] `X-Frame-Options: DENY`
+- [ ] `Referrer-Policy: strict-origin-when-cross-origin`
+- [ ] `Permissions-Policy` configurado
 
 ### 3.2 Rate limits
 
-- [ ] `POST /api/auth/login` con 6 requests en 1 min → 6º devuelve 429.
-- [ ] `POST /api/integrations/oauth/[provider]/auth/start` con 11 requests en 1 min → 11º devuelve 429.
-- [ ] Endpoints normales `/api/*` con 101 requests/min → 101º devuelve 429.
+- [ ] `POST /api/auth/login` — 6 requests en 1 min → 6º devuelve 429 "Demasiados intentos"
+- [ ] `POST /api/auth/login` — buckets IP distintas NO se cruzan
+- [ ] `POST /api/auth/reset-password` — 4 requests en 1 min → 4º devuelve 429
+- [ ] Servidor `/api/*` normales sin afectar (no rate-limited en 100 req/min normales)
 
-### 3.3 Observabilidad
+### 3.3 Endpoints /api/health + /api/version (SP-4-NEW-13)
 
-- [ ] Logs Pino estructurados visibles en Dokploy con `tenant_id`, `request_id`, `severity`.
-- [ ] bull-board UI accesible en `/admin/bull-board` (solo admin) con cola visible.
-- [ ] Sentry recibe errores: forzar error 500 con request inválido → ver event en Sentry dashboard.
+```bash
+curl https://dev.automatizaformacion.com/api/health
+# {"status":"ok","timestamp":"..."}
 
-## 4. Test manual del tester (humano) — 4-5h
+curl https://dev.automatizaformacion.com/api/version
+# {"version":"v0.3.0-rc.1","commit":"<sha>","branch":"feature/sprint-03-hardening","deployedAt":"...","nodeVersion":"v22.x.x"}
+```
 
-> Más extenso que phases anteriores: cubre EXPERIENCIA COMPLETA MVP + 24 findings WCAG + features NEW-09..12.
+- [ ] `/api/health` devuelve 200 con `status: "ok"`
+- [ ] `/api/version` devuelve `version: "v0.3.0-rc.1"` (o mayor si ya bumpeado)
+- [ ] `nodeVersion` empieza con `v22.` (no `v20.`)
+- [ ] `commit` no es `"unknown"` — confirma que Dokploy inyecta build args
+
+### 3.4 Observabilidad
+
+- [ ] Logs Pino estructurados visibles en Dokploy con `tenant_id`, `request_id`, `severity`
+- [ ] bull-board UI accesible en `/api/admin/queues` (solo admin, basic auth `BULL_BOARD_USERNAME/PASSWORD`)
+- [ ] Sentry recibe eventos: forzar error 500 → ver event en Sentry dashboard
+
+## 4. Test manual del tester (humano)
+
+> Más extenso: cubre EXPERIENCIA COMPLETA MVP + features backend Sprint 3 + WCAG.
 
 ### Bloque A — Flujo completo MVP (1h)
 
-- [ ] Landing → onboarding → crear tenant → conectar CRM → crear lead manual → simulator → ver dashboard → conversación whatsapp → agendamiento → leer audit log.
+- [ ] Landing → onboarding → crear tenant → conectar CRM → crear lead manual → simulator → ver dashboard → conversación whatsapp → agendamiento → leer audit log
 
-### Bloque B — Features Sprint 3 visibles (1h 30min)
+### Bloque B — Features Sprint 3 visibles (1h)
 
-- [ ] **NEW-09**: importar Excel campaña, filtrar leads por estado+origen+país, configurar cadencia envío.
-- [ ] **NEW-10**: añadir festivos ES en `/dashboard/calendar/holidays`, programar campaña → debe saltar festivos.
-- [ ] **NEW-11**: verificar UI dice "Leads" no "Historial" en sidebar + headers + breadcrumbs.
-- [ ] **NEW-12**: buscador integraciones filtra, "Probar conexión" muestra ✅/❌, borrar requiere texto confirm, edit abre Sheet lateral.
+- [ ] **NEW-09 backend**: verificar que la Server Action `importCampaignFromExcel` existe y funciona (puede probarse desde consola o test de integración si no hay UI)
+- [ ] **NEW-10 backend**: verificar que `getHolidays/addHoliday/removeHoliday` funcionan y `isBusinessDay()` respeta festivos añadidos
+- [ ] **NEW-11**: verificar UI dice "Leads" (no "Historial") en: sidebar submenu, page h1, breadcrumb tabla leads
+- [ ] **NEW-12 buscador**: buscador integraciones filtra por keyword; "Probar conexión" muestra ✅/❌ (YA EXISTÍA desde Sprint 2 — validar no-regresión)
+- [ ] **Sidebar Dashboard**: primer item del menú apunta correctamente a `/dashboard`
+- [ ] **WCAG skip-link**: Tab en cualquier ruta → aparece "Saltar al contenido principal" visible al recibir foco
 
-### Bloque C — WCAG manual (1h)
+### Bloque C — WCAG manual (30 min)
 
-- [ ] Recorrido por teclado completo (Tab + Shift+Tab + Enter + Space + Esc).
-- [ ] Screen reader (NVDA Windows / VoiceOver Mac) en 5 rutas críticas: `/login`, `/dashboard`, `/dashboard/settings`, `/dashboard/conversaciones`, `/dashboard/calendar`.
-- [ ] Contraste manual con eyeball + axe DevTools en componentes problemáticos (DA-5-010).
+- [ ] Recorrido por teclado (Tab + Shift+Tab + Enter + Space + Esc) en `/dashboard`
+- [ ] aria-labels en botones "Personalizar" de SummaryManager y ChartManager
+- [ ] Heading hierarchy: una sola h1 por página, no saltos h1→h3
+- [ ] Contraste con axe DevTools en componentes críticos (DA-5-010)
 
 ### Bloque D — Performance + observabilidad (30 min)
 
-- [ ] Lighthouse en `/dashboard`: Performance ≥ 80, A11y ≥ 90, Best Practices ≥ 90, SEO ≥ 90.
-- [ ] Sentry: forzar error con `?force_error=true` (si endpoint debug existe) → ver en Sentry.
-- [ ] bull-board: ver cola activa con jobs reales.
+- [ ] Lighthouse en `/dashboard`: Performance ≥ 70, A11y ≥ 90, Best Practices ≥ 90
+- [ ] Sentry dashboard tiene evento reciente del VPS
+- [ ] bull-board: cola activa con jobs visibles
 
 ## 5. Hotfixes encontrados durante la validación
 
-<!-- AUTOFILL-START: Hotfixes Sprint 3 validación -->
-
-PENDIENTE — se rellena durante SP-4B ejecución por Renzo:
-
-| BUG-ID   | Severidad | Descripción | Fix aplicado | Commit | Estado |
-| -------- | --------- | ----------- | ------------ | ------ | ------ |
-| BUG-3-XX | —         | —           | —            | —      | 🔘     |
-
-<!-- AUTOFILL-END -->
+| BUG-ID   | Severidad | Descripción                                    | Fix aplicado | Commit | Estado |
+| -------- | --------- | ---------------------------------------------- | ------------ | ------ | ------ |
+| BUG-3-XX | —         | — (rellenar durante SP-4B ejecución por Renzo) | —            | —      | 🔘     |
 
 ## 6. Bug regression baseline Sprint 3
 
-<!-- AUTOFILL-START: Bugs regression Sprint 3 -->
+Bugs cerrados durante Sprint 3 — verificar no-regresión en VPS:
 
-PENDIENTE — se rellena en SP-4-CLOSE-5 con bugs cerrados durante Sprint 3:
+| BUG-ID      | Descripción                                      | Fix commit                                  | Verificación VPS                   |
+| ----------- | ------------------------------------------------ | ------------------------------------------- | ---------------------------------- |
+| BUG-3-01    | `demo@af.local` hardcoded en tests → usa env var | Sprint 3 commits                            | N/A (solo test local)              |
+| BUG-3-02    | CSP `bedrock.*.amazonaws.com` inválida           | Sprint 3 commits                            | `curl -I` CSP header sin bedrock   |
+| BUG-3-03/04 | `attemptLogin` race + cascada logout             | Sprint 3 commits                            | Login fluido sin errores race      |
+| BUG-3-05    | Saturación Supabase Auth con 8 workers           | `playwright.config.ts workers: 2`           | N/A (config local)                 |
+| BUG-3-06    | Race sprint-2-close concurrencia                 | Helper `loginAsAdmin` unificado             | Playwright suite VPS < 2 failures  |
+| BUG-3-07    | Sidebar md:flex ahoga layout 768px               | Breakpoint `lg:` global                     | Sidebar responsive en 1024px       |
+| BUG-3-09    | KPI cards truncadas en 768px                     | COL_SPAN_MAP recalibrado                    | Cards visibles sin truncado        |
+| BUG-3-10    | Columna ORIGEN truncada tabla historial          | `min-w-max` + sin `overflow-hidden`         | Columna ORIGEN visible en 1440px   |
+| BUG-3-12    | Scroll superior tabla no coincide                | `style={{ width: scrollWidth }}`            | Scroll H alineado                  |
+| BUG-3-13    | Badge "1 Issue" Next Dev Tools                   | `unsafe-eval` solo en dev                   | 0 badge en prod                    |
+| BUG-2B-08   | Botones "Personalizar" sin aria-label            | aria-label + title añadidos                 | Axe 0 violations en SummaryManager |
+| BUG-2B-09   | h1 secundarios → bajar a h2                      | h1→h2 en ChartManager+SummaryManager        | 1 único h1 por página              |
+| BUG-2B-10   | Skip-link faltante                               | `SkipLink.tsx` + `<main id="main-content">` | Tab → skip-link visible            |
 
-- Bugs WCAG-XX detectados y fixed en phase-04.
-- Bugs rate-limit edge cases fixed en phase-05.
-- Bugs NEW-09/10/11/12 fixed en phase-08.
-- Bug Node 22 migration prebuilt binaries fixed en phase-03 (si hubo).
-<!-- AUTOFILL-END -->
+### 6b. BUG-SEC detectados en CLOSE-1.5 (29-05-2026) — requieren atención
+
+> Detectados por el security agent delta (`developer..HEAD`, 35 archivos). Reporte completo: `plans/reports/security-delta-sprint-3-20260528.md`.
+
+| BUG-ID     | Severidad        | Descripción                                                                                                                  | Acción requerida                                                                                                 |
+| ---------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| BUG-SEC-01 | ALTO (A07:2021)  | IP Spoofing rate-limit — `extractClientIp()` prioriza X-Forwarded-For sin validar X-Real-IP                                  | **Resolver ANTES del primer deploy VPS con tráfico real.** Fix: priorizar X-Real-IP en `src/lib/rate-limiter.ts` |
+| BUG-SEC-02 | ALTO (A01:2021)  | Webhook workflow sin auth — `src/app/api/webhooks/workflow/[workflowId]/[path]/[nodeId]/route.ts` endpoint público sin firma | **Resolver ANTES del primer deploy VPS con tráfico real.** Fix: HMAC signature como webhooks Retell/CRM          |
+| BUG-SEC-03 | MEDIO (A09:2021) | Email en claro en logs — `src/lib/actions/auth.ts` líneas 65/86/105                                                          | Backlog post-MVP. Fix: hash sha256-8b                                                                            |
+| BUG-SEC-04 | MEDIO (A04:2021) | Fail-open WhatsApp pause check — `src/lib/integrations/whatsapp.ts:87` try-catch silencia error                              | Backlog post-MVP. Fix: fail-closed                                                                               |
+
+**Acción para Renzo en VPS**: verificar en prod que BUG-SEC-01 y BUG-SEC-02 están resueltos ANTES de abrir tráfico real de clientes. Si no están resueltos antes del hand-off → escalar a Javi HP.
 
 ## 7. Env vars NUEVAS que necesita el VPS
 
-<!-- AUTOFILL-START: Env vars Sprint 3 -->
+Confirmar que todas estén configuradas en el panel Dokploy tab **Environment** (NO Build Args, excepto las de build):
 
-Esperado tras Sprint 3 (validar en CLOSE-5):
+| Var                    | Propósito                                         | Dónde obtener                             | Tab Dokploy |
+| ---------------------- | ------------------------------------------------- | ----------------------------------------- | ----------- |
+| `SENTRY_DSN`           | Sentry SDK init error tracking                    | Sentry project → Settings → Client Keys   | Environment |
+| `SENTRY_ORG`           | source-maps upload (opcional)                     | Sentry org slug                           | Environment |
+| `SENTRY_PROJECT`       | source-maps upload (opcional)                     | Sentry project slug                       | Environment |
+| `PINO_LOG_LEVEL`       | Logging level (debug/info/warn/error)             | Default: `info`                           | Environment |
+| `BULL_BOARD_USERNAME`  | Basic auth bull-board admin UI                    | Generado por Javi HP                      | Environment |
+| `BULL_BOARD_PASSWORD`  | idem                                              | Generado por Javi HP                      | Environment |
+| `RATE_LIMIT_REDIS_URL` | Redis para rate limiter distribuido               | Reusa `REDIS_URL` o instancia dedicada    | Environment |
+| `GIT_COMMIT_SHA`       | Commit SHA para `/api/version`                    | **Build Arg** en Dokploy (no Environment) | Build Args  |
+| `GIT_BRANCH`           | Branch para `/api/version`                        | **Build Arg** en Dokploy                  | Build Args  |
+| `BUILD_TIMESTAMP`      | Timestamp deploy para `/api/version`              | **Build Arg** en Dokploy                  | Build Args  |
+| `CSP_REPORT_URI`       | Endpoint donde reportar violations CSP (opcional) | Sentry recibe report-uri                  | Environment |
 
-| Var                             | Propósito                                         | Dónde obtener                                                                    |
-| ------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `SENTRY_DSN`                    | Sentry SDK init para error tracking (phase-02)    | Sentry project → Settings → Client Keys                                          |
-| `SENTRY_ORG` / `SENTRY_PROJECT` | source-maps upload (opcional)                     | Sentry                                                                           |
-| `PINO_LOG_LEVEL`                | Logging level (debug/info/warn/error)             | Default: `info`                                                                  |
-| `BULL_BOARD_USER`               | Basic auth bull-board admin UI (phase-02)         | Generado                                                                         |
-| `BULL_BOARD_PASS`               | idem                                              | `node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"` |
-| `RATE_LIMIT_REDIS_URL`          | Redis para rate limiter distribuido (phase-05)    | Reusa `REDIS_URL` o instancia dedicada                                           |
-| `CSP_REPORT_URI`                | Endpoint donde reportar violations CSP (opcional) | Sentry recibe report-uri                                                         |
+> **NOTA CRÍTICA**: `SUPABASE_SERVICE_ROLE_KEY` debe estar en tab **Environment** (NO Build Args). Desde Sprint 3 SP-4-DEPRECATIONS-DEPLOY el `Dockerfile` ya NO lo acepta como ARG — si estaba en Build Args en Dokploy, moverlo a Environment o se perderá en runtime.
 
-<!-- AUTOFILL-END -->
+> **PAT GitHub**: el PAT que estaba expuesto en panel Dokploy (incidente 27-05-2026, doc en `plans/260527-2056-e2ctotal-local-run/INCIDENT-260527-pat-leak-y-sheets-paralelo.md`) debe haber sido rotado por Javi HP antes del hand-off. Si no está rotado → escalar antes de desplegar.
 
-## 8. Notas de despliegue
+## 8. Notas de despliegue (Dokploy)
 
-<!-- AUTOFILL-START: Notas despliegue Sprint 3 -->
-
-1. **Dockerfile cambia 3 stages**: `node:20-alpine` → `node:22-alpine` (phase-03).
-2. **Dokploy Clean Cache OBLIGATORIO** en redeploy (Node version change invalida prebuilt binaries de native deps).
-3. **Migración SQL NEW-10**: `supabase/migrations/YYYYMMDD_tenant_holidays.sql` aplicar al VPS via pg-meta REST.
-4. **Sentry setup**: crear proyecto en Sentry.io, obtener DSN, configurar source-maps upload en build.
-5. **bull-board access**: solo admin, basic auth con vars `BULL_BOARD_USER/PASS`.
-6. **Rate limiter**: depende de Redis disponible y accesible desde middleware Edge/Node.
-7. **CSP headers**: validar primero en `staging` (si existe) o `dev.automatizaformacion.com` con header `Content-Security-Policy-Report-Only` antes de enforce.
-8. **Restart Next.js en Dokploy** tras añadir env vars.
-<!-- AUTOFILL-END -->
+1. **Dockerfile cambia a `node:22-alpine`** (3 stages). Dokploy debe hacer **Clean Cache OBLIGATORIO** en el próximo deploy para que Node 22 se instale correctamente (native deps precompilados para Node 20 son incompatibles).
+2. **Migración SQL campaigns + holidays**: `supabase/migrations/20260526100000_campaigns_and_holidays.sql` — aplicar al VPS vía pg-meta REST (`POST https://dev.automatizaformacion.com/supabase/pg/query`) antes del primer acceso a esas tablas.
+3. **Build Args en Dokploy**: añadir `GIT_COMMIT_SHA`, `GIT_BRANCH`, `BUILD_TIMESTAMP` como Build Args para que `/api/version` devuelva valores reales (no `"unknown"`).
+4. **SUPABASE_SERVICE_ROLE_KEY**: verificar que está en tab Environment (no Build Args) — cambio de Sprint 3 SP-4-DEPRECATIONS-DEPLOY.
+5. **Sentry setup**: si no está configurado, crear proyecto en Sentry.io, obtener DSN, añadir `SENTRY_DSN` en Environment. Sin DSN Sentry funciona silenciosamente (no lanza errores).
+6. **bull-board access**: protegido con basic auth. Añadir `BULL_BOARD_USERNAME` + `BULL_BOARD_PASSWORD` antes de acceder a `/api/admin/queues`.
+7. **Rate limiter Redis**: depende de `RATE_LIMIT_REDIS_URL` o `REDIS_URL`. Sin Redis la app funciona (fail-open) pero sin rate limiting activo en prod.
+8. **Restart Next.js en Dokploy** tras añadir/cambiar env vars (las vars de runtime las lee al arrancar el proceso).
+9. **PAT GitHub**: verificar que el PAT rotado está correctamente configurado en Dokploy (incidente 27-05-2026).
+10. **middleware.ts renombrado a proxy.ts**: si hay conflicto de rutas en Dokploy/traefik, verificar que Next 16 detecta correctamente `src/proxy.ts` como middleware proxy.
 
 ## 9. Status final SP-4B phase-04
 
-<!-- AUTOFILL-START: Status final -->
-
-PENDIENTE de auto-fill al cierre Sprint 3. Plantilla esperada:
-
-- ⏳ Pendiente de Renzo: ejecutar checklist manual cuando Sprint 3 desplegado en VPS.
-- 🟢/🟡/🔴 Auto-tests verdes: X pass, X skipped.
-- 🟢/🟡 Coverage ≥ 80%.
-- 🟢/🟡/🔴 Build verde con Node 22.
-- 🟢/🟡/🔴 E2E completo VPS.
-- 🟢/🟡 Lighthouse a11y ≥ 90 en rutas MVP.
-- 🟢/🟡 Headers seguridad presentes.
-- 🟢/🟡 Rate limits activos.
-- 🟢/🟡 Observabilidad operativa.
-- 🟢/🟡 X bugs cerrados con regression checks.
-<!-- AUTOFILL-END -->
+| Bloque                           | Estado al arrancar SP-4B                                                    |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| 1. Test automático               | 🟢 CLOSE-1 verde: typecheck 0 + lint 0 + build 42 rutas + 236/240 Vitest    |
+| 2. Test E2C local Sprint-3-close | 🟢 CLOSE-2 verde: 14/14 specs                                               |
+| 3. Test E2E VPS                  | 🔘 Pendiente Renzo — ejecutar specs contra `dev.automatizaformacion.com`    |
+| 4. Test manual                   | 🔘 Pendiente Renzo — checklist Bloques A-D                                  |
+| 5. Hotfixes validación           | 🔘 Plantilla — rellenar durante SP-4B                                       |
+| 6. Bugs regression               | 🟢 Baseline documentado (12 bugs Sprint 3 + 4 BUG-SEC)                      |
+| 7. Env vars                      | 📝 Lista completa documentada — verificar en Dokploy                        |
+| 8. Notas deploy                  | 📝 Completadas — Clean Cache + SQL migrations + Build Args                  |
+| 9. BUG-SEC-01/02                 | 🔴 **CRÍTICO pre-deploy tráfico real** — resolver antes de abrir a clientes |
 
 ## 10. Hand-off a phase-05 (Cierre SP-4B → MVP GA v0.3.0)
 
-Tras completar phase-01 + 02 + 03a + 03b + 04 con TODO verde, Renzo ejecuta **[phase-05-cierre-sprint.md](phase-05-cierre-sprint.md)** que detona el bump v0.3.0-rc.1 → v0.3.0 GA (MVP completo).
-
-## Estado de la fase
-
-| Bloque             | Estado                             |
-| ------------------ | ---------------------------------- |
-| 1. Test automático | 🔘 Skeleton-ready                  |
-| 2. Test E2C local  | 🔘 Skeleton-ready                  |
-| 3. Test E2E VPS    | 🔘 Skeleton-ready                  |
-| 4. Test manual     | 🔘 Skeleton-ready                  |
-| 5. Hotfixes        | 🔘 Plantilla                       |
-| 6. Bugs regression | 🔘 Plantilla                       |
-| 7. Env vars        | 🔘 Skeleton-ready (probable lista) |
-| 8. Notas deploy    | 🔘 Skeleton-ready                  |
-| 9. Status final    | 🔘 Plantilla                       |
+Tras completar phases 01 + 02 + 03a + 03b + 04 con TODO verde y BUG-SEC-01/02 resueltos, Renzo ejecuta **[phase-05-cierre-sprint.md](phase-05-cierre-sprint.md)** que detona el bump v0.3.0-rc.1 → v0.3.0 GA (MVP completo).
