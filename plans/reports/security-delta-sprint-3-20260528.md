@@ -1,6 +1,6 @@
 # Security Delta Report — Sprint 3 Hardening (CLOSE-1.5)
 
-**Fecha**: 28-05-2026
+**Fecha**: 28-05-2026 (auditoría) · **29-05-2026 (resolución BUGs)**
 **Modo**: delta (OWASP 2021 sobre developer..feature/sprint-03-hardening)
 **Scope**: 35 archivos src/ + Dockerfile + next.config.ts
 **Ejecutor**: af-agents:security (auto-invocado por manager en SP-4-CLOSE-1.5)
@@ -8,7 +8,33 @@
 
 ---
 
-## Resumen ejecutivo
+## 🟢 Update 29-05-2026 — Los 4 BUG-SEC RESUELTOS en esta rama
+
+Tras decisión Javi HP 29-05-2026 tarde ("primero soluciona los 4 errores no bloqueantes,
+ahora y en esta rama"), los 4 hallazgos se han cerrado antes del merge a `developer`.
+
+| BUG ID     | Severidad | Estado   | Fix                                                                                    | Test                                                                |
+| ---------- | --------- | -------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| BUG-SEC-01 | 🟠 Alto   | 🟢 FIXED | `rate-limiter.ts`: `extractClientIp()` prioriza `X-Real-IP`                            | `tests/unit/rate-limiter.test.ts` (5 specs nuevos/refactor)         |
+| BUG-SEC-02 | 🟠 Alto   | 🟢 FIXED | `webhooks/workflow/.../route.ts`: HMAC-SHA256 + flag `WEBHOOK_WORKFLOW_REQUIRE_SECRET` | `tests/unit/security/webhook-hmac.test.ts` (10 specs)               |
+| BUG-SEC-03 | 🟡 Medio  | 🟢 FIXED | `actions/auth.ts`: masking via `lib/security/pii-mask.ts` (3 `console.log` migrados)   | `tests/unit/security/pii-mask.test.ts` (19 specs incl. maskPhone)   |
+| BUG-SEC-04 | 🟡 Medio  | 🟢 FIXED | `integrations/whatsapp.ts`: `requireEnvAny()` + fail-CLOSED en pause check             | Cubierto vía tests integración existentes (typecheck/lint/build OK) |
+| INFO-02    | 🟢 Info   | 🟢 FIXED | Respuesta del webhook workflow ya NO devuelve `lead_id`                                | Cubierto en HMAC test (response shape)                              |
+
+**Verificación CLOSE-4 (29-05-2026 22:00 UTC)**:
+
+- `npm run typecheck` → 0 errores
+- `npm run lint` → 0 problemas
+- `npm test` → **306/310 pass** (4 skip intencionales) — +26 specs nuevos
+- `npm run build` → ✅
+- `npx playwright test` → **61/61 pass** (zero regresiones)
+
+**Veredicto actualizado**: los 4 BUG-SEC dejan de ser pre-deploy VPS y pasan a 🟢 cerrados
+dentro de Sprint 3 v0.3.0-rc.1.
+
+---
+
+## Resumen ejecutivo (snapshot original 28-05)
 
 | Severidad             | Count | Detalle                                                                                                 |
 | --------------------- | ----- | ------------------------------------------------------------------------------------------------------- |
@@ -18,6 +44,9 @@
 | 🟢 Bajo / Informativo | 3     | Docker ANON_KEY build-arg, lead_id en respuesta webhook, asPlainClient sin bypass RLS                   |
 
 **Veredicto: PASS** — No hay findings críticos. El sprint puede continuar a CLOSE-2.
+
+> Los 4 BUG-SEC y INFO-02 se cerraron tras CLOSE-2 por orden del usuario (sección
+> "🟢 Update 29-05-2026" al inicio de este documento).
 
 ---
 
