@@ -1,10 +1,14 @@
 ---
-description: Test E2E exhaustivo y reusable de toda la app (auth, RBAC, RLS, CRUD 12 entidades, integrations, webhooks, widget, observabilidad). Abre navegador real, captura bugs, genera informe.
-argument-hint: [--env local|vps|staging|prod] [--only-fase N] [--skip-fase N,M] [--no-cleanup] [--apps slug1,slug2]
+description: Test E2E exhaustivo y reusable contra VPS (Dokploy, dev.automatizaformacion.com). Para local usar /e2ctotal. Cubre auth, RBAC, RLS, CRUD 12 entidades, integrations, webhooks, widget, observabilidad.
+argument-hint: [--env vps|staging|prod] [--only-fase N] [--skip-fase N,M] [--no-cleanup] [--apps slug1,slug2] [--vps-readonly]
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, TodoWrite, AskUserQuestion, Task]
 ---
 
-# /e2etotal — E2E Full Test Run
+# /e2etotal — E2E Full Test Run (entornos remotos: VPS / staging / prod)
+
+> **Desde 27-may-2026 este comando NO ejecuta contra local**. Para entorno local usar `/e2ctotal` (mismo plan, contra `localhost:8500`). Regla del proyecto: llamar cada cosa por su nombre — E2C = local, E2E = remoto.
+
+**Default `--env vps`** (`https://dev.automatizaformacion.com`). Si se pasa `--env local` el comando AVISA y redirige a usar `/e2ctotal` (no aborta — sigue siendo válido el override por compatibilidad temporal).
 
 **AUTONOMOUS EXECUTION**: no preguntar confirmación en cada paso. Solo pausar:
 
@@ -27,7 +31,11 @@ Ejecutar en una sola pasada y reportar tabla:
 3. `git rev-parse --short HEAD` — capturar SHA.
 4. `curl -fsSL $TARGET_URL/api/health` — 200 esperado.
 5. `curl -fsSL $TARGET_URL/api/version` — capturar versión app.
-6. Verificar `.env.local` (o env del shell) tiene `NEW_ADMIN_PASSWORD` o equivalente del target.
+6. **Detectar acceso a creds admin** (CRÍTICO — sandbox bloquea `.env.local` por defecto). Probar las 3 vías en orden y reportar cuál está activa:
+   - **6a (recomendada)**: `Bash` → `if [ -n "$NEW_ADMIN_PASSWORD" ]; then echo "ENV_SHELL=ok"; else echo "ENV_SHELL=missing"; fi`. Si `ok` → usar esta vía, no leer disco.
+   - **6b (fallback)**: `Read .env.local` — si el sandbox lo permite, extraer `NEW_ADMIN_PASSWORD`. Si devuelve `permission denied / directory denied` → pasar a 6c.
+   - **6c (último recurso)**: pedir al usuario con `AskUserQuestion` que pegue el password en chat. Avisar que queda en transcript.
+   - **Si las 3 fallan**: abortar con mensaje "Sin acceso a creds admin. Opciones: (1) `$env:NEW_ADMIN_PASSWORD = '<pwd>'` antes de relanzar Claude, (2) permitir Read de `.env.local`, (3) ejecutar `/e2etotal --skip-fase 01,02,03,04` para correr solo fases sin login". Ver sección "Acceso a credenciales en sandbox Claude Code" del plan maestro.
 7. `npx playwright --version` — debe responder.
 8. Si target=local: `npm run db:status` debe mostrar Supabase running.
 
@@ -88,7 +96,7 @@ Ejecutar las 8 fases del plan en orden, según las especificaciones del [plan ma
 
 Estructura completa generada (ver detalle en plan maestro sección "Output del run"):
 
-```
+```text
 plans/{YYMMDD-HHmm}-e2etotal-run/
 ├── phase-00..08-*.md
 ├── INFORME-FINAL.md

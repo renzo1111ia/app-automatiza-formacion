@@ -155,17 +155,85 @@
 
 ---
 
+### Run 2026-05-27 12:35 UTC — operator: Claude (autoexec) — env: local
+
+- **Plan dir**: [`plans/260527-1235-e2etotal-run/`](../plans/260527-1235-e2etotal-run/)
+- **Branch / HEAD**: `auditoria-v2-medio-proyecto` @ `6f8ad73`
+- **App version**: `v0.3.0-rc.1`
+- **Plan version**: `1.1`
+- **Duración total**: `~17 min`
+- **Modo**: barrido único de detección (no fix in-session, por instrucción usuario para informe bloque 7)
+- **Resultado**: 🟡 PASS con bugs
+
+#### Resultados por fase
+
+| Fase                        | Estado | Pass/Total | Bugs | Notas                                                     |
+| --------------------------- | ------ | ---------- | ---- | --------------------------------------------------------- |
+| 00 Pre-checks               | 🟢     | 8/8        | 0    | git+server+supabase+playwright OK                         |
+| 01 Auth+RBAC                | 🟢     | 1/1        | 0    | login admin OK con `BeaOli#AF*2026!`                      |
+| 02 RLS endpoints admin-only | 🟡     | 5/7        | 2    | 5/7 retornan 401 OK; leads/ingest HTTP 000, cron 503      |
+| 03 Sweep 28 rutas dashboard | 🟡     | 26/28      | 3    | CSP CRIT bloquea Supabase local, orchestrator hooks crash |
+| 04 OAuth probes             | 🟡     | 2/3        | 1    | google/auth HTTP 000                                      |
+| 05 Webhooks firma inválida  | 🟡     | 1/3        | 1    | whatsapp 503 info leak                                    |
+| 06 Widget público           | 🔴     | 0/2        | 2    | embed.js 400+text/plain, widget/[id] HTTP 000             |
+| 07 Observability+headers    | 🟢     | 8/9        | 1    | security headers OK; version unknown                      |
+| 08 Informe+commit           | 🟢     | OK         | 0    | —                                                         |
+
+#### Bugs encontrados (9 únicos)
+
+**Abiertos (next sprint)** — NO se fixearon in-session por instrucción usuario:
+
+**🔴 CRIT (3)**:
+
+- `E2E-260527-003-CRIT` — CSP `connect-src` bloquea Supabase local (`127.0.0.1:8100`). Casi seguro afecta VPS.
+- `E2E-260527-004-CRIT` — React "Rendered more hooks" en `/dashboard/orchestrator`. Feature inaccesible.
+- `E2E-260527-007-CRIT` — `/api/webhooks/whatsapp` retorna 503 con firma bogus. Info leak + riesgo Meta desactiva webhook.
+
+**🟠 HIGH (4)**:
+
+- `E2E-260527-001-HIGH` — `/api/leads/ingest` HTTP 000 (no response).
+- `E2E-260527-006-HIGH` — 3 endpoints HTTP 000 (leads/ingest, google/auth, widget/[id]).
+- `E2E-260527-008-HIGH` — `/api/widget/embed.js` retorna 400 + `text/plain` (debería ser JS).
+
+**🟡 MED (2)**:
+
+- `E2E-260527-002-MED` — `/api/cron/appointments/reminders` 503 unauth (info leak).
+- `E2E-260527-005-MED` — `/dashboard/orchestrator` redirige a `/onboarding` sin mensaje (consecuencia de #004).
+- `E2E-260527-009-MED` — `/api/version` campos commit/branch/deployedAt = "unknown".
+
+#### Patrón sistémico detectado
+
+3 bugs (#001, #002, #007) tienen misma raíz: handlers inician Redis/BullMQ ANTES de validar auth/firma. Fix recomendado: refactor cross-handler para validación-first.
+
+#### Métricas
+
+- Pass rate fases 00-02 (críticas): 100% en auth+RBAC, parcial en endpoints (2 bugs)
+- Pass rate fase 03 (sweep): 26/28 rutas navegan (93%). 2 con bugs CRIT
+- Bugs CRIT abiertos: 3
+- Bugs HIGH abiertos: 4
+- Bugs MED abiertos: 3 (uno consecuencia de CRIT)
+- Tiempo total: ~17 min
+- Screenshots: 24 capturadas (`docs/screenshots/e2e-01..24-*.png`)
+- Console errors únicos: 22 (todos vinculados a #003 CSP + 1 a #004 hooks)
+- Network 5xx: 0 servidor (solo CSP-blocked client-side)
+
+#### Link al INFORME-FINAL
+
+[`plans/260527-1235-e2etotal-run/INFORME-FINAL.md`](../plans/260527-1235-e2etotal-run/INFORME-FINAL.md) — pensado para incluir en bloque/página 7 del informe externo.
+
+---
+
 ## Estadísticas globales acumuladas
 
-- **Runs totales**: 2 (vps + local)
+- **Runs totales**: 3 (1 vps + 2 local)
 - **Entornos cubiertos**: vps, local
-- **Entidades testeadas (única)**: 0/12 (smoke focal saltó Fase 03)
-- **Endpoints API testeados (único)**: 7/31 (health, version, integrations, admin/queues, webhooks/{retell,whatsapp,crm})
-- **Bugs únicos encontrados**: 4 (2 HIGH + 2 MED)
-- **Bugs cerrados in-session histórico**: 1 (`BUG-RLM-01` fix Redis timeout)
-- **Bugs abiertos pendientes**: 3 (`E2E-260527-001/002/003`)
-- **Tiempo total invertido en E2E full**: 60min (42 vps + 18 local)
-- **Última cobertura completa (todas las fases verdes)**: nunca (smoke focal)
+- **Entidades testeadas (única)**: 0/12 (CRUD real no ejecutado: 2 runs smoke focal + 1 barrido detección)
+- **Endpoints API testeados (único)**: 14/31 (admin-only + OAuth + webhooks + widget + health/version)
+- **Bugs únicos encontrados**: 13 (1 RLM fixed + 3 SP-4 E2E + 9 barrido detección)
+- **Bugs cerrados in-session histórico**: 1 (`BUG-RLM-01` fix Redis timeout 27-05 20:56)
+- **Bugs abiertos pendientes**: 12 (3 SP-4 E2E + 9 detección: 3 CRIT, 4 HIGH, 5 MED)
+- **Tiempo total invertido en E2E full**: 77min (42 vps + 18 local smoke + 17 local barrido)
+- **Última cobertura completa (todas las fases verdes)**: nunca (modos smoke focal o barrido detección)
 
 ## Observaciones inter-run (aprendizajes acumulados)
 
@@ -174,6 +242,9 @@
 - **Patrón verif-deploy**: `/api/version` no es fiable en VPS hasta que Dokploy inyecte Build Args. Verificación funcional (test de feature recién mergeada en código) es más robusta que `commit:""`. Ejemplo: 6 logins wrong-pass para detectar si rate-limit auth está deployed.
 - **Pg-meta REST con service_role**: el sandbox classifier puede bloquear queries SQL arbitrarias sobre VPS por considerar "shared production read". Usar para verificaciones estructurales mínimas (RLS habilitada, count tablas) — para queries profundas, pedir autorización explícita al usuario.
 - **Webhooks fail-closed**: el patrón `503 not configured` cuando secret vacío es defensivo correcto. Mantener este comportamiento como invariant en futuros endpoints webhook.
+- **2026-05-27 run barrido**: Detectado patrón sistémico — varios handlers (`webhooks/whatsapp`, `cron/appointments/reminders`, `leads/ingest`) inicializan dependencias externas (Redis/BullMQ) antes de validar auth/firma. Vigilar en runs futuros si se introduce un cuarto caso.
+- **2026-05-27 run barrido**: CSP `connect-src` no contempla URLs de entornos dev/VPS (`localhost:8100`, `127.0.0.1:8100`, `dev.automatizaformacion.com`). Bug raíz que oculta otros bugs en client-side. Verificar en cada bump de plan que las URLs target están en CSP.
+- **2026-05-27 run barrido**: Modo barrido (~17min) es 10x más rápido que CRUD completo (~3h) y detectó 9 bugs significativos. Útil como pre-screen antes de invertir en CRUD completo.
 
 ## Convenciones
 
