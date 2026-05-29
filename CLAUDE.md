@@ -220,6 +220,30 @@ Triggers de escalado **preventivo** (antes de empezar la tarea, sin esperar a fa
 - Confirma SÓLO antes de: acciones GitHub (push, PR, merge, tag), planes de tareas/sprints, ediciones de `staging`/`main`.
 - Permiso de documentación persistente: si el usuario autoriza editar docs/.md, ese permiso vale para todo el proyecto hasta que diga "modo planificación sin permisos de edición".
 
+## Sincronización proactiva del RoadMap (regla absoluta — orden Javi HP 28-05-2026)
+
+**El RoadMap es la fuente de verdad visible.** `plans/RoadMap.md` + `README.md` raíz deben reflejar el estado real en TIEMPO REAL, sin que el usuario tenga que pedirlo. Es responsabilidad del **`af-agents:manager`** orquestar las invocaciones a **`af-agents:roadmap-keeper`** en los siguientes eventos disparadores:
+
+| Evento                                                         | Acción inmediata `roadmap-keeper`                                                              |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Apertura de tarea/fase/sprint (usuario dice "voy a empezar X") | Estado tarea → **🟡 En Desarrollo** + timestamp + dev asignado (ANTES de delegar al subagente) |
+| `git commit` local                                             | Tarea → **🟠 P. Subir GH** (o 🟡 si es WIP intermedio)                                         |
+| `git push` exitoso                                             | Tarea → **🔵 Subida rama** + ⏱ Push registrado + propagar agregado bloque/sprint               |
+| Merge a `developer` (PR cerrado)                               | Tarea → **🟢 Completada** + ⏱ Cierre registrado + bumpear sprint si corresponde                |
+| Tarea NUEVA descubierta en sesión activa                       | Añadir fila con ID coherente + estimación + estado inicial                                     |
+| Desviación >50% sobre estimación                               | Recalcular sumatorio + nota ⚠️ + notificar usuario                                             |
+| Cierre formal de sprint (CLOSE-5 mergeado)                     | Sprint → **🟢 Completada (merged)** + actualizar `sprint_N_progress` en frontmatter            |
+
+**Reglas obligatorias:**
+
+1. La sincronización cubre TODOS los niveles del RoadMap: (a) frontmatter `last_updated` + `sprint_N_progress`, (b) tabla resumen "Cuadro de mando" superior, (c) tablas detalladas inferiores (`## Fase X — Sprint Y`) con cada tarea + ⏱ Push + ⏱ Cierre + Notas, (d) `README.md` raíz (tabla resumen + cabecera Estado).
+2. **NUNCA esperar a que el usuario pida la actualización.** Si el usuario tiene que recordarle al manager actualizar el RoadMap, es un fallo de orquestación.
+3. La primera delegación de cualquier orden del usuario que arranca trabajo (tarea/fase/sprint) incluye un `Task(af-agents:roadmap-keeper)` en paralelo a la delegación principal.
+4. README.md raíz se actualiza en el MISMO ciclo que RoadMap.md, no en uno posterior.
+5. Memoria persistente del proyecto (`MEMORY.md`) se actualiza al cierre de sesión o tras hito reseñable (sprint cerrado, decisión arquitectónica, bug crítico).
+
+Detalle completo de los disparadores está en [`.claude/agents/manager.md` § "Sincronización proactiva del RoadMap"](.claude/agents/manager.md).
+
 ## Phase/Sprint Completion Protocol (automático)
 
 Al cerrar fase/sprint, ejecutar SIN preguntar y EN ESTE ORDEN ESTRICTO. Cada paso solo arranca si el anterior cerró en verde. Si algo falla, se itera fix + re-run del paso fallido (no se salta):
