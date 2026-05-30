@@ -82,16 +82,19 @@ Usa `Task` con estos `subagent_type` para delegar trabajo (namespace `af-agents`
 
 ## Cómo delegar
 
-```
+```ts
 // Delegar a un agente
-Task(subagent_type="af-agents:database", prompt="Crear tabla leads (SQL migration Supabase + Zod schema + repository)...")
+Task(
+  (subagent_type = "af-agents:database"),
+  (prompt = "Crear tabla leads (SQL migration Supabase + Zod schema + repository)...")
+);
 
 // Delegar en paralelo (agentes independientes)
-Task(subagent_type="af-agents:database", prompt="...")
-Task(subagent_type="af-agents:api", prompt="...")
+Task((subagent_type = "af-agents:database"), (prompt = "..."));
+Task((subagent_type = "af-agents:api"), (prompt = "..."));
 
 // Delegar en background
-Task(subagent_type="af-agents:testing", prompt="...", run_in_background=true)
+Task((subagent_type = "af-agents:testing"), (prompt = "..."), (run_in_background = true));
 ```
 
 ## Archivos clave del proyecto
@@ -144,14 +147,44 @@ Task(subagent_type="af-agents:testing", prompt="...", run_in_background=true)
 3. Trackear tiempos con `@productivity`.
 4. Si surgen bloqueos: delegar a `debugger` o usar skill `blocker`.
 
+### Sincronización proactiva del RoadMap (OBLIGATORIO — orden Javi HP 28-05-2026)
+
+**El RoadMap es la fuente de verdad visible para Javi HP.** Cualquier cambio de estado sin reflejar en `plans/RoadMap.md` (frontmatter + cuadro de mando superior + tablas detalladas inferiores) + `README.md` raíz es un fallo de orquestación. NO esperar a que el usuario lo pida.
+
+**Eventos disparadores OBLIGATORIOS de `af-agents:roadmap-keeper`** (en paralelo o inmediatamente después del evento):
+
+| Evento del orquestador                                              | Acción `roadmap-keeper`                                                                            |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Usuario dice "voy a empezar X" / "arrancamos Y" / "trabajamos en Z" | Cambiar estado tarea/fase/sprint → **🟡 En Desarrollo** + timestamp + dev asignado                 |
+| Antes de delegar una tarea concreta a un subagente                  | Verificar que la tarea está en 🟡; si está en 🔘, pasarla a 🟡 ANTES de delegar                    |
+| Tras `git commit` local de una tarea                                | Cambiar tarea a **🟠 P. Subir GH** (o mantener 🟡 si solo es WIP intermedio)                       |
+| Tras `git push` exitoso de una tarea/lote                           | Cambiar tarea(s) a **🔵 Subida rama** + anotar `⏱ Push` real + propagar agregado bloque/sprint     |
+| Tras merge a `developer` (PR cerrado)                               | Cambiar tarea(s) a **🟢 Completada** + anotar `⏱ Cierre` real + bumpear sprint si corresponde      |
+| Tras descubrir una tarea NUEVA no planificada en sesión activa      | Añadir fila nueva con ID coherente (SP-N-XYZ) + estimación + estado inicial + nota explicativa     |
+| Cualquier desviación >50% sobre estimación                          | Recalcular sumatorio sprint + añadir nota ⚠️ + notificar al usuario en el siguiente mensaje        |
+| Cierre de sprint (tras CLOSE-5 mergeado)                            | Pasar fila `🚀 Sprint N` a **🟢 Completada (merged)** + actualizar `sprint_N_progress` frontmatter |
+
+**Reglas para el manager:**
+
+1. **NUNCA** dejar pasar más de 1 turno con cambios de estado pendientes en RoadMap. Si Javi HP da una orden de arrancar trabajo, la primera delegación del manager incluye un `Task(af-agents:roadmap-keeper)` en paralelo para sincronizar.
+2. **TODOS** los niveles del RoadMap deben quedar consistentes en cada sync: (a) frontmatter `last_updated` + `sprint_N_progress`, (b) tabla resumen "Cuadro de mando" arriba (estado + ⏱ Push + ⏱ Cierre del sprint y sus bloques), (c) tablas detalladas inferiores (`## Fase X — Sprint Y`) con cada tarea individual + ⏱ Push + ⏱ Cierre + Notas, (d) `README.md` raíz (tabla resumen de sprints línea ~100 + cabecera Estado).
+3. **README.md raíz se sincroniza CON cada sync de RoadMap**, no después. Si existe `scripts/generate-readmes.cjs` o templates en `scripts/readme-templates/`, ejecutarlos. Si no, editar README.md raíz manualmente con el mismo agente.
+4. El usuario NO tiene que recordarle al manager actualizar el RoadMap. Es parte de la orquestación, no una tarea opcional. Si el usuario tiene que decirlo, es un fallo del manager.
+5. Memoria persistente del proyecto (`MEMORY.md`) se actualiza en cierre de sesión o cuando hay un hito reseñable (sprint cerrado, decisión arquitectónica, bug crítico).
+
 ### Fin de fase (Phase Completion Protocol — automático)
 
-1. Delegar a `af-agents:testing` — typecheck + lint + build + unit tests + (browser tests si UI).
-2. Delegar a `af-agents:security` — RLS verify + OWASP + secrets scan.
-3. Delegar a `af-agents:review` — code review.
-4. Si todo OK: delegar a `af-agents:git` para PR de `feature/*` → `developer`.
-5. Generar reporte con `@productivity`.
-6. **Bump SemVer** según convención: sprint cerrado → `v0.x.0`; patch → `v0.0.x`.
+Secuencia OBLIGATORIA. Cada paso solo arranca si el anterior cerró en verde:
+
+1. **CLOSE-1** — Delegar a `af-agents:testing`: typecheck + lint + build + unit tests + (browser tests si UI). Si rojo → bloquear y arreglar antes de continuar.
+2. **CLOSE-1.5 (Security delta — PROACTIVO)** — Delegar a `af-agents:security` con modo `delta` (default) sobre `git diff developer..HEAD --name-only -- src/ supabase/migrations/ .env.example`. Si el cierre es de un bump `v0.X.0` con X distinto al último tag, o es un `rc.*`, o es `staging → main` → invocar en modo `full-scan`. **Findings críticos BLOQUEAN cierre** — abrir BUG-X y delegar fix a `af-agents:code` antes de continuar. Findings altos generan BUG-X para próximo sprint pero no bloquean. Findings medios/bajos al backlog.
+3. **CLOSE-2** — E2C local Playwright (UI flujos del sprint + WCAG 2.2 AA rutas clave). Si rojo → bloquear.
+4. **CLOSE-4** — Bug fixes detectados en CLOSE-1/1.5/2. Re-run del paso afectado hasta verde.
+5. **CLOSE-5** — Delegar a `af-agents:review` (code review) → si OK delegar a `af-agents:git` para PR `feature/*` → `developer`. **NO mergear** sin orden explícita del usuario.
+6. Generar reporte con `@productivity`.
+7. **Bump SemVer** según convención: sprint cerrado → `v0.x.0`; patch → `v0.0.x`.
+
+**Regla de oro:** `af-agents:security` se invoca **automáticamente** en cada CLOSE — el usuario NO tiene que pedirlo. Esta es la regla del proyecto desde Sprint 3 (SP-4-SEC-PROACTIVE 27-05-2026).
 
 ## Reglas globales del proyecto
 

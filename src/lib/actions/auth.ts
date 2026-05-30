@@ -1,12 +1,52 @@
 "use server";
 
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { createHash } from "node:crypto";
 import { AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY } from "@/lib/auth-config";
+import { withRateLimit, type RateLimitedError } from "@/lib/api/with-rate-limit";
+import { extractClientIp } from "@/lib/rate-limiter";
+import { maskEmail } from "@/lib/security/pii-mask";
 import { getTenantByUserId, setTenantCookies } from "./tenant";
 
-export async function loginAction(email: string, password: string) {
+/**
+ * Bucket identity para rate-limit de auth actions (SP-4-AUTH-RATELIMIT).
+ *
+ * Devuelve `ip:emailHash` para que ataques brute-force por mismo IP a distintos
+ * emails NO compartan bucket (mitiga username-enumeration y permite que múltiples
+ * usuarios detrás de NAT compartido no se bloqueen entre sí).
+ *
+ * El emailHash es sha256 truncado a 16 hex chars (8 bytes, suficiente entropía
+ * para no colisionar en el bucket y NO log-leakea el email en claro.
+ */
+async function identifyAuthBucket(email: string): Promise<string> {
+  const h = await headers();
+  // Reconstruimos un Request sintético solo para reutilizar extractClientIp,
+  // que prioriza x-forwarded-for → x-real-ip → "unknown".
+  const headersInit: Record<string, string> = {};
+  for (const [k, v] of h.entries()) headersInit[k] = v;
+  const ip = extractClientIp(new Request("http://internal", { headers: headersInit }));
+  const emailHash = createHash("sha256")
+    .update(email.trim().toLowerCase())
+    .digest("hex")
+    .slice(0, 16);
+  return `${ip}:${emailHash}`;
+}
+
+/**
+ * Normaliza la respuesta `rate_limit_exceeded` del HOF `withRateLimit` al
+ * contrato `{ error: string }` que consume `LoginForm` y otros callers.
+ */
+function isRateLimitError(value: unknown): value is RateLimitedError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { error?: string }).error === "rate_limit_exceeded"
+  );
+}
+
+async function _loginAction(email: string, password: string) {
   const cookieStore = await cookies();
 
   const supabase = createServerClient(AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY, {
@@ -22,8 +62,10 @@ export async function loginAction(email: string, password: string) {
     },
   });
 
+  const emailTag = maskEmail(email);
+
   try {
-    console.log(`[AUTH] Intentando login para ${email} en ${AUTH_SUPABASE_URL}`);
+    console.log(`[AUTH] Intentando login para ${emailTag} en ${AUTH_SUPABASE_URL}`);
 
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
@@ -44,7 +86,7 @@ export async function loginAction(email: string, password: string) {
     }
 
     if (authData?.user) {
-      console.log(`[AUTH] Login inicial exitoso para ${email}, procesando perfil...`);
+      console.log(`[AUTH] Login inicial exitoso para ${emailTag}, procesando perfil...`);
 
       // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata.
       const user = authData.user;
@@ -63,7 +105,7 @@ export async function loginAction(email: string, password: string) {
         }
       }
 
-      console.log(`[AUTH] Login completado para ${email}. Redirigiendo...`);
+      console.log(`[AUTH] Login completado para ${emailTag}. Redirigiendo...`);
       redirect("/dashboard");
     }
   } catch (e: unknown) {
@@ -83,6 +125,30 @@ export async function loginAction(email: string, password: string) {
   }
 
   return { success: true };
+}
+
+/**
+ * `loginAction` envuelto con rate-limit (SP-4-AUTH-RATELIMIT):
+ * 5 intentos / minuto por bucket `ip:emailHash`. Cierra OWASP A07:2021
+ * (Identification & Authentication Failures — brute-force / credential stuffing).
+ *
+ * Fail-open si Redis cae (decisión heredada de `rate-limiter.ts`): preferimos
+ * servicio degradado a DoS total. El fallo queda en Pino logs.
+ */
+const _loginActionRateLimited = withRateLimit(_loginAction, {
+  key: "auth-login",
+  perMinute: 5,
+  identify: (email) => identifyAuthBucket(email),
+});
+
+export async function loginAction(email: string, password: string) {
+  const result = await _loginActionRateLimited(email, password);
+  if (isRateLimitError(result)) {
+    return {
+      error: `Demasiados intentos. Inténtalo de nuevo en ${result.resetSec}s.`,
+    };
+  }
+  return result;
 }
 
 export async function logoutAction() {
@@ -133,7 +199,7 @@ export async function getAdminStatus(): Promise<boolean> {
   return isAdm;
 }
 
-export async function resetPasswordAction(email: string) {
+async function _resetPasswordAction(email: string) {
   const cookieStore = await cookies();
   const supabase = createServerClient(AUTH_SUPABASE_URL, AUTH_SUPABASE_ANON_KEY, {
     cookies: {
@@ -166,4 +232,25 @@ export async function resetPasswordAction(email: string) {
   }
 
   return { success: true };
+}
+
+/**
+ * `resetPasswordAction` envuelto con rate-limit (SP-4-AUTH-RATELIMIT):
+ * 3 intentos / minuto por bucket `ip:emailHash`. Anti email-bomb +
+ * mitiga username-enumeration via timing/feedback en el endpoint público.
+ */
+const _resetPasswordActionRateLimited = withRateLimit(_resetPasswordAction, {
+  key: "auth-reset",
+  perMinute: 3,
+  identify: (email) => identifyAuthBucket(email),
+});
+
+export async function resetPasswordAction(email: string) {
+  const result = await _resetPasswordActionRateLimited(email);
+  if (isRateLimitError(result)) {
+    return {
+      error: `Demasiados intentos. Inténtalo de nuevo en ${result.resetSec}s.`,
+    };
+  }
+  return result;
 }

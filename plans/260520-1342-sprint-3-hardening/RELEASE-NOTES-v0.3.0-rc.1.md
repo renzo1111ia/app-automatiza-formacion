@@ -15,7 +15,13 @@ Release candidate del MVP. Cierra Sprint 3 Hardening: observabilidad estructurad
 - **Testing profundo 26-05-2026 (BUG-3-01..13)**: 13 BUGs resueltos en sesión de testing local — race conditions en tests, breakpoint shell `md:` → `lg:` (1024px), KPI hero responsive, tabla historial scroll horizontal, CSP `unsafe-eval` solo en dev. Vitest 228/228 + TypeCheck 0 + Playwright sprint-3-close 14/14.
 - **AWS Bedrock removal**: eliminado permanentemente del stack (orden 26-05-2026). Deps `@aws-sdk/client-bedrock-*` quitadas, MinIO sigue funcionando vía `@aws-sdk/client-s3`. Docs limpiados.
 - **Sidebar UX**: nuevo item "Dashboard" como primer item del menú + rename "Tabla Leads" → "Lista de Leads".
-- **TypeScript no-`any` policy**: ESLint regla `@typescript-eslint/no-explicit-any` activada como ERROR. Husky pre-commit bloquea cualquier `any` introducido. Doc oficial `docs/architecture/typescript-standards.md` con alternativas. Nueva tarea `SP-4-LINT-ZERO` para bajar baseline 114 → 0.
+- **TypeScript no-`any` policy**: ESLint regla `@typescript-eslint/no-explicit-any` activada como ERROR. Husky pre-commit bloquea cualquier `any` introducido. Doc oficial `docs/architecture/typescript-standards.md` con alternativas.
+- **SP-4-LINT-ZERO cerrada (28-05-2026)**: lint baseline 104 problems → **0**. 9 lotes commiteados, 18 archivos limpiados. Patrón `asPlainClient()` helper introducido en QualificationProcessor + scheduler para sortear `[key: string]: unknown` en tipo `Lead`. Sin regresiones (236/240 Vitest verde).
+- **SP-4-DEPRECATIONS-DEPLOY (28-05-2026)**: 4 cambios sin bump de deps. (1) `src/middleware.ts` → `src/proxy.ts` + función `proxy()` (Next 16 deprecation, runtime Node.js). (2) `next.config.ts`: `disableLogger: true` → `webpack.treeshake.removeDebugLogging: true` (Sentry 10). (3) `next.config.ts`: `turbopack.root: process.cwd()` (silencia warning multiple lockfiles). (4) `/api/version`: `??` → `||` (Build Args vacíos no activaban nullish coalescing).
+- **Service role key fuera de imagen Docker (28-05-2026)**: refactor crítico de seguridad. `AUTH_SUPABASE_SERVICE_ROLE_KEY` constante → `getAuthServiceRoleKey()` lazy getter en `src/lib/auth-config.ts`. Dockerfile elimina `ARG/ENV SUPABASE_SERVICE_ROLE_KEY` — el key admin ya NO queda embebido en capa de imagen. 7 callers productivos migrados (reminders/sweep/google-callback/retell-webhook/whatsapp-bridge/WhatsApp{AI,Webhook}Processor). Cierra OWASP A05:2021 (Security Misconfiguration).
+- **Auth rate-limit (SP-4-AUTH-RATELIMIT 27-05)**: `loginAction` 5/min + `resetPasswordAction` 3/min por bucket `ip:emailHash` (sha256-8b para no logear email). Tests Vitest 7/7. Cierra OWASP A07:2021 (Identification & Authentication Failures).
+- **Doc incidente PAT GitHub leak Dokploy (27-05-2026)**: registrado en `plans/260527-2056-e2ctotal-local-run/INCIDENT-260527-pat-leak-y-sheets-paralelo.md`. Rotación efectiva del PAT en panel Dokploy pendiente acción usuario.
+- **Cierre formal CLOSE-1/1.5/2 🟢 PASS (29-05-2026)**: typecheck + lint 0 problems + build 42 rutas + 236/240 Vitest + Security delta OWASP 2021 (0 críticos / 2 altos pre-deploy VPS / 2 medios backlog / 3 bajos) + 14/14 Playwright Sprint 3 specs + 59/61 suite completa.
 
 ## Detalle por área
 
@@ -156,6 +162,12 @@ dev:
 - **SP-4-SIDEBAR-UX** (Dashboard item + Lista de Leads)
 - **SP-4-BUG-3-01..13** (13 BUGs detectados + resueltos en testing profundo 26-05-2026)
 - **SP-4-TS-STANDARDS** (documentación + activación regla `no-explicit-any`)
+- **SP-4-LINT-ZERO** (cerrada 28-05-2026 — lint baseline 104 → 0)
+- **SP-4-DEPRECATIONS-DEPLOY** (Next 16 middleware→proxy + Sentry 10 + turbopack.root + /api/version)
+- **SP-4-AUTH-RATELIMIT** (auth rate-limit login + reset password)
+- **SP-4-SEC-PROACTIVE** (security agent endurecido al stack AF + CLOSE-1.5 obligatorio)
+- **SP-4-RLM-TIMEOUT** (rate-limiter timeout 100ms BUG-RLM-01)
+- **SP-4-CLOSE-1 + SP-4-CLOSE-1.5 + SP-4-CLOSE-2** (cierre formal 29-05-2026, todos 🟢)
 
 ## Tareas diferidas
 
@@ -164,8 +176,11 @@ dev:
 - **NEW-12 mejoras 3+4** (confirmación robusta destructiva + edición slide-over) → Sprint Refinamiento post-MVP por scope arquitectónico.
 - **NEW-09 cola configurable cadencia UI completa** → post-MVP; el schema y la tabla `campaigns.config JSONB` ya existen, solo falta la UI para configurar.
 - **CHANGELOG.md backfill Sprint 1/2/2B** → se hace al subir staging.
-- **SP-4-LINT-ZERO** (8-12h) → limpiar 114 problems baseline lint → 0 al cierre MVP v0.3.0 GA. Sprint-spread (boy scout rule activa).
+- ~~**SP-4-LINT-ZERO**~~ ✅ **CERRADA** 28-05-2026 — baseline 104 problems → 0, 9 lotes commiteados.
 - **Compactación tablas RoadMap.md** → tarea diferida nocturna documentada, ejecutar en este PR antes del merge (script `scripts/compact-roadmap-tables.py`).
+- **Bloque 3.B UI completa (NEW-09/10/11/12 partes UI)** → backlog post-MVP (decisión Javi HP 29-05-2026 al cierre Sprint 3). Críticos backend ya 🟢. Sprint Refinamiento post-Costes-LLM las absorberá si no se priorizan antes. Incluye: UI dropzone Excel + filtros multi-variable + cola configurable (NEW-09 partes UI), UI calendar holidays settings (NEW-10), consolidación adicional Historial→Leads (NEW-11 partes UI), confirmación robusta destructiva + slide-over Settings (NEW-12 mejoras 3+4).
+- **BUG-SEC-01 + BUG-SEC-02** → pre-deploy VPS (resolver antes del primer deploy VPS con tráfico real, no bloquean RC).
+- **BUG-SEC-03 + BUG-SEC-04** → backlog post-MVP.
 
 ## Pendientes operativos (acción manual, no bloquean RC)
 
@@ -173,6 +188,17 @@ dev:
 2. Configurar Dokploy build args (`GIT_COMMIT_SHA`, `GIT_BRANCH`, `BUILD_TIMESTAMP`) en `panel.automatizaformacion.com`.
 3. Habilitar Renovate bot en GitHub repo settings.
 4. Aplicar migración `20260526100000_campaigns_and_holidays.sql` al VPS via pg-meta REST.
+5. **Rotación PAT GitHub en Dokploy** (incidente 27-05-2026): revocar PAT viejo en GitHub Settings + actualizar Provider URL en panel Dokploy del servicio `dev.dash` con PAT nuevo. Recomendado: migrar a Provider "GitHub OAuth" para eliminar PATs del panel para siempre.
+6. **Verificar `SUPABASE_SERVICE_ROLE_KEY` en panel Dokploy** está en tab **Environment** (no Build Args). Tras refactor lazy de SP-4-DEPRECATIONS-DEPLOY el key NO se inyecta en build — debe estar como env runtime para que `getAuthServiceRoleKey()` lo encuentre.
+
+## BUGs de seguridad abiertos (detectados en CLOSE-1.5, no bloquean este RC)
+
+- **BUG-SEC-01** (🟠 ALTO) — IP Spoofing en rate-limit auth (A07:2021). `extractClientIp()` lee `X-Forwarded-For` sin priorizar `X-Real-IP`. Traefik sobrescribe header pero exposición directa al 8500 permite spoofing. **Resolver antes del primer deploy VPS con tráfico real.** Estim 30min.
+- **BUG-SEC-02** (🟠 ALTO) — Webhook workflow sin autenticación (A01:2021). `/api/webhooks/workflow/[workflowId]/[path]/[nodeId]` endpoint público sin firma/auth dispara orquestación (WhatsApp, voz). Pre-existente en `developer`, no introducido por Sprint 3. **Resolver antes del primer deploy VPS con tráfico real.** Estim 1h.
+- **BUG-SEC-03** (🟡 MEDIO) — Email en claro en logs `auth.ts:65/86/105` (PII GDPR). Backlog post-MVP. Estim 20min.
+- **BUG-SEC-04** (🟡 MEDIO) — Fail-open silencioso en `whatsapp.ts:87` del check `is_ai_paused` (leads pausados pueden recibir mensajes si falla la BD). Backlog post-MVP. Estim 15min.
+
+Reporte completo: `plans/reports/security-delta-sprint-3-20260528.md`.
 
 ## Commits del Sprint 3
 

@@ -6,7 +6,7 @@
  * - allowed=true cuando count <= limit.
  * - allowed=false cuando count > limit.
  * - Fail-open si Redis lanza (return allowed=true).
- * - extractClientIp prioriza X-Forwarded-For sobre X-Real-IP.
+ * - extractClientIp prioriza X-Real-IP sobre X-Forwarded-For (BUG-SEC-01 fix).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
@@ -92,18 +92,47 @@ describe("rate-limiter", () => {
     const incrCall = pipelineMock.incr.mock.calls[0]?.[0] as string;
     expect(incrCall).toMatch(/^rl:user:abc:\d+$/);
   });
+
+  it("fail-open con timeout duro 100ms si Redis cuelga (BUG-RLM-01 /e2etotal 27-05-2026)", async () => {
+    // Simula Redis colgado: pipe.exec() nunca resuelve (ioredis ECONNRESET reconnecting).
+    // Sin timeout duro la auth quedaría bloqueada >1.5min (bug real detectado en local).
+    pipelineMock.exec.mockImplementationOnce(
+      () => new Promise(() => {}) // promise que nunca resuelve
+    );
+
+    const { rateLimit } = await import("@/lib/rate-limiter");
+    const start = Date.now();
+    const result = await rateLimit("test:hang", 5, 60_000);
+    const elapsed = Date.now() - start;
+
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(5);
+    // Debe responder en ~100ms + epsilon, NUNCA > 500ms.
+    expect(elapsed).toBeLessThan(500);
+    expect(elapsed).toBeGreaterThanOrEqual(90);
+  });
 });
 
-describe("extractClientIp", () => {
-  it("prioriza X-Forwarded-For (primer IP de la lista)", async () => {
+describe("extractClientIp (BUG-SEC-01 — X-Real-IP priorizado)", () => {
+  it("BUG-SEC-01 fix: prioriza X-Real-IP sobre X-Forwarded-For (anti-spoofing)", async () => {
+    const { extractClientIp } = await import("@/lib/rate-limiter");
+    // Cliente intenta falsificar XFF para evadir rate-limit. X-Real-IP es la IP real
+    // de la conexión TCP inyectada por traefik. La función debe usar X-Real-IP.
+    const req = new Request("http://localhost", {
+      headers: { "x-forwarded-for": "1.2.3.4", "x-real-ip": "203.0.113.99" },
+    });
+    expect(extractClientIp(req)).toBe("203.0.113.99");
+  });
+
+  it("usa X-Forwarded-For (primer IP de la lista) si NO hay X-Real-IP", async () => {
     const { extractClientIp } = await import("@/lib/rate-limiter");
     const req = new Request("http://localhost", {
-      headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.5", "x-real-ip": "10.0.0.5" },
+      headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.5" },
     });
     expect(extractClientIp(req)).toBe("203.0.113.1");
   });
 
-  it("usa X-Real-IP si no hay X-Forwarded-For", async () => {
+  it("usa X-Real-IP si solo está ese header", async () => {
     const { extractClientIp } = await import("@/lib/rate-limiter");
     const req = new Request("http://localhost", {
       headers: { "x-real-ip": "192.168.1.10" },
@@ -111,7 +140,15 @@ describe("extractClientIp", () => {
     expect(extractClientIp(req)).toBe("192.168.1.10");
   });
 
-  it("retorna 'unknown' si no hay headers IP", async () => {
+  it("ignora X-Real-IP vacío y cae a X-Forwarded-For", async () => {
+    const { extractClientIp } = await import("@/lib/rate-limiter");
+    const req = new Request("http://localhost", {
+      headers: { "x-real-ip": "   ", "x-forwarded-for": "10.0.0.7" },
+    });
+    expect(extractClientIp(req)).toBe("10.0.0.7");
+  });
+
+  it("retorna 'unknown' si no hay headers IP útiles", async () => {
     const { extractClientIp } = await import("@/lib/rate-limiter");
     const req = new Request("http://localhost");
     expect(extractClientIp(req)).toBe("unknown");

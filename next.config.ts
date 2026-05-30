@@ -92,9 +92,10 @@ const nextConfig: NextConfig = {
   // como external en server bundles (no pasar por webpack chunking) para evitar runtime errors.
   // Sprint 3 phase-02 Observabilidad (4-03).
   serverExternalPackages: ["pino", "pino-pretty"],
-  // Fijar root de Turbopack al directorio del proyecto. Sin esto, Next 16 detecta
-  // ambiguamente el workspace y resuelve `tailwindcss` desde el parent (donde no hay
-  // node_modules), provocando crash OOM en dev (29-05-2026).
+  // Sprint 3 Hardening + PR #21 hotfix: fijar workspace root para Turbopack.
+  // Sin esto, Next 16 detecta ambiguamente el workspace y resuelve `tailwindcss`
+  // desde el parent (donde no hay node_modules), provocando crash OOM en dev
+  // (29-05-2026) + silencia warning "multiple lockfiles" en worktrees git.
   turbopack: {
     root: path.join(__dirname),
   },
@@ -149,5 +150,11 @@ export default withSentryConfig(nextConfig, {
     disable: false,
     deleteSourcemapsAfterUpload: true,
   },
-  disableLogger: true,
+  // Sprint 3 Hardening: reemplazo de `disableLogger: true` (deprecated en @sentry/nextjs 10.54.0+).
+  // Sentry recomienda mover la opción al árbol webpack.treeshake.
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });
