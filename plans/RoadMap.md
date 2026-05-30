@@ -93,10 +93,10 @@ sprint_3_progress: "🔵 **LISTO PARA MERGE v0.3.0-rc.1** — Sprint 3 con PR #2
 
 > Tareas y sprints específicamente asignados al equipo de desarrollo de Renzo. **Visibilidad clara**: cualquier tarea/sprint con el icono 👤 en este RoadMap pertenece a Renzo + su equipo, no a Javi HP.
 
-| Sprint                                                      | Versión     | Fechas                  | Estim           | Estado       | Notas                                                   |
-| ----------------------------------------------------------- | ----------- | ----------------------- | --------------- | ------------ | ------------------------------------------------------- |
-| 👤 **SP-4B — Sprint Validación Pre-MVP**                    | `v0.3.0 GA` | 16-06-2026 → 19-06-2026 | 40-55h          | 🔘 Pendiente | QA en VPS de los Sprints 0+1+2+2B+3. … _ver nota↓_      |
-| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.5.2`    | Post Costes-LLM         | 18-22h + cierre | 🔘 Pendiente | Fase 01 Simulator persistencia BD + voz · … _ver nota↓_ |
+| Sprint                                                      | Versión     | Fechas                  | Estim           | Estado       | Notas                                              |
+| ----------------------------------------------------------- | ----------- | ----------------------- | --------------- | ------------ | -------------------------------------------------- |
+| 👤 **SP-4B — Sprint Validación Pre-MVP**                    | `v0.3.0 GA` | 16-06-2026 → 19-06-2026 | 40-55h          | 🔘 Pendiente | QA en VPS de los Sprints 0+1+2+2B+3. … _ver nota↓_ |
+| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.5.2`    | Post Costes-LLM         | 22-28h + cierre | 🔘 Pendiente | Simulator + Lanzador + DEPS · _ver nota↓_          |
 
 > **Nota fila `👤 SP-4B — Sprint Validación Pre-MVP` · Notas**: QA en VPS de los Sprints 0+1+2+2B+3. Re-test automático + E2C local + E2E VPS + **manual humano absorbido de CLOSE-3 de cada sprint MVP**. Bumpea SemVer a v0.3.0 GA (MVP). Detalle: [`plans/260522-1700-sprint-validacion-pre-mvp/plan.md`](260522-1700-sprint-validacion-pre-mvp/plan.md)
 >
@@ -175,7 +175,7 @@ sprint_3_progress: "🔵 **LISTO PARA MERGE v0.3.0-rc.1** — Sprint 3 con PR #2
 | **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
 | Sprint 4 — Google Sheets bidireccional (`v0.4.0`)                               | 60-100h         | **10-15h**         | Javi HP         | 23-jun → 30-jun-2026     |
 | Sprint Costes-LLM (`v0.4.1`) — recomendación V2: **adelantar antes que Sheets** | 23-31h          | **5-7h**           | Javi HP         | post-MVP, prioridad alta |
-| Sprint Refinamiento Herramientas (`v0.4.2`) — Renzo                             | 18-22h          | **12-15h**         | Renzo           | post-Costes-LLM          |
+| Sprint Refinamiento Herramientas (`v0.4.2`) — Renzo + Javi HP                   | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Costes-LLM          |
 | Sprint 5 — Salesforce (`v0.5.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Refinamiento        |
 | Sprint 6 — GoHighLevel (`v0.6.0`)                                               | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
 | Sprint 7 — ActiveCampaign (`v0.7.0`)                                            | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
@@ -454,16 +454,19 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 | Item                                               | Estado       | Estim.              | ⏱ Push | ⏱ Cierre | Notas                                                                    |
 | -------------------------------------------------- | ------------ | ------------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| 👤 **🚀 Sprint Refinamiento Herramientas**         | 🔘 Pendiente | **18-22h + cierre** | —      | —        | **v0.5.2** · … _ver nota↓_                                               |
+| 👤 **🚀 Sprint Refinamiento Herramientas**         | 🔘 Pendiente | **22-28h + cierre** | —      | —        | **v0.5.2** · … _ver nota↓_                                               |
 | 👤 ▸ Fase 01 — Simulator persistencia + voz        | 🔘           | 8-10h               | —      | —        | Persistir variables capturadas en BD (no sólo `useState`) … _ver nota↓_  |
 | 👤 ▸ Fase 02 — Lanzador `/calls` real Retell SDK   | 🔘           | 10-12h              | —      | —        | Reemplazar mockup hardcoded por endpoint `/api/calls/manua … _ver nota↓_ |
+| ▸ Fase 03 — **SP-7-DEPS-AUDIT-26** Vulns prod      | 🔘           | 4-6h                | —      | —        | Javi HP · 25 vulns npm audit deps prod · … _ver nota↓_                   |
 | 👤 ▸ Cierre Sprint Refinamiento (SP-5C-CLOSE-1..5) | 🔘           | **4h 30min + bugs** | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-d … _ver nota↓_ |
 
-> **Nota fila `👤 🚀 Sprint Refinamiento Herramientas` · Notas**: **v0.5.2** · `feature/sprint-refinamiento-herramientas-post-mvp` · Inicio Jue 23-07-2026 (post-Costes-LLM) · **Asignado a Renzo + equipo Renzo** · creado 22-05-2026 por decisión Bea + Renzo: Simulator y Lanzador `/calls` fuera del MVP. Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
+> **Nota fila `👤 🚀 Sprint Refinamiento Herramientas` · Notas**: **v0.5.2** · `feature/sprint-refinamiento-herramientas-post-mvp` · Inicio Jue 23-07-2026 (post-Costes-LLM) · **Asignado a Renzo + equipo Renzo** para Fases 01-02 (Simulator + Lanzador `/calls`) + **Javi HP** para Fase 03 (SP-7-DEPS-AUDIT-26 vulns prod, añadida 30-05-2026 tras detectar 25 vulns npm audit en v0.3.0-rc.1) · creado 22-05-2026 por decisión Bea + Renzo: Simulator y Lanzador `/calls` fuera del MVP. Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
 >
 > **Nota fila `👤 ▸ Fase 01 — Simulator persistencia + v` · Notas**: Persistir variables capturadas en BD (no sólo `useState`) + soporte simulación voz (no sólo texto) + retener historial al recargar página
 >
 > **Nota fila `👤 ▸ Fase 02 — Lanzador /calls real Retel` · Notas**: Reemplazar mockup hardcoded por endpoint `/api/calls/manual` real + WebSocket transcripción en vivo + LiveMonitor conectado al SDK de Retell
+>
+> **Nota fila `▸ Fase 03 — SP-7-DEPS-AUDIT-26 Vulns prod` · Notas**: **Asignada a Javi HP** (no Renzo — actualización de deps requiere dev principal). Resolver las **25 vulnerabilidades npm audit (14 moderate + 11 high)** detectadas por el check CI "Security Audit" en deps transitivas de producción: `langchain`, `bullmq`, `exceljs` y `@langchain/langgraph` dependen de versiones vulnerables de `uuid`. Pre-existentes en `developer` antes de Sprint 3 (visibles también en Sprint 4 SPIKE). NO bloquearon el merge de v0.3.0-rc.1 porque el status del PR es `UNSTABLE`, no `BLOCKED`. **Plan**: (1) `npm audit fix --dry-run` para ver qué se resuelve sin breaking change. (2) Si requiere majors, abrir ADR específico con análisis de breaking + plan de tests. (3) Upgrade coordinado langchain + bullmq + exceljs en commit aislado. (4) Re-run /e2ctotal + /e2etotal VPS para verificar zero-regresión. (5) Actualizar `ADR-018-hardening-deps-deferred-post-mvp.md` cerrando esta sección. Estim 4-6h. Detectado en CI run [`26659624573`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/actions/runs/26659624573) y mencionado en RELEASE-NOTES v0.3.0-rc.1 sección "Vulnerabilidades en deps transitivas".
 >
 > **Nota fila `👤 ▸ Cierre Sprint Refinamiento (SP-5C-CL` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · CLOSE-3 manual ABSORBIDO por Renzo en este sprint (no diferido porque ya es Renzo) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 

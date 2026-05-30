@@ -21,7 +21,8 @@ Release candidate del MVP. Cierra Sprint 3 Hardening: observabilidad estructurad
 - **Service role key fuera de imagen Docker (28-05-2026)**: refactor crítico de seguridad. `AUTH_SUPABASE_SERVICE_ROLE_KEY` constante → `getAuthServiceRoleKey()` lazy getter en `src/lib/auth-config.ts`. Dockerfile elimina `ARG/ENV SUPABASE_SERVICE_ROLE_KEY` — el key admin ya NO queda embebido en capa de imagen. 7 callers productivos migrados (reminders/sweep/google-callback/retell-webhook/whatsapp-bridge/WhatsApp{AI,Webhook}Processor). Cierra OWASP A05:2021 (Security Misconfiguration).
 - **Auth rate-limit (SP-4-AUTH-RATELIMIT 27-05)**: `loginAction` 5/min + `resetPasswordAction` 3/min por bucket `ip:emailHash` (sha256-8b para no logear email). Tests Vitest 7/7. Cierra OWASP A07:2021 (Identification & Authentication Failures).
 - **Doc incidente PAT GitHub leak Dokploy (27-05-2026)**: registrado en `plans/260527-2056-e2ctotal-local-run/INCIDENT-260527-pat-leak-y-sheets-paralelo.md`. Rotación efectiva del PAT en panel Dokploy pendiente acción usuario.
-- **Cierre formal CLOSE-1/1.5/2 🟢 PASS (29-05-2026)**: typecheck + lint 0 problems + build 42 rutas + 236/240 Vitest + Security delta OWASP 2021 (0 críticos / 2 altos pre-deploy VPS / 2 medios backlog / 3 bajos) + 14/14 Playwright Sprint 3 specs + 59/61 suite completa.
+- **Cierre formal CLOSE-1/1.5/2/4 🟢 PASS (29-05-2026)**: typecheck + lint 0 problems + build 42 rutas + 306/310 Vitest (+26 specs nuevos tras BUG-SEC fixes) + Security delta OWASP 2021 (0 críticos / **4 BUG-SEC TODOS FIXED en CLOSE-4 antes del merge** / 3 informativos cubiertos) + 61/61 Playwright suite completa + /e2ctotal autónomo PASS (352/356, 98.9%).
+- **Cierre 4 BUG-SEC en esta RC (29-05-2026 tarde)** (orden Javi HP): X-Real-IP priorizado en rate-limit, HMAC-SHA256 en webhook workflow genérico + flag `WEBHOOK_WORKFLOW_REQUIRE_SECRET`, maskEmail/maskPhone helpers para logs PII, fail-CLOSED en pause check WhatsApp. 2 helpers nuevos en `src/lib/security/` + 29 specs nuevos. Commits `bcd36a9` + `c018c11` + `ecdbe9a`.
 
 ## Detalle por área
 
@@ -179,8 +180,8 @@ dev:
 - ~~**SP-4-LINT-ZERO**~~ ✅ **CERRADA** 28-05-2026 — baseline 104 problems → 0, 9 lotes commiteados.
 - **Compactación tablas RoadMap.md** → tarea diferida nocturna documentada, ejecutar en este PR antes del merge (script `scripts/compact-roadmap-tables.py`).
 - **Bloque 3.B UI completa (NEW-09/10/11/12 partes UI)** → backlog post-MVP (decisión Javi HP 29-05-2026 al cierre Sprint 3). Críticos backend ya 🟢. Sprint Refinamiento post-Costes-LLM las absorberá si no se priorizan antes. Incluye: UI dropzone Excel + filtros multi-variable + cola configurable (NEW-09 partes UI), UI calendar holidays settings (NEW-10), consolidación adicional Historial→Leads (NEW-11 partes UI), confirmación robusta destructiva + slide-over Settings (NEW-12 mejoras 3+4).
-- **BUG-SEC-01 + BUG-SEC-02** → pre-deploy VPS (resolver antes del primer deploy VPS con tráfico real, no bloquean RC).
-- **BUG-SEC-03 + BUG-SEC-04** → backlog post-MVP.
+- ~~**BUG-SEC-01 + BUG-SEC-02** → pre-deploy VPS~~ → **🟢 FIXED 29-05-2026 tarde** (orden Javi HP) en commits `bcd36a9` + `c018c11` + `ecdbe9a` antes del merge a `developer`. Ya no son pre-deploy VPS.
+- ~~**BUG-SEC-03 + BUG-SEC-04** → backlog post-MVP~~ → **🟢 FIXED 29-05-2026 tarde** en los mismos commits. Ya no son backlog post-MVP.
 
 ## Pendientes operativos (acción manual, no bloquean RC)
 
@@ -191,14 +192,31 @@ dev:
 5. **Rotación PAT GitHub en Dokploy** (incidente 27-05-2026): revocar PAT viejo en GitHub Settings + actualizar Provider URL en panel Dokploy del servicio `dev.dash` con PAT nuevo. Recomendado: migrar a Provider "GitHub OAuth" para eliminar PATs del panel para siempre.
 6. **Verificar `SUPABASE_SERVICE_ROLE_KEY` en panel Dokploy** está en tab **Environment** (no Build Args). Tras refactor lazy de SP-4-DEPRECATIONS-DEPLOY el key NO se inyecta en build — debe estar como env runtime para que `getAuthServiceRoleKey()` lo encuentre.
 
-## BUGs de seguridad abiertos (detectados en CLOSE-1.5, no bloquean este RC)
+## BUGs de seguridad detectados en CLOSE-1.5 — TODOS FIXED en esta RC (29-05-2026 tarde)
 
-- **BUG-SEC-01** (🟠 ALTO) — IP Spoofing en rate-limit auth (A07:2021). `extractClientIp()` lee `X-Forwarded-For` sin priorizar `X-Real-IP`. Traefik sobrescribe header pero exposición directa al 8500 permite spoofing. **Resolver antes del primer deploy VPS con tráfico real.** Estim 30min.
-- **BUG-SEC-02** (🟠 ALTO) — Webhook workflow sin autenticación (A01:2021). `/api/webhooks/workflow/[workflowId]/[path]/[nodeId]` endpoint público sin firma/auth dispara orquestación (WhatsApp, voz). Pre-existente en `developer`, no introducido por Sprint 3. **Resolver antes del primer deploy VPS con tráfico real.** Estim 1h.
-- **BUG-SEC-03** (🟡 MEDIO) — Email en claro en logs `auth.ts:65/86/105` (PII GDPR). Backlog post-MVP. Estim 20min.
-- **BUG-SEC-04** (🟡 MEDIO) — Fail-open silencioso en `whatsapp.ts:87` del check `is_ai_paused` (leads pausados pueden recibir mensajes si falla la BD). Backlog post-MVP. Estim 15min.
+Los 4 hallazgos del security delta inicial (28-05) se cerraron antes del merge a `developer` por orden de Javi HP. Detalle en commit `bcd36a9` + helpers `src/lib/security/{pii-mask,webhook-hmac}.ts` + 29 specs nuevos (pii-mask 19 + webhook-hmac 10).
 
-Reporte completo: `plans/reports/security-delta-sprint-3-20260528.md`.
+- **BUG-SEC-01** 🟢 FIXED (🟠 ALTO, A07:2021) — IP Spoofing en rate-limit auth. Fix en `src/lib/rate-limiter.ts`: `extractClientIp()` ahora prioriza `X-Real-IP` sobre `X-Forwarded-For` (traefik inyecta X-Real-IP desde la conexión TCP, no propagable por el cliente). Tests refactor en `tests/unit/rate-limiter.test.ts` incl. spec anti-spoofing.
+- **BUG-SEC-02** 🟢 FIXED (🟠 ALTO, A01:2021) — Webhook workflow sin autenticación. Fix en `src/app/api/webhooks/workflow/[workflowId]/[path]/[nodeId]/route.ts`: verificación HMAC-SHA256 (header `X-Webhook-Signature`, formato `sha256=<hex>`, `timingSafeEqual`) cuando el nodo `webhookTrigger` define `data.config.webhook_secret`. Nueva env `WEBHOOK_WORKFLOW_REQUIRE_SECRET` (default `false` compat backward; en VPS público a `true` rechaza nodos sin secret con 401). Respuesta ya NO incluye `lead_id` (cierra INFO-02). Helper compartido en `src/lib/security/webhook-hmac.ts`.
+- **BUG-SEC-03** 🟢 FIXED (🟡 MEDIO, A09:2021) — Email en claro en logs `auth.ts`. Fix con helpers `maskEmail()`/`maskPhone()` en `src/lib/security/pii-mask.ts` (`jua***@dominio.com`). Los 3 `console.log` del login flow migrados. Cumple OWASP A09:2021 y minimiza obligaciones GDPR.
+- **BUG-SEC-04** 🟢 FIXED (🟡 MEDIO, A05:2021) — Fail-open silencioso en `whatsapp.ts` pause check. Fix doble: (1) `process.env.SUPABASE_URL!` → `requireEnvAny(["SUPABASE_URL","NEXT_PUBLIC_SUPABASE_URL"])`; (2) cambio crítico a **fail-CLOSED** en el catch del pause-check: si la query falla, NO se envía mensaje (retorna `PAUSE_CHECK_FAILED`). Pre-fix, el catch silenciaba el error y enviaba el mensaje saltándose el control de opt-out del lead.
+
+Verificación CLOSE-4 post-fixes: `typecheck 0` + `lint 0` + `npm test` 306/310 (+26 specs nuevos, 4 skip intencionales) + `build` OK + `playwright` 61/61 (zero regresiones).
+
+Reporte completo: `plans/reports/security-delta-sprint-3-20260528.md` (sección "Update 29-05-2026").
+
+## Vulnerabilidades en deps transitivas — planificadas para Sprint Refinamiento (v0.5.2)
+
+El check CI "Security Audit" (`.github/workflows/security.yml`) detecta **25 vulnerabilidades npm audit (14 moderate + 11 high)** en deps transitivas de `langchain`, `bullmq`, `exceljs` que dependen de versiones vulnerables de `uuid`. Diagnóstico:
+
+- **Pre-existentes en `developer`** desde antes de Sprint 3 — no introducidas por esta RC.
+- Comunes a múltiples sprints recientes (Sprint 4 SPIKE Sheets, hotfix turbopack, etc.) — ver fallos en runs `gh run list --workflow "Security Audit" --branch developer`.
+- Todas son CVE en `uuid` propagadas vía deps transitivas, no en el código del proyecto.
+- El check falla pero **no bloquea merge** (status `UNSTABLE`, no `BLOCKED`).
+
+**Planificación**: tarea **SP-7-DEPS-AUDIT-26** añadida al **Sprint Refinamiento Herramientas Internas** (v0.5.2, post-Costes-LLM). Estim 4-6h. Cubre análisis con `npm audit fix --dry-run`, upgrade coordinado langchain/bullmq/exceljs + verificación tests/E2E completos + ADR actualizando ADR-018.
+
+ADR-018 (`docs/adr/ADR-018-hardening-deps-deferred-post-mvp.md`) actualizado con sección nueva referenciando estas 25 vulns y la tarea SP-7-DEPS-AUDIT-26.
 
 ## Commits del Sprint 3
 
