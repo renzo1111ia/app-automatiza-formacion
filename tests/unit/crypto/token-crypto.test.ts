@@ -56,8 +56,12 @@ describe("token-crypto AES-256-GCM (2-26)", () => {
     const { encryptToken, decryptToken } = await import("@/lib/crypto/token-crypto");
     const ct = encryptToken("secret");
     const parts = ct.split(":");
-    // Cambiar 1 byte del authTag
-    const tampered = parts[2].replace(/^[0-9a-f]/, "0");
+    // Flip 1 nibble del authTag — garantizado distinto al original.
+    // (un replace fijo a "0" era no-op cuando el authTag ya empezaba por "0":
+    //  test flaky ~1/16. XOR del primer nibble cambia siempre exactamente 1 byte.)
+    const firstNibble = parseInt(parts[2][0], 16);
+    const flipped = (firstNibble ^ 0x1).toString(16);
+    const tampered = flipped + parts[2].slice(1);
     const badCt = `${parts[0]}:${parts[1]}:${tampered}`;
     expect(() => decryptToken(badCt)).toThrow();
   });
