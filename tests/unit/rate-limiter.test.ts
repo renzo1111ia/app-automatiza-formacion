@@ -10,28 +10,44 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let pipelineExecResult: any[] | null = [[null, 1]];
-const pipelineMock = {
-  incr: vi.fn().mockReturnThis(),
-  pexpire: vi.fn().mockReturnThis(),
-  exec: vi.fn().mockImplementation(async () => pipelineExecResult),
-};
+// Vitest 4: vi.hoisted() expone los mocks ANTES de que se ejecute vi.mock() top-level
+// (que se hoistea automáticamente). El `state` mutable vive en el hoisted scope para que
+// los tests puedan reescribir el resultado de `exec()` sin reconstruir el mock.
+const { pipelineMock, redisMock, state } = vi.hoisted(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const s: { result: any[] | null } = { result: [[null, 1]] };
+  const pm = {
+    incr: vi.fn().mockReturnThis(),
+    pexpire: vi.fn().mockReturnThis(),
+    exec: vi.fn(async () => s.result),
+  };
+  const rm = {
+    pipeline: vi.fn(() => pm),
+    on: vi.fn(),
+  };
+  return { pipelineMock: pm, redisMock: rm, state: s };
+});
 
-const redisMock = {
-  pipeline: vi.fn(() => pipelineMock),
-  on: vi.fn(),
-};
-
-vi.mock("ioredis", () => ({
-  Redis: vi.fn().mockImplementation(() => redisMock),
-}));
+function setPipelineResult(v: typeof state.result) {
+  state.result = v;
+}
 
 describe("rate-limiter", () => {
   beforeEach(() => {
     // Reset module cache para que cada test obtenga su propio Redis singleton fresco.
     vi.resetModules();
-    pipelineExecResult = [[null, 1]];
+    // Vitest 4: tras resetModules() el vi.mock() top-level se borra del registry —
+    // hay que re-registrar el mock con vi.doMock() ANTES del import() dinámico.
+    // Además, `vi.fn().mockImplementation(() => obj)` ya NO devuelve `obj` cuando se
+    // invoca con `new`. Usar clase explícita que devuelva la instancia mock.
+    vi.doMock("ioredis", () => ({
+      Redis: class MockRedis {
+        constructor() {
+          return redisMock;
+        }
+      },
+    }));
+    setPipelineResult([[null, 1]]);
     pipelineMock.exec.mockClear();
     pipelineMock.incr.mockClear();
     pipelineMock.pexpire.mockClear();
@@ -46,7 +62,7 @@ describe("rate-limiter", () => {
   });
 
   it("permite request cuando count <= limit", async () => {
-    pipelineExecResult = [[null, 1]];
+    setPipelineResult([[null, 1]]);
     const { rateLimit } = await import("@/lib/rate-limiter");
     const result = await rateLimit("test:1", 5, 60_000);
 
@@ -58,7 +74,7 @@ describe("rate-limiter", () => {
   });
 
   it("bloquea request cuando count > limit", async () => {
-    pipelineExecResult = [[null, 6]];
+    setPipelineResult([[null, 6]]);
     const { rateLimit } = await import("@/lib/rate-limiter");
     const result = await rateLimit("test:2", 5, 60_000);
 
@@ -67,7 +83,7 @@ describe("rate-limiter", () => {
   });
 
   it("permite la request exacta del límite (count === limit)", async () => {
-    pipelineExecResult = [[null, 5]];
+    setPipelineResult([[null, 5]]);
     const { rateLimit } = await import("@/lib/rate-limiter");
     const result = await rateLimit("test:3", 5, 60_000);
 
@@ -85,7 +101,7 @@ describe("rate-limiter", () => {
   });
 
   it("usa key con bucket time-based (sliding window)", async () => {
-    pipelineExecResult = [[null, 1]];
+    setPipelineResult([[null, 1]]);
     const { rateLimit } = await import("@/lib/rate-limiter");
     await rateLimit("user:abc", 10, 30_000);
 
