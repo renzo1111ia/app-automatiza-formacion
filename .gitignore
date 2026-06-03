@@ -90,3 +90,6 @@ backups/local-db/
 
 # Backups locales del RoadMap antes de operaciones masivas (script compactación, etc.)
 plans/RoadMap.md.backup-*
+
+# Salida temporal del gate npm audit del workflow security.yml (se regenera)
+audit-prod.json

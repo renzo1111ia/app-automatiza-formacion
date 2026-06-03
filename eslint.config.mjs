@@ -38,6 +38,7 @@ const eslintConfig = defineConfig([
     "worker.js",               // worker legacy, refactor en Sprint 0 tarea 1-01
     "*.config.{js,mjs,cjs,ts}",
     ".tmp-*",                  // archivos temporales locales
+    "worktrees/**",            // git worktrees paralelos (Sprint 3, Sprint 4...) — su propio .next/build/etc.
   ]),
 ]);
 
