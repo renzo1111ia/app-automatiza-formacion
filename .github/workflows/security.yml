@@ -27,9 +27,33 @@ jobs:
       - name: Install dependencies (ci, locked)
         run: npm ci --ignore-scripts
 
-      - name: npm audit (production only, high+)
-        run: npm audit --omit=dev --audit-level=high
-        # Solo prod deps; las dev vulns (eslint, etc) NO bloquean. High y Critical fallan.
+      - name: npm audit (production only, fail on high/critical)
+        # Gate determinista: parseamos el JSON y SOLO fallamos si hay high o
+        # critical en deps de PRODUCCIÓN. No dependemos del exit code de
+        # `npm audit`, cuyo comportamiento con --omit=dev + --audit-level varía
+        # entre npm 10 y 11 (npm 10 hacía fallar el build con vulns moderate
+        # pese a --audit-level=high). Las moderate residuales son acceptedRisk
+        # documentadas en ADR-018 (next/postcss, exceljs/uuid: downgrades
+        # breaking rechazados, inexplotables en nuestro uso).
+        run: |
+          set -o pipefail
+          npm audit --omit=dev --json > audit-prod.json || true
+          node -e '
+            const a = require("./audit-prod.json");
+            const v = a.metadata.vulnerabilities;
+            console.log("Vulnerabilidades prod:", JSON.stringify(v));
+            const blocking = (v.high || 0) + (v.critical || 0);
+            if (blocking > 0) {
+              console.error(`\n❌ ${blocking} vulnerabilidad(es) high/critical en deps de producción — bloquea.`);
+              for (const [name, info] of Object.entries(a.vulnerabilities || {})) {
+                if (info.severity === "high" || info.severity === "critical") {
+                  console.error(`  - ${name} (${info.severity})`);
+                }
+              }
+              process.exit(1);
+            }
+            console.log(`\n✅ 0 high/critical en producción (${v.moderate || 0} moderate acceptedRisk, ver ADR-018).`);
+          '
 
       - name: npm audit (todas, info)
         if: always()
