@@ -24,6 +24,22 @@ export interface LeadChange {
   changes: Record<string, unknown>;
 }
 
+export interface WrittenCellAudit {
+  sheet_connection_id: string;
+  spreadsheet_id: string;
+  row_index: number;
+  field_name: string;
+  new_value: string | null;
+}
+
+export interface WriteBackResult {
+  sheetsUpdated: number;
+  cellsWritten: number;
+  errors: string[];
+  /** Detalle por celda escrita exitosamente, para audit R-014. */
+  writtenCells: WrittenCellAudit[];
+}
+
 /**
  * Escribe los cambios en TODAS las Sheets conectadas que tengan al lead
  * registrado en sheet_row_processed y writeback_enabled=true.
@@ -36,8 +52,13 @@ export async function writeBackLeadChange(
   tenantId: string,
   leadId: string,
   change: LeadChange
-): Promise<{ sheetsUpdated: number; cellsWritten: number; errors: string[] }> {
-  const out = { sheetsUpdated: 0, cellsWritten: 0, errors: [] as string[] };
+): Promise<WriteBackResult> {
+  const out: WriteBackResult = {
+    sheetsUpdated: 0,
+    cellsWritten: 0,
+    errors: [],
+    writtenCells: [],
+  };
   const supabase = await getAdminSupabaseClient();
 
   // 1. Localizar todas las filas de sheets que apuntan a este lead.
@@ -82,6 +103,22 @@ export async function writeBackLeadChange(
 
       out.sheetsUpdated++;
       out.cellsWritten += cells.length;
+
+      // Mapping cell -> target field para audit. Replica el matching de
+      // buildWritebackCells: column.target con writeback=true y target ∈ changes.
+      for (const col of mapping.columns) {
+        if (!col.writeback) continue;
+        if (!(col.target in change.changes)) continue;
+        const raw = change.changes[col.target];
+        out.writtenCells.push({
+          sheet_connection_id: String(conn.id),
+          spreadsheet_id: String(conn.spreadsheet_id),
+          row_index: rec.row_index,
+          field_name: col.target,
+          new_value: raw === null || raw === undefined ? null : String(raw),
+        });
+      }
+
       log.info("writeback completado para sheet", {
         tenant_id: tenantId,
         lead_id: leadId,

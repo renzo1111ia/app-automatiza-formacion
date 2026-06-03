@@ -26,8 +26,9 @@ import {
   SheetsAdapterError,
 } from "./types";
 import { enqueueSheetPull } from "./queue";
+import { validateMappingRequiredColumns, MAPPING_TARGET_LABEL } from "./row-mapper";
 
-const REVALIDATE_PATH = "/dashboard/settings/integraciones/google-sheets";
+const REVALIDATE_PATH = "/dashboard/settings/integrations/google-sheets";
 
 // ─── Save app credentials ──────────────────────────────────────────────────
 
@@ -100,9 +101,15 @@ const ConnectSheetSchema = z.object({
 
 export async function connectSheetAction(
   input: z.infer<typeof ConnectSheetSchema>
-): Promise<{ ok: true; sheetConnectionId: string } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; sheetConnectionId: string; mappingWarnings: string[] } | { ok: false; error: string }
+> {
   try {
     const parsed = ConnectSheetSchema.parse(input);
+
+    // Validación NO bloqueante de columnas obligatorias del flujo agéntico.
+    // Se avisa al tenant pero NO se impide guardar (puede tener su criterio).
+    const mappingWarnings = buildMappingWarnings(parsed.columnMapping);
     const { tenantId, userId } = await requireCurrentTenant();
     const integration = await getSheetsIntegration(tenantId);
     if (!integration) {
@@ -171,10 +178,33 @@ export async function connectSheetAction(
     }
 
     revalidatePath(REVALIDATE_PATH);
-    return { ok: true, sheetConnectionId };
+    return { ok: true, sheetConnectionId, mappingWarnings };
   } catch (err) {
     return { ok: false, error: errMsg(err) };
   }
+}
+
+/**
+ * Construye mensajes de aviso (español) sobre columnas obligatorias faltantes
+ * en el mapeo, para mostrarlos en el wizard. No lanza — solo informa.
+ */
+function buildMappingWarnings(mapping: ColumnMapping): string[] {
+  const v = validateMappingRequiredColumns(mapping);
+  const warnings: string[] = [];
+  if (v.missing.length > 0) {
+    const labels = v.missing.map((t) => MAPPING_TARGET_LABEL[t] ?? t).join(", ");
+    warnings.push(
+      `Faltan columnas recomendadas para que la IA procese los leads: ${labels}. ` +
+        `Sin ellas algunos leads podrían no entrar en ninguna campaña o no poder ser contactados.`
+    );
+  }
+  if (v.paisMissing) {
+    warnings.push(
+      "No has mapeado la columna País. Se intentará derivar del prefijo del teléfono; " +
+        "si el número no lo permite, el lead quedará sin país."
+    );
+  }
+  return warnings;
 }
 
 // ─── Update mapping ───────────────────────────────────────────────────────

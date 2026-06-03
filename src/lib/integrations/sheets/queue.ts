@@ -27,7 +27,13 @@ export function getSheetsPullQueue(): Queue<SheetPullJob> {
       defaultJobOptions: {
         attempts: 3,
         backoff: { type: "exponential", delay: 10_000 },
-        removeOnComplete: { count: 500 },
+        // BUG-4-09: con jobId fijo (= sheet_connection_id) para deduplicar
+        // notificaciones Drive en ráfaga, NO se puede dejar el job completado
+        // en Redis: BullMQ rechaza re-encolar un jobId que aún existe, así que
+        // tras el primer pull esa connection quedaba bloqueada (el 2º cambio en
+        // la Sheet nunca se procesaba). removeOnComplete:true libera el jobId en
+        // cuanto el job termina; la dedup en ráfaga la sigue dando el delay 5s.
+        removeOnComplete: true,
         removeOnFail: { count: 200 },
       },
     });

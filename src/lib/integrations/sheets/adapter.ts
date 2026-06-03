@@ -17,6 +17,7 @@ import { OAuth2Client } from "google-auth-library";
 import { randomUUID } from "crypto";
 import {
   getAppCredentials,
+  getOAuthBaseUrl,
   getOAuthTokens,
   saveOAuthTokens,
   getSheetsIntegration,
@@ -60,7 +61,7 @@ export class GoogleSheetsAdapter {
       );
     }
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}${REDIRECT_PATH}`;
+    const redirectUri = `${getOAuthBaseUrl()}${REDIRECT_PATH}`;
     adapter.oauth2 = new google.auth.OAuth2(creds.clientId, creds.clientSecret, redirectUri);
     adapter.oauth2.setCredentials(tokens);
 

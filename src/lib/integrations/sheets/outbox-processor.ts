@@ -9,11 +9,73 @@
 // de Sheets: el orchestrator solo hace UPDATEs como siempre, esta capa se
 // encarga de propagar a Google.
 
+import { createHash } from "crypto";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { createLogger } from "@/lib/utils/logger";
-import { writeBackLeadChange } from "./writeback";
+import { writeBackLeadChange, type WrittenCellAudit } from "./writeback";
+import {
+  CrmWriteAuditRepository,
+  IntegrationsRepository,
+} from "@/lib/repositories/integrations-repository";
 
 const log = createLogger("sheets.outbox");
+const auditRepo = new CrmWriteAuditRepository();
+const integrationsRepo = new IntegrationsRepository();
+
+/**
+ * Inserta una fila de audit (R-014) por cada celda escrita en Sheets.
+ * Best-effort: si el audit falla, lo loguea pero NO revierte el writeback
+ * (la escritura en Google ya ocurrió, perder el audit es peor que duplicarlo).
+ */
+async function recordWritebackAudit(
+  tenantId: string,
+  leadId: string,
+  cells: WrittenCellAudit[]
+): Promise<void> {
+  if (cells.length === 0) return;
+
+  const { data: integration } = await integrationsRepo.findByCrmType(tenantId, "google_sheets");
+  if (!integration) {
+    log.warn("audit skipped: tenant sin integration google_sheets activa", {
+      tenant_id: tenantId,
+      lead_id: leadId,
+    });
+    return;
+  }
+
+  for (const cell of cells) {
+    const payloadHash = createHash("sha256")
+      .update(`${cell.spreadsheet_id}|${cell.row_index}|${cell.field_name}|${cell.new_value ?? ""}`)
+      .digest("hex");
+
+    const { error } = await auditRepo.create(tenantId, {
+      tenant_id: tenantId,
+      integration_id: integration.id,
+      crm_type: "google_sheets",
+      operation: "update",
+      local_entity: "lead",
+      local_entity_id: leadId,
+      crm_entity_id: `${cell.spreadsheet_id}#row=${cell.row_index}`,
+      payload_hash: payloadHash,
+      result: "success",
+      write_policy: "overwrite_with_audit",
+      provider: "google_sheets",
+      lead_id: leadId,
+      field_name: cell.field_name,
+      new_value: cell.new_value,
+    });
+
+    if (error) {
+      log.warn("audit insert falló (no bloqueante)", {
+        tenant_id: tenantId,
+        lead_id: leadId,
+        sheet_connection_id: cell.sheet_connection_id,
+        field_name: cell.field_name,
+        error,
+      });
+    }
+  }
+}
 
 export interface OutboxRunResult {
   picked: number;
@@ -33,16 +95,35 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
   const result: OutboxRunResult = { picked: 0, processed: 0, failed: 0, errors: [] };
   const supabase = await getAdminSupabaseClient();
 
-  // 1. Reclamar lote: marcar como processing en una sola transaccion logica.
+  // 1. Reclamar lote en dos pasos. PostgREST NO soporta order()+limit() sobre un
+  // UPDATE (lo traduce a SQL invalido — error "column created_at does not exist"),
+  // asi que primero seleccionamos los ids pendientes ordenados por antiguedad y
+  // luego marcamos esos ids como processing con un UPDATE ... IN (...).
   /* eslint-disable @typescript-eslint/no-explicit-any */
+  const { data: pendingIds, error: selErr } = await (
+    supabase.from("sheets_writeback_outbox" as any) as any
+  )
+    .select("id")
+    .eq("status", "pending")
+    .lt("attempts", MAX_ATTEMPTS)
+    .order("created_at", { ascending: true })
+    .limit(MAX_BATCH);
+
+  if (selErr) {
+    log.error("outbox select pendientes falló", { error: selErr.message });
+    result.errors.push(`claim: ${selErr.message}`);
+    return result;
+  }
+
+  const idsToClaim = ((pendingIds ?? []) as Array<{ id: string }>).map((r) => r.id);
+  if (idsToClaim.length === 0) return result;
+
   const { data: claimed, error: claimErr } = await (
     supabase.from("sheets_writeback_outbox" as any) as any
   )
     .update({ status: "processing" })
+    .in("id", idsToClaim)
     .eq("status", "pending")
-    .lt("attempts", MAX_ATTEMPTS)
-    .order("created_at", { ascending: true })
-    .limit(MAX_BATCH)
     .select("id, lead_id, tenant_id, changes, attempts");
 
   if (claimErr) {
@@ -89,6 +170,20 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
           last_error: wb.errors.length > 0 ? wb.errors.join("; ") : null,
         })
         .eq("id", row.id);
+
+      // R-014: audit append-only por cada celda escrita exitosamente.
+      // Best-effort (no rollback writeback si audit falla, ni marca el job
+      // como failed: la escritura en Google ya ocurrió).
+      try {
+        await recordWritebackAudit(row.tenant_id, row.lead_id, wb.writtenCells);
+      } catch (auditErr) {
+        log.warn("audit batch falló (no bloqueante)", {
+          tenant_id: row.tenant_id,
+          lead_id: row.lead_id,
+          error: auditErr instanceof Error ? auditErr.message : String(auditErr),
+        });
+      }
+
       result.processed++;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

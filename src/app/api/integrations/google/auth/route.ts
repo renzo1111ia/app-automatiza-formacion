@@ -9,7 +9,7 @@
 
 import { google } from "googleapis";
 import { NextResponse } from "next/server";
-import { getAppCredentials } from "@/lib/integrations/sheets/credentials";
+import { getAppCredentials, getOAuthBaseUrl } from "@/lib/integrations/sheets/credentials";
 import { requireCurrentTenant } from "@/lib/integrations/sheets/session";
 import { generateOAuthState } from "@/lib/integrations/crm/oauth/oauth-state";
 
@@ -21,11 +21,11 @@ export async function GET() {
 
     const creds = await getAppCredentials(tenantId).catch(() => null);
     if (!creds) {
-      const back = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}/dashboard/settings/integraciones/google-sheets?error=missing_credentials`;
+      const back = `${getOAuthBaseUrl()}/dashboard/settings/integrations/google-sheets?error=missing_credentials`;
       return NextResponse.redirect(back);
     }
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}${REDIRECT_PATH}`;
+    const redirectUri = `${getOAuthBaseUrl()}${REDIRECT_PATH}`;
     const oauth2Client = new google.auth.OAuth2(creds.clientId, creds.clientSecret, redirectUri);
 
     const scopes = [
@@ -46,7 +46,7 @@ export async function GET() {
   } catch (err) {
     console.error("[GOOGLE AUTH] Error iniciando OAuth flow:", err);
     const msg = err instanceof Error ? err.message : "internal_error";
-    const back = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}/dashboard/settings/integraciones/google-sheets?error=${encodeURIComponent(msg)}`;
+    const back = `${getOAuthBaseUrl()}/dashboard/settings/integrations/google-sheets?error=${encodeURIComponent(msg)}`;
     return NextResponse.redirect(back);
   }
 }

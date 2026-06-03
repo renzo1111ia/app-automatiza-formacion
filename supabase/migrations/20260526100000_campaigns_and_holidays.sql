@@ -35,7 +35,7 @@ CREATE POLICY campaigns_tenant_select ON campaigns
   FOR SELECT
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -43,7 +43,7 @@ CREATE POLICY campaigns_tenant_insert ON campaigns
   FOR INSERT
   WITH CHECK (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -51,7 +51,7 @@ CREATE POLICY campaigns_tenant_update ON campaigns
   FOR UPDATE
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -59,7 +59,7 @@ CREATE POLICY campaigns_tenant_delete ON campaigns
   FOR DELETE
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -101,7 +101,7 @@ CREATE POLICY tenant_holidays_tenant_select ON tenant_holidays
   FOR SELECT
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -109,7 +109,7 @@ CREATE POLICY tenant_holidays_tenant_insert ON tenant_holidays
   FOR INSERT
   WITH CHECK (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
@@ -117,7 +117,7 @@ CREATE POLICY tenant_holidays_tenant_delete ON tenant_holidays
   FOR DELETE
   USING (
     tenant_id IN (
-      SELECT tenant_id FROM user_tenants WHERE user_id = auth.uid()
+      SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()
     )
   );
 
