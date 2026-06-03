@@ -88,6 +88,16 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Incluir en la imagen `output: standalone` los ficheros que algunas rutas leen
+  // en runtime con `fs` desde process.cwd(). Sin esto, la imagen Docker NO copia
+  // estas carpetas (solo el bundle traced) → 404/500 en VPS aunque funcione en local.
+  // Detectado 03-06-2026: /docs/integrations/[slug] daba 404 en VPS (BUG-4-07 revivido
+  // en prod) porque docs/ no estaba en el contenedor standalone.
+  outputFileTracingIncludes: {
+    "/docs/integrations/[slug]": ["./docs/integrations/**/*.md"],
+    "/api/docs/content": ["./MASTER_DOSSIER.md"],
+    "/api/admin/tenants/[id]/client-sql": ["./supabase/migrations/client_supabase_schema.sql"],
+  },
   // Pino y su transitive `thread-stream` usan worker_threads / process.stdout: deben quedar
   // como external en server bundles (no pasar por webpack chunking) para evitar runtime errors.
   // Sprint 3 phase-02 Observabilidad (4-03).
