@@ -8,6 +8,7 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import {
   getAppCredentials,
+  getOAuthBaseUrl,
   getSheetsIntegration,
   saveOAuthTokens,
 } from "@/lib/integrations/sheets/credentials";
@@ -17,7 +18,7 @@ import { verifyOAuthState } from "@/lib/integrations/crm/oauth/oauth-state";
 const REDIRECT_PATH = "/api/integrations/google/callback";
 
 function backUrl(query: string): string {
-  return `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}/dashboard/settings/integraciones/google-sheets?${query}`;
+  return `${getOAuthBaseUrl()}/dashboard/settings/integrations/google-sheets?${query}`;
 }
 
 export async function GET(request: Request) {
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(backUrl("error=integration_missing"));
     }
 
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8500"}${REDIRECT_PATH}`;
+    const redirectUri = `${getOAuthBaseUrl()}${REDIRECT_PATH}`;
     const oauth2Client = new google.auth.OAuth2(creds.clientId, creds.clientSecret, redirectUri);
 
     const { tokens } = await oauth2Client.getToken(code);

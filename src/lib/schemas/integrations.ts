@@ -91,19 +91,35 @@ export const CrmWriteOperationEnum = z.enum(["create", "update", "delete", "upse
 export const CrmWriteResultEnum = z.enum(["success", "error", "skipped", "deferred"]);
 export const CrmWritePolicyEnum = z.enum(["append_only", "overwrite_with_audit"]);
 
+// Modelo unificado tras migration 20260529000000:
+//   - Campos Zod "por operación" (HubSpot/Zoho): integration_id, crm_type,
+//     operation, local_entity, local_entity_id, crm_entity_id, payload_hash,
+//     result, error_message.
+//   - Campos SQL "por celda" (Sheets writeback): provider, lead_id, field_name,
+//     old_value, new_value, actor_id.
+// Todos son opcionales a nivel DB; Zod los marca opcionales pero el caller
+// debe rellenar al menos un modelo coherente (validado por refine).
 export const CrmWriteAuditSchema = z.object({
   id: uuidSchema,
   tenant_id: tenantIdSchema,
+  // Modelo por operación (HubSpot/Zoho/Salesforce/GHL/AC)
   integration_id: uuidSchema,
   crm_type: CrmTypeEnum,
   operation: CrmWriteOperationEnum,
   local_entity: z.string(),
   local_entity_id: uuidSchema,
-  crm_entity_id: z.string().nullable(),
+  crm_entity_id: z.string().nullable().optional(),
   payload_hash: z.string(),
   result: CrmWriteResultEnum,
   error_message: z.string().nullable().optional(),
   write_policy: CrmWritePolicyEnum.default("append_only"),
+  // Modelo granular por celda (Sheets writeback, R-014)
+  provider: z.string().nullable().optional(),
+  lead_id: z.string().nullable().optional(),
+  field_name: z.string().nullable().optional(),
+  old_value: z.string().nullable().optional(),
+  new_value: z.string().nullable().optional(),
+  actor_id: uuidSchema.nullable().optional(),
   created_at: timestampSchema,
 });
 export type CrmWriteAudit = z.infer<typeof CrmWriteAuditSchema>;

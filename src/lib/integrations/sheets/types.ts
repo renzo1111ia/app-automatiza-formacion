@@ -136,6 +136,14 @@ export const ColumnMappingSchema = z.object({
   header_row: z.number().int().min(1).default(1),
   data_start_row: z.number().int().min(1).default(2),
   columns: z.array(ColumnMappingEntrySchema).min(1, "Debe haber al menos 1 columna mapeada"),
+  // Columna semáforo "AF" (letra Sheet): nuestra app escribe 🔴 al empezar a
+  // procesar la fila y 🟢 al terminar. Es columna técnica de proceso, NO se
+  // mapea a ningún campo del lead y se EXCLUYE del row_hash (evita bucle de
+  // pull al escribirla). Opcional: si no se define, no se gestiona semáforo.
+  status_column: z
+    .string()
+    .regex(/^[A-Z]{1,3}$/, "status_column debe ser letra de columna Sheet (A, B, ..., AA)")
+    .optional(),
 });
 export type ColumnMapping = z.infer<typeof ColumnMappingSchema>;
 

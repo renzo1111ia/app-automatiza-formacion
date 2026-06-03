@@ -11,18 +11,19 @@ BEGIN
     RETURN;
   END IF;
 
-  INSERT INTO public.help_sections (slug, title, content_md, audience, updated_at)
+  -- Fix 03-06-2026: la tabla real es (scope, slug, title, content_markdown)
+  -- con UNIQUE(scope, slug). Antes usaba columnas inexistentes (content_md, audience).
+  INSERT INTO public.help_sections (scope, slug, title, content_markdown, updated_at)
   VALUES (
+    'admin',
     'integrations',
     'Integraciones CRM',
     E'## Conectar HubSpot o Zoho\n\n1. Ir a **Ajustes → Integraciones → CRM**.\n2. Click **Conectar** en el provider que prefieras.\n3. Aprobar la app en el portal del CRM (full-page redirect).\n4. Volverás al dashboard con la card en estado **Conectado**.\n\n## Política de escritura\n\n- **append_only** (default): el dashboard SOLO escribe campos vacíos en el CRM. Datos manuales del rep comercial nunca se pisan.\n- **overwrite_with_audit**: permite sobrescribir SOLO los campos listados, con audit trail completo. Útil para corregir typos en email/teléfono masivamente.\n\n## Solo 1 CRM activo por tenant\n\nDesconecta el actual antes de conectar otro. El historial de audit se preserva aunque desconectes.\n\n## ¿Algo falla?\n\n- Click **Test connection** en la card para ver si el CRM responde.\n- Si ves estado "Error", revisa logs del servidor (Easypanel) y reconecta.\n',
-    'admin',
     NOW()
   )
-  ON CONFLICT (slug) DO UPDATE SET
+  ON CONFLICT (scope, slug) DO UPDATE SET
     title = EXCLUDED.title,
-    content_md = EXCLUDED.content_md,
-    audience = EXCLUDED.audience,
+    content_markdown = EXCLUDED.content_markdown,
     updated_at = NOW();
 END $$;
 

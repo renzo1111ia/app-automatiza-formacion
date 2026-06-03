@@ -29,6 +29,8 @@ import {
   BookOpen,
   DollarSign,
   Users,
+  Sheet,
+  SlidersHorizontal,
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -186,6 +188,18 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/settings",
     icon: <Settings className="h-5 w-5" strokeWidth={1.8} />,
     adminOnly: true,
+    subItems: [
+      {
+        label: "Clientes y Config.",
+        href: "/dashboard/settings",
+        icon: <SlidersHorizontal className="h-4 w-4" strokeWidth={1.8} />,
+      },
+      {
+        label: "Google Sheets",
+        href: "/dashboard/settings/integrations/google-sheets",
+        icon: <Sheet className="h-4 w-4" strokeWidth={1.8} />,
+      },
+    ],
   },
   {
     label: "Docs",

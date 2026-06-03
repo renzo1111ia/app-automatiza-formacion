@@ -40,6 +40,35 @@ export async function requireCurrentTenant(): Promise<CurrentTenantInfo> {
   const isAdmin = appMeta.is_admin === true || appMeta.is_admin === "true";
 
   const admin = await getAdminSupabaseClient();
+
+  // El tenant ACTIVO lo decide el selector "Cliente activo" (cookie
+  // `esden-tenant-id`), igual que el resto de la app (CRM vía
+  // getActiveTenantId). Sin esto, Sheets resolvía siempre el tenant DUEÑO del
+  // usuario (auth_user_id) e ignoraba el selector → un admin que cambiaba de
+  // tenant seguía viendo la conexión OAuth del primero.
+  const activeTenantId = cookieStore.get("esden-tenant-id")?.value || null;
+
+  if (activeTenantId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: active, error: activeErr } = await (admin.from("tenants" as any) as any)
+      .select("id, auth_user_id")
+      .eq("id", activeTenantId)
+      .maybeSingle();
+    if (activeErr) {
+      throw new Error(`Error resolviendo tenant activo: ${activeErr.message}`);
+    }
+    // Autorización: admin puede operar cualquier tenant; un no-admin solo el
+    // suyo (defensa por si la cookie se manipula). Si no cumple, caemos al
+    // tenant propio del usuario más abajo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (active && (isAdmin || (active as any).auth_user_id === userId)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { tenantId: (active as any).id as string, userId, isAdmin };
+    }
+  }
+
+  // Fallback: tenant del que el usuario es dueño (clientes sin selector, o
+  // cookie ausente/no autorizada).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: tenantRow, error: tenantErr } = await (admin.from("tenants" as any) as any)
     .select("id")

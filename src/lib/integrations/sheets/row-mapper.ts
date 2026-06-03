@@ -50,12 +50,20 @@ export function indexToLetter(index: number): string {
 // ─── Hash de fila (idempotencia) ───────────────────────────────────────────
 
 /**
- * SHA-256 de la fila completa. Si el hash coincide con el ultimo procesado
- * para esa (sheet_connection_id, row_index), se skipea sin tocar el lead.
+ * SHA-256 de la fila. Si el hash coincide con el ultimo procesado para esa
+ * (sheet_connection_id, row_index), se skipea sin tocar el lead.
+ *
+ * `ignoreIndices`: columnas (0-based) a EXCLUIR del hash. Se usa para la columna
+ * de estado AF (semáforo): nuestra app la escribe, y como esa escritura dispara
+ * un webhook Drive, si entrara en el hash provocaría un re-pull en bucle. Al
+ * excluirla, escribir en AF nunca cambia el hash → el re-pull hace SKIP.
  */
-export function hashRow(rowValues: unknown[]): string {
+export function hashRow(rowValues: unknown[], ignoreIndices: number[] = []): string {
+  const ignore = new Set(ignoreIndices);
   const serialized = JSON.stringify(
-    rowValues.map((v) => (v === undefined || v === null ? "" : String(v)))
+    rowValues.map((v, idx) =>
+      ignore.has(idx) ? null : v === undefined || v === null ? "" : String(v)
+    )
   );
   return createHash("sha256").update(serialized).digest("hex");
 }
@@ -185,12 +193,15 @@ export function mapRowToLead(
   rowIndex: number,
   mapping: ColumnMapping
 ): MappedRow {
+  // La columna semáforo AF (status_column) se excluye del hash: nuestra app la
+  // escribe y no debe contar como "cambio de la fila" (evita bucle de re-pull).
+  const ignoreIdx = mapping.status_column ? [letterToIndex(mapping.status_column)] : [];
   const out: MappedRow = {
     lead: {},
     lead_cualificacion: {},
     metadata: {},
     rowIndex,
-    rowHash: hashRow(rowValues),
+    rowHash: hashRow(rowValues, ignoreIdx),
     warnings: [],
   };
 
@@ -217,6 +228,58 @@ export function mapRowToLead(
   }
 
   return out;
+}
+
+// ─── Validación de columnas obligatorias del mapeo ─────────────────────────
+
+/**
+ * Columnas que el flujo agéntico AF necesita SÍ o SÍ para procesar un lead
+ * (verificado contra orchestrator.ts, 03-06-2026):
+ *  - lead.email     → identidad + sync CRM.
+ *  - lead.telefono  → canal de contacto IA (llamada / WhatsApp).
+ *  - lead.nombre    → personalización de mensajes.
+ *  - lead.campana   → entry_filters del orquestador (allowed_campaigns). Además
+ *    justifica el modelo "un contacto, N leads por campaña/formación distinta".
+ *
+ * `lead.pais` NO es obligatorio en la Sheet: se deriva del prefijo telefónico;
+ * solo si no se puede derivar la UI lo pedirá durante el mapeo.
+ */
+export const REQUIRED_MAPPING_TARGETS = [
+  "lead.email",
+  "lead.telefono",
+  "lead.nombre",
+  "lead.campana",
+] as const;
+
+export interface MappingValidation {
+  ok: boolean;
+  /** Targets obligatorios que faltan en el mapeo. */
+  missing: string[];
+  /** true si falta mapear lead.pais (se podrá derivar del teléfono, pero conviene avisar). */
+  paisMissing: boolean;
+}
+
+/** Etiqueta legible (español) de cada target obligatorio, para el aviso UI. */
+export const MAPPING_TARGET_LABEL: Record<string, string> = {
+  "lead.email": "Email",
+  "lead.telefono": "Teléfono",
+  "lead.nombre": "Nombre",
+  "lead.campana": "Campaña",
+  "lead.pais": "País",
+};
+
+/**
+ * Comprueba que el mapeo cubre las columnas obligatorias. Lógica pura
+ * (testeable). La UI del wizard la usa para avisar antes de guardar.
+ */
+export function validateMappingRequiredColumns(mapping: ColumnMapping): MappingValidation {
+  const mappedTargets = new Set(mapping.columns.map((c) => c.target));
+  const missing = REQUIRED_MAPPING_TARGETS.filter((t) => !mappedTargets.has(t));
+  return {
+    ok: missing.length === 0,
+    missing,
+    paisMissing: !mappedTargets.has("lead.pais"),
+  };
 }
 
 // ─── Inverso para write-back: payload -> celdas a escribir ────────────────

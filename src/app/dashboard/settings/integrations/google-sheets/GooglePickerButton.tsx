@@ -146,6 +146,7 @@ export function GooglePickerButton({ disabled }: { disabled?: boolean }) {
     startTransition(async () => {
       let connected = 0;
       let failed = 0;
+      const mappingWarnings: string[] = [];
       for (const doc of docs) {
         const sug = await suggestMappingAction({
           spreadsheetId: doc.id,
@@ -175,14 +176,23 @@ export function GooglePickerButton({ disabled }: { disabled?: boolean }) {
           columnMapping: mapping,
           writebackEnabled: false,
         });
-        if (res.ok) connected++;
-        else failed++;
+        if (res.ok) {
+          connected++;
+          mappingWarnings.push(...res.mappingWarnings);
+        } else {
+          failed++;
+        }
       }
       if (connected > 0) {
         toast({
           variant: "success",
           description: `${connected} hoja${connected === 1 ? "" : "s"} conectada${connected === 1 ? "" : "s"}.`,
         });
+      }
+      // Avisos NO bloqueantes sobre columnas obligatorias faltantes (dedup).
+      const uniqueWarnings = Array.from(new Set(mappingWarnings));
+      for (const w of uniqueWarnings) {
+        toast({ variant: "warning", description: w });
       }
       if (failed > 0) {
         toast({

@@ -9,6 +9,26 @@ import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { decryptToken, encryptToken } from "@/lib/crypto/token-crypto";
 import { SheetsAdapterError } from "./types";
 
+/**
+ * Base URL para OAuth callback. Permite separar el redirect URI de OAuth
+ * del NEXT_PUBLIC_APP_URL para soportar setups híbridos: OAuth via localhost
+ * (cookies de sesión) + webhooks Drive via tunnel HTTPS público (ngrok).
+ *
+ * Si GOOGLE_OAUTH_REDIRECT_BASE_URL está definida, se usa para callback OAuth.
+ * Si no, fallback a NEXT_PUBLIC_APP_URL (comportamiento histórico).
+ *
+ * Razón: las cookies de sesión Supabase son por-dominio. Si el OAuth callback
+ * llega via tunnel (ngrok) pero el login se hizo en localhost, la cookie no
+ * se ve y requireCurrentTenant() falla con "No autenticado".
+ */
+export function getOAuthBaseUrl(): string {
+  return (
+    process.env.GOOGLE_OAUTH_REDIRECT_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:8500"
+  );
+}
+
 export interface SheetsAppCredentials {
   clientId: string;
   clientSecret: string;
