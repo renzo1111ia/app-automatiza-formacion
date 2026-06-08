@@ -2,6 +2,13 @@
 
 **Contexto:** [plan.md](plan.md). Prerequisitos manuales que Javi HP debe hacer en su cuenta Zoho de test para poder validar el sprint E2E. Decisión 08-06-2026: **probar las dos vías** (Workflow Webhook primero, OAuth + Notifications API después).
 
+## Cuenta Zoho de test (confirmada por Javi HP 08-06-2026)
+
+- **Data Center:** `.eu` → coincide con el default del repo (`ZOHO_API_DOMAIN=https://www.zohoapis.eu`). NO hay que cambiar DC.
+- **Organization ID:** `20115313796`
+- **Panel CRM:** https://crm.zoho.eu/crm/org20115313796
+- **Consola OAuth:** https://api-console.zoho.com (acceder con la cuenta del DC eu)
+
 ## Estado de partida (verificado 08-06-2026)
 
 - ⚠️ **La app OAuth Zoho real NO está registrada.** El Sprint 2 implementó el adapter Zoho con **tests MSW (mocks)**, no con cuenta real. El registro de Public App real solo se hizo para HubSpot (phase-03). Las vars `ZOHO_CLIENT_ID/SECRET` en `.env.example` siguen como `REPLACE_ME`.
