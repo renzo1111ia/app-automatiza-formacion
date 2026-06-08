@@ -58,15 +58,18 @@ Hasta ahora Zoho era solo **destino de salida** (push de leads del CRM interno �
 
 ## Criterios de éxito (cierre OK cuando)
 
-- Tenant configura Zoho como fuente de entrada de leads desde UI admin.
-- Pull leads Zoho → CRM interno funcional (sin duplicados, idempotencia por `zoho_lead_id`).
+- Tenant activa la recepción de leads de Zoho desde la UI admin (auto 1 clic o guía manual).
+- **Crear un lead en Zoho → en segundos aparece en el sistema** (vía webhook, sin esperar a un cron).
+- Re-entrega del mismo evento NO duplica (dedup + idempotencia por `zoho_lead_id`).
+- Un lead perdido por fallo puntual del webhook se recupera en la reconciliación diaria.
 - Writeback bidireccional cambios de stage → Zoho (sin bucle push/pull infinito).
 - `crm_write_audit` registra todo sync (R-014, `overwrite_with_audit`).
 - Autorelleno: `origen='zoho_crm'`, `fecha_ingreso_crm`, `tipo_lead='zoho_import'`, país por prefijo.
+- Webhook valida token por tenant (403 si inválido). Cron fail-closed en prod.
 - RLS tenant-only en tablas nuevas. typecheck + lint + build + tests verdes.
 
 ## No incluye (fuera de alcance)
 
-- Webhook Zoho entrante en tiempo real (queda como mejora; el MVP del sprint usa pull por cron).
 - Sincronización de entidades distintas a Leads (Contacts, Deals, etc.).
-- Backfill histórico masivo (solo `Modified_Time` hacia adelante desde la conexión).
+- Backfill histórico masivo (solo desde la conexión hacia adelante; la reconciliación es incremental, no full).
+- Mapeo avanzado de campos custom de Zoho más allá del editor básico (suficiente para el MVP del sprint).
