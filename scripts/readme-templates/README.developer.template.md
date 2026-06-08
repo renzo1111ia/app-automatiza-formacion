@@ -8,16 +8,16 @@ AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Sistema q
 
 ## Stack tecnológico
 
-| Capa                         | Tecnología                                      |
-| ---------------------------- | ----------------------------------------------- |
-| Frontend / SSR               | Next.js 16 + React 19 + Tailwind CSS            |
-| Base de datos                | PostgreSQL vía Supabase self-hosted (Easypanel) |
-| Autenticación + multi-tenant | `@supabase/ssr` + RLS por tenant                |
-| Validaciones                 | Zod + Repository pattern                        |
-| Colas / workers              | BullMQ + Redis                                  |
-| IA conversacional            | LangChain (Anthropic + OpenAI + Google Genai)   |
-| Voz                          | Retell + Ultravox                               |
-| CRMs MVP                     | HubSpot + Zoho CRM                              |
+| Capa                         | Tecnología                                    |
+| ---------------------------- | --------------------------------------------- |
+| Frontend / SSR               | Next.js 16 + React 19 + Tailwind CSS          |
+| Base de datos                | PostgreSQL vía Supabase self-hosted (Dokploy) |
+| Autenticación + multi-tenant | `@supabase/ssr` + RLS por tenant              |
+| Validaciones                 | Zod + Repository pattern                      |
+| Colas / workers              | BullMQ + Redis                                |
+| IA conversacional            | LangChain (Anthropic + OpenAI + Google Genai) |
+| Voz                          | Retell + Ultravox                             |
+| CRMs MVP                     | HubSpot + Zoho CRM                            |
 
 ---
 

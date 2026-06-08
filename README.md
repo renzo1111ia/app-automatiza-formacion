@@ -1,140 +1,533 @@
 # dashboard-af
 
-**AI CRM + Workflow Orchestrator multi-tenant para academias formativas** (sector formación, España + Latam).
+> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
 
-| Campo           | Valor                                                                                                                                                                                                                                                                                     |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Versión         | `v0.3.0-rc.1` en `developer` (Sprint 3 mergeado vía PR #22). SP-7-DEPS-AUDIT-26 🟢 mergeada encima (25→4 vulns, −84%). Roadmap MVP: SP-4B Validación (16-19/06) → MVP GA `v0.3.0` (22-06).                                                                                                |
-| Estado          | 🟢 **Sprint 3 Hardening CERRADO** (PR #22, `v0.3.0-rc.1`) + 🟢 **SP-7-DEPS-AUDIT-26 CERRADA** (deps audit, −84% vulns, mergeada developer 03-06). Run E2E VPS 03-06 🟢 PASS (0 CRIT / 0 HIGH, ~392 tests). Activo ahora: `feature/sprint-04-google-sheets` (Sheets bidireccional v0.4.0). |
-| Último deploy   | VPS Hetzner `dev.automatizaformacion.com` autodeploy Dokploy desde `developer` (`v0.3.0-rc.1`, Node 22.22.3). Run E2E 03-06 verde contra VPS.                                                                                                                                             |
-| Target MVP      | `v0.3.0` GA — **estim. Lun 22-06-2026** (replanteo 24-05 −7 sem por ratio real Sprints 0/1/2/2B −86% a −94%). Calendario: SP-4B Renzo 16-19/06 → MVP GA 22/06.                                                                                                                            |
-| Stack           | Next.js 16 · React 19 · Tailwind · Supabase self-hosted · `@supabase/ssr` · Zod · BullMQ · LangChain (Anthropic + OpenAI + Google Genai) · Retell · Ultravox · Node 22 LTS                                                                                                                |
-| Rama de trabajo | `feature/sprint-04-google-sheets` — Sheets bidireccional (v0.4.0, post-MVP). Última cerrada: `feature/sp-7-deps-audit-26` (mergeada developer 03-06).                                                                                                                                     |
-| Plan Sprint 3   | [`plans/260520-1342-sprint-3-hardening/plan.md`](plans/260520-1342-sprint-3-hardening/plan.md). Cerrado vía PR #22 (`v0.3.0-rc.1`). Encima: SP-4-LINT-ZERO (104→0) + SP-4-DEPRECATIONS-DEPLOY + SP-7-DEPS-AUDIT-26 (vulns −84%).                                                          |
-
-> ⚠️ **Branding del producto** — el dashboard se entrega como SaaS multi-tenant. Cada academia/centro formativo es un tenant aislado por RLS. Los CRMs externos (HubSpot, Zoho, etc.) se conectan vía adapter layer.
+AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Sistema que orquesta flujos de captación, cualificación y conversión de leads mediante agentes de IA conversacional (voz + chat), sincronización bidireccional con CRMs (HubSpot, Zoho) y paneles de gestión por tenant.
 
 ---
 
-## Documentación principal
+## Stack tecnológico
 
-| Documento                                          | Para qué                                                                                                   |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [`docs/dev-onboarding.md`](docs/dev-onboarding.md) | **Empieza aquí** si acabas de clonar el repo. Setup paso a paso, ramas, `.env.local`, primer arranque      |
-| [`CLAUDE.md`](CLAUDE.md)                           | Reglas operativas del proyecto (modelo IA, branches, autonomía, etc.) — son ley sobre las globales del dev |
-| [`plans/RoadMap.md`](plans/RoadMap.md)             | **Single source of truth** del estado del proyecto — 10 sprints, tareas, estados (🔘🟡🟠🔵🟢)              |
-| [`docs/audit/`](docs/audit/)                       | Auditoría inicial (gap analysis, findings, decisiones cerradas)                                            |
-| [`docs/adr/`](docs/adr/)                           | Architecture Decision Records — decisiones técnicas con trade-offs                                         |
-| [`plans/reports/`](plans/reports/)                 | Reports de subagentes (ADR de dependencias, baselines, etc.)                                               |
+| Capa                         | Tecnología                                    |
+| ---------------------------- | --------------------------------------------- |
+| Frontend / SSR               | Next.js 16 + React 19 + Tailwind CSS          |
+| Base de datos                | PostgreSQL vía Supabase self-hosted (Dokploy) |
+| Autenticación + multi-tenant | `@supabase/ssr` + RLS por tenant              |
+| Validaciones                 | Zod + Repository pattern                      |
+| Colas / workers              | BullMQ + Redis                                |
+| IA conversacional            | LangChain (Anthropic + OpenAI + Google Genai) |
+| Voz                          | Retell + Ultravox                             |
+| CRMs MVP                     | HubSpot + Zoho CRM                            |
 
 ---
 
-## Quick start (desarrollo local)
+## Quick Start (desarrollo local)
 
-Lee [`docs/dev-onboarding.md`](docs/dev-onboarding.md) para el setup completo. Resumen:
-
-```powershell
-# 1. Clonar y dependencias
-git clone https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard.git
-cd Automatiza-Formacion-DashBoard
+```bash
+# 1. Clonar y entrar al proyecto
+git clone <repo-url> dashboard-af
+cd dashboard-af
 git checkout developer
-npm install
 
 # 2. Variables de entorno
 cp .env.example .env.local
-# Edita .env.local con tus credenciales locales/staging
-# OBLIGATORIAS: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
-# SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, REDIS_URL
-# Sin estas la app falla al arrancar (decisión Sprint 0 tarea 1-04 — sin fallback)
+# Edita .env.local con valores reales (pedir al lead por canal seguro)
 
-# 3. Levantar infra local (Supabase + Redis vía Docker)
-npm run local:setup     # equivale a db:up + redis:up + db:seed-demo
+# 3. Instalar dependencias
+npm install
 
-# 4. Dev server
-npm run dev             # http://localhost:8500
+# 4. Arrancar servidor de desarrollo
+npm run dev
+```
 
-# 5. (Opcional) Tests E2E
-npm run test:e2e        # requiere dev server corriendo
-npm run test:e2e:ui     # modo interactivo
+> Requisitos: Node.js 22.x LTS · npm 10.x · Git 2.40+ · Docker Desktop (PostgreSQL local)
+>
+> Lee [`docs/dev-onboarding.md`](docs/dev-onboarding.md) para setup completo, acceso a secretos y flujo de ramas.
+
+---
+
+## Estructura del proyecto (resumida)
+
+```
+dashboard-af/
+├── src/                    # Código fuente (Next.js App Router)
+│   ├── app/                # Rutas y API routes
+│   ├── lib/                # Lógica de negocio, repositories, schemas Zod
+│   └── components/         # Componentes React reutilizables
+├── supabase/               # Migraciones SQL y seeds
+│   └── migrations/
+├── scripts/                # Scripts de utilidad (promote, generate-readmes)
+│   └── readme-templates/   # Plantillas para los 3 README.md por rama
+├── public/                 # Assets estáticos
+├── .env.example            # Template de variables de entorno
+└── package.json
 ```
 
 ---
 
-## Workflow de ramas
+## RoadMap
 
-```text
-feature/* ──► PR ──► developer ──► (orden explícita) ──► staging ──► (orden explícita) ──► main
-```
+> Fuente: `plans/RoadMap.md` · Actualizado: 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
 
-- Trabajo activo: ramas `feature/sprint-NN-<slug>` (NN = número de sprint con dos dígitos, ej. `sprint-01`, `sprint-02`) que parten de `developer`. **Excepción legacy**: Sprint 0 mantiene `feature/sp-0-sprint-0-hotfixes` (no se renombra).
-- **`developer`** versiona TODO el scaffold de Claude Code (`.claude/`, `.claude-plugin/`, `docs/`, `plans/`, `.env.example`).
-- **`staging`** y **`main`** son ramas protegidas — **NO se tocan sin orden explícita del lead**.
+### Fase 0 — Sprint 0: Hotfixes de seguridad
 
-### Hooks de calidad (locales)
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-1 |
+| Versión objetivo | v0.1.0 |
+| Estado | 🟡 En Desarrollo (25/26 dev a 🔵 · 2 diferidas pre-deploy · … _ver nota↓_ |
+| Estimación total | ~107h 30min (11 días lab × 10h) |
+| Rama sugerida | feature/sp-0-sprint-0-hotfixes (pushed origin 22-05-2026 … _ver nota↓_ |
 
-Tras Sprint 0 tarea 0-01, el repo trae hooks de `husky` activos:
+#### Bloque 1.1 — Orquestador BullMQ (bloqueante de cadencia)
 
-| Hook         | Qué hace                                                                                           |
-| ------------ | -------------------------------------------------------------------------------------------------- |
-| `pre-commit` | `lint-staged` — eslint --fix + prettier en archivos staged                                         |
-| `pre-push`   | `typecheck` + `build` + lint en archivos cambiados vs `developer`. Bloquea push a `main`/`staging` |
-| `commit-msg` | Valida Conventional Commits + bloquea co-autoría de IA                                             |
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 0-00 | Setup Playwright local + baseline tests E2E (devDependency … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 0-01 | Setup pre-push hooks (Husky/lefthook) — typecheck + lint + … _ver nota↓_ | 3h | 🔵 Subida rama |
+| 1-01 | Fix `worker.js:58` firma incorrecta `executeSequenceStep` … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 1-02 | Fix `enqueueLeadStep` — quitar silenciado errores Redis (j … _ver nota↓_ | 3h | 🔵 Subida rama |
 
-Para que se activen al clonar: `npm install` corre `prepare: husky` automáticamente.
+#### Bloque 1.2 — Secretos y credenciales
 
-### Tests
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 1-03 | Rotar JWTs comprometidos en Supabase (anon + service_role) | 2h | 🟡 En Desarrollo |
+| 1-04 | Quitar JWTs hardcodeados de 10 puntos del código fuente | 6h | 🔵 Subida rama |
+| 1-05 | Cambio password Postgres default `postgres:postgres` | 1h | 🟡 En Desarrollo |
+| 1-06 | Crear usuario Postgres `app_user` con permisos limitados ( … _ver nota↓_ | 3h | 🔵 Subida rama |
 
-| Comando               | Cuándo                                         |
-| --------------------- | ---------------------------------------------- |
-| `npm run typecheck`   | Pre-push (auto) o manual                       |
-| `npm run lint`        | Pre-push solo en cambios; full en SP-X-CLOSE-1 |
-| `npm run build`       | Pre-push (auto) o manual                       |
-| `npm run test:e2e`    | Cierre de sprint (SP-X-CLOSE-2) o manual       |
-| `npm run test:e2e:ui` | Debug interactivo                              |
+#### Bloque 1.3 — Endpoints sin autenticación
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 1-07 | Auth en endpoints orquestación user-driven (deploy, graph, … _ver nota↓_ | 8h | 🔵 Subida rama |
+| 1-08 | Auth en cron endpoints (sweep + cron/appointments/reminders) | 4h | 🔵 Subida rama |
+| 1-09 | Guard condicional `tenants.config.test*orchestrator_enable … \_ver nota↓* | 2h | 🔵 Subida rama |
+| 1-10 | Cerrar `/api/admin/tenants/[id]/client-sql` (descarga SQL … _ver nota↓_ | 2h | 🔵 Subida rama |
+| 1-11 | Cerrar `/api/tenant/migrate` GET (sirve MIGRATION*SQL comp … \_ver nota↓* | 1h | 🔵 Subida rama |
+
+#### Bloque 1.4 — Webhooks y firmas
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 1-12 | Validación firma webhook Retell | 4h | 🔵 Subida rama |
+| 1-13 | Validación firma Retell **tools** (cancelar/agendar citas) | 6h | 🔵 Subida rama |
+| 1-14 | Validación HMAC WhatsApp obligatoria (no condicional) | 2h | 🔵 Subida rama |
+| 1-15 | Validación firma webhook CRM (anti tenant_id spoofing) | 6h | 🔵 Subida rama |
+
+#### Bloque 1.5 — Privilege escalation y RLS
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 1-16 | Fix privilege escalation via `user_metadata.is_admin` edit … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 1-17 | Verificación rol admin en `createTenant`/`deleteTenant`/`u … _ver nota↓_ | 3h | 🔵 Subida rama |
+| 1-18 | Fix RLS tabla `tenants` (quitar policy tautológica `USING(true)`) | 3h | 🔵 Subida rama |
+| 1-19 | Fix RLS `knowledge_base` (quitar `app.current_tenant` dead … _ver nota↓_ | 2h | 🔵 Subida rama |
+| 1-20 | Fix `fetchCalls` — añadir filtro `tenant_id` en 4 funciones | 4h | 🔵 Subida rama |
+| 1-21 | Fix IDOR `inbox.ts` 9 funciones — verificar ownership tenant | 8h | 🔵 Subida rama |
+
+#### Bloque 1.6 — Otros críticos
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 1-22 | Fix SSRF `/api/tenant/migrate` cookie `af-tenant-url` (aña … _ver nota↓_ | 8h | 🔵 Subida rama |
+| 1-23 | Sanitización XSS widget embed (interpolación `id` en JS se … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 1-24 | Update `axios@1.14.0` → `axios@1.16.1` (15 CVEs: SSRF + Pr … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 1-25 | Reemplazar paquete `crypto@1.0.1` DEPRECATED por built-in … _ver nota↓_ | 3h | 🔵 Subida rama |
+| 1-26 | Update `next@16.1.6` → `next@16.2.6` (cierre 19 CVEs incl. … _ver nota↓_ | 4h | 🔵 Subida rama |
+| 1-27 | \*\*Widget Chatbot Server Action — `web*widgets.allowed_doma … \_ver nota↓* | 8h | 🔵 Subida rama |
+
+##### Tareas de cierre — Sprint 0
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-1-CLOSE-1 | **Auto test** — `npm run typecheck` + `npm run lint` + `np … _ver nota↓_ | 1h 30min | 🟡 En Desarrollo |
+| SP-1-CLOSE-2 | **Test E2C Local** — Abrir browser con Playwright, … _ver nota↓_ | 2h 30min | 🔵 Subida rama |
+| SP-1-CLOSE-3 | \*\*Reemplazado por: análisis cruzado docs Bea (clienta) + R … _ver nota↓_ | 2h | 🟢 COMPLETADA |
+| SP-1-CLOSE-4 | **Corrección de Bugs y cambios detectados** — Subtareas di … _ver nota↓_ | (variable) | 🟢 COMPLETADA |
+| SP-1-CLOSE-5 | **Cierre de Sprint** — PR `feature/sp-0-sprint-0-hotfixes` … _ver nota↓_ | 1h | 🟢 COMPLETADA |
+
+### Fase 1 — Sprint 1: Capa de datos (sin ORM nuevo)
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-2 |
+| Versión objetivo | v0.2.0 |
+| Estado | 🟢 Completada (merged a developer vía PR #5, commit 94c035a) |
+| Estimación total | ~205h estim (con paralelismo 2-3 devs ~3-4 sem) · ⏱ Real: ~12h (orquestación 1 sesión) |
+| Rama sugerida | — |
+
+#### Bloque 2.1 — Unificación cliente Supabase
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-01 | Auditar TODOS los usos directos `pg` / `postgres` / `postg … _ver nota↓_ | 4h |  ~20min |
+| 2-02 | Refactor: mover queries directas `pg`/`postgres` a `@supab … _ver nota↓_ | 12h |  ~58min |
+| 2-03 | Eliminar JWTs `service_role` residuales (los que sobrevivi … _ver nota↓_ | 3h |  ~15min |
+
+#### Bloque 2.2 — Schemas Zod
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-04 | Estructura `src/lib/schemas/` + base helpers Zod (uuid, … _ver nota↓_ | 4h |  ~20min |
+| 2-05 | Zod schemas: `leads` (cruzar con `VARIABLES DEFINIDAS` cliente) | 4h |  ~20min |
+| 2-06 | Zod schemas: `tenants` + `tenant_members` | 2h |  ~10min |
+| 2-07 | Zod schemas: `programs` / `courses` | 2h |  ~10min |
+| 2-08 | Zod schemas: `appointments` + `calls` | 3h |  ~15min |
+| 2-09 | Zod schemas: `ai_agents` / `ai_agent_variants` / `prompts` | 3h |  ~15min |
+| 2-10 | Zod schemas: `knowledge_base` / `chat_memory` / `chat_summary` | 2h |  ~10min |
+| 2-11 | Zod schemas: `integrations` / `webhooks` / `crm*field_mapp … \_ver nota↓* | 3h |  ~15min |
+| 2-35 | Zod `ai_agent_variants.model_name` whitelist (`z.enum([... … _ver nota↓_ | 2h |  ~10min |
+
+#### Bloque 2.3 — Repository pattern
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-12 | Estructura `src/lib/repositories/` + interface base + help … _ver nota↓_ | 4h |  ~20min |
+| 2-13 | Repository: `leads` | 6h |  ~30min |
+| 2-14 | Repository: `tenants` | 4h |  ~20min |
+| 2-15 | Repository: `appointments` + `calls` | 5h |  ~25min |
+| 2-16 | Repository: `ai_agents` (+ variants) | 4h |  ~20min |
+| 2-17 | Repository: `knowledge_base` + `chat_memory` | 5h |  ~25min |
+| 2-18 | Repository: `integrations` + webhooks | 3h |  ~15min |
+
+#### Bloque 2.4 — Refactor queries existentes (paralelizable)
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-19 | Refactor: mover queries de `src/app/api/**/*.ts` a repositorios | 8h |  0 |
+| 2-20 | Refactor: mover queries de server actions `src/lib/actions … _ver nota↓_ | 6h |  0 |
+| 2-21 | Refactor: mover queries de `worker.js` + processors a repositorios | 4h |  0 |
+| 2-36 | Persistir `token_usage` (`completion.usage`) en `chat*mess … \_ver nota↓* | 2h |  0 |
+
+#### Bloque 2.5 — Type safety y limpieza
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-22 | Limpieza `as any` / `as unknown` — usar tipos derivados Zo … _ver nota↓_ | 16h |  0 |
+| 2-37 | Reemplazar `console.log`/`console.error` con `widgetId`+`l … _ver nota↓_ | 1h |  ~5min |
+
+#### Bloque 2.6 — RLS hardening complementario
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-23 | Fix RLS `ai_agents` / `ai_agent_variants` tautológica (no … _ver nota↓_ | 3h |  ~15min |
+| 2-24 | Fix RLS `web_widgets` (devuelve todos los tenants) | 2h |  ~10min |
+| 2-25 | Fix `getPrograms` — añadir filtro tenant (expone programas … _ver nota↓_ | 2h |  ~10min |
+| 2-26 | Cifrar Google OAuth tokens en JSONB (no plano) | 12h |  ~58min |
+| 2-27 | Update next@16.1.6~~ \*\*MOVIDA a Sprint 0 como 1-26 (tras … _ver nota↓_ | 6h — |  — |
+
+#### Bloque 2.7 — Testing y documentación
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-28 | Tests de integración con BD real (NO mocks) para repositor … _ver nota↓_ | 12h |  ~59min |
+| 2-29 | Documentar capa de datos en `docs/architecture/data-layer. … _ver nota↓_ | 4h |  ~20min |
+
+#### Bloque 2.8 — Hardening de dependencias (hallazgos ADR audit 2026-05-20)
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 2-30 | Crear hook `af-productivity-logger.cjs` para automatizar t … _ver nota↓_ | 6h |  ~29min |
+| 2-31 | Update `lucide-react@0.575` → `lucide-react@1.x` (major — … _ver nota↓_ | 4h |  0 |
+| 2-32 | Update `shadcn@3.x` → `shadcn@4.x` (major — revisar compon … _ver nota↓_ | 6h |  0 |
+| 2-33 | Alinear `@types/node@^20` con runtime Node 24 | 2h |  ~10min |
+| 2-34 | Investigar update `eslint@9` → `eslint@10` (bloqueado por … _ver nota↓_ | 2h |  0 |
+
+#### Bloque 2.9 — Fix bugs Renzo + reqs Bea (NUEVO, AÑADIDO POST-AUDIT 22-05-2026)
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+
+##### Tareas de cierre — Sprint 1
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-2-CLOSE-1 | Auto test | 1h 30min |  ~7min |
+| SP-2-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min |  ~12min |
+| SP-2-CLOSE-4 | Corrección de Bugs detectados | (variable) |  ~2min |
+| SP-2-CLOSE-5 | Cierre de Sprint → PR a `developer` + bump a `v0.2.0` + cr … _ver nota↓_ | 1h |  ~1min |
+
+### Fase 2 — Sprint 2: Adapter layer + 2 CRMs (MVP)
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-3 |
+| Versión objetivo | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) |
+| Estado | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) |
+| Estimación total | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research) |
+| Rama sugerida | — |
+
+##### Tareas de cierre — Sprint 2
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-3-CLOSE-1 | Auto test (typecheck + lint + build + Vitest) | 1h 30min | 🟢 COMPLETADA |
+| SP-3-CLOSE-2 | E2C Local + WCAG 2.2 AA (Playwright + axe-core) | 2h 30min | 🟢 COMPLETADA |
+| SP-3-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🟢 COMPLETADA |
+| SP-3-CLOSE-5 | Cierre → PR + bumps + tags + releases + hand-off SP-4B pha … _ver nota↓_ | 1h | 🟢 COMPLETADA |
+
+### Fase 3 — Sprint 3: Hardening
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-4 |
+| Versión objetivo | v0.3.0 (MVP completo, post-hardening) |
+| Estado | 🔘 Pendiente |
+| Estimación total | 2-3 sem (80h–120h) |
+| Rama sugerida | feature/sprint-03-hardening |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 4-01 | Test suite E2E completa (Playwright) cubriendo flujos golden path | 20-22h | 🟢 COMPLETADA |
+| 4-02 | Coverage target ≥80% unit + integration | 8-10h | 🟢 COMPLETADA |
+| 4-03 | Observabilidad: logging estructurado Pino + métricas BullM … _ver nota↓_ | 7-9h | 🟢 COMPLETADA |
+| 4-05 | Refactor accesibilidad WCAG 2.2 AA en todo el admin panel | 28-40h | 🟢 COMPLETADA |
+| 4-06 | Hardening adicional: rate limits, CSP headers, CSRF tokens | 10-14h | 🟢 COMPLETADA |
+| 4-07 | Documentación final cliente: release notes v0.3.0 | 6-8h | 🟢 COMPLETADA |
+| 4-08 | Rate limit wrapper `withRateLimit()` para Server Actions críticas | 6h | 🟢 COMPLETADA |
+| 4-09 | Test E2E Playwright suite completa del widget | 4h | 🟢 COMPLETADA |
+
+##### Tareas de cierre — Sprint 3
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-4-CLOSE-1 | Auto test | 1h 30min | 🟢 COMPLETADA |
+| SP-4-CLOSE-2 | Test E2C Local + WCAG 2.2 AA — recorrido completo MVP | 4h | 🟢 COMPLETADA |
+| SP-4-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-4-CLOSE-5 | Cierre de Sprint → PR a `developer` + \*\*bump a `v0.3.0-rc. … _ver nota↓_ | 1h | 🔘 Pendiente |
+
+### Fase 4 — Sprint 4: Google Sheets bidireccional
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-5 |
+| Versión objetivo | v0.5.0 |
+| Estado | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) |
+| Estimación total | 60-100h |
+| Rama sugerida | feature/sprint-04-google-sheets |
+
+##### Tareas de cierre — Sprint 4
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-5-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-5-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-5-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-5-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-5-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.5.0` + crear … _ver nota↓_ | 30min | 🟡 En Desarrollo |
+
+### Fase 5 — Sprint 5: Salesforce adapter
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-6 |
+| Versión objetivo | v0.6.0 |
+| Estado | 🔘 Pendiente |
+| Estimación total | 60-100h |
+| Rama sugerida | feature/sprint-05-salesforce |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 6-01 | ADR + instalación `jsforce@^3.10.15` | 2-4h | 🔘 Pendiente |
+| 6-02 | OAuth2 Connected App + token refresh + multi-instance (prod/sandbox) | 12-20h | 🔘 Pendiente |
+| 6-03 | `SalesforceAdapter`: Leads + Contacts + Opportunities CRUD | 18-30h | 🔘 Pendiente |
+| 6-04 | Webhooks bidireccionales (Platform Events / Streaming API) | 12-20h | 🔘 Pendiente |
+| 6-05 | UI admin: conexión + field-mapper Salesforce-específico | 8-14h | 🔘 Pendiente |
+| 6-06 | Tests integración sandbox Salesforce | 8-12h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 5
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-6-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-6-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-6-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-6-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-6-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.6.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+
+### Fase 6 — Sprint 6: GoHighLevel adapter
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-7 |
+| Versión objetivo | v0.7.0 |
+| Estado | 🔘 Pendiente |
+| Estimación total | 40-80h |
+| Rama sugerida | feature/sprint-06-gohighlevel |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 7-01 | Registrar app en GHL Marketplace + setup OAuth2 v2 | 4-8h | 🔘 Pendiente |
+| 7-02 | `GoHighLevelAdapter`: Contacts + Opportunities + Calendars | 14-26h | 🔘 Pendiente |
+| 7-03 | Webhooks GHL (eventos bidireccionales) | 8-16h | 🔘 Pendiente |
+| 7-04 | UI admin: conexión + field-mapper | 8-14h | 🔘 Pendiente |
+| 7-05 | Tests integración sandbox GHL | 6-16h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 6
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-7-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-7-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-7-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-7-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-7-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.7.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+
+### Fase 7 — Sprint 7: ActiveCampaign adapter
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-8 |
+| Versión objetivo | v0.8.0 |
+| Estado | 🔘 Pendiente |
+| Estimación total | 20-50h |
+| Rama sugerida | feature/sprint-07-activecampaign |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 8-01 | Setup auth API Key + multi-cuenta | 2-4h | 🔘 Pendiente |
+| 8-02 | `ActiveCampaignAdapter`: Contacts + Deals + Tags + Lists | 8-20h | 🔘 Pendiente |
+| 8-03 | Webhooks (eventos contact updated, deal stage changed) | 4-10h | 🔘 Pendiente |
+| 8-04 | UI admin: conexión + field-mapper | 4-10h | 🔘 Pendiente |
+| 8-05 | Tests integración sandbox | 2-6h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 7
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-8-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-8-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-8-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-8-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-8-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.8.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+
+### Fase 8 — Sprint 8: Adapter pattern generalization
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-9 |
+| Versión objetivo | v0.9.0 |
+| Estado | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) |
+| Estimación total | 20-40h |
+| Rama sugerida | feature/sprint-08-adapter-generalization |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 9-01 | Análisis comparativo: extraer patrones comunes a los 6 adapters | 4-8h | 🔘 Pendiente |
+| 9-02 | Refactor `IntegrationAdapter` base: OAuth flow genérico + … _ver nota↓_ | 8-14h | 🔘 Pendiente |
+| 9-03 | Generalizar webhook handling + signature verification | 4-8h | 🔘 Pendiente |
+| 9-04 | Generalizar rate limiting / retry / circuit breaker por adapter | 4-10h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 8
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-9-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-9-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-9-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-9-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-9-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+
+### Fase 9 — Sprint 9: Tier 2 on-demand (backlog)
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-10 |
+| Versión objetivo | v0.10.x+ (incremental por CRM) |
+| Estado | 🔘 Backlog (on-demand) |
+| Estimación total | ~30-50h por CRM (sólo bajo pedido) |
+| Rama sugerida | feature/sprint-09-tier2-<crm> (por CRM) |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 10-01 | Clientify adapter (on-demand) | ~30-50h | 🔘 Pendiente |
+| 10-02 | Bitrix24 adapter (on-demand) | ~30-50h | 🔘 Pendiente |
+| 10-03 | Pipedrive adapter (on-demand) | ~30-50h | 🔘 Pendiente |
+| 10-04 | Monday adapter (on-demand) | ~30-50h | 🔘 Pendiente |
+| 10-05 | Holded adapter (on-demand) | ~30-50h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 9
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-10-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-10-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-10-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-10-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-10-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.10.x` por CRM | 30min | 🔘 Pendiente |
+
+### Fase 10 — Sprint 10: WhatsApp Tech Provider Migration (Meta)
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-11 (offset +1) |
+| Versión objetivo | v0.11.0 |
+| Estado | 🔘 Pendiente |
+| Estimación total | ~48-72h |
+| Rama sugerida | feature/sprint-10-whatsapp-tech-provider |
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| 11-01 | App Meta dedicada + ADR-025 + acompañamiento a clienta | 4-6h | 🔘 Pendiente |
+| 11-02 | Refactor credenciales: System User token central + dual-mode | 8-12h | 🔘 Pendiente |
+| 11-03 | Embedded Signup (SDK JS + config_id + callback + intercambio) | 10-14h | 🔘 Pendiente |
+| 11-04 | UI "Conectar WhatsApp" + suscripción WABA al webhook | 6-10h | 🔘 Pendiente |
+| 11-05 | Migración tenants vivos sin downtime (dual-mode) | 6-10h | 🔘 Pendiente |
+| 11-06 | App Review (2 vídeos) + Access Verification | 4-6h | 🔘 Pendiente |
+| 11-07 | Tests (unit + integración MSW Graph API) + docs guía tenant | 6-10h | 🔘 Pendiente |
+
+##### Tareas de cierre — Sprint 10
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-11-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-11-CLOSE-2 | Test E2C Local + WCAG 2.2 AA (pantalla de conexión) | 2h 30min | 🔘 Pendiente |
+| SP-11-CLOSE-3 | Test Manual del Dev (post-MVP → estándar) | 1h | 🔘 Pendiente |
+| SP-11-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-11-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.11.0` | 30min | 🔘 Pendiente |
+
+### Resumen por sprint
+
+| Sprint | Versión | Estado | Tareas dev | % Completado | Est. dev |
+|--------|---------|--------|-----------|-------------|---------|
+| 0 | v0.1.0 | 🟡 En Desarrollo (25/26 dev a 🔵 · 2 diferidas pre-deploy · … _ver nota↓_ | 29 | 0% | ~107h 30min (11 días lab × 10h) |
+| 1 | v0.2.0 | 🟢 Completada (merged a developer vía PR #5, commit 94c035a) | 37 | 0% | ~205h estim (con paralelismo 2-3 devs ~3-4 sem) · ⏱ Real: ~12h (orquestación 1 sesión) |
+| 2 | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 0 | 0% | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research) |
+| 3 | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | 8 | 100% | 2-3 sem (80h–120h) |
+| 4 | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | 0 | 0% | 60-100h |
+| 5 | v0.6.0 | 🔘 Pendiente | 6 | 0% | 60-100h |
+| 6 | v0.7.0 | 🔘 Pendiente | 5 | 0% | 40-80h |
+| 7 | v0.8.0 | 🔘 Pendiente | 5 | 0% | 20-50h |
+| 8 | v0.9.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) | 4 | 0% | 20-40h |
+| 9 | v0.10.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | 5 | 0% | ~30-50h por CRM (sólo bajo pedido) |
+| 10 | v0.11.0 | 🔘 Pendiente | 7 | 0% | ~48-72h |
+
 
 ---
 
-## Estado actual del proyecto
+## Versión actual
 
-> 📊 **Vista live**: [`plans/RoadMap.md`](plans/RoadMap.md) — se actualiza con cada cambio de estado de tarea.
-
-| Sprint                            | Versión       | Estado            | Notas                                                                                                                                                                                                                                   |
-| --------------------------------- | ------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0 Hotfixes seguridad              | `v0.1.0`      | 🟢 Completado     | Tag v0.1.0 en `a387dfe` (PR #2). 26 tareas locales · 2 diferidas a pre-deploy VPS. ~11h efectivas vs 118h estim                                                                                                                         |
-| 1 Capa datos                      | `v0.2.0`      | 🟢 Completado     | Mergeado a developer vía PR #5 (`94c035a`). 24 tareas · 8 diferidas · 6 ADRs (014-019) · 58 tests Vitest. ~12h efectivas vs 205h estim                                                                                                  |
-| Autoexec doc-agent + empty-states | —             | 🟢 Completado     | 4 commits directos a developer 24-05-2026: 70 alerts→toast, EmptyState, web_widgets fix, /dashboard/docs-admin + /docs-clientes, hook `af-docs-watcher.cjs`                                                                             |
-| 2 HubSpot + Zoho                  | `v0.2.7`      | 🟢 Completado     | PR #12 mergeado (`a826fd6`) + hotfix BUG-2-01 slug conflict. 170 tests + 5/5 E2E VPS verdes. [Release v0.2.7](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.7)                                |
-| **2B Dashboard KPIs Overview**    | `v0.2.8`      | 🟢 **Completado** | PR #13 mergeado (`17b2902`) + bump v0.2.8 (`bbcbfd0`). 193 Vitest + **15/15 E2E VPS verdes**. 3 bugs resueltos. Ratio −86%. [Release v0.2.8](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/releases/tag/v0.2.8) |
-| **3 Hardening**                   | `v0.3.0-rc.1` | 🟢 **Completado** | PR #22 mergeado a developer (`1283995`). 22/22 tareas dev. CLOSE-1+1.5+2 🟢. Pre-release `v0.3.0-rc.1` publicado. 4 BUG-SEC resueltos en rama (`bcd36a9`).                                                                              |
-| SP-7-DEPS-AUDIT-26                | `v0.3.0-rc.1` | 🟢 **Completado** | Mergeada developer 03-06. **25→4 vulns (−84%)**, 0 críticas / 0 altas. ADR-018. Run E2E VPS 03-06 🟢 PASS (0 CRIT / 0 HIGH, ~392 tests).                                                                                                |
-| 4 Post-MVP                        | `v0.4.0+`     | 🟡 **En Curso**   | `feature/sprint-04-google-sheets` — Sheets bidireccional (spike E2E real validado). Después: Salesforce · GoHighLevel · ActiveCampaign · Costes-LLM                                                                                     |
+**v0.4.0** — En desarrollo. Ver RoadMap para estado de cada sprint.
 
 ---
 
-## Decisiones cerradas que conviene conocer
+## Contribuir
 
-1. **Sin ORM nuevo.** Capa de datos = `@supabase/ssr` + Zod + Repository pattern. No Prisma, no Drizzle.
-2. **Sin Airtable.** Infra = **Dokploy** (`panel.automatizaformacion.com`) + Supabase self-hosted en VPS Hetzner.
-3. **Test con BD real** en integración. NO mocks de Supabase.
-4. **Co-autoría de commits**: humanos sí, IA NO.
-5. **Local-first**: typecheck/lint/build/test en local (hooks). CI en GH Actions minimal (tier gratis 2000 min/mes).
-6. **Variables del CRM**: nomenclatura oficial = [`docs/Docs-entrega-clienta/Estructura/VARIABLES DEFINIDAS- TODO EL PROCESO ok.docx`](docs/Docs-entrega-clienta/) (gitignored).
+Lee [`docs/dev-onboarding.md`](docs/dev-onboarding.md) antes de empezar.
 
-Ver historial completo de decisiones en [`docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md`](docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md).
+Flujo de trabajo:
 
----
+1. Crea rama `feature/<descripcion>` desde `developer`
+2. Trabaja localmente, mantén el RoadMap actualizado (`plans/RoadMap.md`)
+3. Abre PR a `developer` (nunca directamente a `staging` o `main`)
+4. Después del merge, el agente `roadmap-keeper` actualiza estados y READMEs automáticamente
 
-## Para devs nuevos: orden de lectura recomendado
-
-1. Este README (estás aquí ✅)
-2. [`docs/dev-onboarding.md`](docs/dev-onboarding.md) — setup + primer arranque
-3. [`CLAUDE.md`](CLAUDE.md) — reglas del proyecto
-4. [`plans/RoadMap.md`](plans/RoadMap.md) — en qué sprint estamos
-5. La carpeta del sprint actual: [`plans/260520-1342-sprint-3-hardening/`](plans/260520-1342-sprint-3-hardening/) (Sprint 3 vigente — rama `feature/sprint-03-hardening`)
+Convenciones: commits en formato convencional (`feat:`, `fix:`, `chore:`). Sin referencias a IA en mensajes de commit.
 
 ---
 
-## Soporte
+## Licencia
 
-Lead técnico: **Javi HP** (`javihp.email@gmail.com`) — colaborador en la org `AutomatizaFormacion`.
-Repo: <https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard>
+MIT

@@ -147,6 +147,38 @@ foreach ($p in $pathsToRemove) {
     }
 }
 
+# 4b. README por rama destino (sistema generate-readmes.cjs)
+#   staging -> README.staging.md se renombra a README.md (README.main.md se elimina)
+#   main    -> README.main.md    se renombra a README.md (README.staging.md se elimina)
+Write-Host "[4b/6] Gestionando README por rama destino..."
+if ($To -eq "staging") {
+    if (-not (Test-Path "README.staging.md")) {
+        Write-Host "ERROR: README.staging.md no encontrado. Ejecuta primero en developer:" -ForegroundColor Red
+        Write-Host "  node scripts/generate-readmes.cjs" -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "  - README.staging.md -> README.md" -ForegroundColor Yellow
+    if (-not $DryRun) {
+        Move-Item -Force "README.staging.md" "README.md"
+        Remove-Item -Force "README.main.md" -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "  (DRY RUN: Move README.staging.md -> README.md + Remove README.main.md)" -ForegroundColor Magenta
+    }
+} elseif ($To -eq "main") {
+    if (-not (Test-Path "README.main.md")) {
+        Write-Host "ERROR: README.main.md no encontrado. Ejecuta primero en developer:" -ForegroundColor Red
+        Write-Host "  node scripts/generate-readmes.cjs" -ForegroundColor Yellow
+        exit 1
+    }
+    Write-Host "  - README.main.md -> README.md" -ForegroundColor Yellow
+    if (-not $DryRun) {
+        Move-Item -Force "README.main.md" "README.md"
+        Remove-Item -Force "README.staging.md" -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "  (DRY RUN: Move README.main.md -> README.md + Remove README.staging.md)" -ForegroundColor Magenta
+    }
+}
+
 # 5. Commit
 Write-Host "[5/6] Commit de promocion..."
 $commitMsg = "chore(release): promote v$Version from $From to $To"

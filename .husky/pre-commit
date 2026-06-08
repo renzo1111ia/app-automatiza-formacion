@@ -1,1 +1,2 @@
 npx lint-staged
+node .claude/hooks/af-readme-sync-precommit.cjs
