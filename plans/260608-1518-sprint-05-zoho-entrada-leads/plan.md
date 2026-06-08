@@ -39,6 +39,7 @@ Hasta ahora Zoho era solo **destino de salida** (push de leads del CRM interno �
 
 | #   | Fase                                                                             | Archivo                                             | Estim. | Estado       |
 | --- | -------------------------------------------------------------------------------- | --------------------------------------------------- | ------ | ------------ |
+| 00  | **Setup Zoho de test** (acciones del usuario — webhook + OAuth)                  | [phase-00](phase-00-setup-zoho-test.md)             | (user) | 🔘 Pendiente |
 | 01  | Capa de datos (migraciones SQL + tipos Zod)                                      | [phase-01](phase-01-capa-datos-migraciones.md)      | 2-3h   | 🔘 Pendiente |
 | 02  | **Webhook entrante Zoho** + suscripción Notifications API + procesador de evento | [phase-02](phase-02-pull-processor-mapper.md)       | 4-5h   | 🔘 Pendiente |
 | 03  | Writeback bidireccional + trigger + audit                                        | [phase-03](phase-03-writeback-trigger-audit.md)     | 2-3h   | 🔘 Pendiente |
