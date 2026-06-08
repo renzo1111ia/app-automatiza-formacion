@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Google Sheets — App única OAuth (Tech Provider) — dashboard-af</title>
+<style>
+  :root {
+    --azul: #1a3a5c;
+    --azul-claro: #2c6fbb;
+    --gris: #444;
+    --gris-claro: #f4f6f9;
+    --borde: #d6dde6;
+    --verde: #1a8a4a;
+    --naranja: #d97706;
+    --rojo: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--gris);
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .portada {
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+    color: #fff;
+    padding: 70px 50px 60px;
+    page-break-after: always;
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .portada .etiqueta {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 11pt;
+    opacity: 0.85;
+    margin-bottom: 18px;
+  }
+  .portada h1 {
+    font-size: 30pt;
+    margin: 0 0 10px;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+  .portada .sub {
+    font-size: 14pt;
+    opacity: 0.9;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+  .portada .meta {
+    border-top: 1px solid rgba(255,255,255,0.3);
+    padding-top: 22px;
+    font-size: 10.5pt;
+    line-height: 1.9;
+  }
+  .portada .meta b { font-weight: 600; }
+  .contenido { padding: 30px 48px 50px; }
+  h2 {
+    color: var(--azul);
+    font-size: 16pt;
+    border-bottom: 2px solid var(--azul-claro);
+    padding-bottom: 6px;
+    margin-top: 34px;
+    margin-bottom: 14px;
+    page-break-after: avoid;
+  }
+  h3 {
+    color: var(--azul-claro);
+    font-size: 12pt;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+  p { margin: 8px 0; }
+  code {
+    background: var(--gris-claro);
+    border: 1px solid var(--borde);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9pt;
+    color: #b03a5b;
+  }
+  pre {
+    background: var(--gris-claro);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--azul-claro);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+    color: var(--azul);
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9.3pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: var(--azul);
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+    vertical-align: top;
+  }
+  td {
+    border: 1px solid var(--borde);
+    padding: 7px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--gris-claro); }
+  .nota {
+    background: #fff8ec;
+    border: 1px solid #f0d8a8;
+    border-left: 4px solid var(--naranja);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 9.8pt;
+  }
+  .destacado {
+    background: #eef6ee;
+    border: 1px solid #bcdcc4;
+    border-left: 4px solid var(--verde);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 9.8pt;
+  }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .verde { color: var(--verde); font-weight: 600; }
+  .naranja { color: var(--naranja); font-weight: 600; }
+  .rojo { color: var(--rojo); font-weight: 600; }
+  .fuentes { font-size: 8.8pt; color: #777; }
+  .fuentes a { color: var(--azul-claro); text-decoration: none; word-break: break-all; }
+  .seccion-break { page-break-before: always; }
+  .check {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9.3pt;
+  }
+  .check th { background: var(--verde); }
+  .pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #fff;
+  }
+  .pill.dev { background: var(--azul-claro); }
+  .pill.cli { background: var(--naranja); }
+  .paso {
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--azul-claro);
+    border-radius: 4px;
+    padding: 10px 16px 12px;
+    margin: 12px 0;
+    page-break-inside: avoid;
+  }
+  .paso h3 { margin-top: 4px; }
+  .paso .enlace { font-size: 9.2pt; }
+  .paso .enlace a { color: var(--azul-claro); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <div class="etiqueta">Informe técnico · Confidencial</div>
+  <h1>Google Sheets con <em>una sola app</em> y conexión de 1 clic</h1>
+  <div class="sub">Modelo "Tech Provider" para Google OAuth en dashboard-af (sin que el cliente cree apps ni API keys)</div>
+  <div class="meta">
+    <div><b>Proyecto:</b> dashboard-af — AI CRM + Workflow Orchestrator multi-tenant</div>
+    <div><b>Preparado para:</b> Automatiza Formación</div>
+    <div><b>Fecha:</b> 3 de junio de 2026</div>
+    <div><b>Ámbito:</b> impacto técnico, arquitectónico y operativo · scope <code>drive.file</code></div>
+  </div>
+</div>
+
+<div class="contenido">
+
+<h2>1. El objetivo: conectar Sheets con un clic, sin fricción</h2>
+<p>El proyecto <b>ya tiene la integración bidireccional de Google Sheets construida</b> (lectura de filas como leads, escritura de vuelta de estados, watch en tiempo real vía Drive, mapeo de columnas). Lo que cambia aquí <b>no es la integración: es el modelo de conexión del cliente</b>.</p>
+
+<h3>Modelo actual del proyecto (BYO — "trae tu propia app")</h3>
+<p>Hoy, cada academia (cada "tenant") tiene que <b>crear su propia aplicación</b> en Google Cloud Console antes de poder conectar una hoja:</p>
+<pre>crear proyecto Cloud  ·  habilitar 3 APIs  ·  configurar consent screen
+crear OAuth Client ID  ·  copiar Client ID + Client Secret  ·  pegarlos en el dashboard</pre>
+<p>Son <b>5–10 minutos de pasos técnicos</b> en una consola que el cliente final no conoce, propensos a error (redirect URI mal puesto, API sin habilitar, test user no añadido) y generan carga de soporte. Es la principal barrera de adopción.</p>
+
+<div class="destacado">
+  <b>El modelo propuesto</b> sustituye todo ese montaje por un único botón <i>"Conectar con Google"</i>: el cliente inicia sesión con su cuenta de Google, autoriza el acceso <b>solo a las hojas que él elija</b> y empieza a trabajar. <b>La app la pone Automatiza Formación una sola vez; el cliente trabaja con su propia cuenta de Google.</b> Es exactamente el mismo patrón que ya recomendamos para WhatsApp con el modelo Tech Provider de Meta.
+</div>
+
+<div class="nota">
+  <b>Premisa de este informe:</b> esta investigación solo tiene sentido si el resultado es que <b>el cliente conecta su cuenta con un solo clic y un login</b>, sin crear apps, sin sacar API keys, sin tocar Google Cloud. Si no logramos eso, no merece la pena el cambio.
+</div>
+
+<h2>2. Comparativa de los dos modelos de conexión OAuth</h2>
+<table>
+  <tr>
+    <th style="width:26%">Criterio</th>
+    <th style="width:37%">BYO — app por cliente (hoy)</th>
+    <th style="width:37%">App única de Automatiza (propuesto)</th>
+  </tr>
+  <tr><td><b>Quién crea la app Google</b></td><td>El cliente final, en su Google Cloud</td><td><b>Automatiza, una sola vez</b></td></tr>
+  <tr><td><b>Onboarding del cliente</b></td><td>5–10 min de consola técnica + copia/pega de 2 secretos</td><td><b>1 clic + login Google</b> y elegir hojas</td></tr>
+  <tr><td><b>API keys / Client Secret</b></td><td>El cliente los genera y los pega</td><td><b>Ninguno</b> — el cliente no ve credenciales</td></tr>
+  <tr><td><b>Consent screen muestra…</b></td><td>El nombre de la app del cliente</td><td>"Automatiza Formación" (marca profesional)</td></tr>
+  <tr><td><b>Cuota de Google API</b></td><td>Aislada por cliente (su propio proyecto)</td><td>Compartida (la del proyecto de Automatiza)</td></tr>
+  <tr><td><b>Verificación de Google</b></td><td>No la necesita (≤100 usuarios por app)</td><td><b>Pasar la app a producción</b> (ligero, scope no sensible)</td></tr>
+  <tr><td><b>Caducidad de tokens</b></td><td>Caducan a 7 días en modo "Testing"</td><td><b>Permanentes</b> una vez la app está en producción</td></tr>
+  <tr><td><b>Carga de soporte</b></td><td>Alta (cada cliente tropieza con la consola)</td><td><b>Mínima</b></td></tr>
+</table>
+
+<div class="destacado">
+  <b>Conclusión:</b> la app única es el modelo correcto para escalar la captación de academias. El modelo BYO <b>no se elimina</b>: se conserva como <b>opción avanzada</b> para un cliente de muy alto volumen que quiera su propia cuota de Google aislada. Lo llamamos modelo <b>híbrido</b>: app única por defecto (99% de clientes), BYO opcional bajo demanda.
+</div>
+
+<h2>3. Por qué con Google es MÁS sencillo que con Meta</h2>
+<p>El paralelismo con el informe de WhatsApp/Meta es directo, pero hay una diferencia clave a nuestro favor: <b>el scope que usamos con Google (<code>drive.file</code>) no es "sensible"</b>. Esto evita el proceso de revisión caro y lento que sí existe en Meta y en otros scopes de Google.</p>
+<table>
+  <tr>
+    <th style="width:34%">Requisito de revisión</th>
+    <th style="width:33%">Meta Tech Provider (WhatsApp)</th>
+    <th style="width:33%">Google app única (Sheets, <code>drive.file</code>)</th>
+  </tr>
+  <tr><td><b>Revisión de la plataforma</b></td><td>App Review obligatorio</td><td><b>No requiere revisión de scope</b> (scope no sensible)</td></tr>
+  <tr><td><b>Vídeos de demostración</b></td><td>2 vídeos obligatorios</td><td><span class="verde">No</span></td></tr>
+  <tr><td><b>Auditoría de seguridad externa</b></td><td>—</td><td><span class="verde">No (CASA solo aplica a scopes restringidos)</span></td></tr>
+  <tr><td><b>Verificación de empresa / marca</b></td><td>Verificación de empresa obligatoria</td><td>Solo <b>brand verification</b> (logo + web + privacidad): 2–3 días</td></tr>
+  <tr><td><b>Límite de clientes</b></td><td>10 / 7 días → 200 tras verificar</td><td><b>Sin límite</b> en producción con scope no sensible</td></tr>
+  <tr><td><b>Cuello de botella</b></td><td>App Review con vídeo (días/semanas)</td><td>Brand verification (2–3 días hábiles)</td></tr>
+</table>
+
+<div class="nota">
+  <b>Corrección importante respecto a documentación interna previa:</b> alguna guía antigua del proyecto afirmaba que "una app Google con &gt;100 usuarios necesita verificación" y que por eso "cada tenant debe traer su propia app". <b>Eso es cierto solo para scopes <i>sensibles o restringidos</i></b> (como Drive completo o Gmail). Con <code>drive.file</code> — que es <b>no sensible</b> — <b>no hay límite de 100 usuarios ni revisión de scope</b>. Esta es precisamente la razón por la que la app única es viable.
+</div>
+
+<h2 class="seccion-break">4. ¿Hay que cambiar código? Impacto por componente</h2>
+<p>La arquitectura ya soporta casi todo el modelo híbrido por diseño: las credenciales OAuth se guardan cifradas por tenant en columnas que <b>admiten estar vacías</b>, y el retorno de Google (callback) ya identifica al tenant por una firma segura (no por la URL de retorno). Eso significa que <b>una sola app con una sola URL de retorno sirve a todos los clientes</b>.</p>
+<table>
+  <tr>
+    <th style="width:28%">Componente actual</th>
+    <th style="width:24%">Estado hoy</th>
+    <th style="width:34%">¿Cambia con la app única?</th>
+    <th style="width:14%">Esfuerzo</th>
+  </tr>
+  <tr><td><b>Resolución de credenciales</b> (función central)</td><td>Si el tenant no trae app, da error</td><td><b>Sí, mínimo</b> — hacer que caiga a las credenciales globales de Automatiza si el tenant no tiene las suyas</td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td><b>Retorno de Google (callback)</b></td><td>Identifica al tenant por firma segura</td><td><b>Sin cambios</b> — ya funciona con URL única multi-tenant</td><td><span class="verde">Ninguno</span></td></tr>
+  <tr><td><b>Wizard de conexión (UI)</b></td><td>Paso 1 obliga a pegar Client ID/Secret</td><td><b>Sí, sustancial</b> — botón "Conectar con Google" directo; el BYO pasa a opción avanzada colapsada</td><td><span class="naranja">Medio</span></td></tr>
+  <tr><td><b>Estado del wizard</b></td><td>"¿Tiene credenciales?" mira solo las del tenant</td><td><b>Sí</b> — debe considerar también la app global disponible</td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td><b>Almacenamiento de tokens</b></td><td>Cifrado por tenant (AES-256-GCM)</td><td><b>Sin cambios</b> — cada cliente guarda sus propios tokens igual</td><td><span class="verde">Ninguno</span></td></tr>
+  <tr><td><b>Variables de entorno</b></td><td>No hay credenciales globales de Sheets</td><td><b>Nuevas</b> — Client ID + Secret globales de Automatiza</td><td><span class="verde">Bajo</span></td></tr>
+</table>
+
+<div class="nota">
+  <b>Resumen:</b> la lógica sensible (cifrado de tokens, sincronización, escritura de vuelta) <b>no se toca</b>. El cambio es de <b>onboarding y resolución de credenciales</b>: pasamos de "el cliente crea una app y pega 2 secretos" a "el cliente pulsa un botón e inicia sesión". Estimación gruesa: <b>fallback de credenciales + rediseño del wizard + variables + prueba E2E ≈ medio sprint dedicado</b>, encajable como <b>Sprint 11 post-MVP</b> (no toca el MVP de HubSpot + Zoho ni el SPIKE de Sheets ya entregado).
+</div>
+
+<h2>5. Cómo queda el flujo del cliente (objetivo)</h2>
+<ol>
+  <li>El cliente entra en <b>Ajustes → Integraciones → Google Sheets</b>.</li>
+  <li>Ve un único botón <b>"Conectar con Google"</b> (sin formularios de credenciales).</li>
+  <li>Pulsa, <b>inicia sesión con su cuenta de Google</b> y ve un consentimiento con el nombre <b>"Automatiza Formación"</b> pidiendo acceso <b>solo a las hojas que elija</b>.</li>
+  <li>Vuelve al dashboard ya conectado y <b>selecciona sus hojas</b> con el selector de Google.</li>
+  <li>Empieza a trabajar: las filas se procesan como leads y los estados se escriben de vuelta.</li>
+</ol>
+<div class="destacado">
+  El cliente <b>nunca</b> ve la consola de Google Cloud, <b>nunca</b> genera una API key y <b>nunca</b> copia un Client Secret. Justo lo que se pide. El modo BYO (crear su propia app) queda escondido como <i>"¿Necesitas tu propia cuota de Google? Usa tu propia app"</i> para el cliente avanzado que lo solicite.
+</div>
+
+<h2 class="seccion-break">6. Checklist de requisitos</h2>
+<p>Para que la app única funcione en producción con conexión de 1 clic se necesita lo siguiente. <span class="pill cli">Clienta</span> = acción de Automatiza Formación (humana, en Google Cloud); <span class="pill dev">Desarrollo</span> = trabajo de código/config.</p>
+
+<h3>6.1 — Requisitos de la cuenta y la app Google (humano)</h3>
+<table class="check">
+  <tr>
+    <th style="width:6%">#</th>
+    <th style="width:50%">Requisito</th>
+    <th style="width:20%">Responsable</th>
+    <th style="width:24%">Bloquea producción</th>
+  </tr>
+  <tr><td>1</td><td>Proyecto en Google Cloud propiedad de Automatiza Formación</td><td><span class="pill cli">Clienta</span></td><td>Sí</td></tr>
+  <tr><td>2</td><td>Habilitar <b>Google Sheets API</b>, <b>Google Drive API</b> y <b>Google Picker API</b></td><td><span class="pill cli">Clienta</span></td><td>Sí</td></tr>
+  <tr><td>3</td><td>OAuth Client ID tipo <i>Web application</i> con la URL de retorno de producción</td><td><span class="pill cli">Clienta</span></td><td>Sí</td></tr>
+  <tr><td>4</td><td>Dominio verificado en Google Search Console</td><td><span class="pill cli">Clienta</span></td><td>Sí (para producción)</td></tr>
+  <tr><td>5</td><td>Página de inicio pública (HTTPS) y <b>política de privacidad</b> pública</td><td><span class="pill cli">Clienta</span></td><td>Sí (para producción)</td></tr>
+  <tr><td>6</td><td>Consent screen tipo <i>External</i> con scope <code>drive.file</code> + <code>userinfo.email</code></td><td><span class="pill cli">Clienta</span></td><td>Sí</td></tr>
+  <tr><td>7</td><td>Publishing status &rarr; <b>"In production"</b> (elimina caducidad de tokens a 7 días)</td><td><span class="pill cli">Clienta</span></td><td>Sí</td></tr>
+  <tr><td>8</td><td><b>Brand verification</b> (logo + web + privacidad): 2–3 días hábiles de espera</td><td><span class="pill cli">Clienta</span></td><td>No (pero quita el aviso "app no verificada")</td></tr>
+</table>
+
+<h3>6.2 — Requisitos de código y configuración (desarrollo)</h3>
+<table class="check">
+  <tr>
+    <th style="width:6%">#</th>
+    <th style="width:54%">Requisito</th>
+    <th style="width:18%">Responsable</th>
+    <th style="width:22%">Esfuerzo</th>
+  </tr>
+  <tr><td>9</td><td>Fallback de credenciales: si el tenant no tiene app propia, usar las globales de Automatiza (con marca de origen <code>tenant</code> / <code>global</code>)</td><td><span class="pill dev">Desarrollo</span></td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td>10</td><td>Wizard: botón "Conectar con Google" directo cuando hay app global; BYO como opción avanzada colapsada</td><td><span class="pill dev">Desarrollo</span></td><td><span class="naranja">Medio</span></td></tr>
+  <tr><td>11</td><td>Estado del wizard reconoce la app global disponible (no exige credenciales del tenant)</td><td><span class="pill dev">Desarrollo</span></td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td>12</td><td>2 variables de entorno nuevas (Client ID + Secret globales) en local y en el VPS</td><td><span class="pill dev">Desarrollo</span></td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td>13</td><td>Reescritura de la guía del cliente: flujo 1 clic + sección BYO avanzada</td><td><span class="pill dev">Desarrollo</span></td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td>14</td><td>Prueba E2E con una cuenta de cliente de prueba usando la app global</td><td><span class="pill dev">Desarrollo</span></td><td><span class="naranja">Medio</span></td></tr>
+</table>
+
+<div class="nota">
+  <span class="rojo">⚠ Cuello de botella:</span> el único tiempo de espera es la <b>brand verification</b> (#8), 2–3 días hábiles. Y es <b>opcional</b>: la app puede pasar a producción y funcionar de inmediato; lo único que falta sin brand verification es un aviso visual de "app no verificada" con botón "Continuar". El código (9–14) puede completarse y probarse en paralelo con la app aún en modo de pruebas.
+</div>
+
+<h2>7. Riesgos y mitigaciones</h2>
+<table>
+  <tr><th style="width:34%">Riesgo</th><th style="width:66%">Mitigación</th></tr>
+  <tr><td><b>Cuota compartida de Google API</b> entre todos los clientes</td><td>Suficiente para el volumen previsto. Para un cliente de alto volumen, se ofrece el <b>modo BYO</b> (su propia app = su propia cuota). Se puede solicitar ampliación de cuota a Google si hace falta.</td></tr>
+  <tr><td><b>Clientes con Google Workspace corporativo restrictivo</b> que bloquean apps de terceros</td><td>Caso minoritario. Para ellos, el modo BYO o una autorización del administrador de Workspace lo resuelve.</td></tr>
+  <tr><td><b>Aviso "app no verificada"</b> mientras no se complete brand verification</td><td>Iniciar brand verification cuanto antes (2–3 días). Mientras tanto, el aviso no impide conectar.</td></tr>
+  <tr><td><b>Exposición del Client Secret global</b></td><td>Se cifra y se guarda fuera del repositorio (solo en variables de entorno del servidor y vault). Nunca en git, docs ni capturas.</td></tr>
+</table>
+
+<h2>8. Recomendaciones</h2>
+<ol>
+  <li><b>Adoptar el modelo de app única</b> como conexión por defecto. Es lo que convierte la integración en un producto comercializable: el cliente conecta en segundos.</li>
+  <li><b>Conservar BYO como opción avanzada.</b> Nadie paga la cuota que no necesita: app global para el 99%, BYO para alto volumen.</li>
+  <li><b>Pasar la app a producción + iniciar brand verification pronto.</b> Resolver primero, porque elimina la caducidad de tokens a 7 días (un dolor ya conocido) y la espera de Google es el único tiempo muerto.</li>
+  <li><b>Encajar como Sprint 11 post-MVP dedicado.</b> No toca el MVP (HubSpot + Zoho) ni el SPIKE de Sheets ya entregado.</li>
+  <li><b>Acción inmediata de la clienta:</b> crear el proyecto Google Cloud de Automatiza, habilitar las 3 APIs y crear el OAuth Client ID (pasos guiados al final de este informe).</li>
+</ol>
+
+<h2 class="seccion-break">9. Guía paso a paso — montar la app única (Automatiza)</h2>
+<p>Esta guía es para <b>Automatiza Formación</b>, se hace <b>una sola vez</b>. Al terminar, los clientes ya no tienen que crear nada: solo pulsan "Conectar con Google". Todos los enlaces abren en pestaña nueva.</p>
+
+<div class="paso">
+  <h3>Paso 1 · Crear el proyecto en Google Cloud</h3>
+  <p>Inicia sesión con la cuenta de Google de Automatiza Formación y crea un proyecto nuevo (por ejemplo <code>automatiza-dashboard-prod</code>).</p>
+  <p class="enlace">🔗 <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com/projectcreate</a></p>
+</div>
+
+<div class="paso">
+  <h3>Paso 2 · Habilitar las 3 APIs necesarias</h3>
+  <p>En la biblioteca de APIs, busca y pulsa <b>Enable</b> en cada una: <b>Google Sheets API</b>, <b>Google Drive API</b> y <b>Google Picker API</b>.</p>
+  <p class="enlace">
+    🔗 <a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" rel="noopener">Sheets API</a> ·
+    <a href="https://console.cloud.google.com/apis/library/drive.googleapis.com" target="_blank" rel="noopener">Drive API</a> ·
+    <a href="https://console.cloud.google.com/apis/library/picker.googleapis.com" target="_blank" rel="noopener">Picker API</a>
+  </p>
+</div>
+
+<div class="paso">
+  <h3>Paso 3 · Verificar el dominio en Google Search Console</h3>
+  <p>Necesario para poder publicar la app. Añade el dominio (<code>automatizaformacion.com</code>) y verifícalo con un registro DNS TXT o subiendo un archivo HTML.</p>
+  <p class="enlace">🔗 <a href="https://search.google.com/search-console/welcome" target="_blank" rel="noopener">search.google.com/search-console</a></p>
+</div>
+
+<div class="paso">
+  <h3>Paso 4 · Configurar la pantalla de consentimiento (OAuth consent screen)</h3>
+  <p>Tipo <b>External</b>. Rellena: nombre de la app (<b>"Automatiza Formación"</b>), email de soporte, logo, <b>página de inicio</b> y <b>política de privacidad</b> (URLs públicas HTTPS). Añade los scopes <code>.../auth/drive.file</code> y <code>.../auth/userinfo.email</code>.</p>
+  <p class="enlace">🔗 <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener">console.cloud.google.com/apis/credentials/consent</a></p>
+</div>
+
+<div class="paso">
+  <h3>Paso 5 · Crear el OAuth Client ID (Web application)</h3>
+  <p>En <b>Credentials → Create credentials → OAuth client ID</b>, tipo <b>Web application</b>. En <b>Authorized redirect URIs</b> añade la URL de retorno de producción:</p>
+  <pre>https://app.automatizaformacion.com/api/integrations/google/callback</pre>
+  <p>(Añade también la de dev si se va a probar ahí). Al crear, copia el <b>Client ID</b> y el <b>Client Secret</b>: son las 2 variables que necesita el equipo de desarrollo (se guardan en el servidor, nunca en git).</p>
+  <p class="enlace">🔗 <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">console.cloud.google.com/apis/credentials</a></p>
+</div>
+
+<div class="paso">
+  <h3>Paso 6 · Pasar la app a producción</h3>
+  <p>En la pantalla de consentimiento, pulsa <b>Publish app</b> (Publishing status → In production). Esto <b>elimina la caducidad de tokens a 7 días</b>. Con scope <code>drive.file</code> (no sensible) no se requiere revisión de scope para publicar.</p>
+  <p class="enlace">🔗 <a href="https://console.cloud.google.com/apis/credentials/consent" target="_blank" rel="noopener">console.cloud.google.com/apis/credentials/consent</a> (botón "Publish app")</p>
+</div>
+
+<div class="paso">
+  <h3>Paso 7 · Enviar la verificación de marca (brand verification) — opcional pero recomendado</h3>
+  <p>Desde la misma pantalla, envía la app a <b>brand verification</b> (logo + página de inicio + política de privacidad). Espera de <b>2–3 días hábiles</b>. Al aprobarse, desaparece el aviso "Google no ha verificado esta app" del consentimiento del cliente.</p>
+  <p class="enlace">🔗 <a href="https://support.google.com/cloud/answer/13463073" target="_blank" rel="noopener">Guía oficial de verificación OAuth</a></p>
+</div>
+
+<div class="paso">
+  <h3>Paso 8 · Entregar las 2 credenciales al equipo de desarrollo</h3>
+  <p>Pasa el <b>Client ID</b> y el <b>Client Secret</b> por canal seguro (no email, no chat). El equipo los configura como variables de entorno globales en local y en el servidor del VPS. A partir de aquí, cualquier cliente conecta con un solo clic.</p>
+  <p class="enlace">🔗 (interno) Variables: <code>GOOGLE_SHEETS_CLIENT_ID</code> · <code>GOOGLE_SHEETS_CLIENT_SECRET</code></p>
+</div>
+
+<div class="destacado">
+  <b>Resultado final:</b> una sola app de Google, propiedad de Automatiza, en producción. El cliente entra, pulsa "Conectar con Google", inicia sesión y elige sus hojas. Cero apps por cliente, cero API keys, cero consola de Google Cloud para el cliente.
+</div>
+
+<h2>10. Fuentes</h2>
+<p class="fuentes">
+  Documentación oficial de Google for Developers / Google Cloud (junio 2026):
+</p>
+<ul class="fuentes">
+  <li><a href="https://developers.google.com/workspace/drive/api/guides/api-specific-auth" target="_blank" rel="noopener">Drive API — scopes (drive.file no sensible) — Google for Developers</a></li>
+  <li><a href="https://support.google.com/cloud/answer/13463073" target="_blank" rel="noopener">OAuth App Verification — Google Cloud Help</a></li>
+  <li><a href="https://support.google.com/cloud/answer/15549945" target="_blank" rel="noopener">Manage app audience / publishing status (Testing vs Production)</a></li>
+  <li><a href="https://support.google.com/cloud/answer/7454865" target="_blank" rel="noopener">Unverified apps — comportamiento del aviso</a></li>
+  <li><a href="https://developers.google.com/identity/protocols/oauth2/production-readiness/brand-verification" target="_blank" rel="noopener">Brand verification (2–3 días) — Google for Developers</a></li>
+  <li><a href="https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification" target="_blank" rel="noopener">Restricted scope verification + CASA (no aplica a drive.file)</a></li>
+  <li><a href="https://developers.google.com/workspace/drive/api/guides/limits" target="_blank" rel="noopener">Drive API — límites y cuotas por proyecto</a></li>
+  <li><a href="https://developers.google.com/workspace/sheets/api/limits" target="_blank" rel="noopener">Sheets API — límites y cuotas por proyecto</a></li>
+</ul>
+
+<p class="fuentes" style="margin-top:30px; border-top:1px solid var(--borde); padding-top:12px;">
+  Documento elaborado para Automatiza Formación — dashboard-af · 3 de junio de 2026 · Confidencial.
+</p>
+
+</div>
+</body>
+</html>
