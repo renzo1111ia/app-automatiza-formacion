@@ -30,13 +30,16 @@ const { auditCreateMock, findByCrmTypeMock } = vi.hoisted(() => ({
     .mockResolvedValue({ data: { id: "integration-google-1" }, error: null }),
 }));
 
+// Vitest 4: `vi.fn().mockImplementation(() => obj)` deja de tratarse como
+// constructor al invocarse con `new`. Se devuelven clases reales que delegan
+// en los mocks hoisted para conservar las aserciones toHaveBeenCalledWith.
 vi.mock("@/lib/repositories/integrations-repository", () => ({
-  CrmWriteAuditRepository: vi.fn().mockImplementation(() => ({
-    create: auditCreateMock,
-  })),
-  IntegrationsRepository: vi.fn().mockImplementation(() => ({
-    findByCrmType: findByCrmTypeMock,
-  })),
+  CrmWriteAuditRepository: class {
+    create = auditCreateMock;
+  },
+  IntegrationsRepository: class {
+    findByCrmType = findByCrmTypeMock;
+  },
 }));
 
 import { runWritebackOutbox } from "@/lib/integrations/sheets/outbox-processor";

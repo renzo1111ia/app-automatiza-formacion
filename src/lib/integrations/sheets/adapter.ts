@@ -153,7 +153,11 @@ export class GoogleSheetsAdapter {
       await this.sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
         requestBody: {
-          valueInputOption: "USER_ENTERED",
+          // RAW, no USER_ENTERED (SEC-S4-07, formula injection): los valores son
+          // datos de aplicación (stage del lead, etc.) y deben escribirse literales.
+          // Con USER_ENTERED un valor que empiece por "=", "+", "-" o "@" se
+          // interpretaría como fórmula en la Sheet del cliente.
+          valueInputOption: "RAW",
           data,
         },
       });

@@ -12,6 +12,84 @@ Estados oficiales de un release:
 
 ---
 
+## [0.4.0] — 2026-06-08 🟢 Released
+
+**Sprint 4 — Google Sheets bidireccional (post-MVP)** · rama: `feature/sprint-04-google-sheets` → mergeada en `developer` (PR #20 SPIKE Pull-only `29-05` + merge flujo bidireccional `f89aab9` `03-06`) · tag `v0.4.0`.
+
+### Resumen
+
+Integración bidireccional con Google Sheets por tenant: un lead originado en una Sheet se sincroniza al CRM (pull vía webhook ~15s) y los cambios de stage del lead se reflejan de vuelta en la Sheet (writeback con audit R-014). Conexión OAuth Google por tenant activo, wizard de 4 pasos con Google Picker multi-sheet y mapeo de columnas.
+
+### Highlights
+
+- 🔄 **Flujo bidireccional completo** Sheet ↔ CRM validado end-to-end con OAuth real + ngrok (03-06-2026).
+- 🔐 **OAuth Google por tenant** con tokens cifrados AES-256-GCM + state HMAC-SHA256 verificado en tiempo constante.
+- 🧙 **Wizard 4 pasos** + Google Picker multi-sheet + editor de mapeo de columnas.
+- 📝 **Writeback automático** vía outbox + cron, con audit R-014 append-only (`overwrite_with_audit`).
+- 🧩 **Autorelleno de campos**: origen, fecha_ingreso_crm, tipo_lead, país por prefijo telefónico; semáforo de columna AF.
+- 🛡️ **Endurecimiento de seguridad en el cierre** (CLOSE-4): endpoint cron fail-closed en producción + writeback `RAW` (anti formula injection).
+
+### Detalle por área
+
+#### Capa de datos / Backend
+
+- Adapter Sheets API, queue + worker, webhook de pull, processor de pull, outbox-processor de writeback, row-mapper, credentials por tenant, sesión y tipos. (`src/lib/integrations/sheets/*`).
+- Trigger SQL que encola en `sheets_writeback_outbox` cuando un lead originado de Sheet cambia campos relevantes.
+
+#### Frontend
+
+- Página `/dashboard/settings/integrations/google-sheets` con wizard, `GooglePickerButton`, `SheetMappingEditor`, `SheetsWizardClient`.
+- Ajuste CSP para permitir Google Picker.
+
+#### Seguridad (security delta CLOSE-1.5 — OWASP 2021)
+
+- Auditados 21 archivos: 0 CRÍTICO, 1 ALTO, 4 MEDIO, 4 BAJO, 3 INFO.
+- **SEC-S4-01 (ALTO) FIXED**: `authorize()` del cron Sheets ahora fail-closed en producción + `timingSafeEqual`.
+- **SEC-S4-07 (MEDIO) FIXED**: `writeCells` usa `valueInputOption: RAW` en lugar de `USER_ENTERED`.
+- Report: `plans/reports/security-delta-sprint-4-20260608.md`.
+
+### Tiempos reales del sprint
+
+| Bloque                                  | Estimado        | Real           |
+| --------------------------------------- | --------------- | -------------- |
+| Desarrollo (SPIKE 1-9 + E2E real OAuth) | 60-100h         | **~13h**       |
+| Cierre formal (CLOSE-1..5)              | 5h 30min + bugs | **~1h 30min**  |
+| **Total Sprint 4**                      | **65-105h**     | **~14h 30min** |
+
+### Breaking changes
+
+- NINGUNO.
+
+### Migraciones SQL
+
+- `supabase/migrations/20260527000000_sheet_connections.sql`
+- `supabase/migrations/20260527000002_sheets_writeback_trigger.sql`
+- `supabase/migrations/20260603100000_*` (campos autogenerados leads — aplicada local; pendiente VPS pre-deploy).
+
+### Variables de entorno
+
+- `CRON_SECRET` — **obligatoria en producción** (el endpoint `/api/internal/sheets/cron` es fail-closed sin ella). Generar con `openssl rand -base64 48`.
+- Credenciales OAuth Google por tenant (Client ID/Secret) — almacenadas cifradas en BD, no en env.
+
+### Bugs corregidos en el cierre (CLOSE-4)
+
+- **Test fix**: `tests/unit/sheets/outbox.test.ts` — mock de repositorios adaptado a Vitest 4 (clases reales en vez de `vi.fn().mockImplementation` con `new`).
+- **SEC-S4-01** + **SEC-S4-07** (ver Seguridad).
+
+### Tareas diferidas a backlog (BUG-4-XX, no bloquean)
+
+- channel_token de webhook con comparación no constant-time (MEDIO).
+- PII de leads (email/teléfono) en `error.message` propagados a UI / `last_sync_error` / warnings de coerción (MEDIO).
+
+### Validación
+
+- CLOSE-1 🟢: typecheck 0 · lint 0 · build OK · tests 321/325 (4 skip, 0 fail).
+- CLOSE-1.5 🟢: security delta sin críticos; 2 findings fixed in-session.
+- CLOSE-2 🟢: 20/20 specs E2C Playwright local (4 nuevos Sprint 4 + smoke + regresión Sprint 3).
+- Flujo funcional completo validado manualmente E2E con OAuth real (03-06-2026, 14 leads en BD).
+
+---
+
 ## [0.1.0] — 2026-05-22 🟢 Released
 
 **Sprint 0 — Hotfixes de seguridad** · rama: `feature/sp-0-sprint-0-hotfixes` → mergeada en `developer` vía PR #2 (commit `a387dfe`) · tag `v0.1.0` (commit `a387dfe`, tagger Renzo).
