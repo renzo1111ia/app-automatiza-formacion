@@ -1,6 +1,6 @@
 # dashboard-af
 
-> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
+> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08
 
 AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Sistema que orquesta flujos de captación, cualificación y conversión de leads mediante agentes de IA conversacional (voz + chat), sincronización bidireccional con CRMs (HubSpot, Zoho) y paneles de gestión por tenant.
 
@@ -67,7 +67,7 @@ dashboard-af/
 
 ## RoadMap
 
-> Fuente: `plans/RoadMap.md` · Actualizado: 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
+> Fuente: `plans/RoadMap.md` · Actualizado: 2026-06-08
 
 ### Fase 0 — Sprint 0: Hotfixes de seguridad
 

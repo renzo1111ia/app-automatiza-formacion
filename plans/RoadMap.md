@@ -2,19 +2,29 @@
 title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: "2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo."
+last_updated: "2026-06-08"
 last_updated_by: "roadmap-keeper / Claude orquestador"
 project_version: v0.4.0
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
-versioning_policy: "Sprint 0=v0.1.0 · Sprint 1=v0.2.0 · Sprint 2=v0.2.7 · Sprint 2B=v0.2.8/v0.2.9 · Sprint 3=v0.3.0-rc.1 · SP-4B (MVP GA)=v0.3.0 · Sprint 4 Sheets=v0.4.0 · Sprint 5 Zoho-entrada=v0.5.0 · Sprint 6 Refinamiento(Renzo)=v0.6.0 · Sprint 7 Costes-LLM=v0.7.0 · Sprint 8 Salesforce=v0.8.0 · Sprint 9 GoHighLevel=v0.9.0 · Sprint 10 ActiveCampaign=v0.10.0 · Sprint 11 Generalization=v0.11.0 · Sprint 12 Tier2=v0.12.x · Sprint 13 WhatsApp=v0.13.0. (Re-planificado 08-06-2026 por Javi HP: insertado Sprint 5 Zoho + Costes/Refinamiento ascendidos a sprints numerados + Sprint N = v0.N.0.)"
-sprint_0_progress: "🟢 Released v0.1.0 (merged PR #2/#4, tag a387dfe). 26 tareas dev + 2 diferidas a VPS pre-deploy. ⏱ ~11h 5min vs 118h estim (−91%). Detalle → tabla Sprint 0."
-sprint_1_progress: "🟢 Released v0.2.0 (merged PR #5, 94c035a). 24 completadas + 8 diferidas + 6 ADRs (014-019). ⏱ ~12h vs ~205h estim. ENCRYPTION_KEY crítica para deploy. Detalle → tabla Sprint 1."
-sprint_2_progress: "🟢 Released v0.2.7 (merged PR #12, a826fd6, hotfix BUG-2-01). 170 tests + 5/5 E2E VPS verdes. ⏱ ~3h 15min (−94%). Detalle → tabla Sprint 2."
-sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9 (merged PR #13, 17b2902). 193/193 Vitest + 15/15 E2E VPS verdes. ⏱ ~2h 23min (−86%). Detalle → tabla Sprint 2B."
-sprint_3_progress: "🟢 Released v0.3.0-rc.1 (merged PR #22, 30-05-2026, 24 commits). LINT-ZERO + DEPRECATIONS-DEPLOY + 4 BUG-SEC FIXED + CLOSE-1/1.5/2/4 🟢 (352/356 tests, 98.9%). ⏱ ~25h 42min (−80%). Detalle → tabla Sprint 3."
-sprint_4_progress: "🟢 Released v0.4.0 — Sprint 4 Google Sheets bidireccional CERRADO 08-06-2026. CLOSE-1/1.5/2/4 🟢 (321/325 tests, 20/20 E2C, security delta 0 críticos + 2 fixes). Flujo bidireccional validado E2E real OAuth (03-06). Detalle → tabla Sprint 4."
+next_sprint: "Sprint 5 — Zoho CRM entrada de leads (v0.5.0)"
+sprint_0_progress: "🟢 Released v0.1.0"
+sprint_1_progress: "🟢 Released v0.2.0"
+sprint_2_progress: "🟢 Released v0.2.7"
+sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
+sprint_3_progress: "🟢 Released v0.3.0-rc.1"
+sprint_4_progress: "🟢 Released v0.4.0"
+sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 ---
+
+<!--
+  Frontmatter compacto a propósito: solo el dato que consume `roadmap-keeper` y el
+  generador de READMEs. El detalle de cada sprint (PRs, commits, tests, tiempos) vive
+  en las tablas de abajo (mapa de versiones + cuadro de mando + secciones ## Fase N).
+  Resumen del estado actual en el panel "📍 Estado actual de un vistazo" tras los badges.
+-->
+
+<!-- versioning_policy: Sprint N = v0.N.0 (excepto legacy 0/1/2/2B/3). Mapa completo en "🏁 Mapa de versiones vigente" abajo. -->
 
 <!-- Detalle por sprint en "Sprint Tracker (resumen)" más abajo + tablas por sprint + memory/MEMORY.md + RELEASE-NOTES-vX.Y.Z.md. -->
 
@@ -33,28 +43,32 @@ sprint_4_progress: "🟢 Released v0.4.0 — Sprint 4 Google Sheets bidirecciona
 
 <table>
   <tr>
-    <td align="center" width="25%">📌 Versión<br><code>v0.4.0</code></td>
-    <td align="center" width="25%">🎯 MVP GA<br><code>v0.3.0</code></td>
-    <td align="center" width="25%">📅 Fecha objetivo<br><b>22-jun-2026</b></td>
-    <td align="center" width="25%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
+    <td align="center" width="20%">📌 Versión<br><code>v0.4.0</code></td>
+    <td align="center" width="20%">🎯 MVP GA<br><code>v0.3.0</code></td>
+    <td align="center" width="20%">🔜 Próximo<br><b>Sprint 5 · Zoho</b></td>
+    <td align="center" width="20%">📅 Objetivo MVP<br><b>22-jun-2026</b></td>
+    <td align="center" width="20%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
   </tr>
 </table>
 
+<div align="center">
+
 ## 📍 Estado actual de un vistazo
 
-| Pregunta                     | Respuesta                                                                     |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| 🟢 **Último sprint cerrado** | Sprint 4 Google Sheets — `v0.4.0` (cierre formal 08-06, CLOSE-1/1.5/2/4 🟢)   |
-| ⏳ **Acción pendiente**      | Push `developer` + tag `v0.4.0` + release notes (pendiente orden del usuario) |
-| 🔜 **Siguiente hito**        | SP-4B Validación Pre-MVP (Renzo) → cierra **MVP GA `v0.3.0`**                 |
-| ✅ **Salud**                 | tests 321/325 · 20/20 E2C · security delta 0 críticos · E2E VPS 03-06 🟢 PASS |
-| 🗓️ **Planificado**           | Sprint 10 WhatsApp Tech Provider `v0.11.0` (post-MVP, no toca MVP)            |
+</div>
 
-> ⚠️ **Documento vivo**. NO editar directamente sin orden del lead — pide al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md) que lo haga.
->
-> 💡 Cada tarea/fase/sprint tiene **estimación de tiempo** y **estado**. El agente actualiza el estado automáticamente cuando arranca o termina trabajo. Cualquier dev puede consultar aquí en qué fase va el proyecto.
+| &nbsp; | &nbsp; |
+| ---: | :--- |
+| 🟢 &nbsp;**Último cerrado** | **Sprint 4 — Google Sheets** `v0.4.0` · publicado 08-06 (release + tag) |
+| 🔜 &nbsp;**En cola (próximo)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · clon de Sheets (bidireccional) |
+| 🎯 &nbsp;**Hito MVP** | SP-4B Validación Pre-MVP (Renzo) → **MVP GA `v0.3.0`** · 16-21 jun |
+| ✅ &nbsp;**Salud** | 321/325 tests · 20/20 E2C · 0 críticos seguridad · E2E VPS 03-06 🟢 PASS |
+| 🗺️ &nbsp;**En cartera** | Refinamiento · Costes-LLM · Salesforce · GHL · ActiveCampaign · WhatsApp |
 
-## 🏁 Mapa de versiones vigente (2026-06-03)
+> ⚠️ **Documento vivo.** No lo edites a mano sin orden del lead — pídeselo al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md).
+> 💡 Cada sprint lleva **versión, estado y estimación**. El agente los actualiza solo al arrancar o cerrar trabajo.
+
+## 🏁 Mapa de versiones vigente (2026-06-08)
 
 | Sprint              | Versión             | Estado                       | Notas                                                         |
 | ------------------- | ------------------- | ---------------------------- | ------------------------------------------------------------- |

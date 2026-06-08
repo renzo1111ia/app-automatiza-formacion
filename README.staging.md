@@ -1,6 +1,6 @@
 # dashboard-af · Staging
 
-> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
+> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08
 
 AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Esta rama (`staging`) contiene el código listo para QA y pruebas de aceptación previas al release en producción.
 
@@ -61,7 +61,7 @@ dashboard-af/
 
 ## Estado del proyecto
 
-> Actualizado: 2026-06-08 · Sprint 4 Google Sheets 🟢 CERRADO v0.4.0 (CLOSE-1/1.5/2/4 verdes, 2 fixes seguridad). Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). E2E VPS 03-06 🟢 PASS (0 CRIT/HIGH). Detalle por sprint en las tablas de abajo.
+> Actualizado: 2026-06-08
 
 | Sprint | Fase | Versión | Estado | % Completado | Est. total | Inicio | Fin Est. |
 |--------|------|---------|--------|-------------|-----------|--------|---------|
