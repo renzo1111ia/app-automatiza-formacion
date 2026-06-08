@@ -49,12 +49,15 @@ npm run dev
 | SP-3 | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 24-05-2026 19:55 |
 | SP-4 | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | — |
 | SP-5 | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | — |
-| SP-6 | v0.6.0 | 🔘 Pendiente | — |
+| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | — |
+| SP-6 (Refinamiento) | v0.6.0 | 🔘 Pendiente | — |
 | SP-7 | v0.7.0 | 🔘 Pendiente | — |
 | SP-8 | v0.8.0 | 🔘 Pendiente | — |
-| SP-9 | v0.9.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) | — |
-| SP-10 | v0.10.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | — |
-| SP-11 (offset +1) | v0.11.0 | 🔘 Pendiente | — |
+| SP-9 | v0.9.0 | 🔘 Pendiente | — |
+| SP-10 | v0.10.0 | 🔘 Pendiente | — |
+| SP-11 | v0.11.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-10 completos) | — |
+| SP-12 | v0.12.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | — |
+| SP-13 | v0.13.0 | 🔘 Pendiente | — |
 
 > "Release date" se rellena cuando el sprint pasa a 🟢 COMPLETADA (`Fin Real` del RoadMap).
 

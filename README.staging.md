@@ -70,12 +70,15 @@ dashboard-af/
 | SP-3 | Adapter layer + 2 CRMs (MVP) | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 0% | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research) | 24-05-2026 14:00 | 27-05-2026 (5-6 días lab con paralelismo) |
 | SP-4 | Hardening | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | 100% | 2-3 sem (80h–120h) | Vie 29-05-2026 09:00 | Vie 12-06-2026 19:00 |
 | SP-5 | Google Sheets bidireccional | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | 0% | 60-100h | Mar 11-08-2026 09:00 | Vie 21-08-2026 19:00 |
-| SP-6 | Salesforce adapter | v0.6.0 | 🔘 Pendiente | 0% | 60-100h | Vie 28-08-2026 09:00 (+4 días respecto plan original — des … _ver nota↓_ | Mié 09-09-2026 19:00 |
-| SP-7 | GoHighLevel adapter | v0.7.0 | 🔘 Pendiente | 0% | 40-80h | Jue 10-09-2026 09:00 (+4 días respecto plan original) | Vie 18-09-2026 19:00 |
-| SP-8 | ActiveCampaign adapter | v0.8.0 | 🔘 Pendiente | 0% | 20-50h | Lun 21-09-2026 09:00 (+4 días respecto plan original) | Jue 24-09-2026 19:00 |
-| SP-9 | Adapter pattern generalization | v0.9.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-7 completos) | 0% | 20-40h | Vie 25-09-2026 09:00 (+4 días respecto plan original) | Mié 30-09-2026 19:00 |
-| SP-10 | Tier 2 on-demand (backlog) | v0.10.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | 0% | ~30-50h por CRM (sólo bajo pedido) | TBD (on-demand) | TBD (on-demand) |
-| SP-11 (offset +1) | WhatsApp Tech Provider Migration (Meta) | v0.11.0 | 🔘 Pendiente | 0% | ~48-72h | TBD (post-MVP, tras alta Tech Provider de la clienta en Meta) | TBD |
+| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | Zoho CRM como entrada de leads (bidireccional) | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | 0% | 10-15h realista + 5h 30min cierre | — (a definir al arrancar) | — |
+| SP-6 (Refinamiento) | Refinamiento Herramientas Internas (Renzo) | v0.6.0 | 🔘 Pendiente | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) | — | — |
+| SP-7 | Centro de costes LLM con LiteLLM + Langfuse | v0.7.0 | 🔘 Pendiente | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** | Lun 24-08-2026 09:00 (post-Sprint 6 Refinamiento v0.6.0) | Jue 27-08-2026 19:00 (3-4 días lab — sin cambio de calendario) |
+| SP-8 | Salesforce adapter | v0.8.0 | 🔘 Pendiente | 0% | 60-100h | Vie 28-08-2026 09:00 (+4 días respecto plan original — des … _ver nota↓_ | Mié 09-09-2026 19:00 |
+| SP-9 | GoHighLevel adapter | v0.9.0 | 🔘 Pendiente | 0% | 40-80h | Jue 10-09-2026 09:00 (+4 días respecto plan original) | Vie 18-09-2026 19:00 |
+| SP-10 | ActiveCampaign adapter | v0.10.0 | 🔘 Pendiente | 0% | 20-50h | Lun 21-09-2026 09:00 (+4 días respecto plan original) | Jue 24-09-2026 19:00 |
+| SP-11 | Adapter pattern generalization | v0.11.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-10 completos) | 0% | 20-40h | Vie 25-09-2026 09:00 (+4 días respecto plan original) | Mié 30-09-2026 19:00 |
+| SP-12 | Tier 2 on-demand (backlog) | v0.12.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | 0% | ~30-50h por CRM (sólo bajo pedido) | TBD (on-demand) | TBD (on-demand) |
+| SP-13 | WhatsApp Tech Provider Migration (Meta) | v0.13.0 | 🔘 Pendiente | 0% | ~48-72h | TBD (post-MVP, tras alta Tech Provider de la clienta en Meta) | TBD |
 
 
 ---
