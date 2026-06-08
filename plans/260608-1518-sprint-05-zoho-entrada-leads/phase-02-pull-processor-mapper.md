@@ -1,110 +1,124 @@
-# Fase 02 — Pull processor + lead-mapper + cola
+# Fase 02 — Webhook entrante Zoho + suscripción + procesador de evento (EVENT-DRIVEN)
 
-**Contexto:** [plan.md](plan.md) · referencia `src/lib/integrations/sheets/pull-processor.ts` + `row-mapper.ts` + `queue.ts` · reutiliza `src/lib/integrations/crm/providers/zoho.ts`
+**Contexto:** [plan.md](plan.md) · referencia `src/app/api/webhooks/google-sheets/route.ts` + `src/lib/integrations/sheets/pull-processor.ts` + `queue.ts` · reutiliza `src/lib/integrations/crm/providers/zoho.ts`
 
 ## Overview
 
-- **Prioridad:** P1
+- **Prioridad:** P1 (núcleo del sprint)
 - **Estado:** 🔘 Pendiente · depende de Fase 01
-- **Estimación:** 3-4h
-- Implementar la ingesta de leads desde Zoho: cola BullMQ + worker + processor que consulta Zoho (`searchLeads`), mapea a lead interno, INSERT/UPDATE idempotente y dispara el orchestrator.
+- **Estimación:** 4-5h
+- **El lead entra al instante**: cuando un lead entra/cambia en Zoho, Zoho hace POST a nuestro webhook → encolamos → procesamos → el lead aparece en el sistema en segundos. **Sin polling.**
 
 ## Key Insights
 
-- **No se reescribe el cliente Zoho**: se reutiliza `ZohoCRMProvider.searchLeads(criteria, page, perPage)` vía `CRMFactory.getProviderForIntegration(integrationId)`.
-- El `row-mapper.ts` de Sheets es column-letter based → **NO reutilizable**. Se crea `lead-mapper.ts` que mapea `CRMLead.fields` (objeto Zoho) → payload interno usando `field_mapping`.
-- `phone-country.ts` (Sprint 4) **sí se reutiliza** directo para el autorelleno de país.
-- Idempotencia por `zoho_lead_id` en `zoho_lead_synced` (no hash de fila).
+- **Dos vías de suscripción al evento, ambas terminan en el MISMO webhook + procesador:**
+  1. **Notifications API (v8)** — nos suscribimos programáticamente (1 clic UI). Zoho POSTea a nuestra `notify_url` al ocurrir el evento. La suscripción **caduca** (renovación en Fase 05b).
+  2. **Workflow Webhook manual** — el tenant crea una regla en su Zoho que POSTea a la misma URL. No caduca.
+- El webhook de Zoho trae los **`ids`** de los registros afectados (no el lead completo) → hacemos `provider.getLead(id)` para traer el lead y mapearlo.
+- Se reutiliza `ZohoCRMProvider` (Sprint 2) para `getLead`. El `row-mapper.ts` de Sheets NO sirve (column-letter) → `lead-mapper.ts` nuevo.
+- `phone-country.ts` (Sprint 4) se reutiliza directo.
+- Idempotencia por `zoho_lead_id` en `zoho_lead_synced`.
 
 ## Requirements
 
 **Funcionales:**
 
-- Cron/manual dispara un pull job por conexión Zoho activa.
-- El processor consulta Zoho por `Modified_Time > last_synced_at` (paginado), mapea cada lead, INSERT si nuevo / UPDATE si ya sincronizado.
-- Autorelleno: `origen='zoho_crm'`, `tipo_lead='zoho_import'`, `fecha_ingreso_crm=now`, `pais=deriveCountryFromPhone(telefono)`.
-- Tras INSERT de lead nuevo → `orchestrator.handleNewLead()`.
-- Actualizar `last_synced_at` (cursor) al final del batch.
+- Endpoint `POST /api/webhooks/zoho` que: identifica el tenant (por token en la URL/header), valida autenticidad, encola un job por cada `id` recibido, responde 200 rápido (< 2s, no procesa síncrono).
+- Worker consume el job → `provider.getLead(zoho_id)` → mapea → INSERT si nuevo / UPDATE si existe → autorelleno → `orchestrator.handleNewLead()`.
+- Suscripción Notifications API: `subscribeZohoNotifications(integrationId)` registra la `notify_url` + canal + eventos (Leads.create, Leads.edit) y persiste `channel_id`/`expiry` en `zoho_sync_connections`.
 
-**No funcionales:** dedup de jobs por `jobId = "zoho-pull-{integrationId}"`; manejo de errores Zoho (rate-limit/refresh ya cubierto por el provider); logging estructurado con PII enmascarada.
+**No funcionales:** webhook responde 200 SIEMPRE que pueda (encola y devuelve; el procesamiento es async). Validación de autenticidad obligatoria. Dedup de jobs por `jobId = "zoho-lead-{zohoId}"`. PII enmascarada en logs.
 
 ## Related Code Files
 
 **Crear:**
 
-- `src/lib/integrations/zoho-pull/lead-mapper.ts` — `mapZohoLeadToInternal(zohoLead, fieldMapping)` → `{lead, lead_cualificacion, metadata}`; `suggestFieldMapping(zohoFields)` (heurística).
-- `src/lib/integrations/zoho-pull/pull-processor.ts` — `processZohoPullJob(job)`: factory provider → searchLeads paginado → map → upsert idempotente → orchestrator → cursor.
-- `src/lib/integrations/zoho-pull/queue.ts` — BullMQ `zoho_pull_queue`, `enqueueZohoPull()`, `startZohoPullWorker()`, `stopZohoPullWorker()`.
+- `src/app/api/webhooks/zoho/route.ts` — endpoint entrante. Valida `channel_token`/secret por tenant, parsea ids, encola, responde 200.
+- `src/lib/integrations/zoho-pull/subscription.ts` — `subscribeZohoNotifications()`, `unsubscribeZohoNotifications()`, `renewZohoNotifications()` (usa Notifications API v8 vía el provider/cliente HTTP Zoho).
+- `src/lib/integrations/zoho-pull/lead-mapper.ts` — `mapZohoLeadToInternal(zohoLead, fieldMapping)` → `{lead, lead_cualificacion, metadata}`; `suggestFieldMapping()`.
+- `src/lib/integrations/zoho-pull/event-processor.ts` — `processZohoLeadEvent(job)`: `getLead(id)` → map → upsert idempotente → autorelleno → orchestrator.
+- `src/lib/integrations/zoho-pull/queue.ts` — BullMQ `zoho_lead_queue`, `enqueueZohoLeadEvent()`, `startZohoLeadWorker()`, `stopZohoLeadWorker()`.
 
 **Leer para contexto:**
 
-- `src/lib/integrations/sheets/pull-processor.ts` (estructura del flujo + autorelleno líneas ~305-328).
-- `src/lib/integrations/sheets/queue.ts` (patrón BullMQ + dedup).
-- `src/lib/integrations/crm/providers/zoho.ts` (`searchLeads`, forma de `CRMLead`).
-- `src/lib/integrations/crm/factory.ts` (`getProviderForIntegration`).
+- `src/app/api/webhooks/google-sheets/route.ts` (patrón webhook: valida canal, encola, 200 rápido).
+- `src/app/api/webhooks/crm/route.ts` (patrón HMAC + orchestrator existente).
+- `src/lib/integrations/sheets/pull-processor.ts` (autorelleno líneas ~305-328 + orchestrator).
+- `src/lib/integrations/crm/providers/zoho.ts` (`getLead`, forma `CRMLead`) + `factory.ts`.
 - `src/lib/integrations/sheets/phone-country.ts` (reutilizar `deriveCountryFromPhone`).
 
 ## Architecture
 
 ```
-cron / manual ──► enqueueZohoPull(integrationId)  (dedup jobId)
-                        │
-                  zoho_pull_queue (BullMQ)
-                        │
-                  startZohoPullWorker ──► processZohoPullJob(job)
-                        │
-        CRMFactory.getProviderForIntegration(integrationId)
-                        │
-        provider.searchLeads({Modified_Time > last_synced_at}, page…)
-                        │  por cada CRMLead
-        mapZohoLeadToInternal(lead, field_mapping)
-                        │
-        ¿zoho_lead_synced tiene zoho_lead_id?
-           ├─ no  → INSERT lead + autorelleno + zoho_lead_synced + orchestrator.handleNewLead()
-           └─ sí  → UPDATE lead (solo campos del mapping)
-                        │
-        UPDATE zoho_sync_connections.last_synced_at = max(Modified_Time)
+Lead entra/cambia en Zoho
+        │  (al instante)
+        ▼
+  Zoho POST ──► /api/webhooks/zoho?token=<por-tenant>
+        │            valida secret/token por tenant
+        │            extrae ids[], encola, responde 200 (<2s)
+        ▼
+  zoho_lead_queue (BullMQ, dedup jobId="zoho-lead-{id}")
+        │
+  startZohoLeadWorker ──► processZohoLeadEvent(job)
+        │
+  CRMFactory.getProviderForIntegration(integrationId)
+        │
+  provider.getLead(zoho_id)   ── trae el lead completo
+        │
+  mapZohoLeadToInternal(lead, field_mapping)
+        │
+  ¿zoho_lead_synced tiene zoho_lead_id?
+     ├─ no  → INSERT lead + autorelleno (origen='zoho_crm', tipo_lead='zoho_import',
+     │         fecha_ingreso_crm, pais) + zoho_lead_synced + orchestrator.handleNewLead()
+     └─ sí  → UPDATE lead (campos del mapping) + guard anti-bucle
+
+Suscripción (1 vez, al conectar desde UI):
+  subscribeZohoNotifications(integrationId)
+     → Notifications API: notify_url=/api/webhooks/zoho?token=...,
+       events=[Leads.create, Leads.edit], channel_id, expiry
+     → persiste en zoho_sync_connections
 ```
 
 ## Implementation Steps
 
-1. **`lead-mapper.ts`**: `mapZohoLeadToInternal()` recorre `field_mapping` (Zoho field → AF target), construye `lead` + `lead_cualificacion`. Default targets: `Email→email`, `Phone→telefono`, `First_Name/Last_Name→nombre`, `Lead_Status→current_stage` (con normalización al `LeadStageEnum`). `suggestFieldMapping()` heurística por nombre de campo.
-2. **`queue.ts`**: clonar el patrón de `sheets/queue.ts` con nombre `zoho_pull_queue`, misma `connection` Redis, dedup `jobId`.
-3. **`pull-processor.ts`**:
-   - Cargar `zoho_sync_connections` activas (o la del job).
-   - `provider.searchLeads()` con criterio `Modified_Time > last_synced_at`, paginar hasta agotar.
-   - Por lead: `mapZohoLeadToInternal()`, buscar en `zoho_lead_synced`.
-   - INSERT nuevo: autorelleno (`origen`, `tipo_lead`, `fecha_ingreso_crm`, `pais`), crear fila `zoho_lead_synced`, `orchestrator.handleNewLead()`.
-   - UPDATE existente: aplicar solo campos mapeados; **guard anti-bucle** (no re-disparar writeback).
-   - Actualizar cursor `last_synced_at`.
-   - try/catch por lead (un lead fallido no aborta el batch); `last_sync_error` en la conexión si falla global.
-4. **typecheck + lint** tras cada archivo.
+1. **`subscription.ts`**: `subscribeZohoNotifications()` llama Notifications API v8 (`/actions/watch` o `/notifications`) con `notify_url`, `channel_id`, `events`, `token`; persiste `channel_id`+`expiry`+`token` en `zoho_sync_connections`. `unsubscribe`/`renew` análogos.
+2. **`webhook/zoho/route.ts`**: resuelve tenant por `?token=` (o header), valida contra `zoho_sync_connections.channel_token` con `timingSafeEqual`; parsea body Zoho (`ids[]`, `operation`, `module`); por cada id `enqueueZohoLeadEvent()`; responde `200 {ok:true}` siempre que valide (no procesa síncrono). Si no valida → 403.
+3. **`lead-mapper.ts`**: `mapZohoLeadToInternal()` mapea `CRMLead.fields` → payload AF según `field_mapping`; normaliza `Lead_Status` Zoho → `LeadStageEnum` (fallback `QUALIFICATION` + warning).
+4. **`queue.ts`**: BullMQ `zoho_lead_queue`, misma `connection` Redis, dedup `jobId="zoho-lead-{zohoId}"` (evita procesar 2 veces el mismo evento).
+5. **`event-processor.ts`**: `getLead(id)`; si Zoho devuelve 404 (lead borrado) → marcar/skip; map; buscar en `zoho_lead_synced`; INSERT (autorelleno + orchestrator) o UPDATE (guard anti-bucle).
+6. typecheck + lint tras cada archivo.
 
 ## Todo List
 
-- [ ] `lead-mapper.ts` (`mapZohoLeadToInternal` + `suggestFieldMapping`)
-- [ ] `queue.ts` (BullMQ zoho_pull_queue + worker)
-- [ ] `pull-processor.ts` (searchLeads paginado + upsert idempotente + autorelleno + orchestrator + cursor)
-- [ ] Reutilizar `deriveCountryFromPhone` de Sheets
+- [ ] `subscription.ts` (subscribe/unsubscribe/renew Notifications API)
+- [ ] `webhook/zoho/route.ts` (valida token, encola, 200 rápido)
+- [ ] `lead-mapper.ts` (`mapZohoLeadToInternal` + normalización stages)
+- [ ] `queue.ts` (BullMQ zoho_lead_queue + worker + dedup)
+- [ ] `event-processor.ts` (getLead + upsert idempotente + autorelleno + orchestrator)
+- [ ] Reutilizar `deriveCountryFromPhone`
 - [ ] typecheck + lint verdes
 
 ## Success Criteria
 
-- Un pull manual sobre un tenant con leads en Zoho inserta los leads nuevos en `lead` con autorelleno correcto.
-- Re-ejecutar el pull NO duplica (idempotencia por `zoho_lead_id`).
-- Un lead modificado en Zoho actualiza el lead interno (campos mapeados).
-- `orchestrator.handleNewLead()` se invoca solo para leads nuevos.
+- Crear un lead en Zoho → en segundos aparece en el sistema (vía webhook, sin esperar cron).
+- El webhook responde 200 en < 2s (procesamiento async en el worker).
+- Re-entrega del mismo evento NO duplica (dedup jobId + idempotencia `zoho_lead_id`).
+- Webhook con token inválido → 403 (no procesa).
+- Autorelleno correcto (`origen='zoho_crm'`, país por prefijo, etc.).
 
 ## Risk Assessment
 
-- **Normalización de stages Zoho → LeadStageEnum**: los `Lead_Status` de Zoho son texto libre del cliente. Mitigación: tabla de mapeo configurable + fallback a `QUALIFICATION` con log de warning.
-- **Volumen / rate-limit Zoho**: paginar + respetar el backoff que ya implementa el provider; cap de leads por job.
+- **Pérdida de webhook puntual** (Zoho caído / server reiniciando): mitigado por la **reconciliación diaria** de Fase 05b (red de seguridad).
+- **Suscripción caducada** sin renovar → dejan de llegar eventos: mitigado por el cron de renovación de Fase 05b.
+- **Normalización stages Zoho → LeadStageEnum**: texto libre del cliente; mapeo configurable + fallback.
+- **Webhook abierto a internet**: validación de token por tenant obligatoria (`timingSafeEqual`).
 
 ## Security Considerations
 
-- `integrationId` resuelto del tenant autenticado, nunca del input del job sin validar.
-- PII (email/teléfono) enmascarada en logs (usar helper `src/lib/security/` de Sprint 3).
+- Validación de autenticidad del webhook **obligatoria** (token por tenant, comparación constant-time). Un webhook público sin validar = inyección de leads falsos.
+- `integrationId` resuelto del registro de suscripción, nunca del body del webhook sin validar.
+- PII enmascarada en logs (helper `src/lib/security/` Sprint 3).
 
 ## Next Steps
 
-- Fase 03 añade el writeback (dirección inversa) consumiendo el outbox que el trigger llena.
+- Fase 03 (writeback dirección inversa) · Fase 05b (renovación suscripción + reconciliación diaria que respalda este webhook).

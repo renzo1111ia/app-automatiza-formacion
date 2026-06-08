@@ -1618,26 +1618,30 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | **Sprint ID**                  | `SP-5Z` (Zoho; `SP-5` es legacy de Sprint 4 Sheets)          |
 | **Versión objetivo al cierre** | `v0.5.0`                                                      |
 | **Estado del sprint**          | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) |
-| **Estimación total**           | 10-15h realista + 5h 30min cierre                            |
+| **Estimación total**           | 13-18h realista + 5h 30min cierre                            |
 | **Rama de trabajo sugerida**   | `feature/sprint-05-zoho-entrada-leads`                       |
 | **Inicio**                     | — (a definir al arrancar)                                     |
 | **Fin Est.**                   | —                                                            |
 | **Fin Real**                   | —                                                            |
 | **ADR vinculado**              | — (reutiliza adapter Zoho de Sprint 2, multi-DC)             |
+| **Plan detallado**             | [`plans/260608-1518-sprint-05-zoho-entrada-leads/plan.md`](260608-1518-sprint-05-zoho-entrada-leads/plan.md) (6 fases) |
 
-> **Origen del sprint (decisión Javi HP, 08-06-2026):** clon funcional del **Sprint 4 Google Sheets** pero con **Zoho CRM como fuente de entrada de leads**. Hasta ahora Zoho era solo destino de salida (adapter de escritura, Sprint 2 v0.2.7). Este sprint añade la dirección de **entrada**: leads originados en Zoho se sincronizan al CRM interno, y los cambios de stage se reflejan de vuelta en Zoho.
+> **Origen del sprint (decisión Javi HP, 08-06-2026):** Zoho CRM como **fuente de entrada de leads EVENT-DRIVEN**. Hasta ahora Zoho era solo destino de salida (adapter de escritura, Sprint 2 v0.2.7). Este sprint añade la dirección de **entrada instantánea**: en cuanto un lead entra/cambia en Zoho, **Zoho avisa a nuestro sistema al instante vía webhook** y el lead entra automáticamente — **sin polling**. Más writeback bidireccional de cambios de stage de vuelta a Zoho.
+>
+> **Arquitectura (decisión 08-06-2026):** webhook entrante como mecanismo principal (instantáneo), con DOS vías de suscripción — Notifications API auto (1 clic) + Workflow Webhook manual (fallback) — y **reconciliación diaria** idempotente como red de seguridad por si un webhook se pierde. El cron NO hace polling de leads: solo renueva la suscripción + reconcilia 1×/día.
 
 ### Tareas de desarrollo (Fase 5)
 
-> Alcance = paridad funcional con Sprint 4 Sheets, sustituyendo el adapter Google Sheets por el adapter Zoho existente. Tareas detalladas se desglosan al arrancar el sprint; el patrón de referencia es `src/lib/integrations/sheets/*`.
+> Patrón de referencia: `src/lib/integrations/sheets/*` (Sprint 4) + reutiliza adapter Zoho `src/lib/integrations/crm/providers/zoho.ts` (Sprint 2). Detalle por fase en el [plan](260608-1518-sprint-05-zoho-entrada-leads/plan.md).
 
 | ID    | Tarea                                                                            | Estim. | Estado       | Notas                                                                |
 | ----- | -------------------------------------------------------------------------------- | ------ | ------------ | -------------------------------------------------------------------- |
-| 6-01  | Pull de leads desde Zoho (webhook/polling) + processor de ingesta                | 3-4h   | 🔘 Pendiente | Equivale a pull-processor de Sheets. Reutiliza OAuth Zoho multi-DC   |
-| 6-02  | Writeback bidireccional (cambios de stage del lead → Zoho) + outbox             | 3-4h   | 🔘 Pendiente | Equivale a outbox-processor + writeback de Sheets                    |
-| 6-03  | Audit R-014 (`crm_write_audit`, `overwrite_with_audit`) + autorelleno de campos | 2-3h   | 🔘 Pendiente | origen, fecha_ingreso_crm, tipo_lead, país por prefijo telefónico    |
-| 6-04  | UI conexión Zoho como origen de leads + mapeo de campos + tests                 | 2-4h   | 🔘 Pendiente | Equivale al wizard de Sheets, adaptado a Zoho                        |
-| **Subtotal Fase 5 — Desarrollo** |                                                     | **10-15h** |          |                                                                      |
+| 6-01  | Capa de datos: 3 tablas (`zoho_sync_connections`, `zoho_lead_synced`, `zoho_writeback_outbox`) + trigger + RLS + Zod | 2-3h   | 🔘 Pendiente | Idempotencia por `zoho_lead_id` (sin hash de fila)                   |
+| 6-02  | **Webhook entrante Zoho** + suscripción Notifications API + event-processor      | 4-5h   | 🔘 Pendiente | Núcleo event-driven. Lead entra al instante. Reutiliza `getLead()`   |
+| 6-03  | Writeback bidireccional (cambios stage → Zoho) + outbox + audit R-014           | 2-3h   | 🔘 Pendiente | `ZohoCRMProvider.updateLead()` + `CrmWriteAuditRepository`           |
+| 6-04  | UI: activar recepción (1 clic auto + guía manual) + mapeo campos + actions       | 2-3h   | 🔘 Pendiente | Sin Picker — Zoho ya tiene OAuth (Sprint 2)                          |
+| 6-05  | Cron renovación suscripción + reconciliación diaria (red de seguridad)           | 1-2h   | 🔘 Pendiente | NO polling: renueva + reconcilia 1×/día idempotente. Fail-closed prod |
+| **Subtotal Fase 5 — Desarrollo** |                                                     | **11-16h** |          | + cierre. Total realista 13-18h                                      |
 
 ### Tareas de cierre obligatorias (Sprint 5)
 

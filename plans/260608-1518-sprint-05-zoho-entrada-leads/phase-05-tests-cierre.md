@@ -1,13 +1,13 @@
-# Fase 05 — Tests + cierre del sprint (CLOSE-1/1.5/2/4/5)
+# Fase 06 — Tests + cierre del sprint (CLOSE-1/1.5/2/4/5)
 
 **Contexto:** [plan.md](plan.md) · protocolo `CLAUDE.md § "Phase/Sprint Completion Protocol"` + `plans/RoadMap.md § "Protocolo estándar de cierre"`
 
 ## Overview
 
 - **Prioridad:** P1
-- **Estado:** 🔘 Pendiente · depende de Fases 01-04
+- **Estado:** 🔘 Pendiente · depende de Fases 01-05b
 - **Estimación:** 2-3h
-- Tests unitarios del pull/writeback/mapper + protocolo de cierre estándar del proyecto + bump SemVer a `v0.5.0`.
+- Tests unitarios del webhook/event-processor/mapper/writeback + protocolo de cierre estándar + bump SemVer a `v0.5.0`. **Foco event-driven:** tests del webhook entrante (validación token, encolado, dedup) + idempotencia.
 
 ## Key Insights
 
@@ -25,10 +25,11 @@
 
 **Crear:**
 
-- `tests/unit/zoho-pull/lead-mapper.test.ts`
-- `tests/unit/zoho-pull/pull-processor.test.ts`
-- `tests/unit/zoho-pull/outbox.test.ts` (mock con clases reales)
-- `tests/e2e/sprint-5-close/zoho-access-control.spec.ts` (página exige auth + cron fail-closed)
+- `tests/unit/zoho-pull/lead-mapper.test.ts` (mapeo Zoho→AF + normalización stages)
+- `tests/unit/zoho-pull/event-processor.test.ts` (getLead → upsert idempotente + autorelleno)
+- `tests/unit/zoho-pull/outbox.test.ts` (writeback, mock con clases reales — Vitest 4)
+- `tests/unit/zoho-pull/webhook.test.ts` (valida token, encola, dedup, 403 si token inválido)
+- `tests/e2e/sprint-5-close/zoho-access-control.spec.ts` (página exige auth + **webhook rechaza token inválido** + cron fail-closed)
 
 **Actualizar:**
 

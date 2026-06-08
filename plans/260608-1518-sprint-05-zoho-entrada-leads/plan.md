@@ -1,9 +1,9 @@
 ---
 title: "Sprint 5 — Zoho CRM como entrada de leads (bidireccional)"
-description: "Pull de leads desde Zoho al CRM interno + writeback bidireccional de cambios de stage. Clon funcional del Sprint 4 Google Sheets reutilizando el adapter Zoho de Sprint 2."
+description: "Ingesta EVENT-DRIVEN de leads desde Zoho (webhook instantáneo, sin polling) + writeback bidireccional de cambios de stage. Reutiliza el adapter Zoho de Sprint 2. Patrón de referencia: Sprint 4 Sheets."
 status: pending
 priority: P1
-effort: 10-15h
+effort: 13-18h
 version_target: v0.5.0
 branch: feature/sprint-05-zoho-entrada-leads
 sprint_id: SP-5Z
@@ -22,26 +22,31 @@ blocks: []
 
 ## Objetivo
 
-Hasta ahora Zoho era solo **destino de salida** (push de leads del CRM interno → Zoho, Sprint 2). Este sprint añade la dirección de **entrada**: leads originados en Zoho se sincronizan al CRM interno (pull), y los cambios de stage del lead interno se reflejan de vuelta en Zoho (writeback). Paridad funcional con el Sprint 4 Google Sheets.
+Hasta ahora Zoho era solo **destino de salida** (push de leads del CRM interno → Zoho, Sprint 2). Este sprint añade la dirección de **entrada EVENT-DRIVEN**: en cuanto un lead entra (o se modifica) en Zoho, **Zoho avisa a nuestro sistema al instante** vía webhook y el lead entra automáticamente — sin polling, sin esperar a un cron. Además, los cambios de stage del lead interno se reflejan de vuelta en Zoho (writeback bidireccional).
 
-## Decisión de arquitectura
+## Decisión de arquitectura (EVENT-DRIVEN — decisión Javi HP 08-06-2026)
 
-- **PULL periódico por cron** (no webhook en MVP del sprint): el adapter Zoho ya tiene `searchLeads(criteria)` — se consulta `Modified_Time > last_synced_at` cada N minutos. Webhook Zoho entrante = mejora opcional (Fase 5 / backlog).
-- **Idempotencia por `zoho_lead_id`** (Zoho ya da IDs únicos — más simple que el hash de fila de Sheets).
+- **Entrada instantánea por webhook, NO polling.** En cuanto un lead entra/cambia en Zoho → Zoho hace POST a nuestro endpoint → el lead entra en el sistema en segundos.
+- **Dos vías de suscripción al evento (ambas soportadas):**
+  - **Principal — Notifications API (Zoho v8):** nuestra app se suscribe programáticamente a eventos del módulo Leads con 1 clic en la UI (patrón idéntico a Sheets `setupWatch`). La suscripción caduca → cron de **renovación** (NO de polling de leads).
+  - **Fallback — Workflow Webhook manual:** el tenant configura en su panel Zoho una regla "al crear/editar Lead → POST a nuestra URL" siguiendo una guía. No caduca. Para tenants que lo prefieran o no puedan dar permisos de Notifications API.
+- **Red de seguridad — reconciliación diaria:** 1 pull idempotente al día (`searchLeads` por `Modified_Time`) que recupera cualquier lead que el webhook se haya perdido (Zoho caído, server reiniciando). NO es el mecanismo principal — es solo backstop. Idempotente, no duplica.
+- **Idempotencia por `zoho_lead_id`** (Zoho da IDs únicos — más simple que el hash de fila de Sheets). El webhook trae el/los `id`; hacemos `getLead(id)` para traer el lead completo.
 - **Writeback** vía `ZohoCRMProvider.updateLead()` + outbox + trigger SQL (patrón Sheets).
 - **Audit R-014** reutiliza `CrmWriteAuditRepository` con `crm_type='zoho'`, `write_policy='overwrite_with_audit'`.
 
 ## Fases
 
-| #   | Fase                                        | Archivo                                         | Estim. | Estado       |
-| --- | ------------------------------------------- | ----------------------------------------------- | ------ | ------------ |
-| 01  | Capa de datos (migraciones SQL + tipos Zod) | [phase-01](phase-01-capa-datos-migraciones.md)  | 2-3h   | 🔘 Pendiente |
-| 02  | Pull processor + lead-mapper + cola         | [phase-02](phase-02-pull-processor-mapper.md)   | 3-4h   | 🔘 Pendiente |
-| 03  | Writeback bidireccional + trigger + audit   | [phase-03](phase-03-writeback-trigger-audit.md) | 2-3h   | 🔘 Pendiente |
-| 04  | UI configuración + Server Actions           | [phase-04](phase-04-ui-actions.md)              | 2-3h   | 🔘 Pendiente |
-| 05  | Tests + cierre (CLOSE-1/1.5/2/4/5)          | [phase-05](phase-05-tests-cierre.md)            | 2-3h   | 🔘 Pendiente |
+| #   | Fase                                                                             | Archivo                                             | Estim. | Estado       |
+| --- | -------------------------------------------------------------------------------- | --------------------------------------------------- | ------ | ------------ |
+| 01  | Capa de datos (migraciones SQL + tipos Zod)                                      | [phase-01](phase-01-capa-datos-migraciones.md)      | 2-3h   | 🔘 Pendiente |
+| 02  | **Webhook entrante Zoho** + suscripción Notifications API + procesador de evento | [phase-02](phase-02-pull-processor-mapper.md)       | 4-5h   | 🔘 Pendiente |
+| 03  | Writeback bidireccional + trigger + audit                                        | [phase-03](phase-03-writeback-trigger-audit.md)     | 2-3h   | 🔘 Pendiente |
+| 04  | UI configuración (auto-suscripción + guía manual) + Server Actions               | [phase-04](phase-04-ui-actions.md)                  | 2-3h   | 🔘 Pendiente |
+| 05  | Cron renovación suscripción + reconciliación diaria (red de seguridad)           | [phase-05b](phase-05b-renovacion-reconciliacion.md) | 1-2h   | 🔘 Pendiente |
+| 06  | Tests + cierre (CLOSE-1/1.5/2/4/5)                                               | [phase-05](phase-05-tests-cierre.md)                | 2-3h   | 🔘 Pendiente |
 
-**Total:** 11-16h dev + cierre (dentro del rango 10-15h realista).
+**Total:** 13-19h dev + cierre.
 
 ## Dependencias
 

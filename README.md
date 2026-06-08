@@ -325,15 +325,16 @@ dashboard-af/
 | Sprint ID | SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) |
 | Versión objetivo | v0.5.0 |
 | Estado | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) |
-| Estimación total | 10-15h realista + 5h 30min cierre |
+| Estimación total | 13-18h realista + 5h 30min cierre |
 | Rama sugerida | feature/sprint-05-zoho-entrada-leads |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| 6-01 | Pull de leads desde Zoho (webhook/polling) + processor de ingesta | 3-4h | 🔘 Pendiente |
-| 6-02 | Writeback bidireccional (cambios de stage del lead → Zoho) + outbox | 3-4h | 🔘 Pendiente |
-| 6-03 | Audit R-014 (`crm_write_audit`, `overwrite_with_audit`) + autorelleno de campos | 2-3h | 🔘 Pendiente |
-| 6-04 | UI conexión Zoho como origen de leads + mapeo de campos + tests | 2-4h | 🔘 Pendiente |
+| 6-01 | Capa de datos: 3 tablas (`zoho_sync_connections`, `zoho_lead_synced`, `zoho_writeback_outbox`) + trigger + RLS + Zod | 2-3h | 🔘 Pendiente |
+| 6-02 | **Webhook entrante Zoho** + suscripción Notifications API + event-processor | 4-5h | 🔘 Pendiente |
+| 6-03 | Writeback bidireccional (cambios stage → Zoho) + outbox + audit R-014 | 2-3h | 🔘 Pendiente |
+| 6-04 | UI: activar recepción (1 clic auto + guía manual) + mapeo campos + actions | 2-3h | 🔘 Pendiente |
+| 6-05 | Cron renovación suscripción + reconciliación diaria (red de seguridad) | 1-2h | 🔘 Pendiente |
 
 ##### Tareas de cierre — Sprint 5
 
@@ -553,7 +554,7 @@ dashboard-af/
 | 2 | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 0 | 0% | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research) |
 | 3 | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | 8 | 100% | 2-3 sem (80h–120h) |
 | 4 | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | 0 | 0% | 60-100h |
-| 5 | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | 4 | 0% | 10-15h realista + 5h 30min cierre |
+| 5 | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | 5 | 0% | 13-18h realista + 5h 30min cierre |
 | 6 | v0.6.0 | 🔘 Pendiente | 0 | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
 | 7 | v0.7.0 | 🔘 Pendiente | 0 | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
 | 8 | v0.8.0 | 🔘 Pendiente | 6 | 0% | 60-100h |

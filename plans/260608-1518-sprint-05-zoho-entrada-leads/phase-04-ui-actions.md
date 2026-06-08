@@ -21,8 +21,11 @@
 
 - Página `/dashboard/settings/integrations/zoho-pull` (o pestaña dentro de la sección Zoho existente).
 - Mostrar si Zoho está conectado (si no → CTA a conectar OAuth, Sprint 2).
-- Configurar: criterio de pull, `field_mapping` (editor), toggle `writeback_enabled`, toggle `is_active`.
-- Botón "Sincronizar ahora" (pull manual) + estado de última sync + `last_sync_error`.
+- **Activar entrada instantánea** — dos vías que el tenant elige:
+  - **Automática (1 clic):** botón "Activar recepción de leads" → `subscribeZohoNotificationsAction()` (Notifications API). Muestra estado de la suscripción + cuándo se renueva.
+  - **Manual (guía):** desplegable con la URL del webhook (`/api/webhooks/zoho?token=…`) + pasos para crear la regla de workflow en el panel Zoho. Para tenants que no puedan/quieran la suscripción automática.
+- Configurar: `field_mapping` (editor), toggle `writeback_enabled`, toggle `is_active`.
+- Estado: última recepción de lead + `last_sync_error` + botón "Reconciliar ahora" (dispara reconciliación manual, no polling continuo).
 
 **No funcionales:** auth obligatoria (Server Actions resuelven tenant del usuario, nunca aceptan `tenant_id` del cliente); WCAG 2.2 AA en la página.
 
@@ -30,7 +33,7 @@
 
 **Crear:**
 
-- `src/lib/integrations/zoho-pull/actions.ts` — Server Actions: `getZohoSyncStatusAction`, `saveZohoSyncConfigAction` (criterio + mapping), `toggleZohoSyncActiveAction`, `toggleZohoWritebackAction`, `triggerManualZohoPullAction`, `suggestZohoFieldMappingAction`.
+- `src/lib/integrations/zoho-pull/actions.ts` — Server Actions: `getZohoSyncStatusAction`, `saveZohoSyncConfigAction` (mapping), `subscribeZohoNotificationsAction` (1 clic → Notifications API, Fase 02), `unsubscribeZohoNotificationsAction`, `getZohoWebhookUrlAction` (devuelve la URL para la config manual), `toggleZohoSyncActiveAction`, `toggleZohoWritebackAction`, `triggerZohoReconciliationAction` (reconciliación manual, NO polling), `suggestZohoFieldMappingAction`.
 - `src/app/dashboard/settings/integrations/zoho-pull/page.tsx` — Server Component, carga estado.
 - `src/app/dashboard/settings/integrations/zoho-pull/ZohoSyncClient.tsx` — Client Component: config + estado + botón sync.
 - `src/app/dashboard/settings/integrations/zoho-pull/ZohoFieldMappingEditor.tsx` — editor de mapeo Zoho field → AF target.

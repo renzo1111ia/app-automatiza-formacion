@@ -33,7 +33,8 @@
 
 - `src/lib/integrations/zoho-pull/writeback.ts` — `writeBackLeadChangeToZoho(tenantId, leadId, {changes})`: resuelve `zoho_lead_id` desde `zoho_lead_synced`, mapea cambios AF → campos Zoho, `provider.updateLead()`, devuelve `WrittenAudit[]`.
 - `src/lib/integrations/zoho-pull/outbox-processor.ts` — `runZohoWritebackOutbox()`: reclama batch, procesa, audit, marca done/failed.
-- `src/app/api/internal/zoho-pull/cron/route.ts` — endpoint cron protegido (`CRON_SECRET`, **fail-closed en prod** como SEC-S4-01) que dispara `runZohoWritebackOutbox()` + opcionalmente `enqueueZohoPull()` para el pull periódico.
+
+> **Nota:** el endpoint cron que dispara `runZohoWritebackOutbox()` se crea en la **Fase 05b** (`/api/internal/zoho-pull/cron`), donde se orquesta junto con la renovación de suscripción y la reconciliación diaria. Esta fase deja `runZohoWritebackOutbox()` listo para ser invocado desde ahí.
 
 **Leer para contexto:**
 
