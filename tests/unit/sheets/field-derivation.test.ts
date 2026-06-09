@@ -30,6 +30,23 @@ describe("deriveCountryFromPhone", () => {
     expect(deriveCountryFromPhone(null)).toBeNull();
     expect(deriveCountryFromPhone("abc")).toBeNull();
   });
+
+  // BUG-5-04: prefijo internacional con doble cero (0034) y números demasiado
+  // cortos. Regla de negocio Javi HP (08-06-2026): teléfono sin código de país
+  // = España; "00" equivale a "+".
+  it("BUG-5-04: prefijo 0034 (doble cero) deriva España", () => {
+    expect(deriveCountryFromPhone("0034611223344")).toBe("España");
+  });
+  it("BUG-5-04: prefijo 0052 (doble cero) deriva México", () => {
+    expect(deriveCountryFromPhone("0052 55 1234 5678")).toBe("México");
+  });
+  it("BUG-5-04: menos de 7 dígitos → null (no es un teléfono)", () => {
+    expect(deriveCountryFromPhone("12345")).toBeNull();
+    expect(deriveCountryFromPhone("+34 123")).toBeNull();
+  });
+  it("BUG-5-04: número con espacios/guiones sin prefijo → España", () => {
+    expect(deriveCountryFromPhone("611 22 33 44")).toBe("España");
+  });
 });
 
 function mappingWith(targets: string[]): ColumnMapping {

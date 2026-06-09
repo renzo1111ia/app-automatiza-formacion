@@ -62,6 +62,8 @@ async function handleStart(context: RouteContext): Promise<NextResponse> {
     {
       tenant_id: tenantId,
       crm_type: providerKey,
+      display_name:
+        providerKey === "zoho" ? "Zoho CRM" : providerKey === "hubspot" ? "HubSpot" : providerKey,
       is_active: false,
       oauth_state: state,
     },

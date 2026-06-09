@@ -12,6 +12,85 @@ Estados oficiales de un release:
 
 ---
 
+## [0.5.0] — 2026-06-08 🟡 In progress
+
+**Sprint 5 — Zoho CRM como entrada de leads (event-driven)** · rama: `feature/sprint-05-zoho-entrada-leads` → PR a `developer` (sin merge aún) · tag `v0.5.0` pendiente.
+
+### Resumen
+
+Zoho CRM pasa de ser solo destino de salida (push, Sprint 2) a ser **fuente de entrada instantánea de leads**: en cuanto un lead entra o cambia en Zoho, Zoho avisa al sistema vía webhook y el lead entra en segundos — **sin polling**. Más writeback bidireccional de cambios de stage de vuelta a Zoho, con audit R-014.
+
+### Highlights
+
+- ⚡ **Entrada event-driven** (no polling): lead en Zoho → `POST /api/webhooks/zoho` → lead en el sistema en segundos.
+- 🔌 **Dos vías de suscripción**: Notifications API v8 (auto, 1 clic, caduca 7d con renovación por cron) + Workflow Webhook manual (lo crea el tenant en su Zoho, no caduca).
+- 🛡️ **Red de seguridad**: reconciliación diaria idempotente que recupera leads que el webhook pierda (Zoho caído / reinicio).
+- 🔁 **Writeback bidireccional** de cambios de stage → Zoho vía `updateLead` + outbox + audit R-014.
+- ♻️ **Idempotencia** por `zoho_lead_id` + guard anti-bucle pull↔writeback en 3 capas (trigger SQL `app.zoho_pull_in_progress` + RPC `zoho_pull_update_lead` + comparación `Modified_Time`).
+- 🖥️ **UI admin** `/dashboard/settings/integrations/zoho-pull`: activación 1 clic, guía manual con URL del webhook, editor de mapeo de campos, toggles, "Sincronizar ahora".
+
+### Detalle por área
+
+#### Capa de datos
+
+- Tablas nuevas `zoho_sync_connections`, `zoho_lead_synced`, `zoho_writeback_outbox` con RLS multi-tenant.
+- Trigger `tr_lead_changes_to_zoho_writeback()` + RPC `zoho_pull_update_lead()` con guard anti-bucle. Funciones `SECURITY DEFINER` con `search_path` fijado.
+
+#### Integraciones
+
+- `src/lib/integrations/zoho-pull/*`: subscription, lead-mapper, queue (BullMQ `zoho_lead_queue`), event-processor, writeback, outbox-processor, maintenance.
+- Reutiliza el adapter Zoho de Sprint 2 (`crm/providers/zoho.ts`, OAuth multi-DC) + `deriveCountryFromPhone` de Sprint 4.
+- Scope nuevo `ZohoCRM.notifications.ALL` añadido a `REQUIRED_SCOPES`.
+
+#### Seguridad
+
+- Webhook con validación de token por tenant (`timingSafeEqual`, 403 si inválido).
+- Cron `/api/internal/zoho-pull/cron` fail-closed en producción (`CRON_SECRET` + `timingSafeEqual`).
+- Security delta OWASP 2021: 0 críticos, 0 altos. Fixes BAJO/MEDIO aplicados (search_path, error genérico en cron). 3 medios al backlog Sprint 6.
+
+### Fixes en validación E2E real (cuenta Zoho de Javi HP, DC `.eu`, org `20115313796`)
+
+- **BUG-5-01** — Workflow Webhook de Zoho envía el id del registro en el **header `Entity_id`** (body vacío, form-urlencoded), no en el body JSON. Sin leerlo, la vía manual quedaba rota en silencio (Zoho marcaba "1 correcto"). `extractWebhook` ahora lee header + query + body (form/json) y soporta **campos inline** del lead (entra completo sin OAuth).
+- **BUG-5-02** — El webhook se colgaba si Redis tardaba (await enqueue infinito). Timeout duro de 2s + responde 200 igual; la reconciliación recupera lo que falte.
+- **BUG-5-03** — `Lead_Source` de Zoho pisaba `origen`. Ahora mapea a `campana`; `origen` lo fija el processor a `zoho_crm`.
+- **BUG-5-04** — `deriveCountryFromPhone` fallaba en runtime. Reescrito robusto: España por defecto sin prefijo (`+34`/`0034` cubiertos), fallback por prefijo (ES + Latam), `<7` dígitos → null.
+- **BUG-5-05** — `channel_id` de la Notifications API se generaba fuera del rango de `crypto.randomInt`. Fix: `timestamp + 6 dígitos` (numérico, dentro de BIGINT).
+- **BUG-5-06** — Faltaba el constraint `UNIQUE(tenant_id, crm_type)` en `integrations` (bug preexistente Sprint 2): el `upsert ... onConflict` del OAuth start fallaba. Nueva migración idempotente.
+- **BUG-5-07** — `auth/start` no seteaba `display_name` (NOT NULL).
+
+### UI / Documentación
+
+- **Selector "una u otra"** de vía de activación (automática / manual) con banner de estado + badge "Activa" + botones desactivar; botón **"Desconectar Zoho"**.
+- **Guías de integración rediseñadas a HTML claro**: la plantilla genérica `/docs/integrations/[slug]` ahora renderiza el markdown con estilos de marca (cabecera con gradiente, callouts con icono, tablas con cabecera + zebra, dark mode). Aplica a las guías de Zoho (webhook manual) y Google Sheets sin duplicar contenido.
+
+### Migraciones SQL
+
+- `supabase/migrations/20260608153000_zoho_sync_connections.sql`
+- `supabase/migrations/20260608153100_zoho_writeback_trigger.sql`
+- `supabase/migrations/20260608153200_zoho_pull_guarded_update.sql`
+- `supabase/migrations/20260608153300_integrations_unique_tenant_crm.sql` (BUG-5-06)
+
+### Variables de entorno nuevas
+
+- Ninguna nueva obligatoria. Reutiliza `ZOHO_CLIENT_ID/SECRET`, `CRON_SECRET`, `NEXT_PUBLIC_APP_URL`/`NGROK_URL` (ya existentes).
+
+### Breaking changes
+
+- NINGUNO.
+
+### Tests
+
+- Tests unitarios nuevos (lead-mapper, webhook + header `Entity_id` + inline_leads, outbox, event-processor, subscription `channel_id`, `deriveCountryFromPhone` `+34`/`0034`/`<7`) + spec E2C de control de acceso. Suite total: **410 passed | 4 skipped**.
+
+### Validado E2E real (cuenta Zoho de Javi HP, DC `.eu`)
+
+- **Vía A webhook** (id en header `Entity_id`, con y sin campos inline) → leads entraron. ✅
+- **Vía B OAuth + getLead** → lead real "Javi HP" traído de Zoho `.eu` e insertado. ✅
+- OAuth real conectado, tokens cifrados, país derivado del prefijo. ✅
+- Suscripción automática (Notifications API): código completo + `channel_id` corregido; E2E 100% pendiente por limitación del worker standalone en el entorno de prueba (en producción, worker dentro de Next, funciona).
+
+---
+
 ## [0.4.0] — 2026-06-08 🟢 Released
 
 **Sprint 4 — Google Sheets bidireccional (post-MVP)** · rama: `feature/sprint-04-google-sheets` → mergeada en `developer` (PR #20 SPIKE Pull-only `29-05` + merge flujo bidireccional `f89aab9` `03-06`) · tag `v0.4.0`.

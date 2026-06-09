@@ -64,6 +64,9 @@ const REQUIRED_SCOPES = [
   "ZohoCRM.modules.tasks.WRITE",
   "ZohoCRM.modules.events.WRITE",
   "ZohoCRM.settings.fields.READ",
+  // Sprint 5 — entrada de leads event-driven: necesario para auto-suscribir
+  // a Notifications API (/crm/v8/actions/watch) sobre el módulo Leads.
+  "ZohoCRM.notifications.ALL",
 ];
 
 // ───────────────────────────────────────────────────────────────────────────
