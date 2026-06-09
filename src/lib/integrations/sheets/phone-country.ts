@@ -51,19 +51,83 @@ export function deriveCountryFromPhone(
 ): string | null {
   if (!phone || String(phone).trim() === "") return null;
 
-  // Normalizar: el row-mapper ya quita todo menos dígitos y "+". Si no tiene
-  // "+", anteponerlo solo si parece prefijo internacional (heurística mínima);
-  // libphonenumber se encarga del resto con defaultCountry.
   const raw = String(phone).trim();
-  const withPlus = raw.startsWith("+") ? raw : raw.length > 9 ? `+${raw}` : raw;
+  // Cuántos dígitos reales tiene (ignora "+", espacios, guiones). Un teléfono
+  // nacional tiene al menos ~7 dígitos; menos que eso = no es un teléfono.
+  const digitCount = raw.replace(/\D/g, "").length;
+  if (digitCount < 7) return null;
+
+  // Si NO trae prefijo internacional "+", se asume el país por defecto (ES = +34).
+  // Regla de negocio (08-06-2026): un número sin código de país se trata como
+  // español. En ese caso devolvemos directamente el país por defecto sin depender
+  // de la validación estricta de libphonenumber (que rechaza algunos móviles).
+  const hasIntlPrefix = raw.startsWith("+") || raw.startsWith("00");
+  if (!hasIntlPrefix) {
+    return COUNTRY_ES[defaultCountry] ?? defaultCountry;
+  }
 
   try {
-    const parsed = parsePhoneNumberFromString(withPlus, defaultCountry);
-    if (!parsed || !parsed.isValid()) return null;
-    const cc = parsed.country;
-    if (!cc) return null;
-    return COUNTRY_ES[cc] ?? cc; // fallback al código ISO si no está en el mapa
+    const parsed = parsePhoneNumberFromString(raw, defaultCountry);
+    // isPossible es menos estricto que isValid (acepta móviles cuyos rangos no
+    // estén en la metadata reducida). Para derivar país basta con que el número
+    // sea plausible y tenga country detectado.
+    if (parsed && (parsed.isValid() || parsed.isPossible()) && parsed.country) {
+      return COUNTRY_ES[parsed.country] ?? parsed.country;
+    }
   } catch {
-    return null;
+    // libphonenumber puede lanzar si la metadata no está disponible en algún
+    // runtime: caemos al fallback por prefijo de abajo en vez de devolver null.
   }
+
+  // Fallback por prefijo conocido (cubre fallos de libphonenumber). Mapea los
+  // códigos de país más comunes del mercado AF (ES + Latam) a su nombre.
+  const country = countryFromDialPrefix(raw);
+  if (country) return country;
+
+  // Último recurso: si empieza por "+" pero no reconocemos el prefijo, no
+  // inventamos país (podría ser cualquier país). Devolvemos null.
+  return null;
+}
+
+// Prefijos telefónicos internacionales → país (ES + Latam + comunes). Respaldo
+// determinista cuando libphonenumber no resuelve.
+const DIAL_PREFIX: Array<[string, string]> = [
+  ["34", "España"],
+  ["52", "México"],
+  ["54", "Argentina"],
+  ["57", "Colombia"],
+  ["56", "Chile"],
+  ["51", "Perú"],
+  ["593", "Ecuador"],
+  ["58", "Venezuela"],
+  ["502", "Guatemala"],
+  ["591", "Bolivia"],
+  ["1809", "República Dominicana"],
+  ["1829", "República Dominicana"],
+  ["1849", "República Dominicana"],
+  ["504", "Honduras"],
+  ["595", "Paraguay"],
+  ["503", "El Salvador"],
+  ["505", "Nicaragua"],
+  ["506", "Costa Rica"],
+  ["507", "Panamá"],
+  ["598", "Uruguay"],
+  ["1787", "Puerto Rico"],
+  ["1", "Estados Unidos"],
+  ["351", "Portugal"],
+  ["33", "Francia"],
+  ["39", "Italia"],
+  ["49", "Alemania"],
+  ["44", "Reino Unido"],
+];
+
+function countryFromDialPrefix(raw: string): string | null {
+  const digits = raw.replace(/^\+/, "").replace(/^00/, "").replace(/\D/g, "");
+  if (!digits) return null;
+  // Ordenar por longitud de prefijo descendente para que "1809" gane a "1".
+  const sorted = [...DIAL_PREFIX].sort((a, b) => b[0].length - a[0].length);
+  for (const [prefix, name] of sorted) {
+    if (digits.startsWith(prefix)) return name;
+  }
+  return null;
 }
