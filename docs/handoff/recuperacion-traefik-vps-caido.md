@@ -105,6 +105,45 @@ cd /etc/dokploy/compose/dev-automatiza-formacion-supabase-*/code
 docker compose -f infra/supabase-vps/docker-compose.yml up -d
 ```
 
+> ⚠️ **NO ejecutes `docker compose up` sin `-f infra/supabase-vps/docker-compose.yml`.**
+> El `docker-compose.yml` en la RAÍZ de ese `code/` define `dashboard`+`worker`+`redis`
+> (la app, con `build: Dockerfile`), NO el stack Supabase. Un `up` a secas en ese
+> directorio dispara `npm run build` y falla (`exit code 1`). El stack Supabase real
+> vive SIEMPRE en `infra/supabase-vps/docker-compose.yml` (verificado 09-06-2026:
+> `supabase-db` tiene label `config_files=.../code/infra/supabase-vps/docker-compose.yml`).
+
+### Caso `supabase-db` Exited → auth/storage/realtime en bucle (incidente 09-06-2026 PM)
+
+Síntoma: `supabase-auth`/`storage`/`realtime` en **Restarting** con log
+`hostname resolving error (lookup supabase-db ...: server misbehaving)`. Causa:
+**`supabase-db` quedó `Exited (255)`** tras el crash y nadie lo relevantó →
+los demás no resuelven su hostname (no está en la red). Fix rápido sin redeploy:
+
+```bash
+docker start supabase-db          # arranca en ~12s → "Up (healthy)"
+sleep 25                          # auth/storage reintentan solos y se recuperan
+docker ps -a --format '{{.Names}}\t{{.Status}}' | grep -E 'supabase|realtime'
+```
+
+Verás `supabase-db`, `supabase-auth` y `supabase-storage` → **healthy**.
+`realtime-dev` puede seguir en bucle por un fallo propio de migraciones
+(`invalid_schema_name: no schema has been selected`) y `supabase-vector` quedar
+`unhealthy` (logging) — **ninguno de los dos es crítico** para login/app/leads.
+
+**Fix de `realtime-dev`** (causa confirmada 09-06-2026): el contenedor arranca con
+`DB_AFTER_CONNECT_QUERY=SET search_path TO _realtime`, pero en la DB solo existe el
+schema `realtime` (sin guion bajo), no `_realtime`. La forma correcta de arreglarlo es
+**redeploy del stack supabase** (re-ejecuta los init scripts oficiales que crean
+`_realtime`):
+
+```bash
+cd /etc/dokploy/compose/dev-automatiza-formacion-supabase-*/code
+docker compose -f infra/supabase-vps/docker-compose.yml up -d --force-recreate realtime-dev.supabase-realtime
+```
+
+(Evitar crear el schema a mano en la DB de prod salvo emergencia — preferir el init
+script oficial.)
+
 ---
 
 ## 5. Si Traefik corre pero los puertos siguen sin responder → firewall Hetzner
