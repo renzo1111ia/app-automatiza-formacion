@@ -2,10 +2,10 @@
 title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: "2026-06-10"
+last_updated: "2026-06-10 22:15 UTC"
 last_updated_by: "roadmap-keeper / Claude orquestador"
 sprint_4b_progress: "🟢 Cerrado de facto (Renzo) vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario"
-project_version: v0.4.0
+project_version: v0.5.1
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
 next_sprint: "Sprint 6 — Llamadas de Voz (v0.6.0) 🆕"
@@ -15,7 +15,7 @@ sprint_2_progress: "🟢 Released v0.2.7"
 sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
 sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
-sprint_5_progress: "🟡 Mergeado a developer (PR #25) · deploy a staging/main diferido · sin tag v0.5.0"
+sprint_5_progress: "🟢 Released v0.5.1 (tag + release GitHub + RLS hardening + Zoho event-driven)"
 sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Renzo"
 ---
 
@@ -82,7 +82,7 @@ sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Ren
 | Sprint 3            | `v0.3.0-rc.1`       | 🟢 Released (PR #22, 30-may) | Hardening · Pino + Sentry + rate limiting + Node 22           |
 | SP-4B               | `v0.3.0` GA         | 🟢 Cerrado (de facto)        | 👤 Validación pre-MVP (Renzo) · 🟢 vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario |
 | Sprint 4            | `v0.4.0`            | 🟢 Released (08-06)          | Google Sheets bidireccional · cierre formal (CLOSE-1/1.5/2/4) |
-| Sprint 5            | `v0.5.0`            | 🟡 Mergeado (sin tag)        | **Zoho CRM entrada de leads (bidireccional)** · PR #25 a `developer` · deploy staging/main diferido |
+| Sprint 5            | `v0.5.1`            | 🟢 Released (10-06)          | **Zoho CRM entrada de leads + RLS hardening (21/21 tablas) + npm cross-platform lock fix** · tag + release GitHub · PR #25 mergeado a `developer` · deploy staging/main diferido |
 | Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | 👤 **🆕 Llamadas de Voz** (Renzo) · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
 | Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
 | Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
