@@ -412,8 +412,8 @@ async function seedAutomatizaFormacion(): Promise<{ id: string; leadsCount: numb
         version_label: "v1.0",
         prompt_text: `Prompt comercial B2B para ${a.name}. Sector: formacion ES+Latam.`,
         is_active: true,
-        model_provider: "anthropic",
-        model_name: "claude-sonnet-4-7",
+        model_provider: "openai",
+        model_name: "gpt-5.4-mini",
       }))
     );
   }
@@ -743,7 +743,7 @@ async function seedDemoAcademia(): Promise<{ id: string; leadsCount: number }> {
         prompt_text: `Placeholder prompt para ${a.name}.`,
         is_active: true,
         model_provider: "openai",
-        model_name: "gpt-4.1-mini",
+        model_name: "gpt-5.4-mini",
       }))
     );
   }
