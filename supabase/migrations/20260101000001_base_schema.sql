@@ -425,8 +425,17 @@ CREATE TABLE IF NOT EXISTS public.lead_events (
 ALTER TABLE public.lead_events ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
--- POLITICAS RLS para service_role (backend usa esta key)
+-- POLITICAS RLS
+-- service_role: acceso total (backend de confianza).
+-- authenticated: SELECT con AISLAMIENTO POR TENANT (BUG-SEC RLS-001, 10-06-2026).
+--
+-- ANTES (bug): `authenticated_read_* USING (true)` permitia a cualquier usuario
+-- authenticated leer filas de CUALQUIER tenant via anon key (IDOR multi-tenant).
+-- AHORA: cada tabla filtra por su relacion al tenant del usuario logueado.
+-- Patron: tenant_id IN (SELECT id FROM tenants WHERE auth_user_id = auth.uid()).
 -- ============================================================
+
+-- service_role_all_* para TODAS las tablas (sin cambio).
 DO $$
 DECLARE
     tbl TEXT;
@@ -446,7 +455,67 @@ BEGIN
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS "service_role_all_%I" ON public.%I', tbl, tbl);
         EXECUTE format('CREATE POLICY "service_role_all_%I" ON public.%I FOR ALL TO service_role USING (true) WITH CHECK (true)', tbl, tbl);
+        -- Limpiar cualquier authenticated_read previa (incluida la version OPEN bugueada).
         EXECUTE format('DROP POLICY IF EXISTS "authenticated_read_%I" ON public.%I', tbl, tbl);
-        EXECUTE format('CREATE POLICY "authenticated_read_%I" ON public.%I FOR SELECT TO authenticated USING (true)', tbl, tbl);
     END LOOP;
 END $$;
+
+-- authenticated_read_* FILTRADO POR TENANT, por grupo segun como se relaciona cada tabla:
+
+-- (a) Tablas con tenant_id UUID directo.
+DO $$
+DECLARE tbl TEXT;
+BEGIN
+    FOR tbl IN SELECT unnest(ARRAY[
+        'advisors','ai_agent_logs','agendamientos','appointments','campanas',
+        'conversaciones_whatsapp','intentos','intentos_llamadas','lead','lead_cualificacion',
+        'lead_programas','llamadas','notificaciones','orchestration_graphs','system_logs',
+        'voice_agents','workflows'
+    ]) LOOP
+        IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename=tbl) THEN
+            EXECUTE format(
+              'CREATE POLICY "authenticated_read_%I" ON public.%I FOR SELECT TO authenticated '
+              'USING (tenant_id IN (SELECT id FROM public.tenants WHERE auth_user_id = auth.uid()))', tbl, tbl);
+        END IF;
+    END LOOP;
+END $$;
+
+-- (b) chat_messages: tenant_id es TEXT → cast id::text.
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='chat_messages') THEN
+        CREATE POLICY "authenticated_read_chat_messages" ON public.chat_messages FOR SELECT TO authenticated
+          USING (tenant_id IN (SELECT id::text FROM public.tenants WHERE auth_user_id = auth.uid()));
+    END IF;
+END $$;
+
+-- (c) availability_slots: sin tenant_id → via advisor_id.
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='availability_slots') THEN
+        CREATE POLICY "authenticated_read_availability_slots" ON public.availability_slots FOR SELECT TO authenticated
+          USING (advisor_id IN (SELECT a.id FROM public.advisors a
+                 WHERE a.tenant_id IN (SELECT t.id FROM public.tenants t WHERE t.auth_user_id = auth.uid())));
+    END IF;
+END $$;
+
+-- (d) lead_events: sin tenant_id → via lead_id.
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='lead_events') THEN
+        CREATE POLICY "authenticated_read_lead_events" ON public.lead_events FOR SELECT TO authenticated
+          USING (lead_id IN (SELECT l.id FROM public.lead l
+                 WHERE l.tenant_id IN (SELECT t.id FROM public.tenants t WHERE t.auth_user_id = auth.uid())));
+    END IF;
+END $$;
+
+-- (e) tenants: el usuario solo ve SU propia fila (auth_user_id = auth.uid()) o admin.
+--     NO se crea authenticated_read_tenants OPEN (era el leak de anon_key/email cross-tenant).
+--     El acceso legitimo a la fila propia lo da tenants_select_owner_or_admin (definida en migracion de tenants).
+DO $$ BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='tenants') THEN
+        CREATE POLICY "authenticated_read_tenants" ON public.tenants FOR SELECT TO authenticated
+          USING (auth_user_id = auth.uid()
+                 OR COALESCE(((auth.jwt() -> 'app_metadata') ->> 'is_admin'), 'false') = 'true');
+    END IF;
+END $$;
+
+-- NOTA: programas, ai_agents, ai_agent_variants, knowledge_base, web_widgets ya definen
+-- sus propias politicas *_owner_or_admin (filtradas) en sus migraciones — no se tocan aqui.
