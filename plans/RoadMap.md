@@ -551,51 +551,51 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 >
 > **Nota fila `▸ Cierre Sprint 10 (SP-11-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
-### Sprint 10 — ActiveCampaign adapter (post-MVP)
-
-| Item                                 | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ------------------------------------ | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 10**                     | 🔘 Pendiente | 20-50h          | —      | —        | v0.10.0 · `feature/sprint-10-activecampaign` · … _ver nota↓_             |
-| ▸ Tareas de desarrollo (Fase 10)     | 🔘           | 20-50h          | —      | —        | 0/5 · auth API Key (la más sencilla)                                     |
-| ▸ Cierre Sprint 10 (SP-10-CLOSE-1..5) | 🔘          | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
-
-> **Nota fila `🚀 Sprint 10` · Notas**: v0.10.0 · `feature/sprint-10-activecampaign` · **Renumerado de Sprint 7 a Sprint 10 el 08-06-2026**
->
-> **Nota fila `▸ Cierre Sprint 10 (SP-10-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
-
-### Sprint 11 — Adapter pattern generalization
-
-| Item                                 | Estado                          | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ------------------------------------ | ------------------------------- | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 11**                     | 🔘 Bloqueado hasta SP-8..SP-10  | 20-40h          | —      | —        | v0.11.0 · `feature/sprint-11-adapter-generalization` · … _ver nota↓_     |
-| ▸ Tareas de desarrollo (Fase 11)     | 🔘                              | 20-40h          | —      | —        | 0/4                                                                       |
-| ▸ Cierre Sprint 11 (SP-11-CLOSE-1..5) | 🔘                             | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
-
-> **Nota fila `🚀 Sprint 11` · Notas**: v0.11.0 · `feature/sprint-11-adapter-generalization` · **Renumerado de Sprint 8 a Sprint 11 el 08-06-2026** · bloqueado hasta cerrar los adapters Salesforce/GHL/ActiveCampaign
->
-> **Nota fila `▸ Cierre Sprint 11 (SP-11-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
-
-### Sprint 12 — Tier 2 on-demand (backlog)
-
-| Item                                          | Estado     | Estim.         | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| --------------------------------------------- | ---------- | -------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 12**                              | 🔘 Backlog | 30-50h por CRM | —      | —        | v0.12.x · sólo bajo pedido cliente                                       |
-| ▸ CRMs Tier 2                                 | 🔘 Backlog | 30-50h c/u     | —      | —        | Clientify, Bitrix24, Pipedrive, Monday, Holded                           |
-| ▸ Cierre Sprint 12 (SP-12-CLOSE-1..5 por CRM) | 🔘 Backlog | 5h 30min/CRM   | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
-
-> **Nota fila `▸ Cierre Sprint 12 (SP-12-CLOSE-1..5 por ` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) por cada CRM activado · CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A · **Renumerado de Sprint 9 a Sprint 12 el 08-06-2026**
-
-### Sprint 13 — WhatsApp Tech Provider Migration (Meta)
+### Sprint 11 — ActiveCampaign adapter (post-MVP)
 
 | Item                                  | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
 | ------------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 13**                      | 🔘 Pendiente | 48-72h          | —      | —        | v0.13.0 · `feature/sprint-13-whatsapp-tech-provider` · … _ver nota↓_     |
-| ▸ Tareas de desarrollo (Fase 13)      | 🔘           | 48-72h          | —      | —        | 0/7 · Embedded Signup + token sistema central + dual-mode (8 fases)      |
-| ▸ Cierre Sprint 13 (SP-13-CLOSE-1..5) | 🔘           | 6h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| **🚀 Sprint 11**                      | 🔘 Pendiente | 20-50h          | —      | —        | v0.11.0 · `feature/sprint-11-activecampaign` · … _ver nota↓_             |
+| ▸ Tareas de desarrollo (Fase 11)      | 🔘           | 20-50h          | —      | —        | 0/5 · auth API Key (la más sencilla)                                     |
+| ▸ Cierre Sprint 11 (SP-12-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
-> **Nota fila `🚀 Sprint 13` · Notas**: v0.13.0 · `feature/sprint-13-whatsapp-tech-provider` · **Renumerado de Sprint 10 a Sprint 13 el 08-06-2026** (al final tras la generalización de adapters) · Migración WhatsApp del modelo manual (3 creds/tenant) a Tech Provider Meta (Embedded Signup + token sistema central + dual-mode). Plan `plans/260603-1900-sprint-10-whatsapp-tech-provider/` (8 fases) + ADR-025 (Proposed). NO toca MVP. Cuello de botella = App Review Meta (async).
+> **Nota fila `🚀 Sprint 11` · Notas**: v0.11.0 · `feature/sprint-11-activecampaign` · **Renumerado de Sprint 7 a Sprint 10 el 08-06-2026 · Renumerado de Sprint 10 a Sprint 11 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)**
 >
-> **Nota fila `▸ Cierre Sprint 13 (SP-13-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Cierre Sprint 11 (SP-12-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+
+### Sprint 12 — Adapter pattern generalization
+
+| Item                                  | Estado                           | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
+| ------------------------------------- | -------------------------------- | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 12**                      | 🔘 Bloqueado hasta SP-9..SP-11   | 20-40h          | —      | —        | v0.12.0 · `feature/sprint-12-adapter-generalization` · … _ver nota↓_     |
+| ▸ Tareas de desarrollo (Fase 12)      | 🔘                               | 20-40h          | —      | —        | 0/4                                                                       |
+| ▸ Cierre Sprint 12 (SP-13-CLOSE-1..5) | 🔘                               | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+
+> **Nota fila `🚀 Sprint 12` · Notas**: v0.12.0 · `feature/sprint-12-adapter-generalization` · **Renumerado de Sprint 8 a Sprint 11 el 08-06-2026 · Renumerado de Sprint 11 a Sprint 12 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)** · bloqueado hasta cerrar los adapters Salesforce/GHL/ActiveCampaign
+>
+> **Nota fila `▸ Cierre Sprint 12 (SP-13-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+
+### Sprint 13 — Tier 2 on-demand (backlog)
+
+| Item                                          | Estado     | Estim.         | ⏱ Push | ⏱ Cierre | Notas                                                                    |
+| --------------------------------------------- | ---------- | -------------- | ------ | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 13**                              | 🔘 Backlog | 30-50h por CRM | —      | —        | v0.13.x · sólo bajo pedido cliente                                       |
+| ▸ CRMs Tier 2                                 | 🔘 Backlog | 30-50h c/u     | —      | —        | Clientify, Bitrix24, Pipedrive, Monday, Holded                           |
+| ▸ Cierre Sprint 13 (SP-14-CLOSE-1..5 por CRM) | 🔘 Backlog | 5h 30min/CRM   | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+
+> **Nota fila `▸ Cierre Sprint 13 (SP-14-CLOSE-1..5 por ` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) por cada CRM activado · CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A · **Renumerado de Sprint 9 a Sprint 12 el 08-06-2026 · Renumerado de Sprint 12 a Sprint 13 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)**
+
+### Sprint 14 — WhatsApp Tech Provider Migration (Meta)
+
+| Item                                  | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
+| ------------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 14**                      | 🔘 Pendiente | 48-72h          | —      | —        | v0.14.0 · `feature/sprint-14-whatsapp-tech-provider` · … _ver nota↓_     |
+| ▸ Tareas de desarrollo (Fase 14)      | 🔘           | 48-72h          | —      | —        | 0/7 · Embedded Signup + token sistema central + dual-mode (8 fases)      |
+| ▸ Cierre Sprint 14 (SP-15-CLOSE-1..5) | 🔘           | 6h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+
+> **Nota fila `🚀 Sprint 14` · Notas**: v0.14.0 · `feature/sprint-14-whatsapp-tech-provider` · **Renumerado de Sprint 10 a Sprint 13 el 08-06-2026 · Renumerado de Sprint 13 a Sprint 14 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)** (al final tras la generalización de adapters) · Migración WhatsApp del modelo manual (3 creds/tenant) a Tech Provider Meta (Embedded Signup + token sistema central + dual-mode). Plan `plans/260603-1900-sprint-10-whatsapp-tech-provider/` (8 fases) + ADR-025 (Proposed). NO toca MVP. Cuello de botella = App Review Meta (async).
+>
+> **Nota fila `▸ Cierre Sprint 14 (SP-15-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
 ### Lectura rápida del cuadro
 
@@ -1671,56 +1671,78 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 ---
 
-## Fase 6 — Sprint 6: Refinamiento Herramientas Internas (Renzo)
+## Fase 6 — Sprint 6: Llamadas de Voz 🆕 (v0.6.0)
 
-| Campo                          | Valor                                                       |
-| ------------------------------ | ---------------------------------------------------------- |
-| **Sprint ID**                  | `SP-6` (Refinamiento)                                      |
-| **Versión objetivo al cierre** | `v0.6.0`                                                   |
-| **Estado del sprint**          | 🔘 Pendiente                                               |
-| **Estimación total**           | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS)   |
-| **Rama de trabajo sugerida**   | `feature/sprint-06-refinamiento-herramientas`             |
-| **Asignado a**                 | 👤 Renzo + equipo Renzo                                    |
-| **Fin Real**                   | —                                                          |
+| Campo                          | Valor                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| **Sprint ID**                  | `SP-6` (Llamadas de Voz)                                               |
+| **Versión objetivo al cierre** | `v0.6.0`                                                               |
+| **Estado del sprint**          | 🔘 Pendiente                                                           |
+| **Estimación total**           | 8-14h + cierre (realista)                                              |
+| **Rama de trabajo sugerida**   | `feature/sprint-06-llamadas-voz`                                       |
+| **Asignado a**                 | Javi HP                                                                |
+| **Fin Real**                   | —                                                                      |
 
-> **Renumerado de "Sprint Refinamiento" a Sprint 6 el 08-06-2026.** Detalle completo en el cuadro de mando arriba (Fase 01 Simulator persistencia + voz · Fase 02 Lanzador `/calls` real Retell SDK · Fase 03 SP-7-DEPS-AUDIT-26 🟢 ya cerrada). Plan: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md).
+> **🆕 Sprint NUEVO insertado el 10-06-2026 (decisión Javi HP).** Conversaciones de Voz (clon funcional del módulo WhatsApp) + config voz centralizada + llamadas visibles en dashboard y Lista de Leads. Incluye la parte de VOZ movida desde el Sprint 7 (Refinamiento): lanzador `/calls` real Retell SDK + simulación de voz. Detalle de tareas: lo genera el planner al arrancar el sprint.
 
 ### Tareas de cierre obligatorias (Sprint 6)
 
 | ID                           | Tarea                               | Estim.              | Estado       | Notas                                          |
 | ---------------------------- | ----------------------------------- | ------------------- | ------------ | ---------------------------------------------- |
-| SP-6R-CLOSE-1..5             | Protocolo estándar de cierre        | **4h 30min + bugs** | 🔘 Pendiente | CLOSE-3 manual absorbido por Renzo             |
+| SP-7-CLOSE-1..5              | Protocolo estándar de cierre        | **5h 30min + bugs** | 🔘 Pendiente | post-MVP: CLOSE-3 estándar (dev lo ejecuta)    |
 
 ---
 
-## Fase 7 — Sprint 7: Centro de costes LLM con LiteLLM + Langfuse
+## Fase 7 — Sprint 7: Refinamiento Herramientas Internas (Renzo)
+
+| Campo                          | Valor                                                       |
+| ------------------------------ | ---------------------------------------------------------- |
+| **Sprint ID**                  | `SP-7` (Refinamiento)                                      |
+| **Versión objetivo al cierre** | `v0.7.0`                                                   |
+| **Estado del sprint**          | 🔘 Pendiente                                               |
+| **Estimación total**           | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS)   |
+| **Rama de trabajo sugerida**   | `feature/sprint-07-refinamiento-herramientas`             |
+| **Asignado a**                 | 👤 Renzo + equipo Renzo                                    |
+| **Fin Real**                   | —                                                          |
+
+> **Renumerado de "Sprint Refinamiento" a Sprint 6 el 08-06-2026. Renumerado de Sprint 6 a Sprint 7 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).** ⚠️ La parte de VOZ (lanzador `/calls` real Retell SDK + simulación de voz) se MOVIÓ al Sprint 6 "Llamadas de Voz" (decisión Javi HP 10-06-2026). Aquí queda solo el refinamiento NO-voz: Fase 01 Simulator persistencia variables en BD (texto) + historial recarga · Fase 02 lanzador NO-voz · Fase 03 SP-7-DEPS-AUDIT-26 🟢 ya cerrada (ID histórico no se renumera). Plan: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md).
+
+### Tareas de cierre obligatorias (Sprint 7)
+
+| ID                           | Tarea                               | Estim.              | Estado       | Notas                                          |
+| ---------------------------- | ----------------------------------- | ------------------- | ------------ | ---------------------------------------------- |
+| SP-8-CLOSE-1..5              | Protocolo estándar de cierre        | **4h 30min + bugs** | 🔘 Pendiente | CLOSE-3 manual absorbido por Renzo             |
+
+---
+
+## Fase 8 — Sprint 8: Centro de costes LLM con LiteLLM + Langfuse
 
 | Campo                          | Valor                                                                                |
 | ------------------------------ | ------------------------------------------------------------------------------------ |
-| **Sprint ID**                  | `SP-7`                                                                               |
-| **Versión objetivo al cierre** | `v0.7.0`                                                                             |
+| **Sprint ID**                  | `SP-8`                                                                               |
+| **Versión objetivo al cierre** | `v0.8.0`                                                                             |
 | **Estado del sprint**          | 🔘 Pendiente                                                                         |
 | **Estimación total**           | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista**                 |
-| **Rama de trabajo sugerida**   | `feature/sprint-07-costes-llm`                                                       |
-| **Inicio**                     | Lun 24-08-2026 09:00 (post-Sprint 6 Refinamiento `v0.6.0`)                           |
-| **Fin Est.**                   | Jue 27-08-2026 19:00 (3-4 días lab — sin cambio de calendario)                       |
+| **Rama de trabajo sugerida**   | `feature/sprint-08-costes-llm`                                                       |
+| **Inicio**                     | Post-Sprint 7 Refinamiento `v0.7.0`                                                  |
+| **Fin Est.**                   | —                                                                                    |
 | **Fin Real**                   | —                                                                                    |
 | **ADR vinculado**              | [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) |
 
-> **Asignado a:** Javi HP. **Orden fijo (22-05-2026, decisión clienta):** Sprint Costes-LLM va JUSTO DESPUÉS de Google Sheets, antes de Salesforce. Bloquea la fecha de inicio de Sprint 8 (Salesforce) por su duración (+4 días respecto plan original).
+> **Asignado a:** Javi HP. **Orden fijo (22-05-2026, decisión clienta):** Sprint Costes-LLM va JUSTO DESPUÉS de Google Sheets, antes de Salesforce. Bloquea la fecha de inicio de Sprint 9 (Salesforce) por su duración (+4 días respecto plan original). **Renumerado de Sprint 7 a Sprint 8 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 >
 > **Origen del sprint (22-05-2026):** la clienta confirmó que el centro de costes LLM no es necesario en MVP `v0.3.0`. Trabajo trasladado: parte de 4-03 (tabla `llm_usage_logs` + tracker LangChain) + 4-04 entera (dashboard Recharts) + 2-36 (token_usage en `chat_messages`).
 >
-> **Replanificación 28-05-2026 (decisión Javi HP, pendiente ratificación Bea):** sustituir el plan custom in-house original por adopción de **LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby**. Misma ventana de calendario, capacidades multiplicadas (tracing span-level + evals + prompt management + fallback runtime + virtual keys multi-tenant + replay). Detalle en [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) + plan SP-7 in-situ actualizado + bloque 4.0 de [auditoría V2](../docs/audit2/index.html).
+> **Replanificación 28-05-2026 (decisión Javi HP, pendiente ratificación Bea):** sustituir el plan custom in-house original por adopción de **LiteLLM Proxy self-hosted en Dokploy + Langfuse Cloud Hobby**. Misma ventana de calendario, capacidades multiplicadas (tracing span-level + evals + prompt management + fallback runtime + virtual keys multi-tenant + replay). Detalle en [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) + plan SP-8 in-situ actualizado + bloque 4.0 de [auditoría V2](../docs/audit2/index.html).
 
-### Tareas de desarrollo (Fase 7) — REPLANIFICADAS 28-05-2026
+### Tareas de desarrollo (Fase 8) — REPLANIFICADAS 28-05-2026
 
 | ID                               | Tarea                                                                         | Estim. nominal | Estim. realista | Estado       | Refs origen                                                        | Notas                                                                                              |
 | -------------------------------- | ----------------------------------------------------------------------------- | -------------- | --------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | C-01-new                         | LiteLLM Proxy setup Dokploy + virtual keys + fallback runtime + … _ver nota↓_ | 8-14h          | 4-7h            | 🔘 Pendiente | Sustituye C-01 original (descartada)                               | Phase-01 sprint nuevo. SPOF mitigado con ramo de emergencia. _ver nota↓_                           |
 | C-02-new                         | Langfuse Cloud Hobby integration + masking PII + callbacks Lang … _ver nota↓_ | 14-20h         | 6-10h           | 🔘 Pendiente | Sustituye C-02 original (descartada)                               | Phase-02 sprint nuevo. PII crítico: tests sintéticos obligatorios. _ver nota↓_                     |
 | C-03                             | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_      | 2h             | 1-2h            | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04). PRESERVADA tras decisión 28-05-2026. | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Complementa Langfuse con vista por mensaje. _ver nota↓_ |
-| **Subtotal Fase 7 — Desarrollo** |                                                                               | **24-36h**     | **11-19h**      |              |                                                                    | Objetivo realista 15h. + 3-5h cierre. Total 14-24h con cierre.                                     |
+| **Subtotal Fase 8 — Desarrollo** |                                                                               | **24-36h**     | **11-19h**      |              |                                                                    | Objetivo realista 15h. + 3-5h cierre. Total 14-24h con cierre.                                     |
 
 > **Nota fila `C-01-new` · Tarea**: LiteLLM Proxy setup Dokploy + virtual keys multi-tenant + fallback runtime cross-provider + ramo de emergencia + bootstrap tenants
 >
@@ -1734,45 +1756,45 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 >
 > **Nota fila `C-03` · Notas**: Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Sin backfilling de chats históricos (OpenAI no expone usage retroactivo). Paralelizable con C-01-new. Phase-03 sprint nuevo. **PRESERVADA** tras decisión 28-05-2026: complementa LiteLLM (call-level) + Langfuse (span-level) con vista por mensaje persistido (1:1 con Inbox CRM). Tres fuentes de verdad complementarias, no duplicadas.
 
-### Tareas de cierre obligatorias (Sprint 7)
+### Tareas de cierre obligatorias (Sprint 8)
 
 | ID                           | Tarea                                                                    | Estimación          | Estado       | Notas                                                                |
 | ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------ | -------------------------------------------------------------------- |
-| SP-7-CLOSE-1                 | Auto test (typecheck + lint + build + tests)                             | 1h 30min            | 🔘 Pendiente | Foco: tests cost calculation, RLS `llm_usage_logs`, `recordLlmUsage` |
-| SP-7-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant            | 2h 30min            | 🔘 Pendiente | Playwright + screenshots a `docs/screenshots/sprint-costes-llm/`     |
-| SP-7-CLOSE-3                 | Test Manual del Dev — verificar números cuadran con tráfico real         | 1h                  | 🔘 Pendiente |                                                                      |
-| SP-7-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente | Subtareas dinámicas                                                  |
-| SP-7-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump `v0.7.0` + crear r … _ver nota↓_ | 30min               | 🔘 Pendiente |                                                                      |
-| **Subtotal cierre Sprint 7** |                                                                          | **5h 30min + bugs** |              |                                                                      |
+| SP-9-CLOSE-1                 | Auto test (typecheck + lint + build + tests)                             | 1h 30min            | 🔘 Pendiente | Foco: tests cost calculation, RLS `llm_usage_logs`, `recordLlmUsage` |
+| SP-9-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant            | 2h 30min            | 🔘 Pendiente | Playwright + screenshots a `docs/screenshots/sprint-costes-llm/`     |
+| SP-9-CLOSE-3                 | Test Manual del Dev — verificar números cuadran con tráfico real         | 1h                  | 🔘 Pendiente |                                                                      |
+| SP-9-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente | Subtareas dinámicas                                                  |
+| SP-9-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear r … _ver nota↓_ | 30min               | 🔘 Pendiente |                                                                      |
+| **Subtotal cierre Sprint 8** |                                                                          | **5h 30min + bugs** |              |                                                                      |
 
-> **Nota fila `SP-7-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump `v0.7.0` + crear rama Sprint 8 (Salesforce)
+> **Nota fila `SP-9-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear rama Sprint 9 (Salesforce)
 
 ### Pre-requisitos del cierre
 
-- [ ] Sprint 6 (Refinamiento) cerrado y mergeado a `developer` (versión `v0.6.0`).
+- [ ] Sprint 7 (Refinamiento) cerrado y mergeado a `developer` (versión `v0.7.0`).
 - [ ] C-01, C-02, C-03 en 🔵 o 🟢.
-- [ ] `CHANGELOG.md` con entrada `## [v0.7.0]` completa.
+- [ ] `CHANGELOG.md` con entrada `## [v0.8.0]` completa.
 
 ---
 
-## Fase 8 — Sprint 8: Salesforce adapter
+## Fase 9 — Sprint 9: Salesforce adapter
 
 | Campo                          | Valor                                                                    |
 | ------------------------------ | ------------------------------------------------------------------------ |
-| **Sprint ID**                  | `SP-8`                                                                   |
-| **Versión objetivo al cierre** | `v0.8.0`                                                                 |
+| **Sprint ID**                  | `SP-9`                                                                   |
+| **Versión objetivo al cierre** | `v0.9.0`                                                                 |
 | **Estado del sprint**          | 🔘 Pendiente                                                             |
 | **Estimación total**           | 60-100h                                                                  |
-| **Rama de trabajo sugerida**   | `feature/sprint-08-salesforce`                                           |
-| **Inicio**                     | Vie 28-08-2026 09:00 (+4 días respecto plan original — des … _ver nota↓_ |
-| **Fin Est.**                   | Mié 09-09-2026 19:00                                                     |
+| **Rama de trabajo sugerida**   | `feature/sprint-09-salesforce`                                           |
+| **Inicio**                     | Post-Sprint 8 Costes-LLM (+4 días respecto plan original — des … _ver nota↓_ |
+| **Fin Est.**                   | —                                                                        |
 | **Fin Real**                   | —                                                                        |
 
-> **Nota fila `Inicio` · Valor**: Vie 28-08-2026 09:00 (+4 días respecto plan original — desplazado por Sprint Costes-LLM)
+> **Nota fila `Inicio` · Valor**: Post-Sprint 8 Costes-LLM (+4 días respecto plan original — desplazado por Sprint Costes-LLM). **Renumerado de Sprint 8 a Sprint 9 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 
 > **Asignado a:** Javi HP (solo). 9 días lab × 10h/día = 90h. Estimación dentro del rango 60-100h.
 
-### Tareas de desarrollo (Fase 8)
+### Tareas de desarrollo (Fase 9)
 
 > Adapter Salesforce vía `jsforce@^3.10.15` (OAuth2 + Connected Apps). Clientes enterprise. Requiere ADR aprobado antes de instalar.
 
@@ -1784,82 +1806,82 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | 8-04                             | Webhooks bidireccionales (Platform Events / Streaming API)           | 12-20h      | 🔘 Pendiente |                     |
 | 8-05                             | UI admin: conexión + field-mapper Salesforce-específico              | 8-14h       | 🔘 Pendiente |                     |
 | 8-06                             | Tests integración sandbox Salesforce                                 | 8-12h       | 🔘 Pendiente |                     |
-| **Subtotal Fase 8 — Desarrollo** |                                                                      | **60-100h** |              |                     |
-
-### Tareas de cierre obligatorias (Sprint 8)
-
-| ID                           | Tarea                                                                    | Estimación          | Estado       | Notas |
-| ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------ | ----- |
-| SP-8-CLOSE-1                 | Auto test                                                                | 1h 30min            | 🔘 Pendiente |       |
-| SP-8-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                             | 2h 30min            | 🔘 Pendiente |       |
-| SP-8-CLOSE-3                 | Test Manual del Dev                                                      | 1h                  | 🔘 Pendiente |       |
-| SP-8-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente |       |
-| SP-8-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.8.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
-| **Subtotal cierre Sprint 8** |                                                                          | **5h 30min + bugs** |              |       |
-
-> **Nota fila `SP-8-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.8.0` + crear rama Sprint 9
-
----
-
-## Fase 9 — Sprint 9: GoHighLevel adapter
-
-| Campo                          | Valor                                                 |
-| ------------------------------ | ----------------------------------------------------- |
-| **Sprint ID**                  | `SP-9`                                                |
-| **Versión objetivo al cierre** | `v0.9.0`                                              |
-| **Estado del sprint**          | 🔘 Pendiente                                          |
-| **Estimación total**           | 40-80h                                                |
-| **Rama de trabajo sugerida**   | `feature/sprint-09-gohighlevel`                       |
-| **Inicio**                     | Jue 10-09-2026 09:00 (+4 días respecto plan original) |
-| **Fin Est.**                   | Vie 18-09-2026 19:00                                  |
-| **Fin Real**                   | —                                                     |
-
-> **Asignado a:** Javi HP (solo). 7 días lab × 10h/día = 70h. Estimación dentro del rango 40-80h.
-
-### Tareas de desarrollo (Fase 9)
-
-> Adapter GoHighLevel (OAuth2 v2). Foco Latam EduTech. Requiere app registrada en GHL Marketplace.
-
-| ID                               | Tarea                                                      | Estimación | Estado       | Notas              |
-| -------------------------------- | ---------------------------------------------------------- | ---------- | ------------ | ------------------ |
-| 9-01                             | Registrar app en GHL Marketplace + setup OAuth2 v2         | 4-8h       | 🔘 Pendiente | Bloqueante externo |
-| 9-02                             | `GoHighLevelAdapter`: Contacts + Opportunities + Calendars | 14-26h     | 🔘 Pendiente |                    |
-| 9-03                             | Webhooks GHL (eventos bidireccionales)                     | 8-16h      | 🔘 Pendiente |                    |
-| 9-04                             | UI admin: conexión + field-mapper                          | 8-14h      | 🔘 Pendiente |                    |
-| 9-05                             | Tests integración sandbox GHL                              | 6-16h      | 🔘 Pendiente |                    |
-| **Subtotal Fase 9 — Desarrollo** |                                                            | **40-80h** |              |                    |
+| **Subtotal Fase 9 — Desarrollo** |                                                                      | **60-100h** |              |                     |
 
 ### Tareas de cierre obligatorias (Sprint 9)
 
-| ID                           | Tarea                                                                    | Estimación          | Estado       | Notas |
-| ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------ | ----- |
-| SP-9-CLOSE-1                 | Auto test                                                                | 1h 30min            | 🔘 Pendiente |       |
-| SP-9-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                             | 2h 30min            | 🔘 Pendiente |       |
-| SP-9-CLOSE-3                 | Test Manual del Dev                                                      | 1h                  | 🔘 Pendiente |       |
-| SP-9-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente |       |
-| SP-9-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
-| **Subtotal cierre Sprint 9** |                                                                          | **5h 30min + bugs** |              |       |
+| ID                           | Tarea                                                                     | Estimación          | Estado       | Notas |
+| ---------------------------- | ------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
+| SP-10-CLOSE-1                | Auto test                                                                 | 1h 30min            | 🔘 Pendiente |       |
+| SP-10-CLOSE-2                | Test E2C Local + WCAG 2.2 AA                                              | 2h 30min            | 🔘 Pendiente |       |
+| SP-10-CLOSE-3                | Test Manual del Dev                                                       | 1h                  | 🔘 Pendiente |       |
+| SP-10-CLOSE-4                | Corrección de Bugs detectados                                             | (variable)          | 🔘 Pendiente |       |
+| SP-10-CLOSE-5                | Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
+| **Subtotal cierre Sprint 9** |                                                                           | **5h 30min + bugs** |              |       |
 
-> **Nota fila `SP-9-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear rama Sprint 10
+> **Nota fila `SP-10-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear rama Sprint 10
 
 ---
 
-## Fase 10 — Sprint 10: ActiveCampaign adapter
+## Fase 10 — Sprint 10: GoHighLevel adapter
 
-| Campo                          | Valor                                                 |
-| ------------------------------ | ----------------------------------------------------- |
-| **Sprint ID**                  | `SP-10`                                               |
-| **Versión objetivo al cierre** | `v0.10.0`                                             |
-| **Estado del sprint**          | 🔘 Pendiente                                          |
-| **Estimación total**           | 20-50h                                                |
-| **Rama de trabajo sugerida**   | `feature/sprint-10-activecampaign`                    |
-| **Inicio**                     | Lun 21-09-2026 09:00 (+4 días respecto plan original) |
-| **Fin Est.**                   | Jue 24-09-2026 19:00                                  |
-| **Fin Real**                   | —                                                     |
+| Campo                          | Valor                                                  |
+| ------------------------------ | ------------------------------------------------------ |
+| **Sprint ID**                  | `SP-10`                                                |
+| **Versión objetivo al cierre** | `v0.10.0`                                              |
+| **Estado del sprint**          | 🔘 Pendiente                                           |
+| **Estimación total**           | 40-80h                                                 |
+| **Rama de trabajo sugerida**   | `feature/sprint-10-gohighlevel`                        |
+| **Inicio**                     | Post-Sprint 9 Salesforce (+4 días respecto plan orig.) |
+| **Fin Est.**                   | —                                                      |
+| **Fin Real**                   | —                                                      |
 
-> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-50h.
+> **Asignado a:** Javi HP (solo). 7 días lab × 10h/día = 70h. Estimación dentro del rango 40-80h. **Renumerado de Sprint 9 a Sprint 10 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 
 ### Tareas de desarrollo (Fase 10)
+
+> Adapter GoHighLevel (OAuth2 v2). Foco Latam EduTech. Requiere app registrada en GHL Marketplace.
+
+| ID                                | Tarea                                                      | Estimación | Estado       | Notas              |
+| --------------------------------- | ---------------------------------------------------------- | ---------- | ------------ | ------------------ |
+| 9-01                              | Registrar app en GHL Marketplace + setup OAuth2 v2         | 4-8h       | 🔘 Pendiente | Bloqueante externo |
+| 9-02                              | `GoHighLevelAdapter`: Contacts + Opportunities + Calendars | 14-26h     | 🔘 Pendiente |                    |
+| 9-03                              | Webhooks GHL (eventos bidireccionales)                     | 8-16h      | 🔘 Pendiente |                    |
+| 9-04                              | UI admin: conexión + field-mapper                          | 8-14h      | 🔘 Pendiente |                    |
+| 9-05                              | Tests integración sandbox GHL                              | 6-16h      | 🔘 Pendiente |                    |
+| **Subtotal Fase 10 — Desarrollo** |                                                            | **40-80h** |              |                    |
+
+### Tareas de cierre obligatorias (Sprint 10)
+
+| ID                            | Tarea                                                                     | Estimación          | Estado       | Notas |
+| ----------------------------- | ------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
+| SP-11-CLOSE-1                 | Auto test                                                                 | 1h 30min            | 🔘 Pendiente |       |
+| SP-11-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                              | 2h 30min            | 🔘 Pendiente |       |
+| SP-11-CLOSE-3                 | Test Manual del Dev                                                       | 1h                  | 🔘 Pendiente |       |
+| SP-11-CLOSE-4                 | Corrección de Bugs detectados                                             | (variable)          | 🔘 Pendiente |       |
+| SP-11-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear … _ver nota↓_ | 30min              | 🔘 Pendiente |       |
+| **Subtotal cierre Sprint 10** |                                                                           | **5h 30min + bugs** |              |       |
+
+> **Nota fila `SP-11-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear rama Sprint 11
+
+---
+
+## Fase 11 — Sprint 11: ActiveCampaign adapter
+
+| Campo                          | Valor                                                    |
+| ------------------------------ | -------------------------------------------------------- |
+| **Sprint ID**                  | `SP-11`                                                  |
+| **Versión objetivo al cierre** | `v0.11.0`                                                |
+| **Estado del sprint**          | 🔘 Pendiente                                             |
+| **Estimación total**           | 20-50h                                                   |
+| **Rama de trabajo sugerida**   | `feature/sprint-11-activecampaign`                       |
+| **Inicio**                     | Post-Sprint 10 GoHighLevel (+4 días respecto plan orig.) |
+| **Fin Est.**                   | —                                                        |
+| **Fin Real**                   | —                                                        |
+
+> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-50h. **Renumerado de Sprint 10 a Sprint 11 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
+
+### Tareas de desarrollo (Fase 11)
 
 > Adapter ActiveCampaign (API Key). Foco marketing-first. La integración más sencilla de las 4 (sin OAuth complejo).
 
@@ -1870,85 +1892,85 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | 10-03                             | Webhooks (eventos contact updated, deal stage changed)   | 4-10h      | 🔘 Pendiente |             |
 | 10-04                             | UI admin: conexión + field-mapper                        | 4-10h      | 🔘 Pendiente |             |
 | 10-05                             | Tests integración sandbox                                | 2-6h       | 🔘 Pendiente |             |
-| **Subtotal Fase 10 — Desarrollo** |                                                          | **20-50h** |              |             |
+| **Subtotal Fase 11 — Desarrollo** |                                                          | **20-50h** |              |             |
 
-### Tareas de cierre obligatorias (Sprint 10)
+### Tareas de cierre obligatorias (Sprint 11)
 
-| ID                            | Tarea                                                                     | Estimación          | Estado       | Notas |
-| ----------------------------- | ------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
-| SP-10-CLOSE-1                 | Auto test                                                                 | 1h 30min            | 🔘 Pendiente |       |
-| SP-10-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                              | 2h 30min            | 🔘 Pendiente |       |
-| SP-10-CLOSE-3                 | Test Manual del Dev                                                       | 1h                  | 🔘 Pendiente |       |
-| SP-10-CLOSE-4                 | Corrección de Bugs detectados                                             | (variable)          | 🔘 Pendiente |       |
-| SP-10-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
-| **Subtotal cierre Sprint 10** |                                                                           | **5h 30min + bugs** |              |       |
+| ID                            | Tarea                                                                      | Estimación          | Estado       | Notas |
+| ----------------------------- | -------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
+| SP-12-CLOSE-1                 | Auto test                                                                  | 1h 30min            | 🔘 Pendiente |       |
+| SP-12-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                               | 2h 30min            | 🔘 Pendiente |       |
+| SP-12-CLOSE-3                 | Test Manual del Dev                                                        | 1h                  | 🔘 Pendiente |       |
+| SP-12-CLOSE-4                 | Corrección de Bugs detectados                                              | (variable)          | 🔘 Pendiente |       |
+| SP-12-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
+| **Subtotal cierre Sprint 11** |                                                                            | **5h 30min + bugs** |              |       |
 
-> **Nota fila `SP-10-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear rama Sprint 11
+> **Nota fila `SP-12-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear rama Sprint 12
 
 ---
 
-## Fase 11 — Sprint 11: Adapter pattern generalization
+## Fase 12 — Sprint 12: Adapter pattern generalization
 
-| Campo                          | Valor                                                  |
-| ------------------------------ | ------------------------------------------------------ |
-| **Sprint ID**                  | `SP-11`                                                |
-| **Versión objetivo al cierre** | `v0.11.0`                                              |
-| **Estado del sprint**          | 🔘 Pendiente (bloqueado hasta SP-4..SP-10 completos)   |
-| **Estimación total**           | 20-40h                                                 |
-| **Rama de trabajo sugerida**   | `feature/sprint-11-adapter-generalization`             |
-| **Inicio**                     | Vie 25-09-2026 09:00 (+4 días respecto plan original) |
-| **Fin Est.**                   | Mié 30-09-2026 19:00                                  |
-| **Fin Real**                   | —                                                     |
+| Campo                          | Valor                                                   |
+| ------------------------------ | ------------------------------------------------------- |
+| **Sprint ID**                  | `SP-12`                                                 |
+| **Versión objetivo al cierre** | `v0.12.0`                                               |
+| **Estado del sprint**          | 🔘 Pendiente (bloqueado hasta SP-9..SP-11 completos)    |
+| **Estimación total**           | 20-40h                                                  |
+| **Rama de trabajo sugerida**   | `feature/sprint-12-adapter-generalization`              |
+| **Inicio**                     | Post-Sprint 11 ActiveCampaign (+4 días respecto orig.)  |
+| **Fin Est.**                   | —                                                       |
+| **Fin Real**                   | —                                                       |
 
-> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-40h.
+> **Asignado a:** Javi HP (solo). 4 días lab × 10h/día = 40h. Estimación dentro del rango 20-40h. **Renumerado de Sprint 11 a Sprint 12 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 
-### Tareas de desarrollo (Fase 11)
+### Tareas de desarrollo (Fase 12)
 
 > Refactor post-implementación: tras tener 6 adapters reales (HubSpot, Zoho, Sheets, Salesforce, GHL, ActiveCampaign), generalizar el patrón. Extraer abstracciones comunes: OAuth flow, field mapping, webhook handling, rate limiting, write_policy.
 
 | ID                                | Tarea                                                                    | Estimación | Estado       | Notas                                     |
 | --------------------------------- | ------------------------------------------------------------------------ | ---------- | ------------ | ----------------------------------------- |
-| 11-01                             | Análisis comparativo: extraer patrones comunes a los 6 adapters          | 4-8h       | 🔘 Pendiente | Bloqueado hasta SP-4..SP-10 completos     |
+| 11-01                             | Análisis comparativo: extraer patrones comunes a los 6 adapters          | 4-8h       | 🔘 Pendiente | Bloqueado hasta SP-9..SP-11 completos     |
 | 11-02                             | Refactor `IntegrationAdapter` base: OAuth flow genérico + … _ver nota↓_ | 8-14h      | 🔘 Pendiente |                                           |
 | 11-03                             | Generalizar webhook handling + signature verification                    | 4-8h       | 🔘 Pendiente |                                           |
 | 11-04                             | Generalizar rate limiting / retry / circuit breaker por adapter          | 4-10h      | 🔘 Pendiente |                                           |
-| **Subtotal Fase 11 — Desarrollo** |                                                                          | **20-40h** |              | Bloqueado: requiere SP-4..SP-10 completos |
+| **Subtotal Fase 12 — Desarrollo** |                                                                          | **20-40h** |              | Bloqueado: requiere SP-9..SP-11 completos |
 
 > **Nota fila `11-02` · Tarea**: Refactor `IntegrationAdapter` base: OAuth flow genérico + field mapper genérico
 
-### Tareas de cierre obligatorias (Sprint 11)
+### Tareas de cierre obligatorias (Sprint 12)
 
-| ID                            | Tarea                                                                     | Estimación          | Estado       | Notas |
-| ----------------------------- | ------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
-| SP-11-CLOSE-1                 | Auto test                                                                 | 1h 30min            | 🔘 Pendiente |       |
-| SP-11-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                              | 2h 30min            | 🔘 Pendiente |       |
-| SP-11-CLOSE-3                 | Test Manual del Dev                                                       | 1h                  | 🔘 Pendiente |       |
-| SP-11-CLOSE-4                 | Corrección de Bugs detectados                                             | (variable)          | 🔘 Pendiente |       |
-| SP-11-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
-| **Subtotal cierre Sprint 11** |                                                                           | **5h 30min + bugs** |              |       |
+| ID                            | Tarea                                                                      | Estimación          | Estado       | Notas |
+| ----------------------------- | -------------------------------------------------------------------------- | ------------------- | ------------ | ----- |
+| SP-13-CLOSE-1                 | Auto test                                                                  | 1h 30min            | 🔘 Pendiente |       |
+| SP-13-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                               | 2h 30min            | 🔘 Pendiente |       |
+| SP-13-CLOSE-3                 | Test Manual del Dev                                                        | 1h                  | 🔘 Pendiente |       |
+| SP-13-CLOSE-4                 | Corrección de Bugs detectados                                              | (variable)          | 🔘 Pendiente |       |
+| SP-13-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.12.0` + crear … _ver nota↓_ | 30min               | 🔘 Pendiente |       |
+| **Subtotal cierre Sprint 12** |                                                                            | **5h 30min + bugs** |              |       |
 
-> **Nota fila `SP-11-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear rama Sprint 12
+> **Nota fila `SP-13-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump a `v0.12.0` + crear rama Sprint 13
 
 ---
 
-## Fase 12 — Sprint 12: Tier 2 on-demand (backlog)
+## Fase 13 — Sprint 13: Tier 2 on-demand (backlog)
 
 | Campo                          | Valor                                     |
 | ------------------------------ | ----------------------------------------- |
-| **Sprint ID**                  | `SP-12`                                   |
-| **Versión objetivo al cierre** | `v0.12.x+` (incremental por CRM)          |
+| **Sprint ID**                  | `SP-13`                                   |
+| **Versión objetivo al cierre** | `v0.13.x+` (incremental por CRM)          |
 | **Estado del sprint**          | 🔘 Backlog (on-demand)                    |
 | **Estimación total**           | ~30-50h por CRM (sólo bajo pedido)        |
-| **Rama de trabajo sugerida**   | `feature/sprint-12-tier2-<crm>` (por CRM) |
+| **Rama de trabajo sugerida**   | `feature/sprint-13-tier2-<crm>` (por CRM) |
 | **Inicio**                     | TBD (on-demand)                           |
 | **Fin Est.**                   | TBD (on-demand)                           |
 | **Fin Real**                   | —                                         |
 
-> **Asignado a:** Javi HP (solo, por defecto). On-demand: sólo bajo pedido cliente.
+> **Asignado a:** Javi HP (solo, por defecto). On-demand: sólo bajo pedido cliente. **Renumerado de Sprint 12 a Sprint 13 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 
-### Tareas de desarrollo (Fase 12) — Backlog
+### Tareas de desarrollo (Fase 13) — Backlog
 
-> CRMs Tier 2 sólo se implementan **bajo pedido explícito de cliente**. No entran en estimación ni planificación proactiva. Cada CRM se ejecuta como mini-sprint independiente con bump v0.12.x.
+> CRMs Tier 2 sólo se implementan **bajo pedido explícito de cliente**. No entran en estimación ni planificación proactiva. Cada CRM se ejecuta como mini-sprint independiente con bump v0.13.x.
 
 | ID                                | Tarea                         | Estimación                   | Estado     | Notas                                          |
 | --------------------------------- | ----------------------------- | ---------------------------- | ---------- | ---------------------------------------------- |
@@ -1957,48 +1979,48 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | 12-03                             | Pipedrive adapter (on-demand) | ~30-50h                      | 🔘 Backlog | Sólo si cliente lo pide                        |
 | 12-04                             | Monday adapter (on-demand)    | ~30-50h                      | 🔘 Backlog | Sólo si cliente lo pide                        |
 | 12-05                             | Holded adapter (on-demand)    | ~30-50h                      | 🔘 Backlog | Sólo si cliente lo pide                        |
-| **Subtotal Fase 12 — Desarrollo** |                               | **~30-50h por CRM activado** |            | No suma al total del proyecto hasta activación |
+| **Subtotal Fase 13 — Desarrollo** |                               | **~30-50h por CRM activado** |            | No suma al total del proyecto hasta activación |
 
-### Tareas de cierre obligatorias (Sprint 12)
+### Tareas de cierre obligatorias (Sprint 13)
 
 > Plantilla aplicable cada vez que se activa un CRM Tier 2.
 
 | ID                            | Tarea                                                        | Estimación                  | Estado     | Notas |
 | ----------------------------- | ------------------------------------------------------------ | --------------------------- | ---------- | ----- |
-| SP-12-CLOSE-1                 | Auto test                                                    | 1h 30min                    | 🔘 Backlog |       |
-| SP-12-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                 | 2h 30min                    | 🔘 Backlog |       |
-| SP-12-CLOSE-3                 | Test Manual del Dev                                          | 1h                          | 🔘 Backlog |       |
-| SP-12-CLOSE-4                 | Corrección de Bugs detectados                                | (variable)                  | 🔘 Backlog |       |
-| SP-12-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.12.x` por CRM | 30min                       | 🔘 Backlog |       |
-| **Subtotal cierre Sprint 12** |                                                              | **5h 30min + bugs por CRM** |            |       |
+| SP-14-CLOSE-1                 | Auto test                                                    | 1h 30min                    | 🔘 Backlog |       |
+| SP-14-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA                                 | 2h 30min                    | 🔘 Backlog |       |
+| SP-14-CLOSE-3                 | Test Manual del Dev                                          | 1h                          | 🔘 Backlog |       |
+| SP-14-CLOSE-4                 | Corrección de Bugs detectados                                | (variable)                  | 🔘 Backlog |       |
+| SP-14-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.13.x` por CRM | 30min                       | 🔘 Backlog |       |
+| **Subtotal cierre Sprint 13** |                                                              | **5h 30min + bugs por CRM** |            |       |
 
-### Pre-requisitos del cierre Sprint 12 (gates)
+### Pre-requisitos del cierre Sprint 13 (gates)
 
 Aplican los mismos gates que el resto de sprints, además:
 
 - [ ] Pedido explícito del cliente para ese CRM concreto (registrado en issue / decisión audit).
-- [ ] Sprint 11 (generalización adapter) en 🟢 — para aprovechar la abstracción común.
+- [ ] Sprint 12 (generalización adapter) en 🟢 — para aprovechar la abstracción común.
 
 ---
 
-## Fase 13 — Sprint 13: WhatsApp Tech Provider Migration (Meta)
+## Fase 14 — Sprint 14: WhatsApp Tech Provider Migration (Meta)
 
 | Campo                          | Valor                                                                                                                |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| **Sprint ID**                  | `SP-13`                                                                                                              |
-| **Versión objetivo al cierre** | `v0.13.0`                                                                                                            |
+| **Sprint ID**                  | `SP-14`                                                                                                              |
+| **Versión objetivo al cierre** | `v0.14.0`                                                                                                            |
 | **Estado del sprint**          | 🔘 Pendiente                                                                                                         |
 | **Estimación total**           | ~48-72h                                                                                                              |
-| **Rama de trabajo sugerida**   | `feature/sprint-13-whatsapp-tech-provider`                                                                           |
+| **Rama de trabajo sugerida**   | `feature/sprint-14-whatsapp-tech-provider`                                                                           |
 | **Inicio**                     | TBD (post-MVP, tras alta Tech Provider de la clienta en Meta)                                                        |
 | **Fin Est.**                   | TBD                                                                                                                  |
 | **Fin Real**                   | —                                                                                                                    |
 | **Plan**                       | [`plans/260603-1900-sprint-10-whatsapp-tech-provider/plan.md`](260603-1900-sprint-10-whatsapp-tech-provider/plan.md) |
 | **ADR**                        | [`docs/adr/ADR-025-whatsapp-tech-provider-meta.md`](../docs/adr/ADR-025-whatsapp-tech-provider-meta.md)              |
 
-> **Asignado a:** Javi HP. **Origen:** la clienta se da de alta como Tech Provider en Meta. Migra WhatsApp del modelo manual (3 credenciales por tenant) al modelo gestionado (Embedded Signup + token de sistema central). NO toca el MVP. Informe a clienta: [`docs/entregables/Informe-Tech-Provider-Meta-AutomatizaFormacion.pdf`](../docs/entregables/Informe-Tech-Provider-Meta-AutomatizaFormacion.pdf).
+> **Asignado a:** Javi HP. **Origen:** la clienta se da de alta como Tech Provider en Meta. Migra WhatsApp del modelo manual (3 credenciales por tenant) al modelo gestionado (Embedded Signup + token de sistema central). NO toca el MVP. Informe a clienta: [`docs/entregables/Informe-Tech-Provider-Meta-AutomatizaFormacion.pdf`](../docs/entregables/Informe-Tech-Provider-Meta-AutomatizaFormacion.pdf). **Renumerado de Sprint 13 a Sprint 14 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
 
-### Tareas de desarrollo (Fase 13)
+### Tareas de desarrollo (Fase 14)
 
 | ID                                | Tarea                                                         | Estimación  | Estado       | Notas                                          |
 | --------------------------------- | ------------------------------------------------------------- | ----------- | ------------ | ---------------------------------------------- |
@@ -2009,19 +2031,19 @@ Aplican los mismos gates que el resto de sprints, además:
 | 13-05                             | Migración tenants vivos sin downtime (dual-mode)              | 6-10h       | 🔘 Pendiente | Requiere 13-02 + 13-04                         |
 | 13-06                             | App Review (2 vídeos) + Access Verification                   | 4-6h        | 🔘 Pendiente | Async Meta — arranca pronto, corre en paralelo |
 | 13-07                             | Tests (unit + integración MSW Graph API) + docs guía tenant   | 6-10h       | 🔘 Pendiente | Requiere 13-03/04/05                           |
-| **Subtotal Fase 13 — Desarrollo** |                                                               | **~44-68h** |              |                                                |
+| **Subtotal Fase 14 — Desarrollo** |                                                               | **~44-68h** |              |                                                |
 
-### Tareas de cierre obligatorias (Sprint 13)
+### Tareas de cierre obligatorias (Sprint 14)
 
 | ID                            | Tarea                                                          | Estimación          | Estado       | Notas |
 | ----------------------------- | -------------------------------------------------------------- | ------------------- | ------------ | ----- |
-| SP-13-CLOSE-1                 | Auto test                                                      | 1h 30min            | 🔘 Pendiente |       |
-| SP-13-CLOSE-1.5               | Security delta (OWASP 2021 — foco OAuth + token central + CSP) | 1h                  | 🔘 Pendiente |       |
-| SP-13-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA (pantalla de conexión)            | 2h 30min            | 🔘 Pendiente |       |
-| SP-13-CLOSE-3                 | Test Manual del Dev (post-MVP → estándar)                      | 1h                  | 🔘 Pendiente |       |
-| SP-13-CLOSE-4                 | Corrección de Bugs detectados                                  | (variable)          | 🔘 Pendiente |       |
-| SP-13-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.13.0`            | 30min               | 🔘 Pendiente |       |
-| **Subtotal cierre Sprint 13** |                                                                | **6h 30min + bugs** |              |       |
+| SP-15-CLOSE-1                 | Auto test                                                      | 1h 30min            | 🔘 Pendiente |       |
+| SP-15-CLOSE-1.5               | Security delta (OWASP 2021 — foco OAuth + token central + CSP) | 1h                 | 🔘 Pendiente |       |
+| SP-15-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA (pantalla de conexión)            | 2h 30min            | 🔘 Pendiente |       |
+| SP-15-CLOSE-3                 | Test Manual del Dev (post-MVP → estándar)                      | 1h                  | 🔘 Pendiente |       |
+| SP-15-CLOSE-4                 | Corrección de Bugs detectados                                  | (variable)          | 🔘 Pendiente |       |
+| SP-15-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump a `v0.14.0`            | 30min               | 🔘 Pendiente |       |
+| **Subtotal cierre Sprint 14** |                                                                | **6h 30min + bugs** |              |       |
 
 ### Pre-requisitos del cierre Sprint 13 (gates)
 

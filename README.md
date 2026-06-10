@@ -345,45 +345,67 @@ dashboard-af/
 | SP-6-CLOSE-4 | Corrección de bugs | (variable) | 🔘 Pendiente |
 | SP-6-CLOSE-5 | Push + PR developer + bump `v0.5.0` | 30min | 🔘 Pendiente |
 
-### Fase 6 — Sprint 6: Refinamiento Herramientas Internas (Renzo)
+### Fase 6 — Sprint 6: Llamadas de Voz 🆕 (v0.6.0)
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-6 (Refinamiento) |
+| Sprint ID | SP-6 (Llamadas de Voz) |
 | Versión objetivo | v0.6.0 |
 | Estado | 🔘 Pendiente |
-| Estimación total | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
-| Rama sugerida | feature/sprint-06-refinamiento-herramientas |
+| Estimación total | 8-14h + cierre (realista) |
+| Rama sugerida | feature/sprint-06-llamadas-voz |
 
-### Fase 7 — Sprint 7: Centro de costes LLM con LiteLLM + Langfuse
+##### Tareas de cierre — Sprint 6
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-7-CLOSE-1..5 | Protocolo estándar de cierre | 5h 30min + bugs | 🔘 Pendiente |
+
+### Fase 7 — Sprint 7: Refinamiento Herramientas Internas (Renzo)
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-7 |
+| Sprint ID | SP-7 (Refinamiento) |
 | Versión objetivo | v0.7.0 |
 | Estado | 🔘 Pendiente |
-| Estimación total | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
-| Rama sugerida | feature/sprint-07-costes-llm |
+| Estimación total | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
+| Rama sugerida | feature/sprint-07-refinamiento-herramientas |
 
 ##### Tareas de cierre — Sprint 7
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-7-CLOSE-1 | Auto test (typecheck + lint + build + tests) | 1h 30min | 🔘 Pendiente |
-| SP-7-CLOSE-2 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant | 2h 30min | 🔘 Pendiente |
-| SP-7-CLOSE-3 | Test Manual del Dev — verificar números cuadran con tráfico real | 1h | 🔘 Pendiente |
-| SP-7-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-7-CLOSE-5 | Cierre Sprint → PR a `developer` + bump `v0.7.0` + crear r … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-8-CLOSE-1..5 | Protocolo estándar de cierre | 4h 30min + bugs | 🔘 Pendiente |
 
-### Fase 8 — Sprint 8: Salesforce adapter
+### Fase 8 — Sprint 8: Centro de costes LLM con LiteLLM + Langfuse
 
 | Campo | Valor |
 |-------|-------|
 | Sprint ID | SP-8 |
 | Versión objetivo | v0.8.0 |
 | Estado | 🔘 Pendiente |
+| Estimación total | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
+| Rama sugerida | feature/sprint-08-costes-llm |
+
+##### Tareas de cierre — Sprint 8
+
+| ID | Tarea | Est. | Estado |
+|----|-------|------|--------|
+| SP-9-CLOSE-1 | Auto test (typecheck + lint + build + tests) | 1h 30min | 🔘 Pendiente |
+| SP-9-CLOSE-2 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant | 2h 30min | 🔘 Pendiente |
+| SP-9-CLOSE-3 | Test Manual del Dev — verificar números cuadran con tráfico real | 1h | 🔘 Pendiente |
+| SP-9-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-9-CLOSE-5 | Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear r … _ver nota↓_ | 30min | 🔘 Pendiente |
+
+### Fase 9 — Sprint 9: Salesforce adapter
+
+| Campo | Valor |
+|-------|-------|
+| Sprint ID | SP-9 |
+| Versión objetivo | v0.9.0 |
+| Estado | 🔘 Pendiente |
 | Estimación total | 60-100h |
-| Rama sugerida | feature/sprint-08-salesforce |
+| Rama sugerida | feature/sprint-09-salesforce |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -394,25 +416,25 @@ dashboard-af/
 | 8-05 | UI admin: conexión + field-mapper Salesforce-específico | 8-14h | 🔘 Pendiente |
 | 8-06 | Tests integración sandbox Salesforce | 8-12h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 8
+##### Tareas de cierre — Sprint 9
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-8-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-8-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
-| SP-8-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
-| SP-8-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-8-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.8.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-10-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-10-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-10-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-10-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-10-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
 
-### Fase 9 — Sprint 9: GoHighLevel adapter
+### Fase 10 — Sprint 10: GoHighLevel adapter
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-9 |
-| Versión objetivo | v0.9.0 |
+| Sprint ID | SP-10 |
+| Versión objetivo | v0.10.0 |
 | Estado | 🔘 Pendiente |
 | Estimación total | 40-80h |
-| Rama sugerida | feature/sprint-09-gohighlevel |
+| Rama sugerida | feature/sprint-10-gohighlevel |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -422,25 +444,25 @@ dashboard-af/
 | 9-04 | UI admin: conexión + field-mapper | 8-14h | 🔘 Pendiente |
 | 9-05 | Tests integración sandbox GHL | 6-16h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 9
+##### Tareas de cierre — Sprint 10
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-9-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-9-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
-| SP-9-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
-| SP-9-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-9-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.9.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-11-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-11-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-11-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-11-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-11-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
 
-### Fase 10 — Sprint 10: ActiveCampaign adapter
+### Fase 11 — Sprint 11: ActiveCampaign adapter
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-10 |
-| Versión objetivo | v0.10.0 |
+| Sprint ID | SP-11 |
+| Versión objetivo | v0.11.0 |
 | Estado | 🔘 Pendiente |
 | Estimación total | 20-50h |
-| Rama sugerida | feature/sprint-10-activecampaign |
+| Rama sugerida | feature/sprint-11-activecampaign |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -450,25 +472,25 @@ dashboard-af/
 | 10-04 | UI admin: conexión + field-mapper | 4-10h | 🔘 Pendiente |
 | 10-05 | Tests integración sandbox | 2-6h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 10
+##### Tareas de cierre — Sprint 11
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-10-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-10-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
-| SP-10-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
-| SP-10-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-10-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.10.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-12-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-12-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-12-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-12-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-12-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
 
-### Fase 11 — Sprint 11: Adapter pattern generalization
+### Fase 12 — Sprint 12: Adapter pattern generalization
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-11 |
-| Versión objetivo | v0.11.0 |
-| Estado | 🔘 Pendiente (bloqueado hasta SP-4..SP-10 completos) |
+| Sprint ID | SP-12 |
+| Versión objetivo | v0.12.0 |
+| Estado | 🔘 Pendiente (bloqueado hasta SP-9..SP-11 completos) |
 | Estimación total | 20-40h |
-| Rama sugerida | feature/sprint-11-adapter-generalization |
+| Rama sugerida | feature/sprint-12-adapter-generalization |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -477,25 +499,25 @@ dashboard-af/
 | 11-03 | Generalizar webhook handling + signature verification | 4-8h | 🔘 Pendiente |
 | 11-04 | Generalizar rate limiting / retry / circuit breaker por adapter | 4-10h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 11
+##### Tareas de cierre — Sprint 12
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-11-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-11-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
-| SP-11-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
-| SP-11-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-11-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.11.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-13-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-13-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-13-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-13-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-13-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.12.0` + crear … _ver nota↓_ | 30min | 🔘 Pendiente |
 
-### Fase 12 — Sprint 12: Tier 2 on-demand (backlog)
+### Fase 13 — Sprint 13: Tier 2 on-demand (backlog)
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-12 |
-| Versión objetivo | v0.12.x+ (incremental por CRM) |
+| Sprint ID | SP-13 |
+| Versión objetivo | v0.13.x+ (incremental por CRM) |
 | Estado | 🔘 Backlog (on-demand) |
 | Estimación total | ~30-50h por CRM (sólo bajo pedido) |
-| Rama sugerida | feature/sprint-12-tier2-<crm> (por CRM) |
+| Rama sugerida | feature/sprint-13-tier2-<crm> (por CRM) |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -505,25 +527,25 @@ dashboard-af/
 | 12-04 | Monday adapter (on-demand) | ~30-50h | 🔘 Pendiente |
 | 12-05 | Holded adapter (on-demand) | ~30-50h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 12
+##### Tareas de cierre — Sprint 13
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-12-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-12-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
-| SP-12-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
-| SP-12-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-12-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.12.x` por CRM | 30min | 🔘 Pendiente |
+| SP-14-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-14-CLOSE-2 | Test E2C Local + WCAG 2.2 AA | 2h 30min | 🔘 Pendiente |
+| SP-14-CLOSE-3 | Test Manual del Dev | 1h | 🔘 Pendiente |
+| SP-14-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-14-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.13.x` por CRM | 30min | 🔘 Pendiente |
 
-### Fase 13 — Sprint 13: WhatsApp Tech Provider Migration (Meta)
+### Fase 14 — Sprint 14: WhatsApp Tech Provider Migration (Meta)
 
 | Campo | Valor |
 |-------|-------|
-| Sprint ID | SP-13 |
-| Versión objetivo | v0.13.0 |
+| Sprint ID | SP-14 |
+| Versión objetivo | v0.14.0 |
 | Estado | 🔘 Pendiente |
 | Estimación total | ~48-72h |
-| Rama sugerida | feature/sprint-13-whatsapp-tech-provider |
+| Rama sugerida | feature/sprint-14-whatsapp-tech-provider |
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
@@ -535,15 +557,15 @@ dashboard-af/
 | 13-06 | App Review (2 vídeos) + Access Verification | 4-6h | 🔘 Pendiente |
 | 13-07 | Tests (unit + integración MSW Graph API) + docs guía tenant | 6-10h | 🔘 Pendiente |
 
-##### Tareas de cierre — Sprint 13
+##### Tareas de cierre — Sprint 14
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-13-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
-| SP-13-CLOSE-2 | Test E2C Local + WCAG 2.2 AA (pantalla de conexión) | 2h 30min | 🔘 Pendiente |
-| SP-13-CLOSE-3 | Test Manual del Dev (post-MVP → estándar) | 1h | 🔘 Pendiente |
-| SP-13-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-13-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.13.0` | 30min | 🔘 Pendiente |
+| SP-15-CLOSE-1 | Auto test | 1h 30min | 🔘 Pendiente |
+| SP-15-CLOSE-2 | Test E2C Local + WCAG 2.2 AA (pantalla de conexión) | 2h 30min | 🔘 Pendiente |
+| SP-15-CLOSE-3 | Test Manual del Dev (post-MVP → estándar) | 1h | 🔘 Pendiente |
+| SP-15-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
+| SP-15-CLOSE-5 | Cierre Sprint → PR a `developer` + bump a `v0.14.0` | 30min | 🔘 Pendiente |
 
 ### Resumen por sprint
 
@@ -555,14 +577,15 @@ dashboard-af/
 | 3 | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | 8 | 100% | 2-3 sem (80h–120h) |
 | 4 | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | 0 | 0% | 60-100h |
 | 5 | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | 5 | 0% | 13-18h realista + 5h 30min cierre |
-| 6 | v0.6.0 | 🔘 Pendiente | 0 | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
-| 7 | v0.7.0 | 🔘 Pendiente | 0 | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
-| 8 | v0.8.0 | 🔘 Pendiente | 6 | 0% | 60-100h |
-| 9 | v0.9.0 | 🔘 Pendiente | 5 | 0% | 40-80h |
-| 10 | v0.10.0 | 🔘 Pendiente | 5 | 0% | 20-50h |
-| 11 | v0.11.0 | 🔘 Pendiente (bloqueado hasta SP-4..SP-10 completos) | 4 | 0% | 20-40h |
-| 12 | v0.12.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | 5 | 0% | ~30-50h por CRM (sólo bajo pedido) |
-| 13 | v0.13.0 | 🔘 Pendiente | 7 | 0% | ~48-72h |
+| 6 | v0.6.0 | 🔘 Pendiente | 0 | 0% | 8-14h + cierre (realista) |
+| 7 | v0.7.0 | 🔘 Pendiente | 0 | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
+| 8 | v0.8.0 | 🔘 Pendiente | 0 | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
+| 9 | v0.9.0 | 🔘 Pendiente | 6 | 0% | 60-100h |
+| 10 | v0.10.0 | 🔘 Pendiente | 5 | 0% | 40-80h |
+| 11 | v0.11.0 | 🔘 Pendiente | 5 | 0% | 20-50h |
+| 12 | v0.12.0 | 🔘 Pendiente (bloqueado hasta SP-9..SP-11 completos) | 4 | 0% | 20-40h |
+| 13 | v0.13.x+ (incremental por CRM) | 🔘 Backlog (on-demand) | 5 | 0% | ~30-50h por CRM (sólo bajo pedido) |
+| 14 | v0.14.0 | 🔘 Pendiente | 7 | 0% | ~48-72h |
 
 
 ---
