@@ -47,6 +47,14 @@ yarn-error.log*
 .secrets/
 .secrets/**
 
+# handoff bundles con secretos — NUNCA a git (zips de credenciales, briefings con secretos, scripts generadores)
+docs/handoff/*-secretos-*.zip
+docs/handoff/dashboard-af-secretos-*.zip
+docs/handoff/briefing-equipo-dev-*.md
+docs/handoff/generar-zip-secretos-equipo.ps1
+# informes de seguridad de la clienta (pueden exponer superficie de ataque del VPS)
+plans/reports/informe-clienta-seguridad-servidor-*.html
+
 # vercel
 .vercel
 
