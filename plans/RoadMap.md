@@ -7,14 +7,14 @@ last_updated_by: "roadmap-keeper / Claude orquestador"
 project_version: v0.4.0
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
-next_sprint: "Sprint 6 — Llamadas de Voz (v0.6.0) 🆕"
+next_sprint: "Sprint 5 — Zoho CRM entrada de leads (v0.5.0)"
 sprint_0_progress: "🟢 Released v0.1.0"
 sprint_1_progress: "🟢 Released v0.2.0"
 sprint_2_progress: "🟢 Released v0.2.7"
 sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
 sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
-sprint_5_progress: "🟢 Released v0.5.0"
+sprint_5_progress: "🟡 Mergeado a developer (PR #25) · deploy a staging/main diferido · sin tag v0.5.0"
 sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0)"
 ---
 
