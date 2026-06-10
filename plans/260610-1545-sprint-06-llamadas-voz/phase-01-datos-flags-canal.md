@@ -96,7 +96,23 @@ fecha_ultimo_mensaje TIMESTAMPTZ, fecha_creacion TIMESTAMPTZ` + `ENABLE ROW LEVE
 ## Security Considerations
 
 - RLS obligatorio en `conversaciones_voz` (multi-tenant). Service-role solo en webhook server-side.
+- ⚠️ **CORRECCIÓN tras review (RLS-001)**: la migración `conversaciones_voz` debe NACER con política RLS
+  **filtrada por `tenant_id`** (`USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid)` para `authenticated`),
+  NO replicar el patrón permisivo `authenticated_read_* USING (true)` de `base_schema.sql:449-450`. Ese patrón
+  permisivo es deuda PRE-EXISTENTE en chat_messages/lead/llamadas/conversaciones_whatsapp — en verificación VPS,
+  fuera del alcance de este sprint, pero NO se propaga a la tabla nueva.
 - Webhook ya valida HMAC (`verifyRetellWebhook`) — no se relaja.
+
+## Hardening adicional detectado en review (incorporar a esta fase)
+
+- ⚠️ **WEBHOOK-001 (idempotencia)**: añadir `UNIQUE (id_llamada_retell, tenant_id)` a `llamadas` y usar `upsert`
+  con `onConflict` en el webhook. Hoy un retry de Retell duplica llamadas → infla el dashboard.
+- ⚠️ **SCHEMA-004 (origen)**: el webhook NO escribe `lead.origen` hoy. Añadir `UPDATE lead SET origen='llamada_voz'
+WHERE id=leadId AND (origen IS NULL OR origen='')` tras insertar la llamada.
+- ⚠️ **SCHEMA-003 (discriminación)**: añadir índice en `chat_messages (message_type, (metadata->>'call_id'))`
+  y una query de auditoría al cerrar la fase: `SELECT count(*) FROM chat_messages WHERE message_type='SYSTEM_LOG'
+AND metadata->>'call_id' IS NULL`. Preferir `EXISTS(llamadas)` como verdad para el flag "Voz".
+- ⚠️ **SCHEMA-001 (nota, no bloqueante)**: `chat_messages.tenant_id` es TEXT vs UUID del resto — documentar, no migrar aquí.
 
 ## Next Steps
 

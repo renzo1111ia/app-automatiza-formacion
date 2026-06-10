@@ -22,6 +22,13 @@
 - El dashboard de Llamadas ya existe y consume `llamadas` vía analytics. El trabajo es **verificación**
   (que no haya llamadas que no lleguen a la tabla por falta de metadata) + cierre de gaps detectados.
 - Los flags Whats/Voz se calculan **on-read** (EXISTS), no se persisten (fase 01 dejó la query lista).
+- ⚠️ **CORRECCIÓN tras review (PHASE04-004)**: la lista de leads la renderiza `HistorialTable` (`use client`)
+  alimentada por la server action **`fetchCalls`** (`src/lib/actions/calls.ts`). Los flags deben calcularse en
+  **`fetchCalls` (server)** y viajar en `HistorialRow` — NO en cliente. `fetchCalls` hoy NO trae
+  `conversaciones_whatsapp` ni los flags; hay que extender su SELECT/joins.
+- ⚠️ **CORRECCIÓN tras review (PHASE04-002)**: el dashboard de Llamadas cuenta TODAS las filas de `llamadas`
+  sin discriminar canal/origen — incluye datos de demo/seed (`tipo_agente=NULL`). La "verificación de cobertura"
+  debe auditar qué `tipo_agente` existen y si hay que filtrar seed antes de dar los KPIs por buenos.
 
 ## Requirements
 
@@ -56,10 +63,11 @@ Lista de Leads (historial/page.tsx)
 
 **Modificar**
 
-- `src/app/dashboard/historial/page.tsx` — añadir columnas "Whats" y "Voz" con badge verde/rojo.
-- Server action que alimenta la lista (en `src/lib/actions/...`, identificar la usada por `historial`) —
-  añadir `tiene_whatsapp` / `tiene_voz` por lead vía una consulta agregada (EXISTS / left join + group by).
-- `src/lib/actions/analytics/*` — solo si la verificación detecta gaps (p.ej. estados de llamada no contados).
+- `src/components/historial/HistorialTable.tsx` (`use client`) — añadir columnas "Whats" y "Voz" con badge verde/rojo.
+- `src/lib/actions/calls.ts` (`fetchCalls`) — extender `HistorialRow` con `tiene_whatsapp`/`tiene_voz` (boolean)
+  vía EXISTS/joins agregados (server-side, evitar N+1). `src/types/database.ts` — extender el tipo `HistorialRow`.
+- `src/lib/actions/analytics/*` — solo si la verificación detecta gaps (p.ej. estados de llamada no contados,
+  o filtrar `tipo_agente` seed para no inflar KPIs — ver PHASE04-002).
 - (opción) `src/lib/constants/kpi-defaults.ts` — solo si falta algún KPI de cobertura.
 
 **Crear (si aplica)**

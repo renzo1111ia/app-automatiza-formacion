@@ -73,17 +73,30 @@ services:
     networks: [supabase-net, dokploy-network]
 
   # ===========================================================================
-  # Vector (logging) — placeholder, no se usa, lo ponemos por compatibilidad
+  # Vector (logging) — placeholder de compatibilidad.
+  # El logging real (Logflare) se monta en plan aparte: ver
+  # plans/260610-1730-infra-logflare-logging-supabase/ (asignado a Sprint 7 Refinamiento).
+  # Fix 10-06-2026 (doble causa raíz del unhealthy perpetuo):
+  #   1. Sin `--config`, vector lee su default /etc/vector/vector.toml (config demo
+  #      de la imagen) e IGNORA nuestro vector.yml montado → la API :9001 jamás
+  #      arranca ("API is disabled" en log) → unhealthy siempre, da igual el
+  #      start_period. El command es OBLIGATORIO.
+  #   2. busybox-wget resuelve `localhost` a ::1 (IPv6) y la API solo escucha
+  #      IPv4 → usar 127.0.0.1 (mismo bug que tenía storage).
+  # start_period da margen de arranque para evitar esperas fantasma vía el
+  # depends_on de supabase-db.
   # ===========================================================================
   supabase-vector:
     image: timberio/vector:0.28.1-alpine
     container_name: supabase-vector
     restart: unless-stopped
+    command: ["--config", "/etc/vector/vector.yml"]
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9001/health"]
-      interval: 5s
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9001/health"]
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 30s
     volumes:
       - ./vector.yml:/etc/vector/vector.yml:ro
     networks: [supabase-net]
@@ -192,7 +205,7 @@ services:
       supabase-rest: { condition: service_started }
       supabase-imgproxy: { condition: service_started }
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/status"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
       interval: 5s
       timeout: 5s
       retries: 3

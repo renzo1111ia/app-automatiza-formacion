@@ -19,11 +19,16 @@
 
 - "Duplicar exactamente" se resuelve por **reutilización** (decisión Javi HP): mismo componente,
   prop `channel`. Misma UX garantizada porque es literalmente el mismo render.
-- El panel central, en modo voz, muestra **transcripción + grabación (audio player) + duración**
-  en vez de burbujas de chat de texto. Estos datos ya están en `chat_messages.metadata`
-  (`recording_url`, `call_id`) y en `llamadas` (transcripción/duración/resumen).
-- El refactor debe ser **aditivo y mínimo**: no reescribir el componente, solo bifurcar por canal
-  en (a) el filtro de leads/mensajes y (b) el render del item de mensaje de voz.
+- El panel central, en modo voz, muestra **transcripción + grabación (audio player) + duración**.
+  ⚠️ **CORRECCIÓN tras review (F-003)**: el detalle (transcripción/grabación/duración/resumen) está en la tabla
+  **`llamadas`**, NO en `chat_messages`. Hoy `getChatHistory` mapea las llamadas a `SYSTEM_LOG` y **descarta**
+  `url_grabacion`/`transcripcion`. Hay que crear un **tipo de item de voz nuevo** (`VoiceCallMessage` o union),
+  NO forzar la estructura `ChatMessage` (solo soporta TEXT/TEMPLATE/SYSTEM_LOG/IMAGE/DOC).
+- ⚠️ **CORRECCIÓN tras review (F-001)**: el refactor NO es "aditivo y mínimo". `AIAgentInbox` (2281 LOC) está
+  cableado a WhatsApp en ~12 puntos (`getWhatsAppTemplates`, botón "Plantilla Meta", "WhatsApp Activo", placeholders,
+  timeline "Cualificación WhatsApp"...). Parametrizar por canal exige **condicionales transversales**. Por eso la fase
+  se divide en **02a** (read-only: lista + ver llamadas) y **02b** (audio player + transcripción + resumen). Riesgo
+  de regresión WhatsApp ALTO → E2C de WhatsApp obligatorio al cerrar 02a, antes de 02b.
 
 ## Requirements
 
@@ -37,8 +42,16 @@
 
 **No funcionales**
 
-- Sin regresión en WhatsApp (default `channel='whatsapp'`).
-- Cualquier archivo nuevo <200 líneas; el componente reutilizado no se trocea en esta fase (se mantiene aditivo).
+- Sin regresión en WhatsApp (default `channel='whatsapp'`). **E2C de WhatsApp obligatorio al cerrar 02a** (no esperar a fase 05).
+- Cualquier archivo nuevo <200 líneas. El componente `AIAgentInbox` SÍ recibe condicionales por canal (no es trocear,
+  pero tampoco es "solo aditivo" — revisar diffs línea a línea para no romper WhatsApp).
+
+**División de la fase (review F-008/PLAN-HIGH-006, estim 6-9h)**
+
+- **02a (read-only, ~3-4h)**: prop `channel`, ruta + sidebar, `getInboxLeads`/`getChatHistory` por canal,
+  lista de leads con voz + ver llamadas como items (estado/duración/fecha). Cierra con E2C WhatsApp verde.
+- **02b (rich, ~3-5h)**: tipo `VoiceCallMessage` + `VoiceCallCard` (audio player + transcripción colapsable + resumen),
+  manejo de grabación NULL/expirada (onError → "grabación no disponible").
 
 ## Architecture
 

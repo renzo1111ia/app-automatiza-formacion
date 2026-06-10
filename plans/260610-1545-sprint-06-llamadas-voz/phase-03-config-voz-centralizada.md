@@ -20,6 +20,11 @@
   voces, números, sync de recursos, visor de transcripciones). El sidebar ya apunta ahí desde "Agentes de Voz".
 - El trabajo aquí es **auditoría + consolidación**, no construcción desde cero: localizar si hay piezas de
   config de voz fuera (p.ej. en Constructor, `agents/`, `simulator/`, `settings/`) y moverlas/enlazarlas.
+- ⚠️ **CORRECCIÓN tras review (PHASE-03-CRIT-003)**: ya se detectó config dispersa REAL —
+  `src/app/dashboard/settings/IntegrationsManager.tsx` permite editar `config.retell.api_key` y
+  `config.ultravox.api_key`, **duplicando** lo que hace `RetellConfigModal`/`VoiceConfigModal` en voice-agents.
+  Hay que consolidar (una sola fuente) o enlazar. Y la fase entrega un **audit report** con resultado medible,
+  no un "hice grep, no encontré nada".
 
 ## Requirements
 

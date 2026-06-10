@@ -31,8 +31,12 @@
 **Funcionales**
 
 - `POST /api/calls/manual` lanza una llamada real con Retell (`createCall`) pasando `tenant_id`+`lead_id` en metadata.
-- La página `calls/` refleja el estado real (no mock).
+  ⚠️ **Crítico (review PHASE-05-CRIT-002)**: el endpoint HOY **no acepta `lead_id`** en el Zod schema y solo pasa
+  `{source, tenant_id}` a `createCall`. Sin `lead_id` el webhook no asocia la llamada → no aparece en el inbox.
+- La página `calls/` refleja el estado real (no mock). ⚠️ **Crítico (review PHASE-05-CRIT-001)**: `calls/page.tsx`
+  HOY es mock puro (`setTimeout`) que ni llama al endpoint, y `useTenantStore` no extrae `tenantId`.
 - Ciclo completo verificable: lanzar → (webhook) → aparece en Conversaciones de Voz + dashboard + flag Voz.
+- **DESCOPEADO (review)**: Ultravox en el dialer (solo Retell hoy) y transcripción "en vivo" (LiveMonitor es mockup).
 
 **No funcionales**
 
@@ -70,11 +74,13 @@ calls/page.tsx ──POST──▶ /api/calls/manual (real)
 
 ## Implementation Steps
 
-1. Definir Zod schema del payload (`leadId`, `agentId`/`voiceAgentId`, número destino si aplica).
-2. Implementar `/api/calls/manual` real: resolver tenant activo, cargar lead, llamar `RetellBridge.createCall`
-   con `metadata: { tenant_id, lead_id }`. Devolver id de llamada / estado.
-3. Conectar `calls/page.tsx` al endpoint real; quitar el `setTimeout` mock; mostrar estados/errores.
-4. Prueba E2E manual del ciclo: lanzar → webhook → verificar en Conversaciones de Voz + dashboard + flag.
+1. **Zod schema** del payload: añadir `leadId` (obligatorio) además de `phoneNumber`, `agentId`, `tenantId`.
+2. **`/api/calls/manual` real**: validar que `leadId` existe (query a `lead` por tenant), llamar
+   `RetellBridge.createCall` con `metadata: { source:'manual_dialer', tenant_id, lead_id }`. Devolver `callId`.
+3. **Conectar `calls/page.tsx`**: extraer `tenantId` de `useTenantStore` (hoy solo saca `tenantName`); `handleCall`
+   → `fetch('POST /api/calls/manual', {phoneNumber, agentId, tenantId, leadId})` con loading/error reales;
+   quitar el `setTimeout` mock; mostrar `callId` devuelto. (LiveMonitor: dejar claro que es preview, no stream en vivo.)
+4. **Prueba E2E manual** del ciclo: lanzar → webhook → verificar en Conversaciones de Voz + dashboard + flag Voz.
 
 ### Cierre (Protocolo CLOSE-1..5)
 
