@@ -49,7 +49,7 @@ npm run dev
 | SP-3 | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 24-05-2026 19:55 |
 | SP-4 | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | — |
 | SP-5 | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | — |
-| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | — |
+| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | v0.5.0 | 🟡 **Mergeado a developer** (PR #25, 3a9dee5) · deploy a staging/main diferido · sin tag v0.5.0 | Desarrollo: 08-06-2026 (merge developer PR #25) · cierre formal pendiente |
 | SP-6 (Llamadas de Voz) | v0.6.0 | 🔘 Pendiente | — |
 | SP-7 (Refinamiento) | v0.7.0 | 🔘 Pendiente | — |
 | SP-8 | v0.8.0 | 🔘 Pendiente | — |
