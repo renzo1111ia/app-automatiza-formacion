@@ -8,7 +8,7 @@ sprint_4b_progress: "🟢 Cerrado de facto (Renzo) vía E2E VPS 03-06 PASS · bu
 project_version: v0.4.0
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
-next_sprint: "Sprint 5 — Zoho CRM entrada de leads (v0.5.0)"
+next_sprint: "Sprint 6 — Llamadas de Voz (v0.6.0) 🆕"
 sprint_0_progress: "🟢 Released v0.1.0"
 sprint_1_progress: "🟢 Released v0.2.0"
 sprint_2_progress: "🟢 Released v0.2.7"
@@ -47,7 +47,7 @@ sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Ren
   <tr>
     <td align="center" width="20%">📌 Versión<br><code>v0.4.0</code></td>
     <td align="center" width="20%">🎯 MVP GA<br><code>v0.3.0</code></td>
-    <td align="center" width="20%">🔜 Próximo<br><b>Sprint 5 · Zoho</b></td>
+    <td align="center" width="20%">🔜 Próximo<br><b>Sprint 6 · Voz</b></td>
     <td align="center" width="20%">📅 Objetivo MVP<br><b>22-jun-2026</b></td>
     <td align="center" width="20%">🌿 Excluido<br><code>staging</code> · <code>main</code></td>
   </tr>
@@ -62,7 +62,8 @@ sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Ren
 | &nbsp; | &nbsp; |
 | ---: | :--- |
 | 🟢 &nbsp;**Último cerrado** | **Sprint 4 — Google Sheets** `v0.4.0` · publicado 08-06 (release + tag) |
-| 🔜 &nbsp;**En cola (próximo)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · clon de Sheets (bidireccional) |
+| 🟡 &nbsp;**Mergeado (sin tag)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · PR #25 mergeado a `developer` · deploy a staging/main diferido |
+| 🔜 &nbsp;**En cola (próximo)** | **Sprint 6 — Llamadas de Voz** `v0.6.0` · conversaciones de voz (clon WhatsApp) + lanzador `/calls` |
 | 🎯 &nbsp;**Hito MVP** | 👤 SP-4B Validación Pre-MVP (Renzo) → 🟢 **cerrado de facto** vía E2E VPS 03-06 PASS · bump **MVP GA `v0.3.0`** (tag+release) pendiente acción usuario |
 | ✅ &nbsp;**Salud** | 321/325 tests · 20/20 E2C · 0 críticos seguridad · E2E VPS 03-06 🟢 PASS |
 | 🗺️ &nbsp;**En cartera** | Llamadas de Voz · Refinamiento · Costes-LLM · Salesforce · GHL · ActiveCampaign · WhatsApp |
@@ -81,7 +82,7 @@ sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Ren
 | Sprint 3            | `v0.3.0-rc.1`       | 🟢 Released (PR #22, 30-may) | Hardening · Pino + Sentry + rate limiting + Node 22           |
 | SP-4B               | `v0.3.0` GA         | 🟢 Cerrado (de facto)        | 👤 Validación pre-MVP (Renzo) · 🟢 vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario |
 | Sprint 4            | `v0.4.0`            | 🟢 Released (08-06)          | Google Sheets bidireccional · cierre formal (CLOSE-1/1.5/2/4) |
-| Sprint 5            | `v0.5.0`            | 🔘 Pendiente                 | **Zoho CRM entrada de leads (bidireccional)** · clon de Sheets · 🔜 PRÓXIMO |
+| Sprint 5            | `v0.5.0`            | 🟡 Mergeado (sin tag)        | **Zoho CRM entrada de leads (bidireccional)** · PR #25 a `developer` · deploy staging/main diferido |
 | Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | 👤 **🆕 Llamadas de Voz** (Renzo) · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
 | Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
 | Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
@@ -208,8 +209,8 @@ sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Ren
 | **SP-4B — Validación Pre-MVP** (Phases 01..04 + cierre)                         | 40-55h          | **23-32h**         | Renzo + equipo  | 16-jun → 21-jun-2026     |
 | **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
 | Sprint 4 — Google Sheets bidireccional (`v0.4.0`) ✅ CERRADO                     | 60-100h         | **~14h 30min**     | Javi HP         | 🟢 08-jun-2026           |
-| **Sprint 5 — Zoho CRM entrada de leads (`v0.5.0`)** 🔜 PRÓXIMO                   | —               | **10-15h**         | Javi HP         | post-Sheets, a desarrollar |
-| Sprint 6 — Llamadas de Voz (`v0.6.0`) — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h**    | 👤 Renzo        | post-Zoho                |
+| Sprint 5 — Zoho CRM entrada de leads (`v0.5.0`) 🟡 MERGEADO                      | —               | **~6h**            | Javi HP         | 🟡 08-jun (PR #25) · deploy diferido |
+| **Sprint 6 — Llamadas de Voz (`v0.6.0`)** 🔜 PRÓXIMO — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h** | 👤 Renzo  | post-Zoho                |
 | Sprint 7 — Refinamiento Herramientas (`v0.7.0`) — Renzo + Javi HP               | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Llamadas de Voz     |
 | Sprint 8 — Costes-LLM (`v0.8.0`)                                                | 23-31h          | **5-7h**           | Javi HP         | post-Refinamiento        |
 | Sprint 9 — Salesforce (`v0.9.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Costes-LLM          |
@@ -1634,12 +1635,12 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | ------------------------------ | ------------------------------------------------------------- |
 | **Sprint ID**                  | `SP-5Z` (Zoho; `SP-5` es legacy de Sprint 4 Sheets)          |
 | **Versión objetivo al cierre** | `v0.5.0`                                                      |
-| **Estado del sprint**          | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) |
+| **Estado del sprint**          | 🟡 **Mergeado a developer** (PR #25, `3a9dee5`) · deploy a staging/main diferido · sin tag `v0.5.0` |
 | **Estimación total**           | 13-18h realista + 5h 30min cierre                            |
 | **Rama de trabajo sugerida**   | `feature/sprint-05-zoho-entrada-leads`                       |
-| **Inicio**                     | — (a definir al arrancar)                                     |
+| **Inicio**                     | 08-06-2026                                                    |
 | **Fin Est.**                   | —                                                            |
-| **Fin Real**                   | —                                                            |
+| **Fin Real**                   | Desarrollo: 08-06-2026 (merge developer PR #25) · cierre formal pendiente |
 | **ADR vinculado**              | — (reutiliza adapter Zoho de Sprint 2, multi-DC)             |
 | **Plan detallado**             | [`plans/260608-1518-sprint-05-zoho-entrada-leads/plan.md`](260608-1518-sprint-05-zoho-entrada-leads/plan.md) (6 fases) |
 
@@ -1653,12 +1654,20 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 | ID    | Tarea                                                                            | Estim. | Estado       | Notas                                                                |
 | ----- | -------------------------------------------------------------------------------- | ------ | ------------ | -------------------------------------------------------------------- |
-| 6-01  | Capa de datos: 3 tablas (`zoho_sync_connections`, `zoho_lead_synced`, `zoho_writeback_outbox`) + trigger + RLS + Zod | 2-3h   | 🔘 Pendiente | Idempotencia por `zoho_lead_id` (sin hash de fila)                   |
-| 6-02  | **Webhook entrante Zoho** + suscripción Notifications API + event-processor      | 4-5h   | 🔘 Pendiente | Núcleo event-driven. Lead entra al instante. Reutiliza `getLead()`   |
-| 6-03  | Writeback bidireccional (cambios stage → Zoho) + outbox + audit R-014           | 2-3h   | 🔘 Pendiente | `ZohoCRMProvider.updateLead()` + `CrmWriteAuditRepository`           |
-| 6-04  | UI: activar recepción (1 clic auto + guía manual) + mapeo campos + actions       | 2-3h   | 🔘 Pendiente | Sin Picker — Zoho ya tiene OAuth (Sprint 2)                          |
-| 6-05  | Cron renovación suscripción + reconciliación diaria (red de seguridad)           | 1-2h   | 🔘 Pendiente | NO polling: renueva + reconcilia 1×/día idempotente. Fail-closed prod |
-| **Subtotal Fase 5 — Desarrollo** |                                                     | **11-16h** |          | + cierre. Total realista 13-18h                                      |
+| 6-01  | Capa de datos: 3 tablas (`zoho_sync_connections`, `zoho_lead_synced`, `zoho_writeback_outbox`) + trigger + RLS + Zod | 2-3h   | 🟢 Completada | Mergeado PR #25 (`6a46918`). Idempotencia por `zoho_lead_id`        |
+| 6-02  | **Webhook entrante Zoho** + suscripción Notifications API + event-processor      | 4-5h   | 🟢 Completada | Mergeado PR #25. Núcleo event-driven. `src/app/api/webhooks/zoho/`   |
+| 6-03  | Writeback bidireccional (cambios stage → Zoho) + outbox + audit R-014           | 2-3h   | 🟢 Completada | Mergeado PR #25. `zoho-pull/writeback.ts` + `outbox-processor.ts`    |
+| 6-04  | UI: activar recepción (1 clic auto + guía manual) + mapeo campos + actions       | 2-3h   | 🟢 Completada | Mergeado PR #25. `settings/integrations/zoho-pull/` + selector       |
+| 6-05  | Cron renovación suscripción + reconciliación diaria (red de seguridad)           | 1-2h   | 🟢 Completada | Mergeado PR #25. `zoho-pull/maintenance.ts` (renueva + reconcilia)   |
+| 6-06  | **Deuda menor: prompt Virginia + modelos demo** (ver nota↓)                      | 1-2h   | 🔘 Pendiente | Cargar prompt real clienta en BD + arreglar `gpt-4.1-mini` en `FIX_VIRGINIA_PROMPT.sql` |
+| **Subtotal Fase 5 — Desarrollo** |                                                     | **12-18h** |          | + cierre. 5/6 completas (PR #25 mergeado) · 6-06 deuda pendiente     |
+
+> **Nota fila `6-06` · Deuda menor (detectada 10-06-2026):** Dos puntos pendientes detectados durante la validación E2E del simulador:
+>
+> 1. **Prompt de Virginia NO cargado en BD.** El prompt autoritario de la clienta vive en [`docs/Docs-entrega-clienta/Promt-Virginia.md`](../docs/Docs-entrega-clienta/Promt-Virginia.md) (1022 líneas, lógica completa de cualificación Esden: árbol Regla A/B, protocolo precio 2 niveles, rectificación, ~25 variables). En BD el agente "Virginia (Cualificacion)" tiene solo un placeholder. Acción: cargar el prompt real en `ai_agent_variants` (tenant correcto, `tracked_variables` + `automation_rules` coherentes).
+> 2. **Modelo obsoleto en `supabase/FIX_VIRGINIA_PROMPT.sql`.** El script de emergencia aún fija `model_name = 'gpt-4.1-mini'` (obsoleto) y `api_key = 'REEMPLAZAR_CON_TU_KEY_REAL'`. El seed (`scripts/seed-demo.ts`) y la BD ya se corrigieron a `gpt-5.4-mini` (commit `22d88e1`), pero este script no se tocó por ser de emergencia (no entra en el flujo normal). Acción: alinear a `gpt-5.4-mini` + nota sobre la key.
+>
+> No bloquea el cierre del Sprint 5 ni el deploy. Candidata a resolverse en la sesión de carga de agentes reales de la clienta o como hotfix puntual.
 
 ### Tareas de cierre obligatorias (Sprint 5)
 

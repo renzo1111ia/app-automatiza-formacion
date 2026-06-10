@@ -70,7 +70,7 @@ dashboard-af/
 | SP-3 | Adapter layer + 2 CRMs (MVP) | v0.2.7 (final con hotfix BUG-2-01 — bumpeada desde v0.2.5) | 🟢 COMPLETADA (mergeado a developer 24-05-2026 19:55) | 0% | **74h** secuencial · ~**52h** con paralelismo Phase 02‖03‖04 (refinada tras research) | 24-05-2026 14:00 | 27-05-2026 (5-6 días lab con paralelismo) |
 | SP-4 | Hardening | v0.3.0 (MVP completo, post-hardening) | 🔘 Pendiente | 100% | 2-3 sem (80h–120h) | Vie 29-05-2026 09:00 | Vie 12-06-2026 19:00 |
 | SP-5 | Google Sheets bidireccional | v0.5.0 | 🟡 SPIKE En Desarrollo (28-05-2026 — 5/6 subtareas dev cubiertas, Sub 8 pendiente) | 0% | 60-100h | Mar 11-08-2026 09:00 | Vie 21-08-2026 19:00 |
-| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | Zoho CRM como entrada de leads (bidireccional) | v0.5.0 | 🔘 Pendiente · 🔜 **PRÓXIMO** (a desarrollar tras esta sesión) | 0% | 13-18h realista + 5h 30min cierre | — (a definir al arrancar) | — |
+| SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | Zoho CRM como entrada de leads (bidireccional) | v0.5.0 | 🟡 **Mergeado a developer** (PR #25, 3a9dee5) · deploy a staging/main diferido · sin tag v0.5.0 | 83% | 13-18h realista + 5h 30min cierre | 08-06-2026 | — |
 | SP-6 (Llamadas de Voz) | Llamadas de Voz 🆕 (v0.6.0) | v0.6.0 | 🔘 Pendiente | 0% | 8-14h + cierre (realista) | — | — |
 | SP-7 (Refinamiento) | Refinamiento Herramientas Internas (Renzo) | v0.7.0 | 🔘 Pendiente | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) | — | — |
 | SP-8 | Centro de costes LLM con LiteLLM + Langfuse | v0.8.0 | 🔘 Pendiente | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** | Post-Sprint 7 Refinamiento v0.7.0 | — |
