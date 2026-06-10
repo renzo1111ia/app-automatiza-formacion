@@ -79,9 +79,23 @@ function NotConnectedCard() {
           Para recibir leads de Zoho necesitas conectar la integración OAuth primero.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Link href="/dashboard/settings/integrations">
-          <Button>Conectar Zoho OAuth</Button>
+      <CardContent className="space-y-4">
+        <ol className="text-muted-foreground list-decimal space-y-1 pl-5 text-sm">
+          <li>
+            Ve a <strong>Ajustes → Clientes y Config.</strong>
+          </li>
+          <li>
+            Edita tu cliente (icono del lápiz) y abre la sección{" "}
+            <strong>Servidores Externos e Integraciones</strong>.
+          </li>
+          <li>
+            En la tarjeta <strong>Zoho CRM</strong> pulsa <strong>Conectar</strong> y completa el
+            flujo OAuth.
+          </li>
+          <li>Vuelve aquí para activar la recepción de leads y configurar el mapeo.</li>
+        </ol>
+        <Link href="/dashboard/settings">
+          <Button>Ir a conectar Zoho OAuth</Button>
         </Link>
       </CardContent>
     </Card>
