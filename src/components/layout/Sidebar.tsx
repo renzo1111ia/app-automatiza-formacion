@@ -31,6 +31,7 @@ import {
   Users,
   Sheet,
   SlidersHorizontal,
+  RefreshCw,
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -198,6 +199,11 @@ const NAV_ITEMS: NavItem[] = [
         label: "Google Sheets",
         href: "/dashboard/settings/integrations/google-sheets",
         icon: <Sheet className="h-4 w-4" strokeWidth={1.8} />,
+      },
+      {
+        label: "Zoho CRM",
+        href: "/dashboard/settings/integrations/zoho-pull",
+        icon: <RefreshCw className="h-4 w-4" strokeWidth={1.8} />,
       },
     ],
   },
