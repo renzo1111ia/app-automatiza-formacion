@@ -1,6 +1,6 @@
 # dashboard-af · Staging
 
-> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08
+> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-10
 
 AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Esta rama (`staging`) contiene el código listo para QA y pruebas de aceptación previas al release en producción.
 
@@ -61,7 +61,7 @@ dashboard-af/
 
 ## Estado del proyecto
 
-> Actualizado: 2026-06-08
+> Actualizado: 2026-06-10
 
 | Sprint | Fase | Versión | Estado | % Completado | Est. total | Inicio | Fin Est. |
 |--------|------|---------|--------|-------------|-----------|--------|---------|

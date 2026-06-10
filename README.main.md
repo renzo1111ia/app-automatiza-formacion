@@ -1,6 +1,6 @@
 # dashboard-af
 
-> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-08
+> **Versión:** v0.4.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-10
 
 AI CRM + Workflow Orchestrator multi-tenant para academias y centros de formación. Automatiza la captación, cualificación y conversión de leads mediante agentes de IA (voz + chat), integración con HubSpot y Zoho CRM, y paneles de gestión por tenant.
 

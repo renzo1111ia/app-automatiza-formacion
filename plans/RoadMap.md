@@ -2,7 +2,7 @@
 title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: "2026-06-08"
+last_updated: "2026-06-10"
 last_updated_by: "roadmap-keeper / Claude orquestador"
 project_version: v0.4.0
 mvp_target: v0.3.0
@@ -15,6 +15,7 @@ sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
 sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
 sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
+sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0)"
 ---
 
 <!--
@@ -37,7 +38,7 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 ![Fecha](https://img.shields.io/badge/Objetivo-22--jun--2026-e5a93b?style=for-the-badge&logo=calendar&logoColor=white)
 ![Excluido](https://img.shields.io/badge/NO%20promocionar-staging%20%7C%20main-e23b3b?style=for-the-badge&logo=git&logoColor=white)
 
-<sub>**Audiencia**: equipo de desarrollo · **Mantiene**: `af-agents:roadmap-keeper` · **Última actualización**: `2026-06-08`</sub>
+<sub>**Audiencia**: equipo de desarrollo · **Mantiene**: `af-agents:roadmap-keeper` · **Última actualización**: `2026-06-10`</sub>
 
 </div>
 
@@ -63,12 +64,12 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 | 🔜 &nbsp;**En cola (próximo)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · clon de Sheets (bidireccional) |
 | 🎯 &nbsp;**Hito MVP** | SP-4B Validación Pre-MVP (Renzo) → **MVP GA `v0.3.0`** · 16-21 jun |
 | ✅ &nbsp;**Salud** | 321/325 tests · 20/20 E2C · 0 críticos seguridad · E2E VPS 03-06 🟢 PASS |
-| 🗺️ &nbsp;**En cartera** | Refinamiento · Costes-LLM · Salesforce · GHL · ActiveCampaign · WhatsApp |
+| 🗺️ &nbsp;**En cartera** | Llamadas de Voz · Refinamiento · Costes-LLM · Salesforce · GHL · ActiveCampaign · WhatsApp |
 
 > ⚠️ **Documento vivo.** No lo edites a mano sin orden del lead — pídeselo al agente [`af-agents:roadmap-keeper`](../.claude/agents/roadmap-keeper.md).
 > 💡 Cada sprint lleva **versión, estado y estimación**. El agente los actualiza solo al arrancar o cerrar trabajo.
 
-## 🏁 Mapa de versiones vigente (2026-06-08)
+## 🏁 Mapa de versiones vigente (2026-06-10)
 
 | Sprint              | Versión             | Estado                       | Notas                                                         |
 | ------------------- | ------------------- | ---------------------------- | ------------------------------------------------------------- |
@@ -80,14 +81,15 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 | SP-4B               | `v0.3.0` GA         | 🔘 Pendiente                 | Validación pre-MVP (Renzo) · 16-21 jun                        |
 | Sprint 4            | `v0.4.0`            | 🟢 Released (08-06)          | Google Sheets bidireccional · cierre formal (CLOSE-1/1.5/2/4) |
 | Sprint 5            | `v0.5.0`            | 🔘 Pendiente                 | **Zoho CRM entrada de leads (bidireccional)** · clon de Sheets · 🔜 PRÓXIMO |
-| Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator + /calls |
-| Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
-| Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Salesforce adapter                                            |
-| Sprint 9            | `v0.9.0`            | 🔘 Pendiente                 | GoHighLevel adapter                                           |
-| Sprint 10           | `v0.10.0`           | 🔘 Pendiente                 | ActiveCampaign adapter                                        |
-| Sprint 11           | `v0.11.0`           | 🔘 Pendiente                 | Adapter pattern generalization                                |
-| Sprint 12           | `v0.12.x`           | 🔘 Backlog                   | Tier 2 on-demand (bajo pedido por CRM)                        |
-| Sprint 13           | `v0.13.0`           | 🔘 Pendiente                 | WhatsApp Tech Provider (Meta) · Embedded Signup · post-MVP    |
+| Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | **🆕 Llamadas de Voz** · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
+| Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
+| Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
+| Sprint 9            | `v0.9.0`            | 🔘 Pendiente                 | Salesforce adapter                                            |
+| Sprint 10           | `v0.10.0`           | 🔘 Pendiente                 | GoHighLevel adapter                                           |
+| Sprint 11           | `v0.11.0`           | 🔘 Pendiente                 | ActiveCampaign adapter                                        |
+| Sprint 12           | `v0.12.0`           | 🔘 Pendiente                 | Adapter pattern generalization                                |
+| Sprint 13           | `v0.13.x`           | 🔘 Backlog                   | Tier 2 on-demand (bajo pedido por CRM)                        |
+| Sprint 14           | `v0.14.0`           | 🔘 Pendiente                 | WhatsApp Tech Provider (Meta) · Embedded Signup · post-MVP    |
 
 ---
 
@@ -126,11 +128,11 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 | Sprint                                                      | Versión     | Fechas                  | Estim           | Estado       | Notas                                              |
 | ----------------------------------------------------------- | ----------- | ----------------------- | --------------- | ------------ | -------------------------------------------------- |
 | 👤 **SP-4B — Sprint Validación Pre-MVP**                    | `v0.3.0 GA` | 16-06-2026 → 19-06-2026 | 40-55h          | 🔘 Pendiente | QA en VPS de los Sprints 0+1+2+2B+3. … _ver nota↓_ |
-| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.5.2`    | Post Costes-LLM         | 22-28h + cierre | 🔘 Pendiente | Simulator + Lanzador + DEPS · _ver nota↓_          |
+| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.7.0`    | Post Llamadas de Voz    | 22-28h + cierre | 🔘 Pendiente | Simulator + Lanzador (NO-voz) + DEPS · _ver nota↓_ |
 
 > **Nota fila `👤 SP-4B — Sprint Validación Pre-MVP` · Notas**: QA en VPS de los Sprints 0+1+2+2B+3. Re-test automático + E2C local + E2E VPS + **manual humano absorbido de CLOSE-3 de cada sprint MVP**. Bumpea SemVer a v0.3.0 GA (MVP). Detalle: [`plans/260522-1700-sprint-validacion-pre-mvp/plan.md`](260522-1700-sprint-validacion-pre-mvp/plan.md)
 >
-> **Nota fila `👤 Sprint Refinamiento Herramientas Inter` · Notas**: Fase 01 Simulator persistencia BD + voz · Fase 02 Lanzador `/calls` Retell SDK + WebSocket. Tareas movidas FUERA del MVP por decisión 22-05-2026 (Bea + Renzo). Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
+> **Nota fila `👤 Sprint Refinamiento Herramientas Inter` · Notas**: ⚠️ La parte de VOZ (lanzador `/calls` real + simulación de voz) se MOVIÓ al Sprint 6 "Llamadas de Voz" (decisión Javi HP 10-06-2026). Aquí queda solo el refinamiento NO-voz: Fase 01 Simulator persistencia variables en BD (texto) + historial recarda · Fase 02 Lanzador (sin voz) · DEPS. Tareas movidas FUERA del MVP por decisión 22-05-2026 (Bea + Renzo). Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
 
 **Tareas individuales de Renzo dentro de otros sprints**:
 
@@ -141,7 +143,7 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 **Coordinación**:
 
 - Hand-off de cada Sprint MVP (1, 2, 2B, 3) a Renzo: en `SP-N-CLOSE-5` se rellena la plantilla [`plans/260522-1700-sprint-validacion-pre-mvp/phase-NN-validacion-sprint-N.md`](260522-1700-sprint-validacion-pre-mvp/) con tests, comandos, manual checklist, variables VPS y bugs ya cerrados.
-- Hand-off Sprint Refinamiento: tras `SP-7-CLOSE-5` (cierre Costes-LLM), Javi HP redacta el plan detallado del refinamiento y notifica a Renzo.
+- Hand-off Sprint Refinamiento: tras `SP-8-CLOSE-5` (cierre Costes-LLM, Sprint 8), Javi HP redacta el plan detallado del refinamiento y notifica a Renzo.
 
 ---
 
@@ -205,14 +207,15 @@ sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
 | **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
 | Sprint 4 — Google Sheets bidireccional (`v0.4.0`) ✅ CERRADO                     | 60-100h         | **~14h 30min**     | Javi HP         | 🟢 08-jun-2026           |
 | **Sprint 5 — Zoho CRM entrada de leads (`v0.5.0`)** 🔜 PRÓXIMO                   | —               | **10-15h**         | Javi HP         | post-Sheets, a desarrollar |
-| Sprint 6 — Refinamiento Herramientas (`v0.6.0`) — Renzo + Javi HP               | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Zoho                |
-| Sprint 7 — Costes-LLM (`v0.7.0`)                                                | 23-31h          | **5-7h**           | Javi HP         | post-Refinamiento        |
-| Sprint 8 — Salesforce (`v0.8.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Costes-LLM          |
-| Sprint 9 — GoHighLevel (`v0.9.0`)                                               | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
-| Sprint 10 — ActiveCampaign (`v0.10.0`)                                          | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
-| Sprint 11 — Adapter pattern generalization (`v0.11.0`)                          | 20-40h          | **4-7h**           | Javi HP         | post-AC                  |
-| Sprint 12 — Tier 2 on-demand (`v0.12.x`)                                        | 30-50h/CRM      | **6-10h/CRM**      | bajo pedido     | backlog                  |
-| Sprint 13 — WhatsApp Tech Provider (`v0.13.0`)                                  | 48-72h          | **15-25h**         | Javi HP         | post-generalización      |
+| Sprint 6 — Llamadas de Voz (`v0.6.0`) — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h**    | Javi HP         | post-Zoho                |
+| Sprint 7 — Refinamiento Herramientas (`v0.7.0`) — Renzo + Javi HP               | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Llamadas de Voz     |
+| Sprint 8 — Costes-LLM (`v0.8.0`)                                                | 23-31h          | **5-7h**           | Javi HP         | post-Refinamiento        |
+| Sprint 9 — Salesforce (`v0.9.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Costes-LLM          |
+| Sprint 10 — GoHighLevel (`v0.10.0`)                                             | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
+| Sprint 11 — ActiveCampaign (`v0.11.0`)                                          | 20-50h          | **4-8h**           | Javi HP         | post-GHL                 |
+| Sprint 12 — Adapter pattern generalization (`v0.12.0`)                          | 20-40h          | **4-7h**           | Javi HP         | post-AC                  |
+| Sprint 13 — Tier 2 on-demand (`v0.13.x`)                                        | 30-50h/CRM      | **6-10h/CRM**      | bajo pedido     | backlog                  |
+| Sprint 14 — WhatsApp Tech Provider (`v0.14.0`)                                  | 48-72h          | **15-25h**         | Javi HP         | post-generalización      |
 
 > **Nota Auditor V2**: estas estimaciones realistas **asumen mantenimiento del patrón de orquestación multi-agente** que ha producido el ratio −92%. Si el equipo se amplía con devs no-orquestados, recalcular al 50% del original como peor caso. Las estimaciones originales se mantienen en las tablas detalladas más abajo como referencia histórica y para hand-off a SP-4B.
 
@@ -480,61 +483,73 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 >
 > **Nota fila `▸ Cierre Sprint 5 (SP-6-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
-### 👤 Sprint 6 — Refinamiento Herramientas Internas — Equipo Renzo (v0.6.0)
+### Sprint 6 — Llamadas de Voz 🆕 (v0.6.0)
+
+> **Detalle de tareas pendiente — lo genera el planner** (plan en `plans/...` a crear al arrancar el sprint).
+
+| Item                                | Estado       | Estim.  | ⏱ Push | ⏱ Cierre | Notas                                                  |
+| ----------------------------------- | ------------ | ------- | ------ | -------- | ------------------------------------------------------ |
+| **🚀 Sprint 6**                     | 🔘 Pendiente | 8-14h   | —      | —        | **v0.6.0** · `feature/sprint-06-llamadas-voz` · 🆕 Nuevo sprint insertado Javi HP 10-06-2026 |
+| ▸ Tareas de desarrollo (Fase 6)     | 🔘           | 8-14h   | —      | —        | Conversaciones de Voz (clon WhatsApp) + config voz centralizada + llamadas→dashboard+Lista de Leads |
+| ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🔘           | 5h 30min + bugs | — | —   | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+
+---
+
+### 👤 Sprint 7 — Refinamiento Herramientas Internas — Equipo Renzo (v0.7.0)
 
 | Item                                               | Estado        | Estim.              | ⏱ Push    | ⏱ Cierre  | Notas                                                                    |
 | -------------------------------------------------- | ------------- | ------------------- | --------- | --------- | ------------------------------------------------------------------------ |
-| 👤 **🚀 Sprint 6**                                 | 🔘 Pendiente  | **18-22h + cierre** | —         | —         | **v0.6.0** · `feature/sprint-06-refinamiento-herramientas` · … _ver nota↓_ |
-| 👤 ▸ Fase 01 — Simulator persistencia + voz        | 🔘            | 8-10h               | —         | —         | Persistir variables capturadas en BD (no sólo `useState`) … _ver nota↓_  |
-| 👤 ▸ Fase 02 — Lanzador `/calls` real Retell SDK   | 🔘            | 10-12h              | —         | —         | Reemplazar mockup hardcoded por endpoint `/api/calls/manua … _ver nota↓_ |
-| ▸ Fase 03 — **SP-7-DEPS-AUDIT-26** Vulns prod      | 🟢 Completada | 4-6h                | ~1h 15min | ~1h 45min | 🟢 MERGEADA developer 03-06-2026 — 25→4 vulns (-84%) · … _ver nota↓_     |
-| 👤 ▸ Cierre Sprint 6 (SP-6-CLOSE-1..5)             | 🔘            | **4h 30min + bugs** | —         | —         | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| 👤 **🚀 Sprint 7**                                 | 🔘 Pendiente  | **18-22h + cierre** | —         | —         | **v0.7.0** · `feature/sprint-07-refinamiento-herramientas` · … _ver nota↓_ |
+| 👤 ▸ Fase 01 — Simulator persistencia (NO-voz)     | 🔘            | 8-10h               | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: persistir variables en BD (texto) + historial recarga · … _ver nota↓_ |
+| 👤 ▸ Fase 02 — Lanzador `/calls` (NO-voz)          | 🔘            | 10-12h              | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: refinamiento NO-voz del lanzador · … _ver nota↓_ |
+| ▸ Fase 03 — **SP-7-DEPS-AUDIT-26** Vulns prod      | 🟢 Completada | 4-6h                | ~1h 15min | ~1h 45min | 🟢 MERGEADA developer 03-06-2026 — 25→4 vulns (-84%) · ID histórico SP-7-DEPS-AUDIT-26 NO se renumera (ya en commits/CI) · … _ver nota↓_ |
+| 👤 ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5)             | 🔘            | **4h 30min + bugs** | —         | —         | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
-> **Nota fila `👤 🚀 Sprint 6` · Notas**: **v0.6.0** · `feature/sprint-06-refinamiento-herramientas` · **Asignado a Renzo + equipo Renzo** para Fases 01-02 (Simulator + Lanzador `/calls`). **Fase 03 SP-7-DEPS-AUDIT-26 🟢 ADELANTADA Y CERRADA 02-06-2026** por Javi HP (25→4 vulns, −84%, rama `feature/sp-7-deps-audit-26`). El sprint padre estima ahora 18-22h + cierre (sin Fase 03). creado 22-05-2026 por decisión Bea + Renzo: Simulator y Lanzador `/calls` fuera del MVP. **Renumerado de Refinamiento a Sprint 6 el 08-06-2026.** Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
+> **Nota fila `👤 🚀 Sprint 7` · Notas**: **v0.7.0** · `feature/sprint-07-refinamiento-herramientas` · **Asignado a Renzo + equipo Renzo** para Fases 01-02 (Simulator + Lanzador, parte NO-voz). **Fase 03 SP-7-DEPS-AUDIT-26 🟢 ADELANTADA Y CERRADA 02-06-2026** por Javi HP (25→4 vulns, −84%, rama `feature/sp-7-deps-audit-26`). El sprint padre estima ahora 18-22h + cierre (sin Fase 03). creado 22-05-2026 por decisión Bea + Renzo: Simulator y Lanzador `/calls` fuera del MVP. **Renumerado de Sprint 6 a Sprint 7 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).** Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
 >
-> **Nota fila `👤 ▸ Fase 01 — Simulator persistencia + v` · Notas**: Persistir variables capturadas en BD (no sólo `useState`) + soporte simulación voz (no sólo texto) + retener historial al recargar página
+> **Nota fila `👤 ▸ Fase 01 — Simulator persistencia (NO-v` · Notas**: ⚠️ La parte de VOZ (soporte simulación voz) se MOVIÓ al Sprint 6 "Llamadas de Voz" (decisión Javi HP 10-06-2026). Aquí queda solo: persistir variables capturadas en BD (no sólo `useState`) + retener historial al recargar página (texto, sin voz).
 >
-> **Nota fila `👤 ▸ Fase 02 — Lanzador /calls real Retel` · Notas**: Reemplazar mockup hardcoded por endpoint `/api/calls/manual` real + WebSocket transcripción en vivo + LiveMonitor conectado al SDK de Retell
+> **Nota fila `👤 ▸ Fase 02 — Lanzador /calls (NO-voz)` · Notas**: ⚠️ La parte de VOZ (lanzador `/calls` real Retell SDK + WebSocket transcripción en vivo + LiveMonitor SDK) se MOVIÓ al Sprint 6 "Llamadas de Voz" (decisión Javi HP 10-06-2026). Aquí queda solo el refinamiento NO-voz del lanzador.
 >
-> **Nota fila `▸ Fase 03 — SP-7-DEPS-AUDIT-26 Vulns prod` · Notas**: **🟢 ADELANTADA Y CERRADA 02-06-2026** por orden Javi HP — ejecutada fuera del Sprint Refinamiento. Rama `feature/sp-7-deps-audit-26` desde developer. **Resultado**: 25 → 4 vulns (−84%, 0 críticas / 0 altas / 4 moderate acceptedRisk). Plan 3-pass aprobado por `af-agents:adr` previamente. **Pass 1** `npm audit fix` plano cerró 18 vulns (bullmq+exceljs uuid bumps, @langchain/langgraph 1.2.6→1.3.3, hono, fast-uri, fast-xml-parser, langsmith, picomatch, tmp, etc.). **Pass 2** bump `vitest@3.2.4 → 4.1.8` + `@vitest/coverage-v8@4.1.8` cerró las 2 críticas (Vitest UI arbitrary file read/exec). Tests 306/310 verde tras refactor `rate-limiter.test.ts` con `vi.hoisted` + clase `MockRedis` explícita (Vitest 4 ya no permite `vi.fn().mockImplementation()` con `new`). **Pass 3** `package.json` añade `overrides: { brace-expansion: ^2.0.2 }` para forzar versión segura en eslint→minimatch→brace-expansion@1.1.12. **4 vulns moderate residuales como acceptedRisk** documentadas en ADR-018 sección "Cierre SP-7": next/postcss (rechazo downgrade Next 16→9, no servimos CSS no confiable), exceljs/uuid (rechazo downgrade exceljs@3.4, uuid.v4 sin buffer custom inexplotable). **Tiempo real**: ~1h 15min push + ~30min cierre = ~1h 45min vs estim 4-6h (−65%). Verificación CLOSE-4: typecheck 0, lint 0, build OK, npm test 306/310. Detectado en CI run [`26659624573`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/actions/runs/26659624573). **CIERRE 03-06-2026**: run E2E VPS autónomo (`plans/260603-2210-e2etotal-run/`) 🟢 PASS — fases bloqueantes 00-02 100%, ~392 tests, **0 CRIT / 0 HIGH**, 2 MED diferidos (info-leak webhook 503 + `/api/version` Build Args Dokploy). 5 regresiones HIGH/CRIT de runs previos verificadas RESUELTAS en VPS. Fix in-session `E2E-260603-001-LOW` (test crypto authTag flaky → XOR nibble determinista, commit `04c7f59`). 🟢 **MERGEADA a developer 03-06-2026** por orden Javi HP.
+> **Nota fila `▸ Fase 03 — SP-7-DEPS-AUDIT-26 Vulns prod` · Notas**: **ID histórico SP-7-DEPS-AUDIT-26 NO se renumera** — ya referenciado en commits y CI, cambiar causaría confusión. **🟢 ADELANTADA Y CERRADA 02-06-2026** por orden Javi HP — ejecutada fuera del Sprint Refinamiento. Rama `feature/sp-7-deps-audit-26` desde developer. **Resultado**: 25 → 4 vulns (−84%, 0 críticas / 0 altas / 4 moderate acceptedRisk). Plan 3-pass aprobado por `af-agents:adr` previamente. **Pass 1** `npm audit fix` plano cerró 18 vulns (bullmq+exceljs uuid bumps, @langchain/langgraph 1.2.6→1.3.3, hono, fast-uri, fast-xml-parser, langsmith, picomatch, tmp, etc.). **Pass 2** bump `vitest@3.2.4 → 4.1.8` + `@vitest/coverage-v8@4.1.8` cerró las 2 críticas (Vitest UI arbitrary file read/exec). Tests 306/310 verde tras refactor `rate-limiter.test.ts` con `vi.hoisted` + clase `MockRedis` explícita (Vitest 4 ya no permite `vi.fn().mockImplementation()` con `new`). **Pass 3** `package.json` añade `overrides: { brace-expansion: ^2.0.2 }` para forzar versión segura en eslint→minimatch→brace-expansion@1.1.12. **4 vulns moderate residuales como acceptedRisk** documentadas en ADR-018 sección "Cierre SP-7": next/postcss (rechazo downgrade Next 16→9, no servimos CSS no confiable), exceljs/uuid (rechazo downgrade exceljs@3.4, uuid.v4 sin buffer custom inexplotable). **Tiempo real**: ~1h 15min push + ~30min cierre = ~1h 45min vs estim 4-6h (−65%). Verificación CLOSE-4: typecheck 0, lint 0, build OK, npm test 306/310. Detectado en CI run [`26659624573`](https://github.com/AutomatizaFormacion/Automatiza-Formacion-DashBoard/actions/runs/26659624573). **CIERRE 03-06-2026**: run E2E VPS autónomo (`plans/260603-2210-e2etotal-run/`) 🟢 PASS — fases bloqueantes 00-02 100%, ~392 tests, **0 CRIT / 0 HIGH**, 2 MED diferidos (info-leak webhook 503 + `/api/version` Build Args Dokploy). 5 regresiones HIGH/CRIT de runs previos verificadas RESUELTAS en VPS. Fix in-session `E2E-260603-001-LOW` (test crypto authTag flaky → XOR nibble determinista, commit `04c7f59`). 🟢 **MERGEADA a developer 03-06-2026** por orden Javi HP.
 >
-> **Nota fila `👤 ▸ Cierre Sprint 6 (SP-6-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · CLOSE-3 manual ABSORBIDO por Renzo en este sprint (no diferido porque ya es Renzo) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `👤 ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · CLOSE-3 manual ABSORBIDO por Renzo en este sprint (no diferido porque ya es Renzo) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
-### Sprint 7 — Centro de costes LLM (v0.7.0)
+### Sprint 8 — Centro de costes LLM (v0.8.0)
 
 | Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
 | ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 7**                     | 🔘 Pendiente | 23-31h          | —      | —        | v0.7.0 · `feature/sprint-07-costes-llm` · … _ver nota↓_                  |
-| ▸ Tareas de desarrollo (Fase 7)     | 🔘           | 23-31h          | —      | —        | 0/3 (**C-01** tabla llm_usage_logs + tracker, **C-02** dashboard Recharts, **C-03** token_usage chat_messages) |
-| ▸ Cierre Sprint 7 (SP-7-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| **🚀 Sprint 8**                     | 🔘 Pendiente | 23-31h          | —      | —        | v0.8.0 · `feature/sprint-08-costes-llm` · … _ver nota↓_                  |
+| ▸ Tareas de desarrollo (Fase 8)     | 🔘           | 23-31h          | —      | —        | 0/3 (**C-01** tabla llm_usage_logs + tracker, **C-02** dashboard Recharts, **C-03** token_usage chat_messages) |
+| ▸ Cierre Sprint 8 (SP-9-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
-> **Nota fila `🚀 Sprint 7` · Notas**: v0.7.0 · `feature/sprint-07-costes-llm` · creado 22-05-2026 por decisión clienta · **Renumerado de Costes-LLM a Sprint 7 el 08-06-2026** (LiteLLM Proxy + Langfuse, ver ADR-024 Draft)
+> **Nota fila `🚀 Sprint 8` · Notas**: v0.8.0 · `feature/sprint-08-costes-llm` · creado 22-05-2026 por decisión clienta · **Renumerado de Costes-LLM a Sprint 7 el 08-06-2026 · Renumerado de Sprint 7 a Sprint 8 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)** (LiteLLM Proxy + Langfuse, ver ADR-024 Draft)
 >
-> **Nota fila `▸ Cierre Sprint 7 (SP-7-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Cierre Sprint 8 (SP-9-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
-### Sprint 8 — Salesforce adapter (post-MVP)
+### Sprint 9 — Salesforce adapter (post-MVP)
 
 | Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
 | ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 8**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.8.0 · `feature/sprint-08-salesforce` · … _ver nota↓_                  |
-| ▸ Tareas de desarrollo (Fase 8)     | 🔘           | 60-100h         | —      | —        | 0/6 · jsforce vía ADR                                                     |
-| ▸ Cierre Sprint 8 (SP-8-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| **🚀 Sprint 9**                     | 🔘 Pendiente | 60-100h         | —      | —        | v0.9.0 · `feature/sprint-09-salesforce` · … _ver nota↓_                  |
+| ▸ Tareas de desarrollo (Fase 9)     | 🔘           | 60-100h         | —      | —        | 0/6 · jsforce vía ADR                                                     |
+| ▸ Cierre Sprint 9 (SP-10-CLOSE-1..5) | 🔘          | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
-> **Nota fila `🚀 Sprint 8` · Notas**: v0.8.0 · `feature/sprint-08-salesforce` · **Renumerado de Sprint 5 a Sprint 8 el 08-06-2026**
+> **Nota fila `🚀 Sprint 9` · Notas**: v0.9.0 · `feature/sprint-09-salesforce` · **Renumerado de Sprint 5 a Sprint 8 el 08-06-2026 · Renumerado de Sprint 8 a Sprint 9 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)**
 >
-> **Nota fila `▸ Cierre Sprint 8 (SP-8-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Cierre Sprint 9 (SP-10-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
-### Sprint 9 — GoHighLevel adapter (post-MVP)
+### Sprint 10 — GoHighLevel adapter (post-MVP)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 9**                     | 🔘 Pendiente | 40-80h          | —      | —        | v0.9.0 · `feature/sprint-09-gohighlevel` · … _ver nota↓_                 |
-| ▸ Tareas de desarrollo (Fase 9)     | 🔘           | 40-80h          | —      | —        | 0/5 · foco Latam EduTech                                                  |
-| ▸ Cierre Sprint 9 (SP-9-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| Item                                 | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
+| ------------------------------------ | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 10**                     | 🔘 Pendiente | 40-80h          | —      | —        | v0.10.0 · `feature/sprint-10-gohighlevel` · … _ver nota↓_                |
+| ▸ Tareas de desarrollo (Fase 10)     | 🔘           | 40-80h          | —      | —        | 0/5 · foco Latam EduTech                                                  |
+| ▸ Cierre Sprint 10 (SP-11-CLOSE-1..5) | 🔘          | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
-> **Nota fila `🚀 Sprint 9` · Notas**: v0.9.0 · `feature/sprint-09-gohighlevel` · **Renumerado de Sprint 6 a Sprint 9 el 08-06-2026**
+> **Nota fila `🚀 Sprint 10` · Notas**: v0.10.0 · `feature/sprint-10-gohighlevel` · **Renumerado de Sprint 6 a Sprint 9 el 08-06-2026 · Renumerado de Sprint 9 a Sprint 10 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)**
 >
-> **Nota fila `▸ Cierre Sprint 9 (SP-9-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Cierre Sprint 10 (SP-11-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
 
 ### Sprint 10 — ActiveCampaign adapter (post-MVP)
 
