@@ -7,14 +7,14 @@ last_updated_by: "roadmap-keeper / Claude orquestador"
 project_version: v0.4.0
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
-next_sprint: "Sprint 5 — Zoho CRM entrada de leads (v0.5.0)"
+next_sprint: "Sprint 6 — Llamadas de Voz (v0.6.0) 🆕"
 sprint_0_progress: "🟢 Released v0.1.0"
 sprint_1_progress: "🟢 Released v0.2.0"
 sprint_2_progress: "🟢 Released v0.2.7"
 sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
 sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
-sprint_5_progress: "🔘 Pendiente — PRÓXIMO"
+sprint_5_progress: "🟢 Released v0.5.0"
 sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0)"
 ---
 
@@ -2066,14 +2066,15 @@ Aplican los gates estándar de cierre, además:
 | **Sprint 3 (v0.4.0 — cierre MVP)** | `npx playwright test` → 0 failed (6+ golden path flows) · … _ver nota↓_                               |
 | **Sprint 4 (v0.4.0)**              | Tenant conecta Google vía OAuth2 desde UI admin · … _ver nota↓_                                       |
 | **Sprint 5 (v0.5.0)**              | Tenant conecta Zoho como entrada de leads · pull leads Zoho→CRM + writeback bidireccional + audit R-014 · … _ver nota↓_ |
-| **Sprint 6 (v0.6.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: Simulator + Lanzador `/calls` Renzo · … _ver nota↓_ |
-| **Sprint 7 (v0.7.0)**              | Tabla `llm_usage_logs` con RLS multi-tenant funcional · … _ver nota↓_                                 |
-| **Sprint 8 (v0.8.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: … _ver nota↓_                              |
-| **Sprint 9 (v0.9.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: … _ver nota↓_                              |
-| **Sprint 10 (v0.10.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: … _ver nota↓_                              |
-| **Sprint 11 (v0.11.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: … _ver nota↓_                              |
-| **Sprint 12 (v0.12.x+)**           | Plantilla on-demand: por cada CRM Tier 2 activado, … _ver nota↓_                                      |
-| **Sprint 13 (v0.13.0)**            | App Meta dedicada + App Review aprobado + tenant conecta WhatsApp vía Embedded Signup · … _ver nota↓_ |
+| **Sprint 6 (v0.6.0)** 🆕           | (pendiente extraer del plan.md cuando se cree) — esperado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK · … _ver nota↓_ |
+| **Sprint 7 (v0.7.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: Refinamiento Herramientas Internas · … _ver nota↓_ |
+| **Sprint 8 (v0.8.0)**              | Tabla `llm_usage_logs` con RLS multi-tenant funcional · … _ver nota↓_                                 |
+| **Sprint 9 (v0.9.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: tenant conecta Salesforce · … _ver nota↓_  |
+| **Sprint 10 (v0.10.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: GoHighLevel adapter · … _ver nota↓_        |
+| **Sprint 11 (v0.11.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: ActiveCampaign adapter · … _ver nota↓_     |
+| **Sprint 12 (v0.12.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: Adapter generalization · … _ver nota↓_     |
+| **Sprint 13 (v0.13.x+)**           | Plantilla on-demand: por cada CRM Tier 2 activado, … _ver nota↓_                                      |
+| **Sprint 14 (v0.14.0)**            | App Meta dedicada + App Review aprobado + tenant conecta WhatsApp vía Embedded Signup · … _ver nota↓_ |
 
 > **Nota fila `Sprint 0 (v0.1.0)` · Cierre = OK cuando...**: 0 credenciales hardcoded en `src/` · 0 endpoints orquestación sin auth accesibles desde internet · 0 webhooks con firma omitida incondicionalmente · `worker.js:58` firma corregida (flujo multi-día funciona) · RLS `tenants` no devuelve registros ajenos · typecheck+lint+build+tests sin errores · CHANGELOG `[v0.1.0]` completo · todas las tareas en 🔵/🟢 antes de SP-1-CLOSE-5
 >
@@ -2087,21 +2088,23 @@ Aplican los gates estándar de cierre, además:
 >
 > **Nota fila `Sprint 5 (v0.5.0)` · Cierre = OK cuando...**: Tenant conecta Zoho como fuente de entrada de leads desde UI admin · pull leads Zoho→CRM interno funcional · writeback bidireccional cambios de stage → Zoho · sin duplicados (idempotencia) · sin bucle push/pull infinito · `crm_write_audit` registra todo sync (R-014, `overwrite_with_audit`) · autorelleno campos (origen, fecha_ingreso_crm, tipo_lead, país por prefijo) · RLS tenant-only · typecheck+lint+build+tests sin errores
 >
-> **Nota fila `Sprint 6 (v0.6.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK + WebSocket transcripción en vivo · tests sandbox pass
+> **Nota fila `Sprint 6 (v0.6.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree — planner genera tareas al arrancar sprint) — esperado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK + WebSocket transcripción en vivo · tests sandbox pass. **🆕 Sprint insertado 10-06-2026 (decisión Javi HP: mover Llamadas de Voz de Sprint 7 Refinamiento a sprint dedicado).**
 >
-> **Nota fila `Sprint 7 (v0.7.0)` · Cierre = OK cuando...**: Tabla `llm_usage_logs` con RLS multi-tenant funcional · `llm-cost-tracker.ts` captura todas llamadas LangChain · `recordLlmUsage()` invocado en 5 call sites OpenAI directos · `chat_messages.metadata.token_usage` poblado para nuevos mensajes · Dashboard admin (`/admin/costs`) muestra costes por proveedor/mes + evolución tenant/semana · Vista tenant muestra sólo sus propios costes · Precios mayo 2026 (DA-4-005 cerrado) · CHANGELOG `[v0.7.0]` completo
+> **Nota fila `Sprint 7 (v0.7.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: Refinamiento Herramientas Internas · tareas NO-voz de Fase 01/02 Simulator/Lanzador que quedaron en Refinamiento completadas · otras herramientas internas pulidas. **Renumerado de Sprint 6 a Sprint 7 el 10-06-2026.**
 >
-> **Nota fila `Sprint 8 (v0.8.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: tenant conecta Salesforce vía OAuth2 Connected App (prod+sandbox) · CRUD Leads/Contacts/Opportunities funcional · webhooks bidireccionales (Platform Events/Streaming) operativos · tests integración sandbox pass
+> **Nota fila `Sprint 8 (v0.8.0)` · Cierre = OK cuando...**: Tabla `llm_usage_logs` con RLS multi-tenant funcional · `llm-cost-tracker.ts` captura todas llamadas LangChain · `recordLlmUsage()` invocado en 5 call sites OpenAI directos · `chat_messages.metadata.token_usage` poblado para nuevos mensajes · Dashboard admin (`/admin/costs`) muestra costes por proveedor/mes + evolución tenant/semana · Vista tenant muestra sólo sus propios costes · Precios mayo 2026 (DA-4-005 cerrado) · CHANGELOG `[v0.8.0]` completo. **Renumerado de Sprint 7 a Sprint 8 el 10-06-2026.**
 >
-> **Nota fila `Sprint 9 (v0.9.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: app registrada en GHL Marketplace + OAuth2 v2 · adapter Contacts+Opportunities+Calendars funcional · webhooks GHL bidireccionales · tests sandbox GHL pass
+> **Nota fila `Sprint 9 (v0.9.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: tenant conecta Salesforce vía OAuth2 Connected App (prod+sandbox) · CRUD Leads/Contacts/Opportunities funcional · webhooks bidireccionales (Platform Events/Streaming) operativos · tests integración sandbox pass. **Renumerado de Sprint 8 a Sprint 9 el 10-06-2026.**
 >
-> **Nota fila `Sprint 10 (v0.10.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: auth API Key multi-cuenta funcional · adapter Contacts+Deals+Tags+Lists · webhooks ActiveCampaign (contact updated, deal stage changed) · tests sandbox pass
+> **Nota fila `Sprint 10 (v0.10.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: app registrada en GHL Marketplace + OAuth2 v2 · adapter Contacts+Opportunities+Calendars funcional · webhooks GHL bidireccionales · tests sandbox GHL pass. **Renumerado de Sprint 9 a Sprint 10 el 10-06-2026.**
 >
-> **Nota fila `Sprint 11 (v0.11.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: `IntegrationAdapter` base con OAuth flow + field mapper genéricos · webhook handling + signature verification generalizado · rate limiting/retry/circuit breaker por adapter generalizado · refactor sin regresión en 6 adapters existentes
+> **Nota fila `Sprint 11 (v0.11.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: auth API Key multi-cuenta funcional · adapter Contacts+Deals+Tags+Lists · webhooks ActiveCampaign (contact updated, deal stage changed) · tests sandbox pass. **Renumerado de Sprint 10 a Sprint 11 el 10-06-2026.**
 >
-> **Nota fila `Sprint 12 (v0.12.x+)` · Cierre = OK cuando...**: Plantilla on-demand: por cada CRM Tier 2 activado, cumplir gates estándar de cierre de sprint + pedido explícito cliente registrado
+> **Nota fila `Sprint 12 (v0.12.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: `IntegrationAdapter` base con OAuth flow + field mapper genéricos · webhook handling + signature verification generalizado · rate limiting/retry/circuit breaker por adapter generalizado · refactor sin regresión en 6 adapters existentes. **Renumerado de Sprint 11 a Sprint 12 el 10-06-2026.**
 >
-> **Nota fila `Sprint 13 (v0.13.0)` · Cierre = OK cuando...**: App de Meta dedicada creada (no reutilizar la actual) · App Review aprobado (Advanced Access `whatsapp_business_messaging` + `whatsapp_business_management`) · Access Verification completada · tenant conecta WhatsApp vía Embedded Signup sin pegar tokens · token de sistema central (no por tenant) · WABA suscrita al webhook de la app · tenants `manual` sin regresión (dual-mode) · `crypto`/secretos del token central protegidos · typecheck+lint+build+tests sin errores · ADR-025 `Accepted`
+> **Nota fila `Sprint 13 (v0.13.x+)` · Cierre = OK cuando...**: Plantilla on-demand: por cada CRM Tier 2 activado, cumplir gates estándar de cierre de sprint + pedido explícito cliente registrado. **Renumerado de Sprint 12 a Sprint 13 el 10-06-2026.**
+>
+> **Nota fila `Sprint 14 (v0.14.0)` · Cierre = OK cuando...**: App de Meta dedicada creada (no reutilizar la actual) · App Review aprobado (Advanced Access `whatsapp_business_messaging` + `whatsapp_business_management`) · Access Verification completada · tenant conecta WhatsApp vía Embedded Signup sin pegar tokens · token de sistema central (no por tenant) · WABA suscrita al webhook de la app · tenants `manual` sin regresión (dual-mode) · `crypto`/secretos del token central protegidos · typecheck+lint+build+tests sin errores · ADR-025 `Accepted`. **Renumerado de Sprint 13 a Sprint 14 el 10-06-2026.**
 
 ---
 
@@ -2115,15 +2118,16 @@ Aplican los gates estándar de cierre, además:
 | **Sprint 2B** (Fase 2.5)         | v0.2.8/v0.2.9    | 🟢 Completada (merged) | 15 (Dashboard KPIs Overview)                                 | ~16h estim · ⏱ Real ~2h 23min (−86%)             | incluido        |
 | **Sprint 3** (Fase 3)            | v0.3.0-rc.1      | 🟢 Completada (merged) | 22 dev (-1 movida a Sprint Costes-LLM) + 4 BUG-SEC           | 112-144h estim · ⏱ Real ~25h 42min (−80%)        | 8h + bugs       |
 | **Sprint 4** (Fase 4)            | v0.4.0           | 🟢 Completada (merged) | 6 (Google Sheets bidireccional) · SPIKE + E2E real + cierre  | 60-100h estim · ⏱ Real ~14h 30min                | ~1h 30min       |
-| **Sprint 5** (Fase 5)            | v0.5.0           | 🔘 Pendiente 🔜        | 4 (Zoho CRM entrada de leads, bidireccional) · clon Sheets   | 10-15h realista                                  | 5h 30min + bugs |
-| **Sprint 6** (Fase 6)            | v0.6.0           | 🔘 Pendiente           | 👤 Refinamiento Herramientas Internas (Renzo)                 | 18-22h + cierre                                  | 5h 30min + bugs |
-| **Sprint 7** (Fase 7)            | v0.7.0           | 🔘 Pendiente           | 3 (C-01, C-02, C-03 — Costes-LLM)                           | 23-31h (post-Refinamiento, antes de Salesforce)  | 5h 30min + bugs |
-| **Sprint 8** (Fase 8)            | v0.8.0           | 🔘 Pendiente           | 6 (Salesforce adapter)                                       | 60-100h                                          | 5h 30min + bugs |
-| **Sprint 9** (Fase 9)            | v0.9.0           | 🔘 Pendiente           | 5 (GoHighLevel adapter)                                      | 40-80h                                           | 5h 30min + bugs |
-| **Sprint 10** (Fase 10)          | v0.10.0          | 🔘 Pendiente           | 5 (ActiveCampaign adapter)                                   | 20-50h                                           | 5h 30min + bugs |
-| **Sprint 11** (Fase 11)          | v0.11.0          | 🔘 Pendiente           | 4 (Adapter generalization)                                   | 20-40h (bloqueado hasta SP-4..SP-10)             | 5h 30min + bugs |
-| **Sprint 12** (Fase 12)          | v0.12.x+         | 🔘 Backlog             | 5 (Tier 2 on-demand)                                         | ~30-50h por CRM activado (no suma a total)       | 5h 30min + bugs |
-| **Sprint 13** (Fase 13)          | v0.13.0          | 🔘 Pendiente           | 7 (WhatsApp Tech Provider migration)                         | ~48-72h                                          | 6h 30min + bugs |
+| **Sprint 5** (Fase 5)            | v0.5.0           | 🟢 Completada (merged) | 4 (Zoho CRM entrada de leads, bidireccional) · clon Sheets   | 10-15h realista                                  | 5h 30min + bugs |
+| **Sprint 6** (Fase 6) 🆕         | v0.6.0           | 🔘 Pendiente           | (TBD — planner genera tareas al arrancar) Llamadas de Voz    | TBD                                              | 5h 30min + bugs |
+| **Sprint 7** (Fase 7)            | v0.7.0           | 🔘 Pendiente           | 👤 Refinamiento Herramientas Internas (Renzo)                 | 18-22h + cierre                                  | 5h 30min + bugs |
+| **Sprint 8** (Fase 8)            | v0.8.0           | 🔘 Pendiente           | 3 (C-01, C-02, C-03 — Costes-LLM)                           | 23-31h (post-Refinamiento, antes de Salesforce)  | 5h 30min + bugs |
+| **Sprint 9** (Fase 9)            | v0.9.0           | 🔘 Pendiente           | 6 (Salesforce adapter)                                       | 60-100h                                          | 5h 30min + bugs |
+| **Sprint 10** (Fase 10)          | v0.10.0          | 🔘 Pendiente           | 5 (GoHighLevel adapter)                                      | 40-80h                                           | 5h 30min + bugs |
+| **Sprint 11** (Fase 11)          | v0.11.0          | 🔘 Pendiente           | 5 (ActiveCampaign adapter)                                   | 20-50h                                           | 5h 30min + bugs |
+| **Sprint 12** (Fase 12)          | v0.12.0          | 🔘 Pendiente           | 4 (Adapter generalization)                                   | 20-40h (bloqueado hasta SP-4..SP-11)             | 5h 30min + bugs |
+| **Sprint 13** (Fase 13)          | v0.13.x+         | 🔘 Backlog             | 5 (Tier 2 on-demand)                                         | ~30-50h por CRM activado (no suma a total)       | 5h 30min + bugs |
+| **Sprint 14** (Fase 14)          | v0.14.0          | 🔘 Pendiente           | 7 (WhatsApp Tech Provider migration)                         | ~48-72h                                          | 6h 30min + bugs |
 
 > **Nota fila `Sprint 1 (Fase 1)` · Tareas dev**: **32** (24 🟢 Completada + 8 🟢 Diferida; 1 movida a Sprint 0 + 1 a Sprint Costes-LLM)
 
@@ -2148,4 +2152,4 @@ Reglas clave:
 
 ---
 
-**Última actualización**: 08-06-2026 — **Sprint 4 Google Sheets 🟢 CERRADO formalmente (v0.4.0)**: CLOSE-1 (typecheck/lint/build/tests 321/325) + CLOSE-1.5 (security delta OWASP 0 críticos, 2 findings fixed) + CLOSE-2 (20/20 E2C) + CLOSE-4 (2 fixes seguridad + 1 test fix) + bump SemVer + CHANGELOG. Previo: Sprint 3 🟢 (PR #22 merged 30-05) + SP-7 deps audit (PR #23 merged 03-06). Cabecera/frontmatter compactados para legibilidad. **Pendiente acción del usuario**: commit + push `developer` + tag `v0.4.0` + release.
+**Última actualización**: 10-06-2026 — **Sprint 6 "Llamadas de Voz" 🆕 insertado** (decisión Javi HP 10-06-2026): nuevo sprint dedicado v0.6.0 `feature/sprint-06-llamadas-voz` con Retell SDK + Simulator. Sprints 6..13 renumerados a 7..14 en todas las tablas, secciones detalladas, IDs CLOSE y notas. SP-7-DEPS-AUDIT-26 preservado como ID histórico. Previo (08-06-2026): Sprint 5 Zoho CRM entrada de leads mergeado (PR #25, v0.5.0). Sprint 4 Google Sheets 🟢 CERRADO (v0.4.0).
