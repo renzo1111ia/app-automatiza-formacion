@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-v1.41.0-stable
+    container_name: litellm-proxy
+    restart: always
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - STORE_MODEL_IN_DB=true
+      - LITELLM_LOG=INFO
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    networks:
+      - dokploy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health/readiness"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dokploy-network:
+    external: true

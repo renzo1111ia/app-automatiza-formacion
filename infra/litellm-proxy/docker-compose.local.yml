@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:main-v1.41.0-stable
+    container_name: litellm-proxy-local
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
+      - DATABASE_URL=${DATABASE_URL_LOCAL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - REDIS_HOST=${REDIS_HOST:-host.docker.internal}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - STORE_MODEL_IN_DB=true
+      - LITELLM_LOG=INFO
+    volumes:
+      - ./config.yaml:/app/config.yaml
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
