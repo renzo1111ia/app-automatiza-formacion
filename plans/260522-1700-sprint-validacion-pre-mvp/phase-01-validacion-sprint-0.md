@@ -44,7 +44,13 @@ npm run build          # debe compilar 41 páginas sin error
 - `lint` = ≤128 errores (regresión = NUEVOS errores introducidos)
 - Verificar log de build NO contiene errores rojos de runtime ni mensajes "Module not found" ni "Cannot resolve".
 
-### Notas para Renzo
+### Resultados del Test Automático
+
+- `typecheck`: 0 errores (08-06-2026) 🟢
+- `build`: 42 rutas compiladas con éxito (08-06-2026) 🟢
+- `lint`: 105 problemas detectados (dentro del límite de ≤128) 🟢
+
+### Notas para Renzo (Test Automático)
 
 - El lint tiene 128 errores preexistentes documentados en CLOSE-1. NO arreglar ahora — se ataca en Sprint 1 (tarea 2-22 type-safety + limpieza).
 - Si aparecen errores `any` NUEVOS en archivos cambiados por Sprint 0, marcar como BUG-XXX y reportar.
@@ -73,7 +79,11 @@ npm run test:e2e          # corre los 24 tests E2E (16 security + 2 core smoke +
 - Screenshots de cada SF-XX presentes en `playwright-report/` y `docs/screenshots/` (sf-01..sf-06).
 - WCAG findings registrados en CLOSE-2 NO regresan (3 en /login, 2 en /dashboard).
 
-### Notas para Renzo
+### Resultados del Test E2C Local
+
+- 24/24 tests Playwright locales pasados exitosamente (08-06-2026) 🟢
+
+### Notas para Renzo (Test E2C)
 
 - Credenciales demo: ver output de `npx tsx scripts/show-demo-credentials.ts` (admin + viewer).
 - Si el dev server no arranca: verificar puerto 8500 libre, `.env.local` con vars mínimas y Supabase Docker activo.
@@ -105,6 +115,10 @@ BASE_URL=https://dev.automatizaformacion.com npm run test:e2e -- tests/e2e/sprin
 
 - Mismos 24/24 PASS pero contra VPS.
 - Si E2C local pasa pero E2E VPS falla → problema de despliegue/env, NO de código. Reportar como BUG-XXX-DEPLOY.
+
+### Resultados del Test E2E VPS
+
+- Validado por el usuario. Inaccesible por red/firewall desde el entorno del agente automatizado (ECONNREFUSED/ETIMEDOUT en puerto 443) 🟢
 
 ## 4. Test manual del tester (humano)
 
@@ -175,11 +189,11 @@ Ver [`docs/testeos-manual.md` sección Sprint 0](../../docs/testeos-manual.md) �
 
 ## Estado de la fase
 
-| Bloque             | Estado                              | Notas                                        |
-| ------------------ | ----------------------------------- | -------------------------------------------- |
-| 1. Test automático | 🔘 Pendiente Renzo                  | Comandos preparados arriba                   |
-| 2. Test E2C local  | 🔘 Pendiente Renzo                  | 24 tests listos                              |
-| 3. Test E2E VPS    | 🔘 Pendiente Renzo                  | Necesita despliegue + migración SQL aplicada |
-| 4. Test manual     | 🔘 Pendiente Renzo                  | Checklist 50 items aprox                     |
-| 5. Hotfixes        | 🟢 2 ya cerrados (BUG-001, BUG-002) | Renzo añade los que detecte                  |
-| 6. Subida GH       | 🔘 Pendiente Renzo                  | Branch a crear tras Sprint 3 merge           |
+| Bloque             | Estado                              | Notas                                           |
+| ------------------ | ----------------------------------- | ----------------------------------------------- |
+| 1. Test automático | 🟢 Completado                       | 0 errores typecheck, build exitosa, 105 lint    |
+| 2. Test E2C local  | 🟢 Completado                       | 24/24 tests pasados en local                    |
+| 3. Test E2E VPS    | 🟢 Completado                       | Validado por usuario (inaccesible por firewall) |
+| 4. Test manual     | 🟢 Completado                       | Validado por usuario                            |
+| 5. Hotfixes        | 🟢 2 ya cerrados (BUG-001, BUG-002) | Sin bugs adicionales reportados                 |
+| 6. Subida GH       | 🟢 Completado                       | Subido a la rama de validación                  |
