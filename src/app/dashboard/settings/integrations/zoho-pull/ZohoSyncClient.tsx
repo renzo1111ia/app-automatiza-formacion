@@ -6,7 +6,7 @@
 // mapeo de campos, toggles is_active/writeback, sync manual y estado de la
 // última sincronización. Patrón de SheetsWizardClient.tsx.
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   AlertCircle,
   Bell,
@@ -194,8 +194,30 @@ function ZohoConfigPanel({
   );
   const [manualGuideOpen, setManualGuideOpen] = useState(false);
   const [webhookUrl, setWebhookUrl] = useState(initialWebhookUrl);
+  // Mapeo automático al cargar: si no hay mapeo guardado, lo sugerimos solo
+  // (sin que el usuario tenga que pulsar "Sugerir mapeo").
+  const [autoMapping, setAutoMapping] = useState(connection?.field_mapping?.length === 0);
 
   const [pending, startTransition] = useTransition();
+
+  // Auto-sugerir el mapeo una vez al montar si está vacío (Zoho ya conectado).
+  useEffect(() => {
+    if (connection?.field_mapping?.length !== 0) return;
+    let cancelled = false;
+    (async () => {
+      const res = await suggestZohoFieldMappingAction();
+      if (cancelled) return;
+      if (res.ok && res.fieldMapping.length > 0) {
+        setFieldMapping(res.fieldMapping);
+      }
+      setAutoMapping(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Solo al montar — connection no cambia en vida del componente (hay reload tras mutaciones).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Modo activo (las dos vías son alternativas, no coexisten) ─────────────
   //   "auto"   → suscripción Notifications API activa (hay expiry).
@@ -561,22 +583,35 @@ function ZohoConfigPanel({
         <CardHeader>
           <CardTitle className="text-base">Mapeo de campos Zoho → AF</CardTitle>
           <CardDescription>
-            Configura cómo se traducen los campos de Zoho a los campos internos del sistema. Si lo
-            dejas vacío se usa el mapeo por defecto (First_Name, Email, Phone...).
+            El mapeo se detecta automáticamente de un lead de tu Zoho al conectar. Revísalo,
+            ajústalo si quieres y pulsa <strong>Guardar mapeo</strong>. Si lo dejas vacío se usa el
+            mapeo por defecto (First_Name, Email, Phone...).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ZohoFieldMappingEditor
-            mapping={fieldMapping}
-            onChange={setFieldMapping}
-            disabled={pending}
-          />
+          {autoMapping ? (
+            <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4 text-sm">
+              <Loader2 className="size-4 animate-spin" />
+              Detectando campos de tu Zoho automáticamente...
+            </div>
+          ) : (
+            <ZohoFieldMappingEditor
+              mapping={fieldMapping}
+              onChange={setFieldMapping}
+              disabled={pending}
+            />
+          )}
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={handleSuggestMapping} disabled={pending}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSuggestMapping}
+              disabled={pending || autoMapping}
+            >
               {pending ? <Loader2 className="mr-1 size-3 animate-spin" /> : null}
-              Sugerir mapeo
+              Volver a detectar
             </Button>
-            <Button size="sm" onClick={handleSaveMapping} disabled={pending}>
+            <Button size="sm" onClick={handleSaveMapping} disabled={pending || autoMapping}>
               {pending ? (
                 <Loader2 className="mr-1 size-3 animate-spin" />
               ) : (
