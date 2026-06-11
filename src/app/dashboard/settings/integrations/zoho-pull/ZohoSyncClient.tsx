@@ -386,6 +386,33 @@ function ZohoConfigPanel({
 
   return (
     <div className="space-y-6">
+      {/* ── Cabecera: cuenta conectada + desconectar (acceso directo, sin scroll) ── */}
+      <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="size-5 shrink-0 text-green-600" />
+          <div>
+            <p className="font-medium">Zoho CRM conectado</p>
+            <p className="text-muted-foreground text-xs">
+              Cuenta autorizada vía OAuth. Desconecta para cambiar de cuenta o reconectar.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDisconnect}
+          disabled={pending}
+          className="text-destructive border-destructive/40 hover:bg-destructive/5 shrink-0"
+        >
+          {pending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Unplug className="mr-2 size-4" />
+          )}
+          Desconectar
+        </Button>
+      </div>
+
       {/* ── Banner de estado: qué vía está activa ── */}
       <div
         className={`flex items-center gap-3 rounded-lg border p-4 ${
