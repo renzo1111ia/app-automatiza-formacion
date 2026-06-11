@@ -29,6 +29,21 @@ export async function register() {
         err instanceof Error ? err.message : String(err)
       );
     }
+
+    // Sprint 5 (fix entrada de leads): arrancar el worker BullMQ de zoho-pull al
+    // boot. Mismo problema que BUG-4-03 en Sheets: el webhook /api/webhooks/zoho
+    // y la reconciliación encolan jobs (enqueueZohoLeadEvent) pero, sin un worker
+    // consumiendo la cola, los jobs quedan en `wait` y los leads de Zoho nunca se
+    // crean en la BD. Lo arrancamos aquí, en runtime Node, una vez por proceso.
+    try {
+      const { startZohoLeadWorker } = await import("./src/lib/integrations/zoho-pull/queue");
+      startZohoLeadWorker();
+    } catch (err) {
+      console.warn(
+        "[instrumentation] No se pudo arrancar zoho-lead worker:",
+        err instanceof Error ? err.message : String(err)
+      );
+    }
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {
