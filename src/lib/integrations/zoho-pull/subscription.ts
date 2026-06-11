@@ -41,8 +41,13 @@ function publicBaseUrl(): string {
 }
 
 function buildExpiryIso(days = EXPIRY_DAYS): string {
-  // ISO 8601 con offset. Zoho admite max 1 semana; usamos 7 días.
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  // Zoho Notifications API exige channel_expiry en ISO 8601 con offset numérico
+  // explícito (p. ej. 2026-06-18T12:00:00+00:00). `Date.toISOString()` devuelve
+  // el sufijo `Z` (Zulu), que Zoho rechaza con INVALID_DATA / expected datetime.
+  // Convertimos el `Z` final a `+00:00` (sigue siendo UTC) y quitamos los
+  // milisegundos, que Zoho tampoco necesita.
+  const iso = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  return iso.replace(/\.\d{3}Z$/, "+00:00");
 }
 
 /** channel_id numérico (long) — Zoho exige numérico, no UUID. */

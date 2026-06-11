@@ -7,7 +7,6 @@
 // última sincronización. Patrón de SheetsWizardClient.tsx.
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import {
   AlertCircle,
   Bell,
@@ -15,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Plug,
   RefreshCw,
   Loader2,
   Save,
@@ -51,52 +51,125 @@ type ZohoStatus =
 
 interface Props {
   initialStatus: ZohoStatus;
+  /** Mensaje de error del callback OAuth (?error=...). */
+  oauthError?: string | null;
+  /** Flag de éxito del callback OAuth (?success=1). */
+  oauthSuccess?: boolean;
 }
 
-export function ZohoSyncClient({ initialStatus }: Props) {
+export function ZohoSyncClient({ initialStatus, oauthError = null, oauthSuccess = false }: Props) {
   const conn =
     (initialStatus?.ok && initialStatus.zohoConnected && initialStatus.connection) || null;
 
-  // Si no hay integración Zoho conectada, mostrar CTA.
+  // Banner de feedback del OAuth (éxito/error) — mismo patrón que Google Sheets.
+  const banner = (
+    <>
+      {oauthError && (
+        <Card className="border-destructive">
+          <CardContent className="flex items-center gap-3 pt-6">
+            <AlertCircle className="text-destructive size-5 shrink-0" />
+            <div>
+              <p className="text-destructive font-medium">Error al conectar Zoho</p>
+              <p className="text-muted-foreground text-sm">{decodeURIComponent(oauthError)}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {oauthSuccess && (
+        <Card className="border-green-500/40 bg-green-500/5">
+          <CardContent className="flex items-center gap-3 pt-6">
+            <CheckCircle2 className="size-5 shrink-0 text-green-500" />
+            <p className="font-medium">
+              Zoho CRM conectado correctamente. Ahora activa la recepción de leads.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </>
+  );
+
+  // Si no hay integración Zoho conectada, mostrar el paso de conexión OAuth
+  // INTEGRADO en esta misma página (no se manda al usuario a otra pantalla),
+  // igual que el wizard de Google Sheets.
   if (!initialStatus?.ok || !initialStatus.zohoConnected) {
-    return <NotConnectedCard />;
+    return (
+      <div className="space-y-6">
+        {banner}
+        <ConnectOAuthCard />
+      </div>
+    );
   }
 
-  return <ZohoConfigPanel connection={conn} initialWebhookUrl={initialStatus.webhookUrl} />;
+  return (
+    <div className="space-y-6">
+      {banner}
+      <ZohoConfigPanel connection={conn} initialWebhookUrl={initialStatus.webhookUrl} />
+    </div>
+  );
 }
 
-// ─── CTA: Zoho no conectado ───────────────────────────────────────────────────
+// ─── Paso 1: Conectar Zoho OAuth (integrado, patrón Google Sheets) ────────────
 
-function NotConnectedCard() {
+// Data centers de Zoho. El usuario elige el suyo antes de conectar (.eu por
+// defecto). Zoho re-enruta al DC real durante el login, pero arrancar en el DC
+// correcto evita fricción y errores de client_id registrado en otro DC.
+const ZOHO_DATA_CENTERS: { value: string; label: string }[] = [
+  { value: "eu", label: "Europa (.eu)" },
+  { value: "com", label: "EE. UU. (.com)" },
+  { value: "in", label: "India (.in)" },
+  { value: "au", label: "Australia (.com.au)" },
+  { value: "jp", label: "Japón (.jp)" },
+  { value: "ca", label: "Canadá (.zohocloud.ca)" },
+  { value: "sa", label: "Arabia Saudí (.sa)" },
+  { value: "uk", label: "Reino Unido (.uk)" },
+  { value: "cn", label: "China (.com.cn)" },
+];
+
+function ConnectOAuthCard() {
+  const [dc, setDc] = useState("eu");
+
   return (
-    <Card className="border-dashed">
+    <Card className="border-primary">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertCircle className="size-5 text-amber-500" />
-          Zoho CRM no conectado
+          <Plug className="size-5 text-violet-600" />
+          Conectar Zoho CRM
         </CardTitle>
         <CardDescription>
-          Para recibir leads de Zoho necesitas conectar la integración OAuth primero.
+          Autoriza el acceso a tu cuenta Zoho para recibir leads en tiempo real. Te llevaremos a
+          Zoho para iniciar sesión y aceptar los permisos; al volver, podrás activar la recepción y
+          configurar el mapeo de campos aquí mismo.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <ol className="text-muted-foreground list-decimal space-y-1 pl-5 text-sm">
-          <li>
-            Ve a <strong>Ajustes → Clientes y Config.</strong>
-          </li>
-          <li>
-            Edita tu cliente (icono del lápiz) y abre la sección{" "}
-            <strong>Servidores Externos e Integraciones</strong>.
-          </li>
-          <li>
-            En la tarjeta <strong>Zoho CRM</strong> pulsa <strong>Conectar</strong> y completa el
-            flujo OAuth.
-          </li>
-          <li>Vuelve aquí para activar la recepción de leads y configurar el mapeo.</li>
-        </ol>
-        <Link href="/dashboard/settings">
-          <Button>Ir a conectar Zoho OAuth</Button>
-        </Link>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="space-y-1.5">
+            <Label htmlFor="zoho-dc">Servidor (data center)</Label>
+            <select
+              id="zoho-dc"
+              value={dc}
+              onChange={(e) => setDc(e.target.value)}
+              className="border-input bg-background h-10 rounded-md border px-3 text-sm"
+              aria-label="Data center de Zoho"
+            >
+              {ZOHO_DATA_CENTERS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <a href={`/api/integrations/zoho/auth/start?dc=${dc}`}>
+            <Button className="w-full sm:w-auto">
+              <Plug className="mr-2 size-4" />
+              Conectar con Zoho
+            </Button>
+          </a>
+        </div>
+        <p className="text-muted-foreground text-xs">
+          Elige el data center donde está tu cuenta Zoho (por defecto Europa). Se solicitan permisos
+          de lectura/escritura de Leads y Contactos + notificaciones.
+        </p>
       </CardContent>
     </Card>
   );
