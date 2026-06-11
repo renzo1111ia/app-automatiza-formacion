@@ -11,8 +11,13 @@ import { ZohoSyncClient } from "./ZohoSyncClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ZohoPullSettingsPage() {
+interface PageProps {
+  searchParams: Promise<{ success?: string; error?: string }>;
+}
+
+export default async function ZohoPullSettingsPage({ searchParams }: PageProps) {
   const status = await getZohoSyncStatusAction();
+  const { success, error } = await searchParams;
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
@@ -37,7 +42,11 @@ export default async function ZohoPullSettingsPage() {
       <Suspense
         fallback={<div className="text-muted-foreground p-8 text-center">Cargando estado...</div>}
       >
-        <ZohoSyncClient initialStatus={status.ok ? status : null} />
+        <ZohoSyncClient
+          initialStatus={status.ok ? status : null}
+          oauthError={error ?? null}
+          oauthSuccess={success === "1"}
+        />
       </Suspense>
     </div>
   );

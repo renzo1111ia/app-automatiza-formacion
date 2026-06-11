@@ -23,9 +23,23 @@ interface RouteContext {
   params: Promise<{ provider: string }>;
 }
 
+// Zoho usa su propia página autocontenida (Ajustes → Zoho CRM) para todo el
+// flujo (conectar + activar + mapeo), igual que Google Sheets. Por eso tanto el
+// éxito como los errores del OAuth Zoho vuelven a esa página, mientras el resto
+// de CRMs (HubSpot) siguen yendo a la página de edición de cliente.
 function settingsRedirect(query: string): NextResponse {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:8500";
-  return NextResponse.redirect(`${base}/dashboard/settings?section=integrations&${query}`, {
+  const target = /provider=zoho(&|$)/.test(query)
+    ? `${base}/dashboard/settings/integrations/zoho-pull?${query}`
+    : `${base}/dashboard/settings?section=integrations&${query}`;
+  return NextResponse.redirect(target, { status: 302 });
+}
+
+// Redirect explícito a la página Zoho autocontenida (caso de éxito, donde el
+// query no lleva `provider=` pero sí queremos volver a Zoho).
+function zohoRedirect(query: string): NextResponse {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:8500";
+  return NextResponse.redirect(`${base}/dashboard/settings/integrations/zoho-pull?${query}`, {
     status: 302,
   });
 }
@@ -168,7 +182,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
   // F-API-2 — cookie deletion debe aplicarse al response final (Next.js 15
   // Route Handler: mutaciones via cookies() pueden no persistir tras crear
   // un NextResponse independiente).
-  const response = settingsRedirect(`success=${providerKey}`);
+  const response =
+    providerKey === "zoho" ? zohoRedirect(`success=1`) : settingsRedirect(`success=${providerKey}`);
   response.cookies.delete(`oauth_state_${providerKey}`);
   return response;
 }
