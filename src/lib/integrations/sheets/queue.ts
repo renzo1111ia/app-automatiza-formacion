@@ -126,6 +126,23 @@ export function startSheetsPullWorker(): Worker<SheetPullJob> {
   return workerInstance;
 }
 
+/**
+ * Garantiza que el worker está arrancado en este proceso. Idempotente y barato.
+ * Necesario porque en producción standalone (Turbopack) instrumentation.ts no se
+ * ejecuta → sin esto los jobs de sheets-pull quedan en `wait` sin consumidor.
+ * Llamar al inicio de cada request que encola jobs (webhook / cron).
+ */
+export function ensureSheetsPullWorker(): void {
+  if (workerInstance) return;
+  try {
+    startSheetsPullWorker();
+  } catch (err) {
+    log.warn("ensureSheetsPullWorker no pudo arrancar el worker", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 /** Para tests/teardown. */
 export async function stopSheetsPullWorker(): Promise<void> {
   if (workerInstance) {

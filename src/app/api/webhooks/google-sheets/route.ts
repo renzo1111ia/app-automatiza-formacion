@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
-import { enqueueSheetPull } from "@/lib/integrations/sheets/queue";
+import { enqueueSheetPull, ensureSheetsPullWorker } from "@/lib/integrations/sheets/queue";
 import { createLogger } from "@/lib/utils/logger";
 
 const log = createLogger("webhook.google-sheets");
@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
     log.info("Webhook para connection inactiva, ignorado", { channelId });
     return NextResponse.json({ ok: true, ignored: "inactive" });
   }
+
+  // Garantiza que el worker consume la cola en este proceso (standalone no
+  // ejecuta instrumentation.ts → sin esto los jobs quedarían en `wait`).
+  ensureSheetsPullWorker();
 
   // Encolar pull con delay corto - Drive notifica varias veces seguidas para
   // batches; dedup por jobId hace que solo se procese una vez por ventana.

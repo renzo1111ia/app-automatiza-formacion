@@ -81,8 +81,14 @@ export async function enqueueZohoLeadEvent(data: ZohoPullJob, delayMs = 0): Prom
 }
 
 /**
- * Arranca el worker (idempotente). Llamar desde un entrypoint dedicado (worker
- * process). NO arrancar en cada request del API.
+ * Arranca el worker (idempotente — singleton por proceso).
+ *
+ * Se invoca por dos vías:
+ *   1. instrumentation.ts al boot (funciona en dev; en producción standalone con
+ *      Turbopack el instrumentation NO se copia al bundle → no se ejecuta).
+ *   2. ensureZohoLeadWorker() desde el webhook y el cron (vía robusta que SÍ
+ *      funciona en standalone: arranca el worker lazy en el mismo proceso la
+ *      primera vez que llega un evento). El guard de singleton evita duplicados.
  */
 export function startZohoLeadWorker(): Worker<ZohoPullJob> {
   if (workerInstance) return workerInstance;
@@ -131,6 +137,24 @@ export function startZohoLeadWorker(): Worker<ZohoPullJob> {
 
   log.info("zoho-lead worker started", { queue: ZOHO_LEAD_QUEUE, concurrency: 2 });
   return workerInstance;
+}
+
+/**
+ * Garantiza que el worker está arrancado en este proceso. Idempotente y barato
+ * (si ya existe, no hace nada). Pensado para llamarse al inicio de cada request
+ * que encola jobs (webhook / cron) — así el consumidor de la cola existe en
+ * standalone aunque instrumentation.ts no se haya ejecutado. No lanza: si Redis
+ * no está disponible, el propio Worker reintenta la conexión en segundo plano.
+ */
+export function ensureZohoLeadWorker(): void {
+  if (workerInstance) return;
+  try {
+    startZohoLeadWorker();
+  } catch (err) {
+    log.warn("ensureZohoLeadWorker no pudo arrancar el worker", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 /** Para tests/teardown. */

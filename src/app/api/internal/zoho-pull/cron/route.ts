@@ -19,6 +19,7 @@ import {
   runZohoReconciliation,
 } from "@/lib/integrations/zoho-pull/maintenance";
 import { runZohoWritebackOutbox } from "@/lib/integrations/zoho-pull/outbox-processor";
+import { ensureZohoLeadWorker } from "@/lib/integrations/zoho-pull/queue";
 import { createLogger } from "@/lib/utils/logger";
 
 const log = createLogger("cron.zoho");
@@ -55,6 +56,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   try {
+    // La reconciliación encola jobs en la cola Zoho → garantizamos que el worker
+    // los consume en este proceso (standalone no ejecuta instrumentation.ts).
+    ensureZohoLeadWorker();
+
     // Renovación + reconciliación en paralelo (independientes); la reconciliación
     // internamente recorre conexiones de forma secuencial.
     const [subscriptions, reconciliation] = await Promise.all([

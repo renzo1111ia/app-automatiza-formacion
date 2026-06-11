@@ -14,10 +14,14 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("./sentry.server.config");
 
-    // Sprint 4 (BUG-4-03): arrancar el worker BullMQ de sheets-pull al boot.
-    // El webhook de Drive encola jobs (enqueueSheetPull) pero sin un worker
-    // consumiendo la cola los jobs quedan en `wait` para siempre. Lo
-    // arrancamos aquí, en el runtime Node, una sola vez por proceso.
+    // Arranca los workers BullMQ al boot. NOTA: en producción standalone con
+    // Turbopack, instrumentation.ts NO se incluye en el bundle → register() no
+    // se ejecuta y este arranque se pierde. Por eso el arranque REAL y garantizado
+    // ocurre lazy en los entrypoints (ensureZohoLeadWorker/ensureSheetsPullWorker
+    // en webhook + cron). Este bloque sigue siendo útil en dev (donde sí corre).
+    //
+    // Sprint 4 (BUG-4-03): worker sheets-pull. El webhook de Drive encola jobs
+    // (enqueueSheetPull) pero sin worker consumiendo la cola quedan en `wait`.
     try {
       const { startSheetsPullWorker } = await import("./src/lib/integrations/sheets/queue");
       startSheetsPullWorker();

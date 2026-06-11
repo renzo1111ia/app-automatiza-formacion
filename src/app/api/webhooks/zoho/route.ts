@@ -18,7 +18,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
-import { enqueueZohoLeadEvent } from "@/lib/integrations/zoho-pull/queue";
+import { enqueueZohoLeadEvent, ensureZohoLeadWorker } from "@/lib/integrations/zoho-pull/queue";
 import { createLogger } from "@/lib/utils/logger";
 
 const log = createLogger("webhook.zoho");
@@ -188,6 +188,10 @@ export async function POST(req: NextRequest) {
     log.info("Webhook Zoho para connection inactiva, ignorado", { connection_id: conn.id });
     return NextResponse.json({ ok: true, ignored: "inactive" });
   }
+
+  // Garantiza que el worker consume la cola en este proceso (standalone no
+  // ejecuta instrumentation.ts → sin esto los jobs quedarían en `wait`).
+  ensureZohoLeadWorker();
 
   const { ids: leadIds, fieldsById } = await extractWebhook(req);
   if (leadIds.length === 0) {
