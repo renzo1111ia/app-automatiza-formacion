@@ -110,7 +110,24 @@ export function ZohoSyncClient({ initialStatus, oauthError = null, oauthSuccess 
 
 // ─── Paso 1: Conectar Zoho OAuth (integrado, patrón Google Sheets) ────────────
 
+// Data centers de Zoho. El usuario elige el suyo antes de conectar (.eu por
+// defecto). Zoho re-enruta al DC real durante el login, pero arrancar en el DC
+// correcto evita fricción y errores de client_id registrado en otro DC.
+const ZOHO_DATA_CENTERS: { value: string; label: string }[] = [
+  { value: "eu", label: "Europa (.eu)" },
+  { value: "com", label: "EE. UU. (.com)" },
+  { value: "in", label: "India (.in)" },
+  { value: "au", label: "Australia (.com.au)" },
+  { value: "jp", label: "Japón (.jp)" },
+  { value: "ca", label: "Canadá (.zohocloud.ca)" },
+  { value: "sa", label: "Arabia Saudí (.sa)" },
+  { value: "uk", label: "Reino Unido (.uk)" },
+  { value: "cn", label: "China (.com.cn)" },
+];
+
 function ConnectOAuthCard() {
+  const [dc, setDc] = useState("eu");
+
   return (
     <Card className="border-primary">
       <CardHeader>
@@ -125,15 +142,33 @@ function ConnectOAuthCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <a href="/api/integrations/zoho/auth/start">
-          <Button className="w-full sm:w-auto">
-            <Plug className="mr-2 size-4" />
-            Conectar con Zoho
-          </Button>
-        </a>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="space-y-1.5">
+            <Label htmlFor="zoho-dc">Servidor (data center)</Label>
+            <select
+              id="zoho-dc"
+              value={dc}
+              onChange={(e) => setDc(e.target.value)}
+              className="border-input bg-background h-10 rounded-md border px-3 text-sm"
+              aria-label="Data center de Zoho"
+            >
+              {ZOHO_DATA_CENTERS.map((d) => (
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <a href={`/api/integrations/zoho/auth/start?dc=${dc}`}>
+            <Button className="w-full sm:w-auto">
+              <Plug className="mr-2 size-4" />
+              Conectar con Zoho
+            </Button>
+          </a>
+        </div>
         <p className="text-muted-foreground text-xs">
-          Se solicitan permisos de lectura/escritura de Leads y Contactos + notificaciones. Zoho
-          detecta automáticamente tu data center (.eu, .com, etc.).
+          Elige el data center donde está tu cuenta Zoho (por defecto Europa). Se solicitan permisos
+          de lectura/escritura de Leads y Contactos + notificaciones.
         </p>
       </CardContent>
     </Card>

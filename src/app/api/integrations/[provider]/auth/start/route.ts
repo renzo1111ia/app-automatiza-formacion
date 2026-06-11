@@ -16,21 +16,32 @@ import {
 import { generateOAuthState } from "@/lib/integrations/crm/oauth/oauth-state";
 import { CRMFactory } from "@/lib/integrations/crm/factory";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { LOCATION_TO_ACCOUNTS } from "@/lib/integrations/crm/providers/zoho-dc-detector";
 
 interface RouteContext {
   params: Promise<{ provider: string }>;
 }
 
-export async function POST(_request: NextRequest, context: RouteContext) {
-  return handleStart(context);
+export async function POST(request: NextRequest, context: RouteContext) {
+  return handleStart(request, context);
 }
 
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   // GET conveniencia para enlace directo desde la UI (no requiere form submit).
-  return handleStart(context);
+  return handleStart(request, context);
 }
 
-async function handleStart(context: RouteContext): Promise<NextResponse> {
+// Resuelve el data center elegido por el usuario (?dc=eu|com|in|...) a su
+// accounts server. Solo aplica a Zoho (multi-DC). Si el DC no es válido o no se
+// pasa, devuelve null y el provider usa su default. Zoho además re-enruta al DC
+// real del usuario durante el login, así que esto es solo el punto de entrada.
+function resolveZohoAccountsServer(request: NextRequest): string | null {
+  const dc = new URL(request.url).searchParams.get("dc")?.toLowerCase();
+  if (!dc) return null;
+  return LOCATION_TO_ACCOUNTS[dc] ?? null;
+}
+
+async function handleStart(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { provider } = await context.params;
   const parsed = providerParamSchema.safeParse({ provider });
   if (!parsed.success) {
@@ -86,10 +97,17 @@ async function handleStart(context: RouteContext): Promise<NextResponse> {
     maxAge: 15 * 60,
   });
 
+  // Zoho: el usuario puede elegir su data center (?dc=eu|com|...) en la UI. Se
+  // pasa al provider como metadata para que la URL OAuth apunte al DC correcto
+  // (.eu por defecto desde el desplegable). HubSpot ignora esto.
+  const accountsServer = providerKey === "zoho" ? resolveZohoAccountsServer(request) : null;
+  const metadata = accountsServer ? { accounts_server: accountsServer } : undefined;
+
   const oauthProvider = CRMFactory.createForOAuthFlow(providerKey, {
     clientId: env.clientId,
     clientSecret: env.clientSecret,
     redirectUri,
+    metadata,
   });
   const authUrl = oauthProvider.getAuthorizationUrl(state, redirectUri);
 
