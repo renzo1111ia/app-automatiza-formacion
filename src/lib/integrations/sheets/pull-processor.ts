@@ -14,7 +14,7 @@ import {
   SheetConnectionSchema,
 } from "./types";
 import { mapRowToLead, letterToIndex, hashRow } from "./row-mapper";
-import { deriveCountryFromPhone } from "./phone-country";
+import { resolveLeadCountry } from "./phone-country";
 import { LeadStageEnum } from "@/lib/schemas/_base";
 
 const log = createLogger("sheets.pull-processor");
@@ -238,13 +238,12 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         // orquestador / writeback). Solo lo seteamos si viene mapeado.
         if (mapped.lead.current_stage === undefined) delete updatePayload.current_stage;
 
-        // Completar autogenerados solo si faltan en BD y la fila/teléfono los aporta.
+        // Completar país si falta en BD: explícito → teléfono → España (regla AF).
         if (!c.pais) {
-          const p =
-            (mapped.lead.pais as string | undefined) ??
-            deriveCountryFromPhone(mapped.lead.telefono as string | undefined) ??
-            undefined;
-          if (p) updatePayload.pais = p;
+          updatePayload.pais = resolveLeadCountry(
+            mapped.lead.pais as string | undefined,
+            (updatePayload.telefono ?? mapped.lead.telefono) as string | undefined
+          );
         }
         if (!c.origen) updatePayload.origen = "google_sheets";
         if (!c.tipo_lead) updatePayload.tipo_lead = "sheet_import";
@@ -307,10 +306,11 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       //  - tipo_lead: clasificación por defecto de importación Sheet.
       //  - pais: si la fila no lo trae, derivar del prefijo del teléfono.
       const nowIso = new Date().toISOString();
-      const derivedPais =
-        (mapped.lead.pais as string | undefined) ??
-        deriveCountryFromPhone(mapped.lead.telefono as string | undefined) ??
-        undefined;
+      // País: explícito → derivado del teléfono → España por defecto (regla AF única).
+      const resolvedPais = resolveLeadCountry(
+        mapped.lead.pais as string | undefined,
+        mapped.lead.telefono as string | undefined
+      );
 
       const leadPayload: Record<string, unknown> = {
         tenant_id: job.tenant_id,
@@ -318,8 +318,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         status: "PENDING",
         origen: "google_sheets",
         tipo_lead: "sheet_import",
-        ...mapped.lead, // un mapeo explícito de origen/tipo_lead/pais tiene prioridad
-        ...(derivedPais ? { pais: derivedPais } : {}),
+        ...mapped.lead, // un mapeo explícito de origen/tipo_lead tiene prioridad
+        pais: resolvedPais, // SIEMPRE hay país (tras el spread, gana este valor resuelto)
         fecha_ingreso_crm: nowIso,
         metadata: {
           ...(mapped.metadata ?? {}),

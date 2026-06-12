@@ -89,6 +89,36 @@ export function deriveCountryFromPhone(
   return null;
 }
 
+/** País por defecto del mercado AF cuando no se puede determinar de otra forma. */
+export const DEFAULT_LEAD_COUNTRY = "España";
+
+/**
+ * Resuelve el país de un lead con la regla de negocio canónica de AF, aplicable
+ * a TODOS los inputs que crean leads (Sheets, Zoho, widget, ingest, CRM, etc.):
+ *
+ *   1. País explícito (si el input lo trae) → se respeta.
+ *   2. Si no, se deriva del prefijo del teléfono (+34 → España, +52 → México…).
+ *   3. Si no se puede derivar (sin teléfono o sin prefijo reconocible) →
+ *      España por defecto (mercado principal de AF).
+ *
+ * NUNCA devuelve null/undefined: siempre hay país. Pensada para usarse como
+ * única fuente de verdad — no duplicar la cadena `?? derive ?? "España"` en cada
+ * processor.
+ */
+export function resolveLeadCountry(
+  explicitCountry: string | null | undefined,
+  phone: string | null | undefined,
+  defaultCountry: CountryCode = "ES"
+): string {
+  const explicit = explicitCountry == null ? "" : String(explicitCountry).trim();
+  if (explicit !== "") return explicit;
+
+  const derived = deriveCountryFromPhone(phone, defaultCountry);
+  if (derived) return derived;
+
+  return COUNTRY_ES[defaultCountry] ?? DEFAULT_LEAD_COUNTRY;
+}
+
 // Prefijos telefónicos internacionales → país (ES + Latam + comunes). Respaldo
 // determinista cuando libphonenumber no resuelve.
 const DIAL_PREFIX: Array<[string, string]> = [

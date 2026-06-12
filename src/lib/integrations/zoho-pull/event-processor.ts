@@ -17,7 +17,7 @@
 
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { CRMFactory } from "@/lib/integrations/crm/factory";
-import { deriveCountryFromPhone } from "@/lib/integrations/sheets/phone-country";
+import { resolveLeadCountry } from "@/lib/integrations/sheets/phone-country";
 import { LeadStageEnum } from "@/lib/schemas/_base";
 import { createLogger } from "@/lib/utils/logger";
 import { mapZohoLeadToInternal } from "./lead-mapper";
@@ -215,6 +215,22 @@ async function handleExisting(
     }
   }
 
+  // País (regla AF): si el lead en BD no tiene país, resolverlo (teléfono →
+  // España). Solo se rellena cuando falta en BD para no pisar uno editado a mano.
+  if (changes.pais == null) {
+    const { data: leadRow } = await supabase
+      .from("lead")
+      .select("pais, telefono")
+      .eq("id", synced.lead_id)
+      .maybeSingle();
+    if (leadRow && (leadRow.pais == null || String(leadRow.pais).trim() === "")) {
+      changes.pais = resolveLeadCountry(
+        mapped.lead.pais as string | undefined,
+        (changes.telefono ?? mapped.lead.telefono ?? leadRow.telefono) as string | undefined
+      );
+    }
+  }
+
   if (Object.keys(changes).length > 0) {
     // UPDATE vía RPC con SET LOCAL app.zoho_pull_in_progress=true en la misma
     // transacción → el trigger writeback NO re-encola (guard SQL real).
@@ -261,10 +277,11 @@ async function handleNew(
   result: ZohoEventResult
 ): Promise<void> {
   const nowIso = new Date().toISOString();
-  const derivedPais =
-    (mapped.lead.pais as string | undefined) ??
-    deriveCountryFromPhone(mapped.lead.telefono as string | undefined) ??
-    undefined;
+  // País: explícito → derivado del teléfono → España por defecto (regla AF única).
+  const resolvedPais = resolveLeadCountry(
+    mapped.lead.pais as string | undefined,
+    mapped.lead.telefono as string | undefined
+  );
 
   const leadPayload: Record<string, unknown> = {
     tenant_id: job.tenant_id,
@@ -273,7 +290,7 @@ async function handleNew(
     origen: "zoho_crm",
     tipo_lead: "zoho_import",
     ...mapped.lead, // un mapeo explícito tiene prioridad sobre los defaults
-    ...(derivedPais ? { pais: derivedPais } : {}),
+    pais: resolvedPais, // SIEMPRE hay país (tras el spread, gana este valor resuelto)
     fecha_ingreso_crm: nowIso,
     fecha_primer_contacto: nowIso,
     metadata: {

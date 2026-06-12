@@ -5,6 +5,7 @@ import { LeadWebhookSchema } from "@/lib/validations/lead";
 import { orchestrator } from "@/lib/core/orchestrator";
 import { verifyCrmWebhookSignature } from "@/lib/api-auth";
 import { createLogger } from "@/lib/utils/logger";
+import { resolveLeadCountry } from "@/lib/integrations/sheets/phone-country";
 
 const log = createLogger("webhook.crm");
 
@@ -87,6 +88,8 @@ export async function POST(req: Request) {
           {
             ...validatedData.data,
             tenant_id: tenantId,
+            // País (regla AF): explícito → teléfono → España por defecto.
+            pais: resolveLeadCountry(validatedData.data.pais, validatedData.data.telefono),
             fecha_actualizacion: new Date().toISOString(),
           },
           { onConflict: "tenant_id, id_lead_externo" }

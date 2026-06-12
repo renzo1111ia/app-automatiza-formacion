@@ -5,6 +5,7 @@ import axios from "axios";
 import { getLeadLocationData } from "@/lib/core/compliance";
 import { normalizeWhatsAppNumber, ensurePlusPrefix } from "@/lib/utils/phone-helper";
 import { getAuthServiceRoleKey } from "@/lib/auth-config";
+import { resolveLeadCountry } from "@/lib/integrations/sheets/phone-country";
 
 /**
  * WHATSAPP WEBHOOK PROCESSOR
@@ -127,8 +128,9 @@ export async function processIncomingWhatsApp(
           is_ai_enabled: true,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ai_agent_id: (defaultAgent as any)?.id || null,
+          // País (regla AF): geolocalización del número → teléfono → España.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pais: (location as any).countryName,
+          pais: resolveLeadCountry((location as any).countryName, ensurePlusPrefix(fromNumber)),
           fecha_ingreso_crm: new Date().toISOString(),
         })
         .select()
@@ -146,12 +148,10 @@ export async function processIncomingWhatsApp(
         updates.foto_url = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=random&color=fff&size=128`;
       }
 
-      // Update country for existing lead if missing
+      // Update country for existing lead if missing (regla AF: geo → tel → España).
       if (!lead.pais) {
         const location = getLeadLocationData(fromNumber);
-        if (location.countryName) {
-          updates.pais = location.countryName;
-        }
+        updates.pais = resolveLeadCountry(location.countryName, ensurePlusPrefix(fromNumber));
       }
 
       if (Object.keys(updates).length > 0) {

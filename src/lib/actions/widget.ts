@@ -10,6 +10,7 @@ import { KnowledgeBaseService, ChatSummaryService } from "@/lib/services/knowled
 import { FactExtractionService } from "@/lib/services/fact-extractor";
 import { validateWidgetOrigin } from "@/lib/api/validate-widget-origin";
 import { rateLimitWidget } from "@/lib/api/rate-limit-widget";
+import { resolveLeadCountry } from "@/lib/integrations/sheets/phone-country";
 
 export async function getWebWidgetConfig(id: string) {
   const supabase = await getAdminSupabaseClient();
@@ -129,9 +130,18 @@ export async function getChatbotResponse({
         .update(leadUpdates as never)
         .eq("id", currentLeadId);
     } else {
+      // País (regla AF): lead nuevo del widget → explícito → teléfono → España.
+      const kv = (knownVariables ?? {}) as Record<string, unknown>;
+      const leadInsert = {
+        ...leadUpdates,
+        pais: resolveLeadCountry(
+          (kv.pais ?? kv.country) as string | undefined,
+          (kv.telefono ?? kv.phone) as string | undefined
+        ),
+      };
       const { data: newLead } = await supabase
         .from("lead")
-        .insert([leadUpdates] as never)
+        .insert([leadInsert] as never)
         .select()
         .single();
       if (newLead) {

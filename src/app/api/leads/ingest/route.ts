@@ -4,6 +4,7 @@ import { orchestrator } from "@/lib/core/orchestrator";
 import { Tenant, ClientConfig } from "@/types/database";
 import { LeadStageEnum } from "@/lib/schemas/_base";
 import { leadOpportunitiesRepository } from "@/lib/repositories/lead-opportunities-repository";
+import { resolveLeadCountry } from "@/lib/integrations/sheets/phone-country";
 
 /**
  * UNIVERSAL INGEST ENDPOINT
@@ -96,7 +97,8 @@ export async function POST(req: NextRequest) {
       apellido: payload.apellido || "Externo",
       telefono: payload.telefono,
       email: payload.email,
-      pais: payload.pais,
+      // País (regla AF): explícito → derivado del teléfono → España por defecto.
+      pais: resolveLeadCountry(payload.pais, payload.telefono),
       origen: payload.origen,
       campana: payload.campana,
       current_stage: LeadStageEnum.enum.QUALIFICATION,
