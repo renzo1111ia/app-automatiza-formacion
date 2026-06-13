@@ -16,8 +16,15 @@ export interface LiteLLMRequest {
 // configuradas, el cliente va directo al fallback (SDK del provider). NUNCA se
 // usan defaults inseguros (la default `sk-1234` de los tutoriales de LiteLLM
 // daría acceso total a quien la conozca — ver red-team Sprint 8 V10).
-const LITELLM_BASE_URL = process.env.LITELLM_BASE_URL?.trim() || null;
-const LITELLM_API_KEY = process.env.LITELLM_API_KEY?.trim() || null;
+//
+// Se leen en tiempo de LLAMADA (no en constantes de módulo) para que un cambio
+// de env var surta efecto sin reimportar el módulo y para que sea testeable.
+function getLiteLLMBaseUrl(): string | null {
+  return process.env.LITELLM_BASE_URL?.trim() || null;
+}
+function getLiteLLMApiKey(): string | null {
+  return process.env.LITELLM_API_KEY?.trim() || null;
+}
 
 // Timeout del fetch al proxy. Un proxy vivo pero colgado (deadlock de pool
 // Postgres) dejaría el fetch pendiente indefinidamente sin AbortController,
@@ -26,7 +33,7 @@ const LITELLM_TIMEOUT_MS = 15_000;
 
 /** True si el proxy LiteLLM está configurado vía env vars. */
 export function isLiteLLMConfigured(): boolean {
-  return Boolean(LITELLM_BASE_URL && LITELLM_API_KEY);
+  return Boolean(getLiteLLMBaseUrl() && getLiteLLMApiKey());
 }
 
 /**
@@ -41,15 +48,16 @@ export async function proxyChatCompletion(req: LiteLLMRequest) {
     return emergencyFallbackChat(req);
   }
 
+  const baseUrl = getLiteLLMBaseUrl()!.replace(/\/+$/, "");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), LITELLM_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${LITELLM_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LITELLM_API_KEY}`,
+        Authorization: `Bearer ${getLiteLLMApiKey()}`,
       },
       body: JSON.stringify(req),
       signal: controller.signal,

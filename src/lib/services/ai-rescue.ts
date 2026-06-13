@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getSupabaseServerClient } from "../supabase/server";
+import { getLLMClient } from "@/lib/llm/llm-client";
 
 let _openai: OpenAI | null = null;
 
@@ -9,7 +10,8 @@ function getOpenAI() {
         if (!apiKey || apiKey === "your_api_key_here") {
             throw new Error("OPENAI_API_KEY no configurada. Por favor, añádela a tu archivo .env.local");
         }
-        _openai = new OpenAI({ apiKey });
+        // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+        _openai = getLLMClient(apiKey);
     }
     return _openai;
 }

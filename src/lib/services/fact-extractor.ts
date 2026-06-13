@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { getLLMClient } from "@/lib/llm/llm-client";
 import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
@@ -69,7 +69,8 @@ export class FactExtractionService {
                 console.error(`[FACT EXTRACTOR] ❌ OpenAI API Key missing or invalid for lead ${leadId}`);
                 return null;
             }
-            const openai = new OpenAI({ apiKey });
+            // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+            const openai = getLLMClient(apiKey);
             const supabase = await getAdminSupabaseClient();
             let validSegments = ['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'];
             

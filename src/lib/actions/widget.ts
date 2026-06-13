@@ -251,7 +251,18 @@ ${chatSummary || "New interaction."}
         content: aiResponse,
         sent_by: "AI_WIDGET",
         status: "SENT",
-        metadata: { source: "WEB_WIDGET", widget_id: widgetId, variant_id: activeVariant.id },
+        metadata: {
+          source: "WEB_WIDGET",
+          widget_id: widgetId,
+          variant_id: activeVariant.id,
+          model: modelName,
+          // Token usage real para /dashboard/costs (red-team Sprint 8 V5).
+          token_usage: {
+            prompt_tokens: completion.usage?.prompt_tokens ?? 0,
+            completion_tokens: completion.usage?.completion_tokens ?? 0,
+            total_tokens: completion.usage?.total_tokens ?? 0,
+          },
+        },
       } as never);
 
       // 7. Extract Facts

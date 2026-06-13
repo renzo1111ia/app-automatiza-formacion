@@ -436,6 +436,17 @@ ${
 
     let aiMessage = completion.choices[0]?.message;
 
+    // Acumulador de token usage de TODAS las llamadas (inicial + rondas tool).
+    // El dashboard /dashboard/costs lee chat_messages.metadata.token_usage; con
+    // tool calls hay hasta 3 llamadas OpenAI por mensaje, así que el coste real
+    // es la suma, no solo la primera (red-team Sprint 8 V5). Aproximado por
+    // mensaje: cubre el agregado de las rondas de este turno.
+    const tokenUsage = {
+      prompt_tokens: completion.usage?.prompt_tokens ?? 0,
+      completion_tokens: completion.usage?.completion_tokens ?? 0,
+      total_tokens: completion.usage?.total_tokens ?? 0,
+    };
+
     // 10. Handle Tool Calls with recursion (max 2 rounds)
     let toolRounds = 0;
     const maxToolRounds = 2;
@@ -549,6 +560,11 @@ ${
         temperature: 0.7,
       });
       aiMessage = nextCompletion.choices[0]?.message;
+
+      // Acumular el usage de esta ronda de tool al total del mensaje.
+      tokenUsage.prompt_tokens += nextCompletion.usage?.prompt_tokens ?? 0;
+      tokenUsage.completion_tokens += nextCompletion.usage?.completion_tokens ?? 0;
+      tokenUsage.total_tokens += nextCompletion.usage?.total_tokens ?? 0;
     }
 
     const aiResponse = aiMessage?.content || "";
@@ -590,6 +606,8 @@ ${
           metadata: {
             meta_id: completion.id,
             model: modelName,
+            // Suma de tokens de todas las llamadas de este turno (red-team V5).
+            token_usage: tokenUsage,
           },
         };
 

@@ -1,5 +1,5 @@
-import OpenAI from "openai";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { getLLMClient } from "@/lib/llm/llm-client";
 
 /**
  * AI ANALYSIS SERVICE
@@ -97,7 +97,8 @@ export async function analyzeConversation(
 
   try {
     const apiKey = await resolveApiKey(tenantId);
-    const openai = new OpenAI({ apiKey });
+    // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+    const openai = getLLMClient(apiKey);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",

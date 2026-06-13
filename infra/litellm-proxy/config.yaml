@@ -23,8 +23,12 @@ litellm_settings:
     host: os.environ/REDIS_HOST
     port: os.environ/REDIS_PORT
     password: os.environ/REDIS_PASSWORD
+  # Formato de fallbacks en LiteLLM v1.85+: lista de dicts {modelo: [alternativas]}.
+  # El formato viejo lista-de-listas [["a","b"]] de v1.41 ya NO es válido y rompe
+  # el arranque del proxy (validado en local, Sprint 8).
   fallbacks:
-    - ["claude-3-5-sonnet-20241022", "gpt-4o", "gemini-2.0-flash"]
+    - claude-3-5-sonnet-20241022: ["gpt-4o", "gemini-2.0-flash"]
+    - gpt-4o: ["gemini-2.0-flash", "gpt-4o-mini"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
