@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getSupabaseServerClient } from "../supabase/server";
 import { getLLMClient } from "@/lib/llm/llm-client";
+import { traceLLMUsage } from "@/lib/observability/langfuse-client";
 
 let _openai: OpenAI | null = null;
 
@@ -45,6 +46,7 @@ export class AIRescueService {
 
             // 2. Generate Message with GPT-4o
             const openai = getOpenAI();
+            const startedAt = Date.now();
             const response = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -72,6 +74,14 @@ export class AIRescueService {
                 ],
                 temperature: 0.7,
                 max_tokens: 150
+            });
+
+            // Observabilidad: solo metadata de uso, sin el historial (PII).
+            traceLLMUsage({
+                agentName: "ai-rescue",
+                model: response.model || "gpt-4o",
+                usage: response.usage,
+                latencyMs: Date.now() - startedAt,
             });
 
             const message = response.choices[0].message.content?.trim();
