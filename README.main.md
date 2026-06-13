@@ -1,6 +1,6 @@
 # dashboard-af
 
-> **Versión:** v0.5.1 &nbsp;·&nbsp; **Actualizado:** 2026-06-10 22:15 UTC
+> **Versión:** v0.8.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-13 14:30 UTC
 
 AI CRM + Workflow Orchestrator multi-tenant para academias y centros de formación. Automatiza la captación, cualificación y conversión de leads mediante agentes de IA (voz + chat), integración con HubSpot y Zoho CRM, y paneles de gestión por tenant.
 
@@ -52,7 +52,7 @@ npm run dev
 | SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | v0.5.0 | 🟡 **Mergeado a developer** (PR #25, 3a9dee5) · deploy a staging/main diferido · sin tag v0.5.0 | Desarrollo: 08-06-2026 (merge developer PR #25) · cierre formal pendiente |
 | SP-6 (Llamadas de Voz) | v0.6.0 | 🔘 Pendiente | — |
 | SP-7 (Refinamiento) | v0.7.0 | 🔘 Pendiente | — |
-| SP-8 | v0.8.0 | 🔘 Pendiente | — |
+| SP-8 | v0.8.0 | 🔵 Subida rama pendiente (implementación completada 13-06-2026) | 13-06-2026 (rama subida, PR sin merge) |
 | SP-9 | v0.9.0 | 🔘 Pendiente | — |
 | SP-10 | v0.10.0 | 🔘 Pendiente | — |
 | SP-11 | v0.11.0 | 🔘 Pendiente | — |
@@ -66,7 +66,7 @@ npm run dev
 
 ## Versión actual
 
-**v0.5.1**
+**v0.8.0**
 
 ---
 

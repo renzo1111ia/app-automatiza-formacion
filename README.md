@@ -1,6 +1,6 @@
 # dashboard-af
 
-> **Versión:** v0.8.0 (Sprint 8 en rama, PR sin merge) &nbsp;·&nbsp; **Actualizado:** 2026-06-13
+> **Versión:** v0.8.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-13 14:30 UTC
 
 AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Sistema que orquesta flujos de captación, cualificación y conversión de leads mediante agentes de IA conversacional (voz + chat), sincronización bidireccional con CRMs (HubSpot, Zoho) y paneles de gestión por tenant.
 
@@ -67,7 +67,7 @@ dashboard-af/
 
 ## RoadMap
 
-> Fuente: `plans/RoadMap.md` · Actualizado: 2026-06-10 22:15 UTC
+> Fuente: `plans/RoadMap.md` · Actualizado: 2026-06-13 14:30 UTC
 
 ### Fase 0 — Sprint 0: Hotfixes de seguridad
 
@@ -384,7 +384,7 @@ dashboard-af/
 |-------|-------|
 | Sprint ID | SP-8 |
 | Versión objetivo | v0.8.0 |
-| Estado | 🔘 Pendiente |
+| Estado | 🔵 Subida rama pendiente (implementación completada 13-06-2026) |
 | Estimación total | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
 | Rama sugerida | feature/sprint-08-costes-llm |
 
@@ -392,11 +392,11 @@ dashboard-af/
 
 | ID | Tarea | Est. | Estado |
 |----|-------|------|--------|
-| SP-9-CLOSE-1 | Auto test (typecheck + lint + build + tests) | 1h 30min | 🔘 Pendiente |
-| SP-9-CLOSE-2 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant | 2h 30min | 🔘 Pendiente |
-| SP-9-CLOSE-3 | Test Manual del Dev — verificar números cuadran con tráfico real | 1h | 🔘 Pendiente |
-| SP-9-CLOSE-4 | Corrección de Bugs detectados | (variable) | 🔘 Pendiente |
-| SP-9-CLOSE-5 | Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear r … _ver nota↓_ | 30min | 🔘 Pendiente |
+| SP-8-CLOSE-1 | Auto test (typecheck + lint + build + tests) ✅ REALIZADO | 1h 30min | 🟢 COMPLETADA |
+| SP-8-CLOSE-2 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant | 2h 30min | 🔘 Pendiente |
+| SP-8-CLOSE-3 | Test Manual del Dev — verificar números cuadran con tráfico real | 1h | 🔘 Pendiente |
+| SP-8-CLOSE-4 | Corrección de Bugs detectados | (variable) | ✅ Reasignada |
+| SP-8-CLOSE-5 | Cierre Sprint → PR a `developer` (SIN merge) + ADR-024 Accepted | 30min | 🔘 Pendiente |
 
 ### Fase 9 — Sprint 9: Salesforce adapter
 
@@ -580,7 +580,7 @@ dashboard-af/
 | 5 | v0.5.0 | 🟡 **Mergeado a developer** (PR #25, 3a9dee5) · deploy a staging/main diferido · sin tag v0.5.0 | 6 | 83% | 13-18h realista + 5h 30min cierre |
 | 6 | v0.6.0 | 🔘 Pendiente | 0 | 0% | 8-14h + cierre (realista) |
 | 7 | v0.7.0 | 🔘 Pendiente | 0 | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) |
-| 8 | v0.8.0 | 🔘 Pendiente | 0 | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
+| 8 | v0.8.0 | 🔵 Subida rama pendiente (implementación completada 13-06-2026) | 0 | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** |
 | 9 | v0.9.0 | 🔘 Pendiente | 6 | 0% | 60-100h |
 | 10 | v0.10.0 | 🔘 Pendiente | 5 | 0% | 40-80h |
 | 11 | v0.11.0 | 🔘 Pendiente | 5 | 0% | 20-50h |
@@ -593,7 +593,7 @@ dashboard-af/
 
 ## Versión actual
 
-**v0.5.1** — En desarrollo. Ver RoadMap para estado de cada sprint.
+**v0.8.0** — En desarrollo. Ver RoadMap para estado de cada sprint.
 
 ---
 
