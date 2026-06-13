@@ -1,9 +1,9 @@
 # ADR-024 — LLM Observability & Gateway: LiteLLM Proxy + Langfuse
 
-- **Status:** Draft (28-05-2026 · borrador para revisión Bea + arranque SP-5B en agosto)
-- **Date:** 2026-05-28
-- **Sprint:** SP-5B (Sprint Costes-LLM post-MVP, `v0.5.1`, planificado Lun 24-08-2026 → Jue 27-08-2026)
-- **Deciders:** Javi HP (Auditor del proyecto + dev orquestador) · Bea (clienta, pendiente revisión)
+- **Status:** Accepted (13-06-2026 · implementado en Sprint 8 con alcance re-scopeado por red-team. Pendiente ratificación Bea de las cuestiones abiertas — ver §Cuestiones abiertas)
+- **Date:** 2026-05-28 (Draft) · 2026-06-13 (Accepted)
+- **Sprint:** Sprint 8 — Costes-LLM (`v0.8.0`). Sustituye a la numeración original SP-5B/`v0.5.1`.
+- **Deciders:** Javi HP (Auditor del proyecto + dev orquestador) · Bea (clienta, ratificación pendiente de cuestiones abiertas)
 
 ## Contexto
 
@@ -121,6 +121,37 @@ Sustituir el plan custom in-house del Sprint Costes-LLM por una arquitectura hí
 - LangChain callback handler: <https://langfuse.com/guides/cookbook/integration_langchain>
 - Sentry + Langfuse stack (proyecto ya tiene Sentry de Sprint 3): complementarios, no se solapan (Sentry = errores app, Langfuse = traces LLM).
 
+## Notas de implementación (Sprint 8 — 13-06-2026)
+
+El sprint se ejecutó tras un análisis adversarial (red-team) que **re-scopeó** el alcance original por riesgo. Cambios respecto al plan inicial:
+
+### Re-scope por red-team
+
+1. **Alcance mínimo seguro, lo peligroso diferido.** El objetivo real del sprint (costes) se entregó sin introducir el SPOF del gateway en la ruta caliente:
+   - **Phase 01** — persistencia de `token_usage` en `chat_messages` (cierra el gap del dashboard `/dashboard/costs`, que caía a un fallback fijo `$0.002/msg`). WhatsApp suma las hasta 3 llamadas del turno (tool calls).
+   - **Phase 02** — LiteLLM Proxy enruta SOLO call sites async no-críticos (`fact-extractor`, `ai-analysis`, `ai-rescue`) vía helper `getLLMClient()` (baseURL del SDK OpenAI, preserva `tools`/`response_format`). La ruta caliente (WhatsApp/widget) NO se migró.
+   - **Phase 03** — Langfuse recibe SOLO metadata (tokens/modelo/latencia/tenant), NUNCA inputs/outputs (PII de leads).
+2. **DIFERIDO a sprint posterior:** migración de WhatsApp/embeddings al proxy, virtual keys per-tenant, budget enforce (en Sprint 8 caps en modo alert-only), Langfuse con payload PII (requiere self-host + masking validado), prompt management, evals.
+
+### Defectos del andamiaje previo corregidos
+
+- **Versión LiteLLM**: la imagen estaba en `main-v1.41.0-stable` (2024) y el ADR mencionaba `main-stable`. **Pineada a `ghcr.io/berriai/litellm:v1.85.5`** (estable 11-06-2026, SemVer plano, firmada cosign).
+- **Formato `fallbacks`**: el `config.yaml` usaba el formato lista-de-listas de v1.41, que **rompe el arranque** en v1.85. Corregido a lista-de-dicts. Validado levantando el contenedor v1.85.5 en local (completion real + `LiteLLM_SpendLogs` persistido).
+- **Postgres**: LiteLLM apuntaba al cluster Supabase de prod como superuser. **Ahora usa su propio Postgres dedicado** (`litellm-db`), aislado, sin RLS cross-tenant ni riesgo de pool exhaustion.
+- **Vars unificadas**: el código usa `LITELLM_BASE_URL`/`LITELLM_API_KEY` (no `LITELLM_PROXY_URL`/`LITELLM_MASTER_KEY`). Eliminado el default inseguro `sk-1234`/`localhost:4000` → fail-safe al SDK directo.
+- **Fallback de emergencia**: ahora propaga `tools`/`tool_choice`/`response_format`/`messages` y mapea por provider (antes descartaba tool calls y forzaba `gpt-4o-mini` — habría roto el agendado de WhatsApp en una caída).
+- **Healthcheck**: añadido `start_period: 60s` (evita crash-loop durante las migraciones de arranque).
+
+### Cuestiones abiertas (ratificación Bea)
+
+- **Langfuse producción**: en Sprint 8 NO se envía payload PII. Para tracing con payload real → **self-hosted en Dokploy** (sin transferencia internacional, sin DPA), nunca Cloud con datos de leads. Decisión de Bea sobre cuándo.
+- **Budget caps**: alert-only en Sprint 8; activar enforce tras observar consumo real ~1 semana.
+
+### Decisión nº4/nº5 originales — confirmadas
+
+La tabla `llm_usage_logs` custom y el dashboard Recharts custom siguen DESCARTADOS. `LiteLLM_SpendLogs` es la **fuente canónica de coste €** (validada en local); `chat_messages.metadata.token_usage` es la vista aproximada por mensaje (solo tokens, sin €).
+
 ## Status update history
 
 - **2026-05-28** — Draft creado por Javi HP. Pendiente revisión Bea (clienta) antes de arranque SP-5B en agosto.
+- **2026-06-13** — Promovido a Accepted e implementado en Sprint 8 (`v0.8.0`) con alcance re-scopeado por red-team. Renumera SP-5B → Sprint 8. Pendiente ratificación Bea de cuestiones abiertas (Langfuse self-host + budget enforce).
