@@ -1,12 +1,51 @@
+# LiteLLM Proxy — stack Dokploy (VPS Hetzner)
+#
+# AISLAMIENTO (red-team Sprint 8 V3): LiteLLM usa su PROPIO Postgres, NO el
+# cluster Supabase de producción. Compartir el Postgres de prod arriesgaba:
+#   - Pool exhaustion en picos 10:00/18:00 ES → caída total de plataforma.
+#   - Migraciones Prisma de LiteLLM corriendo sobre la BD multi-tenant.
+#   - Sin RLS en su schema → fuga de spend cross-tenant.
+#
+# SEGURIDAD: master key y passwords vienen de env vars del secret manager de
+# Dokploy. NUNCA hardcodear. El servicio NO lleva labels Traefik → no se expone
+# a Internet, solo accesible por la red interna dokploy-network.
+#
+# Imagen pineada a v1.85.5 (estable 11-06-2026, firmada cosign, multi-arch).
+# NO usar :latest / :main-stable / :main-v1.41.0-stable (obsoleto).
+
 version: "3.8"
+
 services:
-  litellm-proxy:
-    image: ghcr.io/berriai/litellm:main-v1.41.0-stable
-    container_name: litellm-proxy
+  litellm-db:
+    image: postgres:16-alpine
+    container_name: litellm-db
     restart: always
     environment:
+      - POSTGRES_USER=${LITELLM_DB_USER}
+      - POSTGRES_PASSWORD=${LITELLM_DB_PASSWORD}
+      - POSTGRES_DB=litellm
+    volumes:
+      - litellm-db-data:/var/lib/postgresql/data
+    networks:
+      - litellm-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LITELLM_DB_USER} -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  litellm-proxy:
+    image: ghcr.io/berriai/litellm:v1.85.5
+    container_name: litellm-proxy
+    restart: always
+    depends_on:
+      litellm-db:
+        condition: service_healthy
+    environment:
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
-      - DATABASE_URL=${DATABASE_URL}
+      # Postgres PROPIO de LiteLLM (no el de Supabase prod).
+      - DATABASE_URL=postgresql://${LITELLM_DB_USER}:${LITELLM_DB_PASSWORD}@litellm-db:5432/litellm
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
@@ -19,13 +58,24 @@ services:
       - ./config.yaml:/app/config.yaml
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     networks:
+      - litellm-internal
       - dokploy-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health/readiness"]
       interval: 30s
       timeout: 10s
       retries: 3
+      # start_period evita el crash-loop durante el arranque: LiteLLM corre
+      # migraciones Prisma al iniciar y puede tardar más que 30s × 3 (red-team V8).
+      start_period: 60s
 
 networks:
+  # Red privada entre el proxy y su Postgres — no accesible desde fuera.
+  litellm-internal:
+    driver: bridge
+  # Red Dokploy para que el app Next.js alcance el proxy por nombre interno.
   dokploy-network:
     external: true
+
+volumes:
+  litellm-db-data:
