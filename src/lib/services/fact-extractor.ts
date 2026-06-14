@@ -1,4 +1,5 @@
-import OpenAI from "openai";
+import { getLLMClient } from "@/lib/llm/llm-client";
+import { traceLLMUsage } from "@/lib/observability/langfuse-client";
 import { enqueueLeadStep } from "@/lib/core/queue/lead-sequence-queue";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
 import { evaluateLeadQualification } from "@/lib/core/intelligence/qualifier";
@@ -69,7 +70,8 @@ export class FactExtractionService {
                 console.error(`[FACT EXTRACTOR] ❌ OpenAI API Key missing or invalid for lead ${leadId}`);
                 return null;
             }
-            const openai = new OpenAI({ apiKey });
+            // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+            const openai = getLLMClient(apiKey);
             const supabase = await getAdminSupabaseClient();
             let validSegments = ['PUESTO 1', 'REVISADO', 'CUALIFICADO', 'SIN INTERÉS'];
             
@@ -125,6 +127,7 @@ REGLAS CRÍTICAS:
 EJEMPLO DE SALIDA:
 {"user_name": "Carlos", "RESUMEN_EJECUTIVO": "Interesado en MBA", "qualified": "SI", "segmentacion": "${validSegments[0] || 'REVISADO'}", "estado_conversacion": "FINALIZADA", "ESTADO": "Interesado", "REGLA_APLICADA": "Sin requisitos", "QA_HANDLED": "SI", "QA_TOPIC": "Precios", "CURSE_NAME": null}`;
 
+            const startedAt = Date.now();
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o-mini",
                 messages: [
@@ -134,6 +137,15 @@ EJEMPLO DE SALIDA:
                 response_format: { type: "json_object" },
                 temperature: 0,
                 max_tokens: 400
+            });
+
+            // Observabilidad: solo metadata de uso, sin el diálogo (PII).
+            traceLLMUsage({
+                tenantId,
+                agentName: "fact-extractor",
+                model: completion.model || "gpt-4o-mini",
+                usage: completion.usage,
+                latencyMs: Date.now() - startedAt,
             });
 
             const rawResult = completion.choices[0]?.message?.content;

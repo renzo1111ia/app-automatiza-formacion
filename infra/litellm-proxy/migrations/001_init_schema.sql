@@ -1,15 +1,19 @@
-CREATE SCHEMA IF NOT EXISTS litellm_proxy;
-
--- El rol litellm_admin requiere permisos de uso sobre el esquema
-DO
-$$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'litellm_admin') THEN
-    CREATE ROLE litellm_admin WITH LOGIN PASSWORD 'CHANGE_ME_IN_PROD';
-  END IF;
-END
-$$;
-
-GRANT USAGE, CREATE ON SCHEMA litellm_proxy TO litellm_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA litellm_proxy TO litellm_admin;
-ALTER DEFAULT PRIVILEGES IN SCHEMA litellm_proxy GRANT ALL PRIVILEGES ON TABLES TO litellm_admin;
+-- ============================================================================
+-- DEPRECADO — NO EJECUTAR (Sprint 8, 13-06-2026)
+-- ============================================================================
+--
+-- Esta migración creaba el schema `litellm_proxy` + un rol dentro del cluster
+-- Supabase de PRODUCCIÓN compartido. El red-team del Sprint 8 (V3) determinó
+-- que compartir el Postgres de prod con LiteLLM es un riesgo crítico:
+--   - Pool exhaustion en picos → caída total de la plataforma multi-tenant.
+--   - Migraciones Prisma de LiteLLM corriendo sobre la BD del app.
+--   - Sin RLS en su schema → fuga de spend cross-tenant.
+--   - Password hardcodeada 'CHANGE_ME_IN_PROD'.
+--
+-- DECISIÓN: LiteLLM usa ahora su PROPIO Postgres dedicado (servicio `litellm-db`
+-- en docker-compose.dokploy.yml). LiteLLM gestiona su propio schema vía Prisma
+-- al arrancar contra ese Postgres aislado. Ya NO se provisiona schema alguno
+-- dentro del cluster Supabase.
+--
+-- Este fichero se conserva como audit trail. NO aplicarlo contra Supabase.
+-- ============================================================================

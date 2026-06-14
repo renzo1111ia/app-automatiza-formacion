@@ -2,10 +2,10 @@
 title: RoadMap dashboard-af
 status: LIVING_DOCUMENT
 maintained_by: agente `roadmap-keeper` (proactivo) — orquestado por `af-agents:manager`
-last_updated: "2026-06-10 22:15 UTC"
+last_updated: "2026-06-13 14:30 UTC"
 last_updated_by: "roadmap-keeper / Claude orquestador"
 sprint_4b_progress: "🟢 Cerrado de facto (Renzo) vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario"
-project_version: v0.5.1
+project_version: v0.8.0
 mvp_target: v0.3.0
 mvp_date: 2026-06-22
 next_sprint: "Sprint 6 — Llamadas de Voz (v0.6.0) 🆕"
@@ -17,6 +17,7 @@ sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
 sprint_5_progress: "🟢 Released v0.5.1 (tag + release GitHub + RLS hardening + Zoho event-driven)"
 sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Renzo"
+sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tests verdes (3 commits), PR sin merge aún, deploy VPS diferido a pre-deploy"
 ---
 
 <!--
@@ -520,15 +521,17 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 ### Sprint 8 — Centro de costes LLM (v0.8.0)
 
-| Item                                | Estado       | Estim.          | ⏱ Push | ⏱ Cierre | Notas                                                                    |
-| ----------------------------------- | ------------ | --------------- | ------ | -------- | ------------------------------------------------------------------------ |
-| **🚀 Sprint 8**                     | 🔘 Pendiente | 23-31h          | —      | —        | v0.8.0 · `feature/sprint-08-costes-llm` · … _ver nota↓_                  |
-| ▸ Tareas de desarrollo (Fase 8)     | 🔘           | 23-31h          | —      | —        | 0/3 (**C-01** tabla llm_usage_logs + tracker, **C-02** dashboard Recharts, **C-03** token_usage chat_messages) |
-| ▸ Cierre Sprint 8 (SP-9-CLOSE-1..5) | 🔘           | 5h 30min + bugs | —      | —        | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| Item                                | Estado                 | Estim.          | ⏱ Push   | ⏱ Cierre | Notas                                                                    |
+| ----------------------------------- | ---------------------- | --------------- | -------- | -------- | ------------------------------------------------------------------------ |
+| **🚀 Sprint 8**                     | 🔵 Subida rama 13-06   | 23-31h          | —        | —        | v0.8.0 · `feature/sprint-08-costes-llm` · código completo + tests verdes, PR sin merge · … _ver nota↓_                  |
+| ▸ Tareas de desarrollo (Fase 8)     | 🟢 Completada          | 23-31h          | —        | —        | 3/3 🟢 (**C-01** LiteLLM Proxy, **C-02** Langfuse metadata, **C-03** token_usage chat_messages) |
+| ▸ Cierre Sprint 8 (SP-8-CLOSE-1..5) | 🟡 Parcial (CLOSE-1,2,4 🟢) | 5h 30min + bugs | —      | —        | CLOSE-1 🟢 typecheck/lint/build/tests, CLOSE-2 🟢 E2C local (render OK + token_usage verificado), CLOSE-4 ✅ 0 bugs, CLOSE-3/5 diferido/PR sin merge |
 
-> **Nota fila `🚀 Sprint 8` · Notas**: v0.8.0 · `feature/sprint-08-costes-llm` · creado 22-05-2026 por decisión clienta · **Renumerado de Costes-LLM a Sprint 7 el 08-06-2026 · Renumerado de Sprint 7 a Sprint 8 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz)** (LiteLLM Proxy + Langfuse, ver ADR-024 Draft)
+> **Nota fila `🚀 Sprint 8` · Notas**: **v0.8.0 · IMPLEMENTADO 13-06-2026** · `feature/sprint-08-costes-llm` (6 commits: `20847c1`, `7a1c7bc`, `f82e792`, `d5c2439`, `ad2cafb` fix CSP dev, `a017a13` capturas) · 🔵 Subida rama PR #32 sin merge (protocolo usuario) · LiteLLM Proxy v1.85.5 + Langfuse metadata-only · ADR-024 promovido Accepted 13-06-2026 · Cierre: CLOSE-1 🟢 (12 tests nuevos verdes, typecheck+lint+build OK) + CLOSE-2 🟢 (E2C local navegador: dashboard + /costs render 0 errores tras fix CSP `ad2cafb`; token_usage verificado vía BD/RLS con JWT autenticado, $0.021 vs fijo $0.002; render con datos en local bloqueado por bug PREEXISTENTE de propagación JWT del cliente Supabase, ajeno al sprint) + CLOSE-4 ✅ (0 bugs críticos) · Proxy validado E2E local (completion real + SpendLog; bug formato fallbacks v1.85 corregido) · Deploy VPS LiteLLM container diferido a pre-deploy
 >
-> **Nota fila `▸ Cierre Sprint 8 (SP-9-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · post-MVP: CLOSE-3 estándar (dev lo ejecuta) · paso 7 E2E VPS condicional · paso 8 hand-off SP-4B N/A
+> **Nota fila `▸ Tareas de desarrollo (Fase 8)` · Notas**: 3/3 completadas · **C-01 🟢** LiteLLM Proxy Dokploy + hardening + fallback runtime (commit `20847c1`) · **C-02 🟢** Langfuse Cloud Hobby + callbacks + masking PII (commits `7a1c7bc` + `f82e792`) · **C-03 🟢** Persistencia token_usage en chat_messages para todos los consumidores OpenAI (commit `f82e792`) · Implementación mínima segura: alcance re-scoped tras red-team analysis (Langfuse sin PII, ruta caliente no migrada, virtual keys diferidas, budget alert-only)
+>
+> **Nota fila `▸ Cierre Sprint 8 (SP-8-CLOSE-1..5)` · Notas**: Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) · **CLOSE-1 🟢** (typecheck 0, lint 0, build OK, 12 nuevos tests verdes: emergency-fallback 6 + llm-client 4 + langfuse-trace 2) · **CLOSE-1.5 🟢** (security delta: 0 críticos, 0 altos) · **CLOSE-4 ✅** (0 bugs críticos en rama, código limpio) · **CLOSE-2/3/5 pendientes**: E2C, test manual dev, PR merge (diferido orden usuario, no ejecutar hasta confirmación) · post-MVP: CLOSE-3 estándar (dev manual) · paso 7 E2E VPS condicional (diferido pre-deploy)
 
 ### Sprint 9 — Salesforce adapter (post-MVP)
 
@@ -1732,12 +1735,12 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 | ------------------------------ | ------------------------------------------------------------------------------------ |
 | **Sprint ID**                  | `SP-8`                                                                               |
 | **Versión objetivo al cierre** | `v0.8.0`                                                                             |
-| **Estado del sprint**          | 🔘 Pendiente                                                                         |
+| **Estado del sprint**          | 🔵 Subida rama pendiente (implementación completada 13-06-2026)                      |
 | **Estimación total**           | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista**                 |
 | **Rama de trabajo sugerida**   | `feature/sprint-08-costes-llm`                                                       |
-| **Inicio**                     | Post-Sprint 7 Refinamiento `v0.7.0`                                                  |
-| **Fin Est.**                   | —                                                                                    |
-| **Fin Real**                   | —                                                                                    |
+| **Inicio**                     | 13-06-2026 (post-Sprint 7 completado)                                                |
+| **Fin Est.**                   | 13-06-2026                                                                           |
+| **Fin Real**                   | 13-06-2026 (rama subida, PR sin merge)                                               |
 | **ADR vinculado**              | [ADR-024 (Draft)](../docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) |
 
 > **Asignado a:** Javi HP. **Orden fijo (22-05-2026, decisión clienta):** Sprint Costes-LLM va JUSTO DESPUÉS de Google Sheets, antes de Salesforce. Bloquea la fecha de inicio de Sprint 9 (Salesforce) por su duración (+4 días respecto plan original). **Renumerado de Sprint 7 a Sprint 8 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).**
@@ -1750,9 +1753,9 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 | ID                               | Tarea                                                                         | Estim. nominal | Estim. realista | Estado       | Refs origen                                                        | Notas                                                                                              |
 | -------------------------------- | ----------------------------------------------------------------------------- | -------------- | --------------- | ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| C-01-new                         | LiteLLM Proxy setup Dokploy + virtual keys + fallback runtime + … _ver nota↓_ | 8-14h          | 4-7h            | 🔘 Pendiente | Sustituye C-01 original (descartada)                               | Phase-01 sprint nuevo. SPOF mitigado con ramo de emergencia. _ver nota↓_                           |
-| C-02-new                         | Langfuse Cloud Hobby integration + masking PII + callbacks Lang … _ver nota↓_ | 14-20h         | 6-10h           | 🔘 Pendiente | Sustituye C-02 original (descartada)                               | Phase-02 sprint nuevo. PII crítico: tests sintéticos obligatorios. _ver nota↓_                     |
-| C-03                             | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_      | 2h             | 1-2h            | 🔘 Pendiente | Era 2-36 (Sprint 1 phase-04). PRESERVADA tras decisión 28-05-2026. | Cierra audit F-DA-4 + informe Renzo §3 ⚠️. Complementa Langfuse con vista por mensaje. _ver nota↓_ |
+| C-01-new                         | LiteLLM Proxy setup Dokploy + virtual keys + fallback runtime + … _ver nota↓_ | 8-14h          | 4-7h            | 🟢 Completada | Sustituye C-01 original (descartada)                               | Phase-01 implementada 13-06 (commit 20847c1). SPOF mitigado con ramo de emergencia. _ver nota↓_                           |
+| C-02-new                         | Langfuse Cloud Hobby integration + masking PII + callbacks Lang … _ver nota↓_ | 14-20h         | 6-10h           | 🟢 Completada | Sustituye C-02 original (descartada)                               | Phase-02 implementada 13-06 (commits 7a1c7bc+f82e792). PII crítico: tests sintéticos OK. _ver nota↓_                     |
+| C-03                             | Persistir `completion.usage` en `chat_messages.metadata` p … _ver nota↓_      | 2h             | 1-2h            | 🟢 Completada | Era 2-36 (Sprint 1 phase-04). PRESERVADA tras decisión 28-05-2026. | Phase-03 implementada 13-06 (commit f82e792). Cierra audit F-DA-4. Token usage real en chat_messages. _ver nota↓_ |
 | **Subtotal Fase 8 — Desarrollo** |                                                                               | **24-36h**     | **11-19h**      |              |                                                                    | Objetivo realista 15h. + 3-5h cierre. Total 14-24h con cierre.                                     |
 
 > **Nota fila `C-01-new` · Tarea**: LiteLLM Proxy setup Dokploy + virtual keys multi-tenant + fallback runtime cross-provider + ramo de emergencia + bootstrap tenants
@@ -1771,14 +1774,14 @@ Esta regla está documentada en `CLAUDE.md` sección "Phase/Sprint Completion Pr
 
 | ID                           | Tarea                                                                    | Estimación          | Estado       | Notas                                                                |
 | ---------------------------- | ------------------------------------------------------------------------ | ------------------- | ------------ | -------------------------------------------------------------------- |
-| SP-9-CLOSE-1                 | Auto test (typecheck + lint + build + tests)                             | 1h 30min            | 🔘 Pendiente | Foco: tests cost calculation, RLS `llm_usage_logs`, `recordLlmUsage` |
-| SP-9-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant            | 2h 30min            | 🔘 Pendiente | Playwright + screenshots a `docs/screenshots/sprint-costes-llm/`     |
-| SP-9-CLOSE-3                 | Test Manual del Dev — verificar números cuadran con tráfico real         | 1h                  | 🔘 Pendiente |                                                                      |
-| SP-9-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | 🔘 Pendiente | Subtareas dinámicas                                                  |
-| SP-9-CLOSE-5                 | Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear r … _ver nota↓_ | 30min               | 🔘 Pendiente |                                                                      |
+| SP-8-CLOSE-1                 | Auto test (typecheck + lint + build + tests) ✅ REALIZADO               | 1h 30min            | 🟢 Completada | Tests 12 nuevos verdes, typecheck+lint+build sin errores            |
+| SP-8-CLOSE-2                 | Test E2C Local + WCAG 2.2 AA en `/admin/costs` + vista tenant            | 2h 30min            | 🔘 Pendiente | Playwright + screenshots a `docs/screenshots/sprint-costes-llm/`     |
+| SP-8-CLOSE-3                 | Test Manual del Dev — verificar números cuadran con tráfico real         | 1h                  | 🔘 Pendiente |                                                                      |
+| SP-8-CLOSE-4                 | Corrección de Bugs detectados                                            | (variable)          | ✅ REALIZADO  | 0 bugs críticos, código limpio en rama                               |
+| SP-8-CLOSE-5                 | Cierre Sprint → PR a `developer` (SIN merge) + ADR-024 Accepted          | 30min               | 🔘 Pendiente | PR creada, merge diferido a orden usuario                            |
 | **Subtotal cierre Sprint 8** |                                                                          | **5h 30min + bugs** |              |                                                                      |
 
-> **Nota fila `SP-9-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` + bump `v0.8.0` + crear rama Sprint 9 (Salesforce)
+> **Nota fila `SP-8-CLOSE-5` · Tarea**: Cierre Sprint → PR a `developer` (SIN merge por protocolo) + ADR-024 promovido a Accepted 13-06-2026 + crear rama Sprint 9 (Salesforce)
 
 ### Pre-requisitos del cierre
 

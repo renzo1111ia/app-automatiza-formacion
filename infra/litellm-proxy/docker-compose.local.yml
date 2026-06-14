@@ -1,13 +1,21 @@
+# LiteLLM Proxy — entorno LOCAL de desarrollo.
+#
+# Solo local: expone el puerto 4000 al host para que `npm run dev` (localhost:8500)
+# alcance el proxy. NO usar este compose en VPS (usar docker-compose.dokploy.yml).
+#
+# El default de master key local es aceptable porque el proxy NO se expone fuera
+# de localhost y no maneja datos reales. En VPS la key viene del secret manager.
+
 version: "3.8"
 services:
   litellm-proxy:
-    image: ghcr.io/berriai/litellm:main-v1.41.0-stable
+    image: ghcr.io/berriai/litellm:v1.85.5
     container_name: litellm-proxy-local
     restart: always
     ports:
       - "4000:4000"
     environment:
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-1234}
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-local-dev-only}
       - DATABASE_URL=${DATABASE_URL_LOCAL}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}

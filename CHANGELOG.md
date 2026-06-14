@@ -12,6 +12,62 @@ Estados oficiales de un release:
 
 ---
 
+## [0.8.0] — 2026-06-13 🟡 In progress
+
+**Sprint 8 — Costes-LLM (LiteLLM Proxy + Langfuse)** · rama: `feature/sprint-08-costes-llm` → PR a `developer` (sin merge aún) · tag `v0.8.0` pendiente · [ADR-024](docs/adr/ADR-024-llm-observability-gateway-litellm-langfuse.md) (Accepted).
+
+### Resumen
+
+Observabilidad y control de costes de las llamadas LLM. Implementado con alcance **re-scopeado por un análisis red-team**: se entrega el valor (persistencia de coste + observabilidad) sin introducir el punto único de fallo del gateway en la ruta caliente.
+
+### Highlights
+
+- 💰 **`token_usage` real en el dashboard de costes**: `/dashboard/costs` dejaba de calcular coste IA porque el campo `chat_messages.metadata.token_usage` nunca se escribía (caía a un fijo `$0.002/msg`). Ahora WhatsApp (sumando las hasta 3 llamadas de tool calls) y el widget lo persisten.
+- 🔀 **LiteLLM Proxy opcional para flujos async**: `fact-extractor`, `ai-analysis` y `ai-rescue` pueden enrutarse por el gateway (cost tracking + fallback cross-provider). La ruta caliente (WhatsApp/widget) NO se migra → sin SPOF.
+- 📊 **Langfuse metadata-only**: traces de uso/coste (tokens, modelo, latencia, tenant) SIN enviar inputs/outputs — la PII de leads no sale del sistema.
+- 🛡️ **Hardening del andamiaje previo**: eliminado el default inseguro `sk-1234`, fallback de emergencia que ahora preserva `tools`/`response_format`, imagen LiteLLM pineada a `v1.85.5`, Postgres del proxy aislado del cluster de producción.
+
+### Detalle por área
+
+#### Capa de datos / Costes
+
+- `WhatsAppAIProcessor` y `widget`: persisten `metadata.token_usage = {prompt, completion, total}` + `model`. WhatsApp suma el usage de todas las rondas de tool calls del turno.
+- Fuente canónica de coste €: `LiteLLM_SpendLogs` (validada en local). `chat_messages.token_usage` = vista aproximada por mensaje (solo tokens).
+
+#### LLM Gateway
+
+- Nuevo helper `getLLMClient()` ([src/lib/llm/llm-client.ts](src/lib/llm/llm-client.ts)): cliente OpenAI con `baseURL` al proxy si está configurado, directo si no. Flag `LITELLM_FORCE_DOWN` para el caos test.
+- `config.yaml`: formato `fallbacks` corregido al de LiteLLM v1.85 (lista-de-dicts).
+- `docker-compose.dokploy.yml`: Postgres propio aislado (`litellm-db`), imagen `v1.85.5`, healthcheck con `start_period: 60s`.
+- `emergency-fallback`: propaga `tools`/`tool_choice`/`response_format`/`messages`; fallback por provider.
+
+#### Observabilidad
+
+- `traceLLMUsage()` ([src/lib/observability/langfuse-client.ts](src/lib/observability/langfuse-client.ts)): emite trace de metadata, best-effort (no rompe la cadena si Langfuse cae).
+
+### Breaking changes
+
+- NINGUNO. El proxy y Langfuse son opcionales (sin env vars → comportamiento previo: SDK directo, sin tracing).
+
+### Variables de entorno nuevas
+
+- `LITELLM_FORCE_DOWN` — (opcional) `true` simula el proxy caído para el caos test.
+- Internas del stack Dokploy (no las lee el app): `LITELLM_MASTER_KEY`, `LITELLM_DB_USER`, `LITELLM_DB_PASSWORD`.
+
+### Diferido a sprint posterior
+
+- Migración de WhatsApp/embeddings al proxy, virtual keys per-tenant, budget enforce (Sprint 8: alert-only), Langfuse con payload PII (requiere self-host + masking validado), prompt management, evals.
+
+### Notas de despliegue
+
+- Levantar el stack `infra/litellm-proxy/docker-compose.dokploy.yml` en Dokploy (con su Postgres propio) queda para la sesión pre-deploy VPS. El contenedor `v1.85.5` se validó E2E en local (completion real + SpendLog).
+
+### Tests
+
+- 12 tests nuevos verdes: `emergency-fallback` (6), `llm-client` (4), `langfuse-trace` (2).
+
+---
+
 ## [0.5.0] — 2026-06-08 🟡 In progress
 
 **Sprint 5 — Zoho CRM como entrada de leads (event-driven)** · rama: `feature/sprint-05-zoho-entrada-leads` → PR a `developer` (sin merge aún) · tag `v0.5.0` pendiente.

@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import { getSupabaseServerClient } from "../supabase/server";
+import { getLLMClient } from "@/lib/llm/llm-client";
+import { traceLLMUsage } from "@/lib/observability/langfuse-client";
 
 let _openai: OpenAI | null = null;
 
@@ -9,7 +11,8 @@ function getOpenAI() {
         if (!apiKey || apiKey === "your_api_key_here") {
             throw new Error("OPENAI_API_KEY no configurada. Por favor, añádela a tu archivo .env.local");
         }
-        _openai = new OpenAI({ apiKey });
+        // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+        _openai = getLLMClient(apiKey);
     }
     return _openai;
 }
@@ -43,6 +46,7 @@ export class AIRescueService {
 
             // 2. Generate Message with GPT-4o
             const openai = getOpenAI();
+            const startedAt = Date.now();
             const response = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
@@ -70,6 +74,14 @@ export class AIRescueService {
                 ],
                 temperature: 0.7,
                 max_tokens: 150
+            });
+
+            // Observabilidad: solo metadata de uso, sin el historial (PII).
+            traceLLMUsage({
+                agentName: "ai-rescue",
+                model: response.model || "gpt-4o",
+                usage: response.usage,
+                latencyMs: Date.now() - startedAt,
             });
 
             const message = response.choices[0].message.content?.trim();

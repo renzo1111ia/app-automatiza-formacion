@@ -1,5 +1,6 @@
-import OpenAI from "openai";
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
+import { getLLMClient } from "@/lib/llm/llm-client";
+import { traceLLMUsage } from "@/lib/observability/langfuse-client";
 
 /**
  * AI ANALYSIS SERVICE
@@ -97,8 +98,10 @@ export async function analyzeConversation(
 
   try {
     const apiKey = await resolveApiKey(tenantId);
-    const openai = new OpenAI({ apiKey });
+    // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+    const openai = getLLMClient(apiKey);
 
+    const startedAt = Date.now();
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -133,6 +136,15 @@ Responde ÚNICAMENTE con el objeto JSON.`,
         },
       ],
       response_format: { type: "json_object" },
+    });
+
+    // Observabilidad: solo metadata de uso, sin el transcript (PII).
+    traceLLMUsage({
+      tenantId,
+      agentName: "ai-analysis",
+      model: response.model || "gpt-4o-mini",
+      usage: response.usage,
+      latencyMs: Date.now() - startedAt,
     });
 
     const content = response.choices[0].message.content;

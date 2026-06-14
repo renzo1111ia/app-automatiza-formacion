@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
 /**
@@ -11,12 +11,17 @@ import type { Database } from "@/types/database";
  * This client always connects to the central Supabase project.
  * Tenant isolation is handled server-side via RLS — NOT via separate DB credentials.
  *
- * 24-05-2026: refactor para usar acceso DIRECTO a process.env.NEXT_PUBLIC_*.
- * Next.js sólo bakea estos valores cuando se accede de forma literal
- * (`process.env.NEXT_PUBLIC_X`), NO via lookup dinámico `process.env[name]`.
- * En browser bundles, `requireEnv("NEXT_PUBLIC_X")` resolvía a undefined porque
- * `process.env` está vacío en runtime — sólo los valores bakeados existen.
- * Ver bug paralelo arreglado en src/lib/auth-config.ts (commit 702d4a3).
+ * 13-06-2026 (Sprint 8): migrado de `createClient` (@supabase/supabase-js) a
+ * `createBrowserClient` (@supabase/ssr). El cliente plano NO leía la sesión de
+ * las cookies SSR que escribe el login (auth.ts usa createServerClient), así que
+ * las queries client-side iban con solo la anon key (sin JWT) y la RLS las
+ * bloqueaba — devolvían []. Síntoma visible: /dashboard/costs sin datos en local.
+ * createBrowserClient lee esas cookies y propaga el JWT de sesión → la RLS deja
+ * ver las filas del tenant autenticado. Afecta a TODA lectura client-side con RLS.
+ *
+ * 24-05-2026: acceso DIRECTO a process.env.NEXT_PUBLIC_* (Next.js sólo bakea
+ * estos valores con acceso literal, no via lookup dinámico). En browser bundles
+ * `requireEnv("NEXT_PUBLIC_X")` resolvía a undefined. Ver auth-config.ts (702d4a3).
  */
 const PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,5 +38,5 @@ export function getSupabaseClient() {
       "Missing required env: NEXT_PUBLIC_SUPABASE_ANON_KEY. " + "Debe ser un Build Arg en Dokploy."
     );
   }
-  return createClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  return createBrowserClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
 }

@@ -49,6 +49,10 @@ const securityHeaders = [
       [
         "connect-src 'self'",
         "https://*.supabase.co wss://*.supabase.co",
+        // Solo en dev: el cliente del navegador hace fetch directo al Supabase
+        // local (Kong en 127.0.0.1:8100 / localhost:8100). En prod la URL de
+        // Supabase es same-origin (path-prefix) y cae bajo 'self'.
+        ...(IS_DEV ? ["http://127.0.0.1:8100 http://localhost:8100 ws://127.0.0.1:8100 ws://localhost:8100"] : []),
         "https://api.anthropic.com",
         "https://api.openai.com",
         "https://generativelanguage.googleapis.com",

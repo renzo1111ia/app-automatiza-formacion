@@ -1,6 +1,6 @@
 # dashboard-af · Staging
 
-> **Versión:** v0.5.1 &nbsp;·&nbsp; **Actualizado:** 2026-06-10 22:15 UTC
+> **Versión:** v0.8.0 &nbsp;·&nbsp; **Actualizado:** 2026-06-13 14:30 UTC
 
 AI CRM + Workflow Orchestrator multi-tenant para academias formativas. Esta rama (`staging`) contiene el código listo para QA y pruebas de aceptación previas al release en producción.
 
@@ -61,7 +61,7 @@ dashboard-af/
 
 ## Estado del proyecto
 
-> Actualizado: 2026-06-10 22:15 UTC
+> Actualizado: 2026-06-13 14:30 UTC
 
 | Sprint | Fase | Versión | Estado | % Completado | Est. total | Inicio | Fin Est. |
 |--------|------|---------|--------|-------------|-----------|--------|---------|
@@ -73,7 +73,7 @@ dashboard-af/
 | SP-5Z (Zoho; SP-5 es legacy de Sprint 4 Sheets) | Zoho CRM como entrada de leads (bidireccional) | v0.5.0 | 🟡 **Mergeado a developer** (PR #25, 3a9dee5) · deploy a staging/main diferido · sin tag v0.5.0 | 83% | 13-18h realista + 5h 30min cierre | 08-06-2026 | — |
 | SP-6 (Llamadas de Voz) | Llamadas de Voz 🆕 (v0.6.0) | v0.6.0 | 🔘 Pendiente | 0% | 8-14h + cierre (realista) | — | — |
 | SP-7 (Refinamiento) | Refinamiento Herramientas Internas (Renzo) | v0.7.0 | 🔘 Pendiente | 0% | 18-22h + cierre (sin Fase 03, ya cerrada como SP-7-DEPS) | — | — |
-| SP-8 | Centro de costes LLM con LiteLLM + Langfuse | v0.8.0 | 🔘 Pendiente | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** | Post-Sprint 7 Refinamiento v0.7.0 | — |
+| SP-8 | Centro de costes LLM con LiteLLM + Langfuse | v0.8.0 | 🔵 Subida rama pendiente (implementación completada 13-06-2026) | 0% | 24-36h nominal · 11-19h realista + 3-5h cierre = **14-24h realista** | 13-06-2026 (post-Sprint 7 completado) | 13-06-2026 |
 | SP-9 | Salesforce adapter | v0.9.0 | 🔘 Pendiente | 0% | 60-100h | Post-Sprint 8 Costes-LLM (+4 días respecto plan original — des … _ver nota↓_ | — |
 | SP-10 | GoHighLevel adapter | v0.10.0 | 🔘 Pendiente | 0% | 40-80h | Post-Sprint 9 Salesforce (+4 días respecto plan orig.) | — |
 | SP-11 | ActiveCampaign adapter | v0.11.0 | 🔘 Pendiente | 0% | 20-50h | Post-Sprint 10 GoHighLevel (+4 días respecto plan orig.) | — |
@@ -86,7 +86,7 @@ dashboard-af/
 
 ## Versión actual
 
-**v0.5.1** — Staging. Ver tabla de estado para progreso por fase.
+**v0.8.0** — Staging. Ver tabla de estado para progreso por fase.
 
 ---
 
