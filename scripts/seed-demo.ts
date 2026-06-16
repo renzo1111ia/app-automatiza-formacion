@@ -241,7 +241,10 @@ async function ensureAuthUser(
   const { data: list } = await admin.auth.admin.listUsers();
   const existing = list?.users?.find((u) => u.email === email);
   if (existing) {
-    await admin.auth.admin.updateUserById(existing.id, { user_metadata: metadata });
+    await admin.auth.admin.updateUserById(existing.id, { 
+      user_metadata: metadata,
+      app_metadata: metadata
+    });
     return existing.id;
   }
   const { data, error } = await admin.auth.admin.createUser({
@@ -249,6 +252,7 @@ async function ensureAuthUser(
     password,
     email_confirm: true,
     user_metadata: metadata,
+    app_metadata: metadata,
   });
   if (error) {
     console.error(`createUser ${email}:`, error.message);
