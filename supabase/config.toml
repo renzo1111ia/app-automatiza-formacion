@@ -381,7 +381,9 @@ deno_version = 2
 # secret_key = "env(SECRET_VALUE)"
 
 [analytics]
-enabled = true
+# Disabled on Windows — requires Docker TCP on localhost:2375 which causes unhealthy containers.
+# To enable: expose Docker daemon on tcp://localhost:2375 in Docker Desktop settings.
+enabled = false
 port = 8350
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"

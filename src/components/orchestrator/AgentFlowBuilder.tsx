@@ -49,6 +49,8 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { AIAgent } from "@/types/database";
 import { getAIAgents } from "@/lib/actions/agents";
+import { getWhatsAppTemplates } from "@/lib/actions/whatsapp";
+import type { WhatsAppDBTemplate } from "@/lib/integrations/whatsapp/client";
 
 interface FlowNodeData {
     text?: string;
@@ -404,6 +406,7 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
     const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [aiAgents, setAiAgents] = useState<AIAgent[]>([]);
+    const [waTemplates, setWaTemplates] = useState<WhatsAppDBTemplate[]>([]);
     const [precedingVariables, setPrecedingVariables] = useState<string[]>([]);
     const [nodeSimulations, setNodeSimulations] = useState<Record<string, NodeSimulation>>({});
 
@@ -482,7 +485,12 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
             const res = await getAIAgents();
             if (res.success && res.data) setAiAgents(res.data);
         };
+        const loadWaTemplates = async () => {
+            const res = await getWhatsAppTemplates("APPROVED");
+            if (res.success && res.data) setWaTemplates(res.data);
+        };
         loadAgents();
+        loadWaTemplates();
     }, []);
 
     const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>(
@@ -1538,37 +1546,89 @@ export function AgentFlowBuilder({ initialFlow, onSave, onClose, agentName, isIn
                             )}
 
                             {selectedNode.type === 'flow_meta_template' && (
-                                <div className="space-y-6">
-                                    <div className="space-y-4">
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Nombre de la Plantilla (Meta)</label>
-                                            <input 
-                                                value={(selectedNode.data.templateName as string) || ""}
-                                                onChange={(e) => updateNodeData(selectedNode.id, { templateName: e.target.value })}
-                                                placeholder="Ej: bienvenida_esden"
-                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
-                                            />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Idioma</label>
-                                            <input 
-                                                value={(selectedNode.data.language as string) || "es"}
-                                                onChange={(e) => updateNodeData(selectedNode.id, { language: e.target.value })}
-                                                placeholder="es"
-                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white"
-                                            />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30">Mapeo de Parámetros (Indice 1, 2...)</label>
-                                            <textarea 
-                                                value={(selectedNode.data.paramsMapping as string[] | undefined)?.join("\n") || ""}
-                                                onChange={(e) => updateNodeData(selectedNode.id, { paramsMapping: e.target.value.split("\n") })}
-                                                placeholder="Ej:&#10;{{nombre}}&#10;{{sede}}"
-                                                className="w-full min-h-[120px] bg-white/5 border border-white/10 rounded-xl p-4 text-[11px] font-mono text-white/50"
-                                            />
-                                            <p className="text-[8px] text-white/20 italic">Pon una variable por línea. El sistema las mapeará por orden.</p>
-                                        </div>
+                                <div className="space-y-5">
+                                    {/* Template selector from DB */}
+                                    <div className="space-y-3">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-green-400">Plantilla Meta (aprobadas)</label>
+                                        {waTemplates.length === 0 ? (
+                                            <div className="rounded-xl border border-dashed border-green-500/20 bg-green-500/5 px-4 py-3">
+                                                <p className="text-[9px] text-green-300/60 font-semibold">
+                                                    Sin plantillas sincronizadas.
+                                                </p>
+                                                <p className="text-[8px] text-white/20 mt-0.5">
+                                                    Ve a Ajustes → WhatsApp WABA y pulsa &quot;Sincronizar desde Meta&quot;.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <select
+                                                id="meta-template-select"
+                                                title="Seleccionar plantilla de WhatsApp"
+                                                value={(selectedNode.data.templateId as string) || ""}
+                                                onChange={(e) => {
+                                                    const tpl = waTemplates.find(t => t.id === e.target.value);
+                                                    updateNodeData(selectedNode.id, {
+                                                        templateId: e.target.value,
+                                                        templateName: tpl?.name || "",
+                                                        language: tpl?.language || "es",
+                                                        templateCategory: tpl?.category || "",
+                                                    });
+                                                }}
+                                                className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white focus:border-green-500/40 outline-none"
+                                            >
+                                                <option value="">-- Seleccionar plantilla --</option>
+                                                {waTemplates.map(tpl => (
+                                                    <option key={tpl.id} value={tpl.id}>
+                                                        {tpl.name} ({tpl.language}) · {tpl.category}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
                                     </div>
+
+                                    {/* Show resolved info when a template is selected */}
+                                    {(selectedNode.data.templateId as string) && (() => {
+                                        const tpl = waTemplates.find(t => t.id === (selectedNode.data.templateId as string));
+                                        if (!tpl) return null;
+                                        const mappingEntries = Object.entries(tpl.variable_mapping || {});
+                                        return (
+                                            <div className="rounded-xl border border-green-500/10 bg-green-500/5 p-4 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-green-400">Info de plantilla</p>
+                                                    <span className="text-[8px] font-bold uppercase px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">
+                                                        {tpl.status}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-[9px]">
+                                                    <div>
+                                                        <p className="text-white/30 uppercase font-bold">Idioma</p>
+                                                        <p className="text-green-300 font-mono">{tpl.language}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-white/30 uppercase font-bold">Categoría</p>
+                                                        <p className="text-green-300 font-mono">{tpl.category}</p>
+                                                    </div>
+                                                </div>
+                                                {mappingEntries.length > 0 && (
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] text-white/20 uppercase font-bold">Variables mapeadas</p>
+                                                        {mappingEntries.map(([idx, field]) => (
+                                                            <div key={idx} className="flex items-center gap-2">
+                                                                <span className="font-mono text-[9px] text-green-400">{`{{${idx}}}`}</span>
+                                                                <span className="text-[8px] text-white/40">→</span>
+                                                                <span className="text-[9px] text-white/60">{field}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {mappingEntries.length === 0 && (
+                                                    <p className="text-[8px] text-amber-400/70 italic">
+                                                        ⚠ Esta plantilla no tiene variables mapeadas aún.
+                                                        Configúralas en Ajustes → WhatsApp WABA.
+                                                    </p>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             )}
 

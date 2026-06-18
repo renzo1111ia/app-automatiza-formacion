@@ -84,6 +84,7 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 | SP-4B               | `v0.3.0` GA         | 🟢 Cerrado (de facto)        | 👤 Validación pre-MVP (Renzo) · 🟢 vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario |
 | Sprint 4            | `v0.4.0`            | 🟢 Released (08-06)          | Google Sheets bidireccional · cierre formal (CLOSE-1/1.5/2/4) |
 | Sprint 5            | `v0.5.1`            | 🟢 Released (10-06)          | **Zoho CRM entrada de leads + RLS hardening (21/21 tablas) + npm cross-platform lock fix** · tag + release GitHub · PR #25 mergeado a `developer` · deploy staging/main diferido |
+| Sprint 5.7          | `v0.5.70`           | 🟡 En Desarrollo               | Output-WhatsApp (Meta WABA) · Plantillas · Logs · Envíos |
 | Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | 👤 **🆕 Llamadas de Voz** (Renzo) · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
 | Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
 | Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
@@ -211,6 +212,7 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 | **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
 | Sprint 4 — Google Sheets bidireccional (`v0.4.0`) ✅ CERRADO                     | 60-100h         | **~14h 30min**     | Javi HP         | 🟢 08-jun-2026           |
 | Sprint 5 — Zoho CRM entrada de leads (`v0.5.0`) 🟡 MERGEADO                      | —               | **~6h**            | Javi HP         | 🟡 08-jun (PR #25) · deploy diferido |
+| Sprint 5.7 — Output-WhatsApp (`v0.5.70`) 🟡 EN DESARROLLO                        | 20-30h          | **15-20h**         | Javi HP         | 🟡 En progreso           |
 | **Sprint 6 — Llamadas de Voz (`v0.6.0`)** 🔜 PRÓXIMO — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h** | 👤 Renzo  | post-Zoho                |
 | Sprint 7 — Refinamiento Herramientas (`v0.7.0`) — Renzo + Javi HP               | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Llamadas de Voz     |
 | Sprint 8 — Costes-LLM (`v0.8.0`)                                                | 23-31h          | **5-7h**           | Javi HP         | post-Refinamiento        |
