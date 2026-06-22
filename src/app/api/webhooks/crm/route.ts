@@ -57,7 +57,8 @@ export async function POST(req: Request) {
     const supabase = await getSupabaseServerClient();
 
     // 1. Deduplication Guard: Check if a lead with the same phone or email already exists for this tenant
-    const { data: existingLead } = await (supabase.from("lead" as any) as any)
+    const { data: existingLead } = await supabase
+      .from("lead")
       .select("id")
       .eq("tenant_id", tenantId)
       .or(`telefono.eq.${validatedData.data.telefono},email.eq.${validatedData.data.email}`)
@@ -69,7 +70,8 @@ export async function POST(req: Request) {
       console.log(
         `[CRM WEBHOOK] Duplicate found for ${validatedData.data.telefono}. Merging data with lead ${existingLead.id}`
       );
-      const { error: updateError } = await (supabase.from("lead" as any) as any)
+      const { error: updateError } = await supabase
+        .from("lead")
         .update({
           ...validatedData.data,
           fecha_actualizacion: new Date().toISOString(),
@@ -83,7 +85,8 @@ export async function POST(req: Request) {
       leadId = existingLead.id;
     } else {
       // New Lead: Standard Upsert (Safe for concurrent requests with same id_lead_externo)
-      const { data: newLead, error: leadError } = await (supabase.from("lead" as any) as any)
+      const { data: newLead, error: leadError } = await supabase
+        .from("lead")
         .upsert(
           {
             ...validatedData.data,

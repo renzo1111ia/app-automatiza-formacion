@@ -3,16 +3,16 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { TenantConfig } from "@/types/tenant";
 
 interface TenantState extends TenantConfig {
-    isConfigured: boolean;
-    setTenant: (config: TenantConfig) => void;
-    clearTenant: () => void;
+  isConfigured: boolean;
+  setTenant: (config: TenantConfig) => void;
+  clearTenant: () => void;
 }
 
 const DEFAULT_STATE: TenantConfig = {
-    tenantId: "",
-    tenantName: "",
-    config: {},
-    isAdmin: false,
+  tenantId: "",
+  tenantName: "",
+  config: {},
+  isAdmin: false,
 };
 
 /**
@@ -22,23 +22,22 @@ const DEFAULT_STATE: TenantConfig = {
  * All DB access uses the central Supabase instance with RLS enforcing isolation.
  */
 export const useTenantStore = create<TenantState>()(
-    persist(
-        (set) => ({
-            ...DEFAULT_STATE,
-            isConfigured: false,
+  persist(
+    (set) => ({
+      ...DEFAULT_STATE,
+      isConfigured: false,
 
-            setTenant: (config) =>
-                set({
-                    ...config,
-                    isConfigured: !!config.tenantId,
-                }),
-
-            clearTenant: () =>
-                set({ ...DEFAULT_STATE, isConfigured: false }),
+      setTenant: (config) =>
+        set({
+          ...config,
+          isConfigured: !!config.tenantId,
         }),
-        {
-            name: "automatiza-tenant",
-            storage: createJSONStorage(() => sessionStorage),
-        }
-    )
+
+      clearTenant: () => set({ ...DEFAULT_STATE, isConfigured: false }),
+    }),
+    {
+      name: "automatiza-tenant",
+      storage: createJSONStorage(() => sessionStorage),
+    }
+  )
 );

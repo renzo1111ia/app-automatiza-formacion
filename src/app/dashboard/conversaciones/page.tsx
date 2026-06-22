@@ -7,9 +7,9 @@ import AIAgentInbox from "@/components/agents/AIAgentInbox";
  * This page has been upgraded to the Premium AI-Integrated Inbox.
  */
 export default function ConversacionesPage() {
-    return (
-        <div className="h-[calc(100vh-140px)] w-full">
-            <AIAgentInbox />
-        </div>
-    );
+  return (
+    <div className="h-[calc(100vh-140px)] w-full">
+      <AIAgentInbox />
+    </div>
+  );
 }

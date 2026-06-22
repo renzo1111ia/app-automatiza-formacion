@@ -63,7 +63,8 @@ export async function writeBackLeadChange(
 
   // 1. Localizar todas las filas de sheets que apuntan a este lead.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rows, error } = await (supabase.from("sheet_row_processed" as any) as any)
+  const { data: rows, error } = await supabase
+    .from("sheet_row_processed")
     .select(
       "id, sheet_connection_id, row_index, sheet_connections!inner(id, tenant_id, spreadsheet_id, sheet_tab_name, column_mapping, writeback_enabled, is_active)"
     )

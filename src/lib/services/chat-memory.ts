@@ -20,7 +20,8 @@ export class ChatMemoryService {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.from("chat_messages" as any) as any)
+      const { data, error } = await supabase
+        .from("chat_messages")
         .select("direction, content")
         .eq("lead_id", leadId)
         .in("message_type", ["TEXT", "TEMPLATE"])

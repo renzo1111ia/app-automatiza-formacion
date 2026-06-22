@@ -19,7 +19,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ sco
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("help_sections" as any) as any)
+  const { data, error } = await supabase
+    .from("help_sections")
     .select("*")
     .eq("scope", scope)
     .order("display_order", { ascending: true });

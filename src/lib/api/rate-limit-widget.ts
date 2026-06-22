@@ -14,7 +14,7 @@
  *   esta política con circuit breaker.
  */
 
-import IORedis from 'ioredis';
+import IORedis from "ioredis";
 
 let sharedClient: IORedis | null = null;
 
@@ -24,7 +24,7 @@ function getRedisClient(): IORedis | null {
   if (!url) return null;
   try {
     const parsed = new URL(url);
-    const isTLS = url.startsWith('rediss://');
+    const isTLS = url.startsWith("rediss://");
     sharedClient = new IORedis({
       host: parsed.hostname,
       port: parseInt(parsed.port) || 6379,
@@ -39,8 +39,8 @@ function getRedisClient(): IORedis | null {
       },
       lazyConnect: true,
     });
-    sharedClient.on('error', err => {
-      console.warn('[rate-limit-widget] redis error:', err.message);
+    sharedClient.on("error", (err) => {
+      console.warn("[rate-limit-widget] redis error:", err.message);
     });
     return sharedClient;
   } catch {
@@ -64,7 +64,7 @@ export interface RateLimitResult {
 export async function rateLimitWidget(
   widgetId: string,
   clientIp: string,
-  perMinute: number,
+  perMinute: number
 ): Promise<RateLimitResult> {
   const safeLimit = Math.max(1, Math.floor(perMinute));
   const client = getRedisClient();
@@ -74,11 +74,12 @@ export async function rateLimitWidget(
 
   const key = `rl:widget:${widgetId}:${clientIp}`;
   try {
-    const [incrRes, expireRes] = (await client
-      .multi()
-      .incr(key)
-      .expire(key, 60, 'NX' as never) // sólo setea TTL si no existe (preserva ventana)
-      .exec()) as [[Error | null, number], [Error | null, number]] | null ?? [];
+    const [incrRes, expireRes] =
+      ((await client
+        .multi()
+        .incr(key)
+        .expire(key, 60, "NX" as never) // sólo setea TTL si no existe (preserva ventana)
+        .exec()) as [[Error | null, number], [Error | null, number]] | null) ?? [];
 
     const incrErr = incrRes?.[0] ?? null;
     const count = (incrRes?.[1] as number) ?? 0;
@@ -91,8 +92,8 @@ export async function rateLimitWidget(
     return { allowed: true, remaining: Math.max(0, safeLimit - count) };
   } catch (err) {
     console.warn(
-      '[rate-limit-widget] redis op failed, fallback ALLOW:',
-      err instanceof Error ? err.message : String(err),
+      "[rate-limit-widget] redis op failed, fallback ALLOW:",
+      err instanceof Error ? err.message : String(err)
     );
     return { allowed: true, remaining: safeLimit, degraded: true };
   }

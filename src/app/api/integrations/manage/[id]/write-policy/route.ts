@@ -39,7 +39,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("integrations" as any) as any)
+  const { error } = await supabase
+    .from("integrations")
     .update({
       write_policy: parsed.data.write_policy,
       override_fields: parsed.data.override_fields,

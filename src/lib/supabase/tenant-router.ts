@@ -21,30 +21,30 @@ import { getTenantExternalClient } from "./tenant-client";
 export type TenantMode = "central" | "external";
 
 export interface TenantDataClient {
-    /** Ready-to-use Supabase client */
-    client: SupabaseClient;
-    /** "central" = shared DB with tenant_id filter | "external" = client's own DB */
-    mode: TenantMode;
-    /** The tenant UUID */
-    tenantId: string;
-    /**
-     * Helper: applies tenant_id filter only when mode === "central".
-     * Always use this instead of manually calling .eq("tenant_id", ...)
-     *
-     * Example:
-     *   const query = client.from("lead").select("*")
-     *   const filtered = applyTenantFilter(query)
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    applyTenantFilter: (query: any) => any;
+  /** Ready-to-use Supabase client */
+  client: SupabaseClient;
+  /** "central" = shared DB with tenant_id filter | "external" = client's own DB */
+  mode: TenantMode;
+  /** The tenant UUID */
+  tenantId: string;
+  /**
+   * Helper: applies tenant_id filter only when mode === "central".
+   * Always use this instead of manually calling .eq("tenant_id", ...)
+   *
+   * Example:
+   *   const query = client.from("lead").select("*")
+   *   const filtered = applyTenantFilter(query)
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  applyTenantFilter: (query: any) => any;
 }
 
 // In-memory cache: tenantId → { mode, supabaseUrl?, supabaseServiceKey? }
 type TenantMeta = {
-    mode: TenantMode;
-    supabaseUrl?: string;
-    supabaseServiceKey?: string;
-    cachedAt: number;
+  mode: TenantMode;
+  supabaseUrl?: string;
+  supabaseServiceKey?: string;
+  cachedAt: number;
 };
 const metaCache = new Map<string, TenantMeta>();
 const META_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -55,50 +55,50 @@ const META_TTL_MS = 5 * 60 * 1000; // 5 minutes
  * then caches it to avoid repeated DB lookups.
  */
 interface TenantRow {
-    id: string;
-    supabase_url: string | null;
-    config: Record<string, unknown> | null;
+  id: string;
+  supabase_url: string | null;
+  config: Record<string, unknown> | null;
 }
 
 async function resolveTenantMeta(tenantId: string): Promise<TenantMeta> {
-    const cached = metaCache.get(tenantId);
-    if (cached && Date.now() - cached.cachedAt < META_TTL_MS) {
-        return cached;
-    }
+  const cached = metaCache.get(tenantId);
+  if (cached && Date.now() - cached.cachedAt < META_TTL_MS) {
+    return cached;
+  }
 
-    const centralClient = await getSupabaseServerClient();
-    const { data: tenant, error } = await centralClient
-        .from("tenants")
-        .select("id, supabase_url, config")
-        .eq("id", tenantId)
-        .returns<TenantRow[]>()
-        .single();
+  const centralClient = await getSupabaseServerClient();
+  const { data: tenant, error } = await centralClient
+    .from("tenants")
+    .select("id, supabase_url, config")
+    .eq("id", tenantId)
+    .returns<TenantRow[]>()
+    .single();
 
-    if (error || !tenant) {
-        console.error(`[TENANT-ROUTER] Could not resolve tenant ${tenantId}:`, error?.message);
-        // Fallback to central mode — safe default
-        const meta: TenantMeta = { mode: "central", cachedAt: Date.now() };
-        metaCache.set(tenantId, meta);
-        return meta;
-    }
-
-    const config = (tenant as TenantRow).config;
-    const supabaseUrl = (tenant as TenantRow).supabase_url;
-    // service key stored inside config.supabase_service_key (not exposed in anon)
-    const supabaseServiceKey = (config?.supabase_service_key as string) || null;
-
-    const isExternal = !!(supabaseUrl && supabaseServiceKey);
-
-    const meta: TenantMeta = {
-        mode: isExternal ? "external" : "central",
-        supabaseUrl: supabaseUrl ?? undefined,
-        supabaseServiceKey: supabaseServiceKey ?? undefined,
-        cachedAt: Date.now(),
-    };
-
+  if (error || !tenant) {
+    console.error(`[TENANT-ROUTER] Could not resolve tenant ${tenantId}:`, error?.message);
+    // Fallback to central mode — safe default
+    const meta: TenantMeta = { mode: "central", cachedAt: Date.now() };
     metaCache.set(tenantId, meta);
-    console.log(`[TENANT-ROUTER] Tenant ${tenantId} → mode: ${meta.mode}`);
     return meta;
+  }
+
+  const config = (tenant as TenantRow).config;
+  const supabaseUrl = (tenant as TenantRow).supabase_url;
+  // service key stored inside config.supabase_service_key (not exposed in anon)
+  const supabaseServiceKey = (config?.supabase_service_key as string) || null;
+
+  const isExternal = !!(supabaseUrl && supabaseServiceKey);
+
+  const meta: TenantMeta = {
+    mode: isExternal ? "external" : "central",
+    supabaseUrl: supabaseUrl ?? undefined,
+    supabaseServiceKey: supabaseServiceKey ?? undefined,
+    cachedAt: Date.now(),
+  };
+
+  metaCache.set(tenantId, meta);
+  console.log(`[TENANT-ROUTER] Tenant ${tenantId} → mode: ${meta.mode}`);
+  return meta;
 }
 
 /**
@@ -108,33 +108,33 @@ async function resolveTenantMeta(tenantId: string): Promise<TenantMeta> {
  * @returns TenantDataClient with routing metadata and filter helper
  */
 export async function getTenantDataClient(tenantId: string): Promise<TenantDataClient> {
-    const meta = await resolveTenantMeta(tenantId);
+  const meta = await resolveTenantMeta(tenantId);
 
-    let client: SupabaseClient;
+  let client: SupabaseClient;
 
-    if (meta.mode === "external" && meta.supabaseUrl && meta.supabaseServiceKey) {
-        client = getTenantExternalClient({
-            tenantId,
-            supabaseUrl: meta.supabaseUrl,
-            supabaseServiceKey: meta.supabaseServiceKey,
-        });
-    } else {
-        client = await getSupabaseServerClient();
+  if (meta.mode === "external" && meta.supabaseUrl && meta.supabaseServiceKey) {
+    client = getTenantExternalClient({
+      tenantId,
+      supabaseUrl: meta.supabaseUrl,
+      supabaseServiceKey: meta.supabaseServiceKey,
+    });
+  } else {
+    client = await getSupabaseServerClient();
+  }
+
+  /**
+   * Applies `tenant_id` filter only in central mode.
+   * In external mode the DB is already isolated — no filter needed.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyTenantFilter = (query: any): any => {
+    if (meta.mode === "central") {
+      return query.eq("tenant_id", tenantId);
     }
+    return query;
+  };
 
-    /**
-     * Applies `tenant_id` filter only in central mode.
-     * In external mode the DB is already isolated — no filter needed.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const applyTenantFilter = (query: any): any => {
-        if (meta.mode === "central") {
-            return query.eq("tenant_id", tenantId);
-        }
-        return query;
-    };
-
-    return { client, mode: meta.mode, tenantId, applyTenantFilter };
+  return { client, mode: meta.mode, tenantId, applyTenantFilter };
 }
 
 /**
@@ -142,6 +142,6 @@ export async function getTenantDataClient(tenantId: string): Promise<TenantDataC
  * Call this after updating a tenant's Supabase credentials.
  */
 export function invalidateTenantMeta(tenantId: string): void {
-    metaCache.delete(tenantId);
-    console.log(`[TENANT-ROUTER] Meta cache invalidated for tenant ${tenantId}`);
+  metaCache.delete(tenantId);
+  console.log(`[TENANT-ROUTER] Meta cache invalidated for tenant ${tenantId}`);
 }

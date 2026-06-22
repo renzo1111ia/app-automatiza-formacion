@@ -705,7 +705,11 @@ export class Orchestrator {
 
     if (sortedIndices.length > 0) {
       for (const idx of sortedIndices) {
-        bodyParams.push({ type: "text", text: resolveVal(mappings[idx]) });
+        const paramObj: any = { type: "text", text: resolveVal(mappings[idx]) };
+        if (isNaN(Number(idx))) {
+          paramObj.parameter_name = idx;
+        }
+        bodyParams.push(paramObj);
       }
     } else if (lead.nombre) {
       // Minimal safety fallback
@@ -1046,7 +1050,12 @@ export class Orchestrator {
           if (value === "lead.nombre") value = lead.nombre || "Cliente";
           else if (value === "lead.apellido") value = lead.apellido || "";
           else if (value === "lead.email") value = lead.email || "";
-          parameters.push({ type: "text", text: value });
+
+          const paramObj: any = { type: "text", text: value };
+          if (isNaN(Number(idx))) {
+            paramObj.parameter_name = idx;
+          }
+          parameters.push(paramObj);
         }
 
         const components = parameters.length > 0 ? [{ type: "body", parameters: parameters }] : [];

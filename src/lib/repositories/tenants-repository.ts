@@ -66,10 +66,7 @@ export class TenantsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: inserted, error } = await (supabase.from(TABLE) as any)
-        .insert(data)
-        .select()
-        .single();
+      const { data: inserted, error } = await supabase.from(TABLE).insert(data).select().single();
       if (error) return { data: null, error: handleSupabaseError(error) };
       return { data: inserted as Tenant, error: null };
     } catch (e) {
@@ -81,7 +78,8 @@ export class TenantsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updated, error } = await (supabase.from(TABLE) as any)
+      const { data: updated, error } = await supabase
+        .from(TABLE)
         .update(data)
         .eq("id", id)
         .select()

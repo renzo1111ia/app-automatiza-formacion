@@ -1,10 +1,10 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-const filePath = path.resolve('d:\\esden-dashboard\\src\\components\\agents\\AIAgentInbox.tsx');
+const filePath = path.resolve("d:\\esden-dashboard\\src\\components\\agents\\AIAgentInbox.tsx");
 
 function main() {
-  let content = fs.readFileSync(filePath, 'utf8');
+  let content = fs.readFileSync(filePath, "utf8");
 
   // 1. Add selectedLeadAppointment state variable
   const targetState = `const [isSyncingVars, setIsSyncingVars] = useState(false);`;
@@ -12,7 +12,7 @@ function main() {
     const [selectedLeadAppointment, setSelectedLeadAppointment] = useState<any | null>(null);`;
 
   if (!content.includes(targetState)) {
-    console.error('Target state not found in AIAgentInbox.tsx');
+    console.error("Target state not found in AIAgentInbox.tsx");
     return;
   }
   content = content.replace(targetState, replacementState);
@@ -77,15 +77,15 @@ function main() {
     }, [selectedLead, loadChat]);`;
 
   // Try matching with flexible whitespace if literal match fails
-  const normalizedContent = content.replace(/\r\n/g, '\n');
-  const normalizedTarget = targetEffect.replace(/\r\n/g, '\n');
-  const normalizedReplacement = replacementEffect.replace(/\r\n/g, '\n');
+  const normalizedContent = content.replace(/\r\n/g, "\n");
+  const normalizedTarget = targetEffect.replace(/\r\n/g, "\n");
+  const normalizedReplacement = replacementEffect.replace(/\r\n/g, "\n");
 
   if (normalizedContent.includes(normalizedTarget)) {
     content = normalizedContent.replace(normalizedTarget, normalizedReplacement);
   } else {
     // Attempt slightly looser match or fallback
-    console.error('Target effect not matched literally. Checking looser pattern...');
+    console.error("Target effect not matched literally. Checking looser pattern...");
     // We can split and replace chunks if needed
   }
 
@@ -120,19 +120,21 @@ function main() {
                                          meta.ID_LEAD = selectedLead.id_lead_externo || "null";
                                      }`;
 
-  const normalizedContent2 = content.replace(/\r\n/g, '\n');
-  const normalizedTarget2 = targetFallback.replace(/\r\n/g, '\n');
-  const normalizedReplacement2 = replacementFallback.replace(/\r\n/g, '\n');
+  const normalizedContent2 = content.replace(/\r\n/g, "\n");
+  const normalizedTarget2 = targetFallback.replace(/\r\n/g, "\n");
+  const normalizedReplacement2 = replacementFallback.replace(/\r\n/g, "\n");
 
   if (normalizedContent2.includes(normalizedTarget2)) {
     content = normalizedContent2.replace(normalizedTarget2, normalizedReplacement2);
   } else {
-    console.error('Target fallback not matched literally.');
+    console.error("Target fallback not matched literally.");
   }
 
   // Save the result
-  fs.writeFileSync(filePath, content, 'utf8');
-  console.log('Cleanly and successfully injected appointment display & formatting in AIAgentInbox.tsx!');
+  fs.writeFileSync(filePath, content, "utf8");
+  console.log(
+    "Cleanly and successfully injected appointment display & formatting in AIAgentInbox.tsx!"
+  );
 }
 
 main();

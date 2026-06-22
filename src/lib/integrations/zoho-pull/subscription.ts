@@ -131,7 +131,8 @@ export async function subscribeZohoNotifications(integrationId: string): Promise
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("zoho_sync_connections" as any) as any)
+  const { error } = await supabase
+    .from("zoho_sync_connections")
     .update({
       subscription_channel_id: channelId,
       subscription_token: subscriptionToken,
@@ -154,7 +155,8 @@ export async function subscribeZohoNotifications(integrationId: string): Promise
 export async function unsubscribeZohoNotifications(integrationId: string): Promise<void> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: conn } = await (supabase.from("zoho_sync_connections" as any) as any)
+  const { data: conn } = await supabase
+    .from("zoho_sync_connections")
     .select("subscription_channel_id")
     .eq("integration_id", integrationId)
     .maybeSingle();
@@ -177,7 +179,8 @@ export async function unsubscribeZohoNotifications(integrationId: string): Promi
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("zoho_sync_connections" as any) as any)
+  await supabase
+    .from("zoho_sync_connections")
     .update({
       subscription_channel_id: null,
       subscription_token: null,
@@ -198,7 +201,8 @@ export async function unsubscribeZohoNotifications(integrationId: string): Promi
 export async function renewZohoNotifications(integrationId: string): Promise<SubscribeResult> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: conn } = await (supabase.from("zoho_sync_connections" as any) as any)
+  const { data: conn } = await supabase
+    .from("zoho_sync_connections")
     .select("subscription_channel_id, subscription_token")
     .eq("integration_id", integrationId)
     .maybeSingle();
@@ -227,7 +231,8 @@ export async function renewZohoNotifications(integrationId: string): Promise<Sub
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("zoho_sync_connections" as any) as any)
+  await supabase
+    .from("zoho_sync_connections")
     .update({ subscription_expiry: expiry, subscription_method: "notifications_api" })
     .eq("integration_id", integrationId);
 

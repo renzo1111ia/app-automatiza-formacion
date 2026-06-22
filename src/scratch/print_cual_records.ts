@@ -11,13 +11,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const tenantId = "47e84fa2-73f3-4e23-9267-1e49d4442f70";
 
 async function main() {
-    const { data: rows, error } = await supabase
-        .from("lead_cualificacion")
-        .select("*");
-    
-    console.log("=== ALL lead_cualificacion RECORDS ===");
-    console.log(JSON.stringify(rows || [], null, 2));
-    if (error) console.error("Error:", error);
+  const { data: rows, error } = await supabase.from("lead_cualificacion").select("*");
+
+  console.log("=== ALL lead_cualificacion RECORDS ===");
+  console.log(JSON.stringify(rows || [], null, 2));
+  if (error) console.error("Error:", error);
 }
 
 main().catch(console.error);

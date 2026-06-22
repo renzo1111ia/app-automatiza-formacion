@@ -162,7 +162,7 @@ async function insertAuditRows(
 ): Promise<void> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("crm_write_audit" as any) as any).insert(rows);
+  const { error } = await supabase.from("crm_write_audit").insert(rows);
   if (error) {
     throw new Error(`crm_write_audit insert failed: ${error.message}`);
   }

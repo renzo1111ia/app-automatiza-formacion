@@ -69,7 +69,7 @@ async function handleStart(request: NextRequest, context: RouteContext): Promise
   // Upsert row de integrations con oauth_state (is_active=false hasta callback ok).
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("integrations" as any) as any).upsert(
+  const { error } = await supabase.from("integrations").upsert(
     {
       tenant_id: tenantId,
       crm_type: providerKey,

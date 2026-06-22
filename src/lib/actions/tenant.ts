@@ -153,7 +153,11 @@ export async function getActiveTenantConfig(): Promise<Tenant | null> {
 
   const supabase = await getAdminSupabase();
   const { data, error } = await supabase.from("tenants").select("*").eq("id", tenantId).single();
-  if (error || !data) return null;
+
+  if (error || !data) {
+    console.error("DEBUG: getActiveTenantConfig failed", { tenantId, error, dataIsNull: !data });
+    return null;
+  }
 
   return {
     ...data,
@@ -228,7 +232,7 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
       api_type: api_type || "internal",
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("tenants")
       .insert({
         ...tenantData,
@@ -268,13 +272,25 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
         if (existingUser) {
           targetAuthUserId = existingUser.id;
           // Update the tenant record immediately to link it for the future
-          await supabase.from("tenants").update({ auth_user_id: targetAuthUserId }).eq("id", id);
+          await serviceSupabase
+            .from("tenants")
+            .update({ auth_user_id: targetAuthUserId })
+            .eq("id", id);
         }
       }
     }
 
+    // Get current user to prevent self-demotion
+    const supabaseForAuth = await getAdminSupabase();
+    const {
+      data: { user: currentUser },
+    } = await supabaseForAuth.auth.getUser();
+
     // 1. If password is provided AND we have/found an auth_user_id, update it
     if (updates.password && targetAuthUserId) {
+      if (updates.is_admin === false && targetAuthUserId === currentUser?.id) {
+        return { error: "No puedes quitarte el acceso de administrador a ti mismo por seguridad." };
+      }
       // Sprint 0 tarea 1-16: is_admin va en app_metadata (server-controlled).
       const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
         targetAuthUserId,
@@ -319,6 +335,9 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
       (updates.is_admin !== undefined || updates.username !== undefined) &&
       targetAuthUserId
     ) {
+      if (updates.is_admin === false && targetAuthUserId === currentUser?.id) {
+        return { error: "No puedes quitarte el acceso de administrador a ti mismo por seguridad." };
+      }
       // Update metadata even if password is not provided.
       // Sprint 0 tarea 1-16: is_admin va en app_metadata (server-controlled).
       const { error: authError } = await serviceSupabase.auth.admin.updateUserById(
@@ -359,7 +378,7 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
 
     cleanUpdates.config = newConfig;
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("tenants")
       .update(cleanUpdates)
       .eq("id", id)
@@ -394,6 +413,7 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
 export async function updateTenantConfig(id: string, partialConfig: Record<string, unknown>) {
   try {
     const supabase = await getAdminSupabase();
+    const serviceSupabase = await getServiceSupabase();
 
     // 1. Get current config
     const { data: tenant, error: fetchError } = await supabase
@@ -450,7 +470,7 @@ export async function updateTenantConfig(id: string, partialConfig: Record<strin
     }
 
     // 3. Save
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("tenants")
       .update({ config: updatedConfig })
       .eq("id", id)
@@ -474,8 +494,8 @@ export async function deleteTenant(id: string) {
     throw new Error(adminGate.error);
   }
 
-  const supabase = await getAdminSupabase();
-  const { error } = await supabase.from("tenants").delete().eq("id", id);
+  const serviceSupabase = await getServiceSupabase();
+  const { error } = await serviceSupabase.from("tenants").delete().eq("id", id);
   if (error) {
     console.error("DELETE TENANT ERROR:", error.message);
     throw new Error(error.message);
@@ -506,7 +526,9 @@ export async function setTenantToInternalDatabase(tenantId: string) {
       api_type: "internal",
     };
 
-    const { error: updateError } = await supabase
+    const serviceSupabase = await getServiceSupabase();
+
+    const { error: updateError } = await serviceSupabase
       .from("tenants")
       .update({
         config: updatedConfig,

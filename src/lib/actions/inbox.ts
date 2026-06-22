@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { getAdminSupabaseClient } from "@/lib/supabase/server";
@@ -305,7 +306,8 @@ export async function sendManualMessage(
   type: "TEXT" | "TEMPLATE" = "TEXT",
   languageCode: string = "es",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  templateComponents?: any[]
+  templateComponents?: any[],
+  fullMappedText?: string
 ): Promise<{ success: boolean; data?: ChatMessage; error?: string }> {
   const tenant = await getActiveTenantConfig();
   if (!tenant) return { success: false, error: "No tenant" };
@@ -370,7 +372,7 @@ export async function sendManualMessage(
 
       // Log to system_logs for the user to see
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("system_logs" as any) as any).insert({
+      await supabase.from("system_logs").insert({
         tenant_id: tenant.id,
         event_type: "WHATSAPP_SEND_ERROR",
         message: `Error enviando ${type}: ${errorMsg}`,
@@ -401,7 +403,7 @@ export async function sendManualMessage(
       lead_id: leadId,
       direction: "OUTBOUND",
       message_type: type,
-      content: content,
+      content: fullMappedText || content,
       sent_by: "Asesor Humano",
       status: "SENT",
     } as never)
@@ -525,14 +527,12 @@ export async function deleteLead(leadId: string): Promise<{ success: boolean; er
 
   // 1. Delete associated chat messages first (manual cascading if not in DB)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("chat_messages" as any) as any)
-    .delete()
-    .eq("lead_id", leadId)
-    .eq("tenant_id", tenant.id);
+  await supabase.from("chat_messages").delete().eq("lead_id", leadId).eq("tenant_id", tenant.id);
 
   // 2. Delete the lead
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("lead" as any) as any)
+  const { error } = await supabase
+    .from("lead")
     .delete()
     .eq("id", leadId)
     .eq("tenant_id", tenant.id);
@@ -553,7 +553,8 @@ export async function deleteChatHistory(
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("chat_messages" as any) as any)
+  const { error } = await supabase
+    .from("chat_messages")
     .delete()
     .eq("lead_id", leadId)
     .eq("tenant_id", tenant.id);
@@ -574,7 +575,8 @@ export async function deleteLeadFacts(
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("lead" as any) as any)
+  const { error } = await supabase
+    .from("lead")
     .update({ metadata: {} } as never)
     .eq("id", leadId)
     .eq("tenant_id", tenant.id);
@@ -624,7 +626,8 @@ export async function getAgentTrackedVariables(
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabase.from("ai_agent_variants" as any) as any)
+    let query = supabase
+      .from("ai_agent_variants")
       .select("tracked_variables")
       .eq("is_active", true)
       .order("updated_at", { ascending: false });
@@ -634,7 +637,8 @@ export async function getAgentTrackedVariables(
     } else {
       // Fallback: find any agent for this tenant
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: agents } = await (supabase.from("ai_agents" as any) as any)
+      const { data: agents } = await supabase
+        .from("ai_agents")
         .select("id")
         .eq("tenant_id", tenant.id);
       const ids = (agents || []).map((a: { id: string }) => a.id);
@@ -647,6 +651,47 @@ export async function getAgentTrackedVariables(
 
     const vars = (data?.tracked_variables as string[]) || [];
     return { success: true, data: vars };
+  } catch (e: unknown) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+
+/**
+ * Gets all unique tracked_variables across all active variants for the tenant.
+ */
+export async function getAllTrackedVariables(): Promise<{
+  success: boolean;
+  data?: string[];
+  error?: string;
+}> {
+  const supabase = await getAdminSupabaseClient();
+  const tenant = await getActiveTenantConfig();
+  if (!tenant) return { success: false, error: "No tenant" };
+
+  try {
+    // 1. Get all agents for tenant
+    const { data: agents } = await supabase
+      .from("ai_agents")
+      .select("id")
+      .eq("tenant_id", tenant.id);
+    const ids = (agents || []).map((a: { id: string }) => a.id);
+    if (ids.length === 0) return { success: true, data: [] };
+
+    // 2. Get tracked_variables from all active variants of these agents
+    const { data: variants } = await supabase
+      .from("ai_agent_variants")
+      .select("tracked_variables")
+      .in("agent_id", ids)
+      .eq("is_active", true);
+
+    const allVars = new Set<string>();
+    (variants || []).forEach((v: any) => {
+      if (v.tracked_variables && Array.isArray(v.tracked_variables)) {
+        v.tracked_variables.forEach((tv: string) => allVars.add(tv));
+      }
+    });
+
+    return { success: true, data: Array.from(allVars) };
   } catch (e: unknown) {
     return { success: false, error: (e as Error).message };
   }

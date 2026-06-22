@@ -15,9 +15,9 @@ export class AppointmentService {
 
   static async getLeadAppointments(leadId: string) {
     const supabase = await this.getSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("appointments") as any)
-      .select("id, scheduled_at, status, notes, advisors(name)")
+    const { data: appointments, error } = await supabase
+      .from("appointments")
+      .select("id, start_time, duration, title, status, notes, advisors(name)")
       .eq("lead_id", leadId)
       .neq("status", "CANCELLED")
       .order("scheduled_at", { ascending: true });
@@ -26,7 +26,7 @@ export class AppointmentService {
       console.error("[GET LEAD APPOINTMENTS] Error:", error);
       return [];
     }
-    return data || [];
+    return appointments || [];
   }
 
   private static normalizeDate(dateStr: string): string {
@@ -85,11 +85,10 @@ export class AppointmentService {
     }
 
     try {
-      // 0. Auto-cancel existing appointments for this lead that day (best-effort)
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("appointments") as any)
-          .update({ status: "CANCELLED" })
+        await supabase
+          .from("appointments")
+          .update({ status: "CANCELLED" } as never)
           .eq("lead_id", leadId)
           .gte("scheduled_at", `${cleanDate}T00:00:00Z`)
           .lte("scheduled_at", `${cleanDate}T23:59:59Z`);
@@ -97,28 +96,27 @@ export class AppointmentService {
         console.warn("[BOOK APPOINTMENT] Auto-cancel skipped (non-fatal):", e);
       }
 
-      // 1. Verify lead exists
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: leadError } = await (supabase.from("lead") as any)
-        .select("id")
-        .eq("id", leadId)
+      const { data: tenantData } = await supabase
+        .from("tenants")
+        .select("config")
+        .eq("id", tenantId)
         .single();
 
-      if (leadError) {
-        throw new Error(`Error al obtener datos del prospecto: ${leadError.message}`);
+      if (!tenantData) {
+        throw new Error("Error al obtener datos del tenant");
       }
 
-      // 2. Try to fetch program name (optional, never crash)
       let programName: string | null = null;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: lp } = await (supabase.from("lead_programas") as any)
+        const { data: lp } = await supabase
+          .from("lead_programas")
           .select("programas(nombre)")
-          .eq("id_lead", leadId)
+          .eq("lead_id", leadId)
+          .eq("status", "ACTIVE")
           .limit(1)
           .maybeSingle();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        programName = (lp as any)?.programas?.nombre || null;
+        programName =
+          (lp as unknown as { programas?: { nombre: string } })?.programas?.nombre || null;
       } catch (e) {
         console.warn("[BOOK APPOINTMENT] Could not fetch program name, skipping...", e);
       }
@@ -129,12 +127,10 @@ export class AppointmentService {
           ? `Interesado en: ${programName}`
           : null;
 
-      // 0. Validate availability before booking
       const scheduledDate = new Date(scheduledAt);
       const dateForValidation = format(scheduledDate, "yyyy-MM-dd");
       const availability = await this.checkAvailability(tenantId, dateForValidation);
 
-      // Convert requested time to HH:mm in Madrid timezone for comparison
       const requestedTimeMadrid = format(
         toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE),
         "HH:mm"
@@ -144,28 +140,18 @@ export class AppointmentService {
       );
 
       if (!isAvailable) {
-        console.warn(
-          `[BOOK APPOINTMENT] ❌ Outside availability: ${requestedTimeMadrid} Madrid time on ${dateForValidation}`
-        );
         throw new Error(
           `La hora seleccionada (${requestedTimeMadrid} hora España) no está disponible o está fuera del horario de atención.`
         );
       }
 
-      // 3. ADAPTIVE RETRY STRATEGY
-      // We try the insert starting with a full payload.
-      // On each "column not found" error we strip the offending field and retry.
-      // The strip order goes from most optional to least optional.
-      // The absolute bare-minimum (tenant_id, lead_id, scheduled_at) always works.
       const basePayload: Record<string, unknown> = {
         tenant_id: tenantId,
         lead_id: leadId,
         scheduled_at: scheduledAt,
       };
 
-      // Full payload — we'll peel these off one by one if the DB rejects them
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const currentData: any = {
+      const currentData: Record<string, unknown> = {
         ...basePayload,
         status: "PENDING",
         advisor_id: null,
@@ -174,27 +160,20 @@ export class AppointmentService {
         metadata: { source: "ai_wa_processor", extracted_program: programName },
       };
 
-      // Strip order: most optional first
       const stripOrder = ["metadata", "notes", "duration_minutes", "advisor_id", "status"];
 
-      console.log(
-        `[BOOK APPOINTMENT] ✍️ Attempting insert with full payload. ScheduledAt: ${scheduledAt}`
-      );
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let appointment: any = null;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let appointment: Record<string, unknown> | null = null;
       let lastError: any = null;
 
       for (let i = 0; i <= stripOrder.length; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = await (supabase.from("appointments") as any)
-          .insert(i === 0 ? currentData : { ...currentData })
+        const result = await supabase
+          .from("appointments")
+          .insert((i === 0 ? currentData : { ...currentData }) as never)
           .select()
           .single();
 
         if (!result.error) {
-          appointment = result.data;
+          appointment = result.data as Record<string, unknown>;
           lastError = null;
           console.log(`[BOOK APPOINTMENT] ✅ Insert succeeded on attempt ${i + 1}`);
           break;
@@ -202,54 +181,29 @@ export class AppointmentService {
 
         lastError = result.error;
         const msg: string = lastError?.message || "";
-
-        // Only retry for schema/column errors
         const isSchemaError =
           msg.includes("column") || msg.includes("schema cache") || lastError?.code === "PGRST204";
 
-        if (!isSchemaError) {
-          console.error(`[BOOK APPOINTMENT] ❌ Non-schema error, not retrying: ${msg}`);
-          break;
-        }
+        if (!isSchemaError) break;
 
         if (i < stripOrder.length) {
-          // Identify which column to strip from the error message, or use strip order
           let fieldToRemove = stripOrder[i];
-          for (const f of stripOrder) {
-            if (msg.includes(f) && currentData[f] !== undefined) {
-              fieldToRemove = f;
-              break;
-            }
-          }
-          console.warn(
-            `[BOOK APPOINTMENT] ⚠️ Schema issue: "${msg.substring(0, 100)}". Stripping '${fieldToRemove}' and retrying...`
-          );
           delete currentData[fieldToRemove];
         } else {
-          // All optional fields stripped, try absolute minimum
-          console.warn(`[BOOK APPOINTMENT] ⚠️ Final attempt with bare minimum payload...`);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const minResult = await (supabase.from("appointments") as any)
-            .insert(basePayload)
-            .select()
-            .single();
-          if (!minResult.error) {
-            appointment = minResult.data;
-            lastError = null;
-            console.log(`[BOOK APPOINTMENT] ✅ Bare-minimum insert succeeded.`);
-          } else {
-            lastError = minResult.error;
-          }
+          const { error: syncError } = await supabase.from("google_calendar_sync").insert({
+            tenant_id: tenantId,
+            appointment_id: (appointment as any)?.id,
+            status: "PENDING",
+            sync_attempts: 0,
+          } as never);
           break;
         }
       }
 
       if (lastError) {
-        console.error(`[BOOK APPOINTMENT] ❌ Permanent insert error after all retries:`, lastError);
         throw new Error(`Error persistente en base de datos al agendar: ${lastError.message}`);
       }
 
-      console.log(`[BOOK APPOINTMENT] 🎉 Appointment created! ID: ${appointment?.id}`);
       return appointment;
     } catch (err: unknown) {
       console.error(`[BOOK APPOINTMENT] Critical failure:`, err);
@@ -257,45 +211,46 @@ export class AppointmentService {
     }
   }
 
-  static async cancelAppointment(appointmentId: string) {
+  static async cancelAppointment(appointmentId: string, tenantId: string) {
     const supabase = await this.getSupabase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("appointments") as any)
-      .update({ status: "CANCELLED" })
+    const { error: cancelError } = await supabase
+      .from("appointments")
+      .update({ status: "CANCELLED", updated_at: new Date().toISOString() } as never)
+      .eq("tenant_id", tenantId)
       .eq("id", appointmentId);
-    if (error) throw error;
+    if (cancelError) throw cancelError;
     return { success: true };
   }
 
-  static async rescheduleAppointment(appointmentId: string, newDate: string, newTime?: string) {
+  static async rescheduleAppointment(
+    appointmentId: string,
+    tenantId: string,
+    newDate: string,
+    newTime?: string
+  ) {
     const supabase = await this.getSupabase();
     let scheduledAt = newDate;
     if (newTime) {
-      const timeStr = newTime.includes(":")
-        ? newTime.split(":").length === 2
-          ? `${newTime}:00`
-          : newTime
-        : `${newTime}:00:00`;
+      const timeStr = newTime.includes(":") ? newTime : `${newTime}:00:00`;
       try {
-        const utcDate = fromZonedTime(`${newDate} ${timeStr}`, this.DEFAULT_TIMEZONE);
-        scheduledAt = utcDate.toISOString();
+        scheduledAt = fromZonedTime(`${newDate} ${timeStr}`, this.DEFAULT_TIMEZONE).toISOString();
       } catch {
         scheduledAt = `${newDate}T${timeStr}Z`;
       }
     }
 
-    // 0. Fetch appointment to get tenant_id and validate availability
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existingApp, error: fetchErr } = await (supabase.from("appointments") as any)
-      .select("tenant_id")
+    const { data: appointment, error: fetchError } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("tenant_id", tenantId)
       .eq("id", appointmentId)
       .single();
 
-    if (fetchErr || !existingApp) throw new Error("Cita no encontrada para reprogramar.");
+    if (fetchError || !appointment) throw new Error("Cita no encontrada para reprogramar.");
 
     const scheduledDate = new Date(scheduledAt);
     const dateForValidation = format(scheduledDate, "yyyy-MM-dd");
-    const availability = await this.checkAvailability(existingApp.tenant_id, dateForValidation);
+    const availability = await this.checkAvailability(tenantId, dateForValidation);
 
     const requestedTimeMadrid = format(toZonedTime(scheduledDate, this.DEFAULT_TIMEZONE), "HH:mm");
     const isAvailable = availability.available_slots.some(
@@ -306,9 +261,9 @@ export class AppointmentService {
       throw new Error(`La nueva hora (${requestedTimeMadrid} hora España) no está disponible.`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("appointments") as any)
-      .update({ scheduled_at: scheduledAt, status: "SCHEDULED" })
+    const { error } = await supabase
+      .from("appointments")
+      .update({ scheduled_at: scheduledAt, status: "SCHEDULED" } as never)
       .eq("id", appointmentId);
     if (error) throw error;
     return { success: true, newTime: scheduledAt };
@@ -316,30 +271,19 @@ export class AppointmentService {
 
   static async checkAvailability(tenantId: string, date: string, leadTimezone?: string) {
     const cleanDate = this.normalizeDate(date);
-    console.log(
-      `[CHECK AVAILABILITY] 🔍 Checking for ${cleanDate}. Madrid TZ: ${this.DEFAULT_TIMEZONE}, Target TZ: ${leadTimezone || "none"}`
-    );
     const supabase = await this.getSupabase();
-
-    // Determine day of week in Madrid timezone
     const referenceDate = fromZonedTime(`${cleanDate} 12:00:00`, this.DEFAULT_TIMEZONE);
-    const dayOfWeek = referenceDate.getDay(); // 0-6 (Sun-Sat)
+    const dayOfWeek = referenceDate.getDay();
 
-    // availability_slots has no direct tenant_id column — it links via advisor_id → advisors.tenant_id
-    // First, get all advisor IDs that belong to this tenant
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: tenantAdvisors } = (await (supabase.from("advisors") as any)
+    const { data: tenantAdvisors } = await supabase
+      .from("advisors")
       .select("id")
       .eq("tenant_id", tenantId)
-      .eq("is_active", true)) as { data: { id: string }[] | null };
+      .eq("is_active", true);
 
-    const advisorIds = (tenantAdvisors || []).map((a) => a.id);
+    const advisorIds = ((tenantAdvisors as { id: string }[]) || []).map((a) => a.id);
 
-    // Get availability slots for that day, filtered to this tenant's advisors
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let rangesQuery = (supabase.from("availability_slots") as any)
-      .select("*")
-      .eq("day_of_week", dayOfWeek);
+    let rangesQuery = supabase.from("availability_slots").select("*").eq("day_of_week", dayOfWeek);
 
     if (advisorIds.length > 0) {
       // Include both advisor-specific slots AND general tenant slots (advisor_id IS NULL)
@@ -375,12 +319,14 @@ export class AppointmentService {
     // Get tenant config for default slot duration
     let globalSlotDuration = 15; // Default if nothing else found
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: tenant } = (await (supabase as any)
+      const tenantResponse = await supabase
         .from("tenants")
         .select("config")
         .eq("id", tenantId)
-        .single()) as { data: { config: { scheduling?: { slot_duration?: number } } } | null };
+        .single();
+      const tenant = tenantResponse.data as {
+        config: { scheduling?: { slot_duration?: number } };
+      } | null;
       const config = tenant?.config?.scheduling;
       if (config?.slot_duration) {
         globalSlotDuration = Number(config.slot_duration);

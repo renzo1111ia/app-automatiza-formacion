@@ -144,7 +144,8 @@ export async function getOrchestratorConfig(): Promise<{
 
     const supabase = await getAdminSupabaseClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("tenant_orchestrator_config" as any) as any)
+    const { data, error } = await supabase
+      .from("tenant_orchestrator_config")
       .select("config, flow_graph")
       .eq("tenant_id", tenantId)
       .single();
@@ -204,7 +205,7 @@ export async function saveOrchestratorConfig(
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("tenant_orchestrator_config" as any) as any).upsert(
+    const { error } = await supabase.from("tenant_orchestrator_config").upsert(
       {
         tenant_id: tenantId,
         config: mergedConfig,
@@ -237,7 +238,8 @@ export async function getOrchestratorConfigForTenant(
   try {
     const supabase = await getAdminSupabaseClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from("tenant_orchestrator_config" as any) as any)
+    const { data } = await supabase
+      .from("tenant_orchestrator_config")
       .select("config")
       .eq("tenant_id", tenantId)
       .single();

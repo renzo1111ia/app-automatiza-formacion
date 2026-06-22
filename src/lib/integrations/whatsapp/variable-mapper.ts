@@ -31,8 +31,8 @@ export interface LeadSnapshot {
   telefono?: string | null;
   nombre_programa?: string | null;
   estado?: string | null;
-  fecha_cita?: string | null;      // ISO date string
-  hora_cita?: string | null;       // "HH:mm" string
+  fecha_cita?: string | null; // ISO date string
+  hora_cita?: string | null; // "HH:mm" string
   nombre_asesor?: string | null;
   origen?: string | null;
   ciudad?: string | null;
@@ -186,9 +186,7 @@ function extractParameters(
   if (matches.length === 0) return [];
 
   // Build unique sorted list of indices found in the component
-  const indices = [...new Set(matches.map((m) => m[1]))].sort(
-    (a, b) => Number(a) - Number(b)
-  );
+  const indices = [...new Set(matches.map((m) => m[1]))].sort((a, b) => Number(a) - Number(b));
 
   for (const index of indices) {
     const fieldName = variableMapping[index];

@@ -205,6 +205,11 @@ const NAV_ITEMS: NavItem[] = [
         href: "/dashboard/settings/integrations/zoho-pull",
         icon: <RefreshCw className="h-4 w-4" strokeWidth={1.8} />,
       },
+      {
+        label: "WhatsApp WABA",
+        href: "/dashboard/settings/whatsapp",
+        icon: <MessageSquare className="h-4 w-4" strokeWidth={1.8} />,
+      },
     ],
   },
   {

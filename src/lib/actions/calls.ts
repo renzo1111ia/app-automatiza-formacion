@@ -242,6 +242,8 @@ export async function fetchCalls({
         fecha_primer_contacto: firstCall.fecha_inicio,
         llamadas: sortedLlamadas,
         total_llamadas: sortedLlamadas.length,
+        tiene_whatsapp: (lead.conversaciones_whatsapp ?? []).length > 0,
+        tiene_voz: sortedLlamadas.length > 0,
       };
     });
 
@@ -375,6 +377,8 @@ export async function getCallsByPhone(phone: string): Promise<HistorialRow[]> {
         fecha_primer_contacto: firstCall.fecha_inicio,
         llamadas: sortedLlamadas,
         total_llamadas: sortedLlamadas.length,
+        tiene_whatsapp: (lead.conversaciones_whatsapp ?? []).length > 0,
+        tiene_voz: sortedLlamadas.length > 0,
       };
     });
   } catch (e) {

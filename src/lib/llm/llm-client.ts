@@ -38,5 +38,12 @@ export function getLLMClient(apiKey: string): OpenAI {
 
   // Proxy no configurado o forzado OFF → SDK directo con la key del tenant.
   log.debug("Cliente LLM async directo al provider (proxy no activo)");
-  return new OpenAI({ apiKey });
+
+  const trimmedKey = apiKey?.trim() || "";
+  let baseURL = undefined;
+  if (trimmedKey.startsWith("sk-or-v1")) {
+    baseURL = "https://openrouter.ai/api/v1";
+  }
+
+  return new OpenAI({ apiKey: trimmedKey, baseURL });
 }

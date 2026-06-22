@@ -48,7 +48,10 @@ export class FlowInterpreter {
       .eq("flow_id", flowId);
 
     if (nodesError || !nodesData || nodesData.length === 0) {
-      return { status: "ERROR", error: `Failed to load nodes: ${nodesError?.message || "No nodes found"}` };
+      return {
+        status: "ERROR",
+        error: `Failed to load nodes: ${nodesError?.message || "No nodes found"}`,
+      };
     }
 
     // 2. Obtener las aristas/conexiones
@@ -151,7 +154,9 @@ export class FlowInterpreter {
               .select("config")
               .eq("id", tenantId)
               .single();
-            const tenantConfig = tenant?.config as { whatsapp?: { accessToken?: string; phoneNumberId?: string } } | null;
+            const tenantConfig = tenant?.config as {
+              whatsapp?: { accessToken?: string; phoneNumberId?: string };
+            } | null;
             const waConfig = tenantConfig?.whatsapp;
 
             if (waConfig?.accessToken && waConfig?.phoneNumberId) {
@@ -322,9 +327,15 @@ export class FlowInterpreter {
               const value = this.interpolateString((node.data.value as string) || "", currentLead);
 
               if (
-                ["nombre", "apellido", "email", "telefono", "pais", "tipo_lead", "segmentacion"].includes(
-                  field
-                )
+                [
+                  "nombre",
+                  "apellido",
+                  "email",
+                  "telefono",
+                  "pais",
+                  "tipo_lead",
+                  "segmentacion",
+                ].includes(field)
               ) {
                 updatedPayload = { [field]: value };
               } else {

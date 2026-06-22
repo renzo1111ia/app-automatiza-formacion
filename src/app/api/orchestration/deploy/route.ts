@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requireApiUser, requireTenantAccess, requireOrchestrationEnabled } from "@/lib/api-auth";
@@ -22,7 +23,16 @@ export async function POST(req: Request) {
     const supabase = await getSupabaseServerClient();
 
     // 1. Desactivar todos los flujos de este tenant (si es un despliegue primario)
-    // O simplemente marcar este como el activo
+    if (status === "ACTIVE") {
+      const { error: clearError } = await (supabase as any)
+        .from("workflows")
+        .update({ is_primary: false })
+        .eq("tenant_id", tenantId);
+
+      if (clearError) console.error("[DEPLOY] Error clearing primaries:", clearError);
+    }
+
+    // 2. Opcional: Marcar este como el activo
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: updateError } = await (supabase as any)
       .from("workflows")

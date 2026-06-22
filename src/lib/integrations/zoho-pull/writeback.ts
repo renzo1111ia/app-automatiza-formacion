@@ -111,7 +111,8 @@ export async function writeBackLeadChangeToZoho(
 
   // 1. Resolver zoho_lead_id + conexión desde zoho_lead_synced.
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const { data: syncRow, error: syncErr } = await (supabase.from("zoho_lead_synced" as any) as any)
+  const { data: syncRow, error: syncErr } = await supabase
+    .from("zoho_lead_synced")
     .select(
       "zoho_lead_id, integration_id, zoho_sync_connections!inner(id, tenant_id, writeback_enabled, is_active, field_mapping, integration_id)"
     )

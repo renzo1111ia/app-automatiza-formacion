@@ -27,10 +27,10 @@ El objetivo de este sprint es habilitar el canal de salida oficial de WhatsApp m
 
 | #   | Fase                                                                             | Archivo                                             | Estim. | Estado       |
 | --- | -------------------------------------------------------------------------------- | --------------------------------------------------- | ------ | ------------ |
-| 01  | **Capa de datos y Configuración** (Tablas para plantillas, números y logs)       | [phase-01](phase-01-setup-db.md)                     | 3-4h   | 🔘 Pendiente |
-| 02  | **Cliente API de Envío** (Llamadas REST a Meta Cloud API para plantillas/texto)    | [phase-02](phase-02-api-client.md)                  | 6-8h   | 🔘 Pendiente |
-| 03  | **UI de Configuración y Mapeo** (Gestión de plantillas y variables del lead)      | [phase-03](phase-03-ui-templates.md)                | 5-7h   | 🔘 Pendiente |
-| 04  | **Pruebas y Cierre** (Simulación de webhooks de entrega, logs y validación)      | [phase-04](phase-04-tests-cierre.md)                | 4-5h   | 🔘 Pendiente |
+| 01  | **Capa de datos y Configuración** (Tablas para plantillas, números y logs)       | [phase-01](phase-01-setup-db.md)                     | 3-4h   | ✅ Completado |
+| 02  | **Cliente API de Envío** (Llamadas REST a Meta Cloud API para plantillas/texto)    | [phase-02](phase-02-api-client.md)                  | 6-8h   | ✅ Completado |
+| 03  | **UI de Configuración y Mapeo** (Gestión de plantillas y variables del lead)      | [phase-03](phase-03-ui-templates.md)                | 5-7h   | ✅ Completado |
+| 04  | **Pruebas y Cierre** (Simulación de webhooks de entrega, logs y validación)      | [phase-04](phase-04-tests-cierre.md)                | 4-5h   | ✅ Completado |
 
 **Total estimado:** 18-24h dev + cierre.
 

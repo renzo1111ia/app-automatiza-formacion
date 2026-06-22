@@ -39,7 +39,8 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("integrations" as any) as any)
+  await supabase
+    .from("integrations")
     .update({
       last_healthcheck_at: new Date().toISOString(),
       healthcheck_status: ok ? "ok" : "error",

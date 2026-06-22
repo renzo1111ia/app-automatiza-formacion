@@ -33,6 +33,10 @@ Accion inmediata requerida. El sistema tiene secretos de produccion en git.
 | B-010 | Fix fetchCalls - anadir getActiveTenantId() y .eq(tenant_id) en query principal | S | F-04-001 |
 | B-011 | Fix getPrograms - anadir filtro tenant_id | S | F-04-008 |
 | B-012 | Fix AppointmentWatchdog - anadir filtro tenant_id en query de appointments | S | F-02-004 |
+| B-012b| Fix Orchestrator IDOR en actions - anadir filtro tenant_id | S | Audit Orchestrator |
+| B-012c| Secure test/orchestrator API - anadir requireApiAdmin | S | Audit Orchestrator |
+| B-012d| Fix Orchestrator Race Condition (Single-Active Flow) en deploy/route.ts | S | Audit Orchestrator |
+| B-012e| Reparacion DB: Anadir is_primary e is_active a tabla workflows | S | Audit Orchestrator |
 
 Dependencias Sprint 0: ninguna - todos son fixes independientes. Ejecutar en paralelo si es posible.
 Precondicion para Sprint 1: B-001 (rotar JWT) es critico para la seguridad del resto del trabajo.

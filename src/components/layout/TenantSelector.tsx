@@ -66,6 +66,13 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
           isAdmin: !!first.is_admin,
         });
         setTenantCookies(first.id, first.name).then(() => router.refresh());
+      } else if (tenantName && !cookieTenantId) {
+        // Store has a tenant (from sessionStorage) but the cookie was lost
+        // (e.g. user logged out and logged back in). We must restore the cookie.
+        const active = clientTenants.find((t) => t.name === tenantName);
+        if (active) {
+          setTenantCookies(active.id, active.name).then(() => router.refresh());
+        }
       }
     }
     loadTenants();

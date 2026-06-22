@@ -53,7 +53,8 @@ export async function getHolidays(input: {
   const endDate = `${parsed.data.year}-12-31`;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
-  const { data, error } = await (supabase.from("tenant_holidays" as any) as any)
+  const { data, error } = await supabase
+    .from("tenant_holidays")
     .select("id, tenant_id, country_code, date, name")
     .eq("country_code", parsed.data.countryCode)
     .gte("date", startDate)
@@ -93,7 +94,8 @@ export async function addHoliday(input: {
 
   const supabase = await getSupabaseServerClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
-  const { data, error } = await (supabase.from("tenant_holidays" as any) as any)
+  const { data, error } = await supabase
+    .from("tenant_holidays")
     .insert({
       tenant_id: tenant.id,
       country_code: parsed.data.countryCode,
@@ -183,7 +185,8 @@ export async function isBusinessDay(
   const supabase = await getSupabaseServerClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
-  const { data, error } = await (supabase.from("tenant_holidays" as any) as any)
+  const { data, error } = await supabase
+    .from("tenant_holidays")
     .select("id")
     .eq("tenant_id", tenantId)
     .eq("country_code", countryCode.toUpperCase())

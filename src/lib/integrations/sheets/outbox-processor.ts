@@ -100,9 +100,8 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
   // asi que primero seleccionamos los ids pendientes ordenados por antiguedad y
   // luego marcamos esos ids como processing con un UPDATE ... IN (...).
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const { data: pendingIds, error: selErr } = await (
-    supabase.from("sheets_writeback_outbox" as any) as any
-  )
+  const { data: pendingIds, error: selErr } = await supabase
+    .from("sheets_writeback_outbox")
     .select("id")
     .eq("status", "pending")
     .lt("attempts", MAX_ATTEMPTS)
@@ -118,9 +117,8 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
   const idsToClaim = ((pendingIds ?? []) as Array<{ id: string }>).map((r) => r.id);
   if (idsToClaim.length === 0) return result;
 
-  const { data: claimed, error: claimErr } = await (
-    supabase.from("sheets_writeback_outbox" as any) as any
-  )
+  const { data: claimed, error: claimErr } = await supabase
+    .from("sheets_writeback_outbox")
     .update({ status: "processing" })
     .in("id", idsToClaim)
     .eq("status", "pending")
@@ -152,7 +150,8 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
       if (wb.errors.length > 0 && wb.cellsWritten === 0) {
         // Todo falló -> reintentar mas tarde.
 
-        await (supabase.from("sheets_writeback_outbox" as any) as any)
+        await supabase
+          .from("sheets_writeback_outbox")
           .update({
             status: "pending",
             attempts: row.attempts + 1,
@@ -163,7 +162,8 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
         continue;
       }
 
-      await (supabase.from("sheets_writeback_outbox" as any) as any)
+      await supabase
+        .from("sheets_writeback_outbox")
         .update({
           status: "done",
           processed_at: new Date().toISOString(),
@@ -190,7 +190,8 @@ export async function runWritebackOutbox(): Promise<OutboxRunResult> {
       const newAttempts = row.attempts + 1;
       const failed = newAttempts >= MAX_ATTEMPTS;
 
-      await (supabase.from("sheets_writeback_outbox" as any) as any)
+      await supabase
+        .from("sheets_writeback_outbox")
         .update({
           status: failed ? "failed" : "pending",
           attempts: newAttempts,
@@ -226,7 +227,8 @@ export async function renewExpiringWatchChannels(): Promise<{
   const supabase = await getAdminSupabaseClient();
   const threshold = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await (supabase.from("sheet_connections" as any) as any)
+  const { data, error } = await supabase
+    .from("sheet_connections")
     .select("id, tenant_id, spreadsheet_id, drive_channel_id, drive_resource_id")
     .eq("is_active", true)
     .lt("drive_channel_expiry", threshold)
@@ -250,7 +252,8 @@ export async function renewExpiringWatchChannels(): Promise<{
       }
       const watch = await adapter.setupWatch(row.spreadsheet_id);
 
-      await (supabase.from("sheet_connections" as any) as any)
+      await supabase
+        .from("sheet_connections")
         .update({
           drive_channel_id: watch.channelId,
           drive_channel_token: watch.channelToken,

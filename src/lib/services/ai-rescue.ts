@@ -6,15 +6,15 @@ import { traceLLMUsage } from "@/lib/observability/langfuse-client";
 let _openai: OpenAI | null = null;
 
 function getOpenAI() {
-    if (!_openai) {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey || apiKey === "your_api_key_here") {
-            throw new Error("OPENAI_API_KEY no configurada. Por favor, añádela a tu archivo .env.local");
-        }
-        // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
-        _openai = getLLMClient(apiKey);
+  if (!_openai) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === "your_api_key_here") {
+      throw new Error("OPENAI_API_KEY no configurada. Por favor, añádela a tu archivo .env.local");
     }
-    return _openai;
+    // Call site async no-crítico → vía proxy LiteLLM si está activo, directo si no.
+    _openai = getLLMClient(apiKey);
+  }
+  return _openai;
 }
 
 /**
@@ -22,37 +22,37 @@ function getOpenAI() {
  * Generates personalized re-engagement messages for inactive leads.
  */
 export class AIRescueService {
-    /**
-     * Generates a personalized message based on chat history and instructions.
-     */
-    static async generateSmartNudge(params: {
-        leadId: string;
-        instructions: string;
-        agentPrompt: string;
-    }): Promise<string> {
-        const { leadId, instructions, agentPrompt } = params;
-        const supabase = await getSupabaseServerClient();
+  /**
+   * Generates a personalized message based on chat history and instructions.
+   */
+  static async generateSmartNudge(params: {
+    leadId: string;
+    instructions: string;
+    agentPrompt: string;
+  }): Promise<string> {
+    const { leadId, instructions, agentPrompt } = params;
+    const supabase = await getSupabaseServerClient();
 
-        try {
-            // 1. Fetch Chat History (Summary)
-            const { data: summaryDataRaw } = await supabase
-                .from("chat_summaries")
-                .select("summary")
-                .eq("lead_id", leadId)
-                .single();
+    try {
+      // 1. Fetch Chat History (Summary)
+      const { data: summaryDataRaw } = await supabase
+        .from("chat_summaries")
+        .select("summary")
+        .eq("lead_id", leadId)
+        .single();
 
-            const summaryData = summaryDataRaw as { summary: string } | null;
-            const history = summaryData?.summary || "No hay historial previo.";
+      const summaryData = summaryDataRaw as { summary: string } | null;
+      const history = summaryData?.summary || "No hay historial previo.";
 
-            // 2. Generate Message with GPT-4o
-            const openai = getOpenAI();
-            const startedAt = Date.now();
-            const response = await openai.chat.completions.create({
-                model: "gpt-4o",
-                messages: [
-                    {
-                        role: "system",
-                        content: `Eres VirginIA, un agente experto en ventas. Tu objetivo es reactivar a un lead que ha dejado de responder.
+      // 2. Generate Message with GPT-4o
+      const openai = getOpenAI();
+      const startedAt = Date.now();
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `Eres VirginIA, un agente experto en ventas. Tu objetivo es reactivar a un lead que ha dejado de responder.
                         
                         CONTEXTO DEL AGENTE:
                         ${agentPrompt}
@@ -69,28 +69,27 @@ export class AIRescueService {
                         - Usa el nombre del lead si lo conoces.
                         - El mensaje debe ser enviado por WhatsApp.
                         - NO uses placeholders como [NOMBRE], sustitúyelos por la información real si la tienes.
-                        - Responde ÚNICAMENTE con el texto del mensaje a enviar.`
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 150
-            });
+                        - Responde ÚNICAMENTE con el texto del mensaje a enviar.`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      });
 
-            // Observabilidad: solo metadata de uso, sin el historial (PII).
-            traceLLMUsage({
-                agentName: "ai-rescue",
-                model: response.model || "gpt-4o",
-                usage: response.usage,
-                latencyMs: Date.now() - startedAt,
-            });
+      // Observabilidad: solo metadata de uso, sin el historial (PII).
+      traceLLMUsage({
+        agentName: "ai-rescue",
+        model: response.model || "gpt-4o",
+        usage: response.usage,
+        latencyMs: Date.now() - startedAt,
+      });
 
-            const message = response.choices[0].message.content?.trim();
-            return message || "Hola! Sigues ahí? Me gustaría seguir hablando contigo.";
-
-        } catch (err: unknown) {
-            const error = err as Error;
-            console.error("[AI_RESCUE] Error generating smart nudge:", error.message);
-            return instructions.split('\n')[0] || "Hola! Sigues ahí?"; // Fallback to instruction or default
-        }
+      const message = response.choices[0].message.content?.trim();
+      return message || "Hola! Sigues ahí? Me gustaría seguir hablando contigo.";
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("[AI_RESCUE] Error generating smart nudge:", error.message);
+      return instructions.split("\n")[0] || "Hola! Sigues ahí?"; // Fallback to instruction or default
     }
+  }
 }

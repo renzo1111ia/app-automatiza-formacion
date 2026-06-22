@@ -50,7 +50,8 @@ export class AppointmentWatchdog {
         // 2. Mark as processed to avoid double triggers
         // Supabase TS infers update fields as never on this table; cast required.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("appointments") as any)
+        await supabase
+          .from("appointments")
           .update({ watchdog_processed: true, status: "NO_SHOW" })
           .eq("id", apt.id);
 

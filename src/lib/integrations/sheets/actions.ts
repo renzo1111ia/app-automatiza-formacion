@@ -67,7 +67,8 @@ export async function listConnectedSheetsAction(): Promise<
     const supabase = await getAdminSupabaseClient();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("sheet_connections" as any) as any)
+    const { data, error } = await supabase
+      .from("sheet_connections")
       .select("*")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
@@ -123,9 +124,8 @@ export async function connectSheetAction(
 
     // 1. Insert row sin watch (caso fallback) - aseguramos atomicidad luego.
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const { data: inserted, error: insertErr } = await (
-      supabase.from("sheet_connections" as any) as any
-    )
+    const { data: inserted, error: insertErr } = await supabase
+      .from("sheet_connections")
       .insert({
         tenant_id: tenantId,
         integration_id: integration.id,
@@ -153,7 +153,8 @@ export async function connectSheetAction(
       const adapter = await GoogleSheetsAdapter.forTenant(tenantId);
       const watch = await adapter.setupWatch(parsed.spreadsheetId);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("sheet_connections" as any) as any)
+      await supabase
+        .from("sheet_connections")
         .update({
           drive_channel_id: watch.channelId,
           drive_channel_token: watch.channelToken,
@@ -231,7 +232,8 @@ export async function updateSheetMappingAction(
     if (parsed.sheetTabName !== undefined) updates.sheet_tab_name = parsed.sheetTabName;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("sheet_connections" as any) as any)
+    const { error } = await supabase
+      .from("sheet_connections")
       .update(updates)
       .eq("id", parsed.sheetConnectionId)
       .eq("tenant_id", tenantId);
@@ -254,7 +256,8 @@ export async function toggleSheetActiveAction(
     const { tenantId } = await requireCurrentTenant();
     const supabase = await getAdminSupabaseClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("sheet_connections" as any) as any)
+    const { error } = await supabase
+      .from("sheet_connections")
       .update({ is_active: isActive })
       .eq("id", sheetConnectionId)
       .eq("tenant_id", tenantId);
@@ -276,7 +279,8 @@ export async function disconnectSheetAction(
     const supabase = await getAdminSupabaseClient();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: row } = await (supabase.from("sheet_connections" as any) as any)
+    const { data: row } = await supabase
+      .from("sheet_connections")
       .select("drive_channel_id, drive_resource_id")
       .eq("id", sheetConnectionId)
       .eq("tenant_id", tenantId)
@@ -295,7 +299,8 @@ export async function disconnectSheetAction(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("sheet_connections" as any) as any)
+    const { error } = await supabase
+      .from("sheet_connections")
       .delete()
       .eq("id", sheetConnectionId)
       .eq("tenant_id", tenantId);
@@ -349,7 +354,8 @@ export async function getConnectionStatusAction(): Promise<
 
     const supabase = await getAdminSupabaseClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { count } = await (supabase.from("sheet_connections" as any) as any)
+    const { count } = await supabase
+      .from("sheet_connections")
       .select("id", { count: "exact", head: true })
       .eq("tenant_id", tenantId);
 

@@ -13,28 +13,29 @@ const from = "2026-04-19T05:16:25.088Z";
 const to = "2026-05-20T03:59:59.999Z";
 
 async function main() {
-    const table = "lead_cualificacion";
-    const col = "id";
-    const joinCol = "id_lead";
-    const timeCol = "fecha_creacion";
-    const isGrouped = false;
+  const table = "lead_cualificacion";
+  const col = "id";
+  const joinCol = "id_lead";
+  const timeCol = "fecha_creacion";
+  const isGrouped = false;
 
-    let q = supabase.from(table)
-        .select(isGrouped ? `${timeCol}, ${col}, ${joinCol}` : `${col}, ${joinCol}`)
-        .eq("tenant_id", tenantId)
-        .gte(timeCol, from)
-        .lte(timeCol, to);
-    
-    console.log("Constructed query filters:", {
-        tenant_id: tenantId,
-        timeCol,
-        from,
-        to
-    });
-    
-    const { data, error } = await q;
-    console.log("Query Result Data:", data);
-    console.log("Query Result Error:", error);
+  let q = supabase
+    .from(table)
+    .select(isGrouped ? `${timeCol}, ${col}, ${joinCol}` : `${col}, ${joinCol}`)
+    .eq("tenant_id", tenantId)
+    .gte(timeCol, from)
+    .lte(timeCol, to);
+
+  console.log("Constructed query filters:", {
+    tenant_id: tenantId,
+    timeCol,
+    from,
+    to,
+  });
+
+  const { data, error } = await q;
+  console.log("Query Result Data:", data);
+  console.log("Query Result Error:", error);
 }
 
 main().catch(console.error);

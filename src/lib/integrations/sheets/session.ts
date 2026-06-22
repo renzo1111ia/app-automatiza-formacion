@@ -50,7 +50,8 @@ export async function requireCurrentTenant(): Promise<CurrentTenantInfo> {
 
   if (activeTenantId) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: active, error: activeErr } = await (admin.from("tenants" as any) as any)
+    const { data: active, error: activeErr } = await admin
+      .from("tenants")
       .select("id, auth_user_id")
       .eq("id", activeTenantId)
       .maybeSingle();
@@ -70,7 +71,8 @@ export async function requireCurrentTenant(): Promise<CurrentTenantInfo> {
   // Fallback: tenant del que el usuario es dueño (clientes sin selector, o
   // cookie ausente/no autorizada).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: tenantRow, error: tenantErr } = await (admin.from("tenants" as any) as any)
+  const { data: tenantRow, error: tenantErr } = await admin
+    .from("tenants")
     .select("id")
     .eq("auth_user_id", userId)
     .maybeSingle();

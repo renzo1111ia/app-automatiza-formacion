@@ -51,9 +51,8 @@ async function handleWebhook(
     // 1. Validate Workflow & Get Tenant
     // orchestration_graphs uses workflow_id PK not in generated DB types; cast required.
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const { data: workflow, error: wfError } = (await (
-      supabase.from("orchestration_graphs" as any) as any
-    )
+    const { data: workflow, error: wfError } = (await supabase
+      .from("orchestration_graphs")
       .select("tenant_id, graph_data")
       .eq("workflow_id", workflowId)
       .single()) as { data: WorkflowRecord | null; error: unknown };
@@ -156,7 +155,8 @@ async function handleWebhook(
 
     // Standard Lead Upsert
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: lead, error: leadError } = (await (supabase.from("lead" as any) as any)
+    const { data: lead, error: leadError } = (await supabase
+      .from("lead")
       .upsert(
         {
           tenant_id: workflow.tenant_id,

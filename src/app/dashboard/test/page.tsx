@@ -13,7 +13,9 @@ export default async function TestPage() {
     diagnosticData.tenantId = tenantId;
 
     const tenantConfig = await getActiveTenantConfig();
-    diagnosticData.tenantConfig = tenantConfig ? { id: tenantConfig.id, name: tenantConfig.name } : null;
+    diagnosticData.tenantConfig = tenantConfig
+      ? { id: tenantConfig.id, name: tenantConfig.name }
+      : null;
 
     if (tenantId) {
       const now = new Date();
@@ -50,9 +52,9 @@ export default async function TestPage() {
   }
 
   return (
-    <div className="p-8 font-mono bg-slate-900 text-slate-100 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 text-emerald-400">Dashboard Diagnostic Data</h1>
-      <pre className="bg-slate-950 p-6 rounded-2xl border border-slate-800 overflow-x-auto">
+    <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
+      <h1 className="mb-4 text-2xl font-bold text-emerald-400">Dashboard Diagnostic Data</h1>
+      <pre className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950 p-6">
         {JSON.stringify(diagnosticData, null, 2)}
       </pre>
     </div>

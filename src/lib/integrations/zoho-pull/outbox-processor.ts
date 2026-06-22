@@ -115,9 +115,8 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
 
   // Paso 1a — Seleccionar IDs pending ordenados por antigüedad.
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const { data: pendingIds, error: selErr } = await (
-    supabase.from("zoho_writeback_outbox" as any) as any
-  )
+  const { data: pendingIds, error: selErr } = await supabase
+    .from("zoho_writeback_outbox")
     .select("id")
     .eq("status", "pending")
     .lt("attempts", MAX_ATTEMPTS)
@@ -136,9 +135,8 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
 
   // Paso 1b — Marcar como processing (solo los que siguen pending para evitar race).
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const { data: claimed, error: claimErr } = await (
-    supabase.from("zoho_writeback_outbox" as any) as any
-  )
+  const { data: claimed, error: claimErr } = await supabase
+    .from("zoho_writeback_outbox")
     .update({ status: "processing" })
     .in("id", idsToClaim)
     .eq("status", "pending")
@@ -173,7 +171,8 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
         const newAttempts = row.attempts + 1;
         const finalFailed = newAttempts >= MAX_ATTEMPTS;
         /* eslint-disable @typescript-eslint/no-explicit-any */
-        await (supabase.from("zoho_writeback_outbox" as any) as any)
+        await supabase
+          .from("zoho_writeback_outbox")
           .update({
             status: finalFailed ? "failed" : "pending",
             attempts: newAttempts,
@@ -187,7 +186,8 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
 
       // Al menos un campo escrito → marcar done.
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      await (supabase.from("zoho_writeback_outbox" as any) as any)
+      await supabase
+        .from("zoho_writeback_outbox")
         .update({
           status: "done",
           processed_at: new Date().toISOString(),
@@ -215,7 +215,8 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
       const finalFailed = newAttempts >= MAX_ATTEMPTS;
 
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      await (supabase.from("zoho_writeback_outbox" as any) as any)
+      await supabase
+        .from("zoho_writeback_outbox")
         .update({
           status: finalFailed ? "failed" : "pending",
           attempts: newAttempts,

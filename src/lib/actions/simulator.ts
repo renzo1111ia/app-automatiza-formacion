@@ -15,6 +15,7 @@ export async function testAgentVariables(params: {
   history: { role: "user" | "assistant"; content: string }[];
   currentVariables: Record<string, string | number | boolean>;
 }) {
+  const TEST_LEAD_ID = "00000000-0000-4000-8000-000000000000";
   try {
     const { agentId, message, history, currentVariables } = params;
     const supabase = await getAdminSupabaseClient();
@@ -34,6 +35,15 @@ export async function testAgentVariables(params: {
 
     if (!agent || !variant) throw new Error("Agente no encontrado");
 
+    // Ensure test lead exists in DB
+    await supabase.from("lead").upsert({
+      id: TEST_LEAD_ID,
+      tenant_id: agent.tenant_id,
+      nombre: "Simulador",
+      apellido: "Test Lead",
+      telefono: "+34000000000",
+    });
+
     // 2. Prepare Context with current variables
     let context = variant.prompt_text || "";
     Object.entries(currentVariables).forEach(([key, value]) => {
@@ -44,8 +54,15 @@ export async function testAgentVariables(params: {
     });
 
     // 3. Get AI Response
-    const apiKey = variant.api_key || process.env.OPENAI_API_KEY;
-    const openai = new OpenAI({ apiKey });
+    const rawApiKey = variant.api_key || process.env.OPENAI_API_KEY;
+    const apiKey = rawApiKey?.trim() || "";
+
+    let baseURL = undefined;
+    if (apiKey.startsWith("sk-or-v1")) {
+      baseURL = "https://openrouter.ai/api/v1";
+    }
+
+    const openai = new OpenAI({ apiKey, baseURL });
 
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: "system", content: context },
@@ -57,24 +74,126 @@ export async function testAgentVariables(params: {
     if (modelName === "gpt-4.1") modelName = "gpt-4o";
     if (modelName === "gpt-4.1-mini") modelName = "gpt-4o-mini";
 
-    const completion = await openai.chat.completions.create({
+    const schedulingTools: OpenAI.Chat.ChatCompletionTool[] = [
+      {
+        type: "function",
+        function: {
+          name: "check_availability",
+          description: "Consulta los huecos libres para agendar una cita en un día concreto.",
+          parameters: {
+            type: "object",
+            properties: {
+              date: { type: "string", description: "Fecha en formato YYYY-MM-DD" },
+            },
+            required: ["date"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "book_appointment",
+          description: "Reserva una cita firme para el usuario en una hora disponible.",
+          parameters: {
+            type: "object",
+            properties: {
+              date: { type: "string", description: "Fecha en formato YYYY-MM-DD" },
+              time: { type: "string", description: "Hora en formato HH:MM" },
+            },
+            required: ["date", "time"],
+          },
+        },
+      },
+    ];
+
+    let completion = await openai.chat.completions.create({
       model: modelName,
       messages,
       temperature:
         ((variant as unknown as Record<string, unknown>).temperature as number | undefined) || 0.7,
+      tools: schedulingTools,
     });
 
-    const aiResponse = completion.choices[0]?.message?.content || "";
+    const choice = completion.choices[0];
+    let aiResponse = choice?.message?.content || "";
+    const toolCalls = choice?.message?.tool_calls;
+
+    const executedTools: { name: string; args: unknown; result: unknown }[] = [];
+
+    if (toolCalls && toolCalls.length > 0) {
+      messages.push(choice.message);
+
+      const { checkAvailability, createAppointment } = await import("@/lib/actions/scheduling");
+
+      for (const tc of toolCalls) {
+        if (tc.type === "function") {
+          let args: Record<string, string> = {};
+          try {
+            args = JSON.parse(tc.function.arguments);
+          } catch (e) {
+            console.error("Error parsing tool arguments", e);
+          }
+
+          let resultStr = "";
+          let resultData = null;
+
+          if (tc.function.name === "check_availability") {
+            const res = await checkAvailability(agent.tenant_id, args.date);
+            if (res.success) {
+              resultData = res;
+              resultStr = `Disponibilidad para ${args.date}: configuración: ${JSON.stringify(res.config)}, slots ocupados: ${JSON.stringify(res.busy_slots)}`;
+            } else {
+              resultStr = `Error: ${res.error}`;
+            }
+          } else if (tc.function.name === "book_appointment") {
+            const res = await createAppointment({
+              lead_id: TEST_LEAD_ID,
+              scheduled_at: `${args.date}T${args.time}:00.000Z`,
+              status: "CONFIRMED",
+            });
+            if (res.success) {
+              resultData = res.data;
+              resultStr = `Cita agendada correctamente para ${args.date} a las ${args.time}.`;
+            } else {
+              resultStr = `Error agendando cita: ${res.error}`;
+            }
+          }
+
+          executedTools.push({ name: tc.function.name, args, result: resultData });
+
+          messages.push({
+            role: "tool",
+            tool_call_id: tc.id,
+            content: resultStr,
+          });
+        }
+      }
+
+      completion = await openai.chat.completions.create({
+        model: modelName,
+        messages,
+        temperature: 0.7,
+        tools: schedulingTools,
+      });
+
+      aiResponse = completion.choices[0]?.message?.content || "";
+    }
 
     // 4. Extract Variables (Facts)
     const trackedVars = (variant.tracked_variables as string[]) || [];
     let newExtractedData = {};
 
     if (trackedVars.length > 0) {
+      // Reconstruct full dialogue from history
+      const fullDialogue = history
+        .map((h) => `${h.role === "user" ? "User" : "AI"}: ${h.content}`)
+        .concat(`User: ${message}\nAI: ${aiResponse}`)
+        .join("\n\n");
+
       // Simulate extraction
       const extractionResult = await FactExtractionService.extractFromDialogue(
-        "test-lead-id",
-        `User: ${message}\nAI: ${aiResponse}`,
+        TEST_LEAD_ID,
+        fullDialogue,
         trackedVars,
         apiKey!
       );
@@ -87,6 +206,7 @@ export async function testAgentVariables(params: {
       success: true,
       response: aiResponse,
       extracted: newExtractedData,
+      executedTools,
     };
   } catch (error: unknown) {
     const err = error as Error;
@@ -137,7 +257,25 @@ export async function saveSimulatorSession(params: {
     return { success: true };
   } catch (error) {
     const err = error as Error;
+    console.error("[SAVE SESSION] Error:", err);
     return { success: false, error: err.message };
+  }
+}
+
+export async function getTestAppointments() {
+  const TEST_LEAD_ID = "00000000-0000-4000-8000-000000000000";
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("lead_id", TEST_LEAD_ID)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
   }
 }
 

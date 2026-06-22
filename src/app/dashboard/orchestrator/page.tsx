@@ -6,5 +6,5 @@ import { redirect } from "next/navigation";
  * como un sistema nodal unificado.
  */
 export default function OrchestratorRedirectPage() {
-    redirect("/dashboard/onboarding");
+  redirect("/dashboard/onboarding");
 }

@@ -54,7 +54,8 @@ export class ZohoPollingProcessor {
             // 3. Upsert into "lead" table
             // Supabase TS inference resolves upsert body to never[] on this table; cast required.
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: lead, error: upsertError } = (await (supabase.from("lead") as any)
+            const { data: lead, error: upsertError } = (await supabase
+              .from("lead")
               .upsert(
                 {
                   tenant_id: tenant.id,
@@ -126,7 +127,7 @@ export class ZohoPollingProcessor {
 
     if (program) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("lead_programas") as any).upsert(
+      await supabase.from("lead_programas").upsert(
         {
           id_lead: leadId,
           id_programa: (program as { id: string }).id,

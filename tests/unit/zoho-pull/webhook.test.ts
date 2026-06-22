@@ -23,6 +23,7 @@ vi.mock("@/lib/supabase/server", () => ({
 
 vi.mock("@/lib/integrations/zoho-pull/queue", () => ({
   enqueueZohoLeadEvent: vi.fn(),
+  ensureZohoLeadWorker: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/logger", () => ({

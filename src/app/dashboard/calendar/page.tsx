@@ -91,7 +91,7 @@ export default function CalendarPage() {
   const [selectedAdvisor, setSelectedAdvisor] = useState<Advisor | null>(null);
   const [editingAdvisor, setEditingAdvisor] = useState<Partial<Advisor> | null>(null);
   const [slots, setSlots] = useState<
-    Record<number, { active: boolean; start: string; end: string }>
+    Record<number, { active: boolean; ranges: { id: string; start: string; end: string }[] }>
   >({}); // dayOfWeek → config
   const [slotDuration, setSlotDuration] = useState(15);
   const [saving, setSaving] = useState(false);
@@ -131,25 +131,38 @@ export default function CalendarPage() {
   const loadSlots = useCallback(async (advisorId: string | null) => {
     const res = await getAdvisorSlots(advisorId);
     if (res.success && res.data) {
-      const map: Record<number, { active: boolean; start: string; end: string }> = {};
-      // Initialize with default empty state to ensure we don't keep old data
+      const map: Record<
+        number,
+        { active: boolean; ranges: { id: string; start: string; end: string }[] }
+      > = {};
       [0, 1, 2, 3, 4, 5, 6].forEach(
-        (d) => (map[d] = { active: false, start: "09:00", end: "20:00" })
+        (d) =>
+          (map[d] = { active: false, ranges: [{ id: "default", start: "09:00", end: "20:00" }] })
       );
 
-      res.data.forEach((s) => {
-        map[s.day_of_week] = {
-          active: true,
-          start: s.start_time || "09:00",
-          end: s.end_time || "20:00",
-        };
-      });
+      if (res.data && res.data.length > 0) {
+        res.data.forEach((s) => {
+          if (!map[s.day_of_week].active) {
+            map[s.day_of_week].active = true;
+            map[s.day_of_week].ranges = [];
+          }
+          map[s.day_of_week].ranges.push({
+            id: Math.random().toString(36).substr(2, 9),
+            start: s.start_time || "09:00",
+            end: s.end_time || "20:00",
+          });
+        });
+      }
       setSlots(map);
     } else {
       // Reset if no data or error
-      const map: Record<number, { active: boolean; start: string; end: string }> = {};
+      const map: Record<
+        number,
+        { active: boolean; ranges: { id: string; start: string; end: string }[] }
+      > = {};
       [0, 1, 2, 3, 4, 5, 6].forEach(
-        (d) => (map[d] = { active: false, start: "09:00", end: "20:00" })
+        (d) =>
+          (map[d] = { active: false, ranges: [{ id: "default", start: "09:00", end: "20:00" }] })
       );
       setSlots(map);
     }
@@ -228,18 +241,26 @@ export default function CalendarPage() {
     if (tab === "slots") {
       getAdvisorSlots(selectedAdvisor?.id || null).then((res) => {
         if (!isMounted) return;
-        const map: Record<number, { active: boolean; start: string; end: string }> = {};
+        const map: Record<
+          number,
+          { active: boolean; ranges: { id: string; start: string; end: string }[] }
+        > = {};
         [0, 1, 2, 3, 4, 5, 6].forEach(
-          (d) => (map[d] = { active: false, start: "09:00", end: "20:00" })
+          (d) =>
+            (map[d] = { active: false, ranges: [{ id: "default", start: "09:00", end: "20:00" }] })
         );
 
-        if (res.success && res.data) {
+        if (res.success && res.data && res.data.length > 0) {
           res.data.forEach((s) => {
-            map[s.day_of_week] = {
-              active: true,
+            if (!map[s.day_of_week].active) {
+              map[s.day_of_week].active = true;
+              map[s.day_of_week].ranges = [];
+            }
+            map[s.day_of_week].ranges.push({
+              id: Math.random().toString(36).substr(2, 9),
               start: s.start_time || "09:00",
               end: s.end_time || "20:00",
-            };
+            });
           });
         }
         setSlots(map);
@@ -288,14 +309,24 @@ export default function CalendarPage() {
   async function handleSaveSlots() {
     setSaving(true);
     const advisorId = selectedAdvisor?.id || null;
-    const slotsToSave = Object.entries(slots)
-      .filter(([, config]) => config.active)
-      .map(([day, config]) => ({
-        day_of_week: parseInt(day),
-        start_time: config.start,
-        end_time: config.end,
-        slot_duration_minutes: slotDuration,
-      }));
+    const slotsToSave: {
+      day_of_week: number;
+      start_time: string;
+      end_time: string;
+      slot_duration_minutes: number;
+    }[] = [];
+    Object.entries(slots).forEach(([day, config]) => {
+      if (config.active) {
+        config.ranges.forEach((range) => {
+          slotsToSave.push({
+            day_of_week: parseInt(day),
+            start_time: range.start,
+            end_time: range.end,
+            slot_duration_minutes: slotDuration,
+          });
+        });
+      }
+    });
 
     // 2. Save duration in tenant config
     const tenant = await getActiveTenantConfig();
@@ -1224,8 +1255,7 @@ export default function CalendarPage() {
                     const dbDay = DAYS_DB_MAP[i];
                     const slotConfig = slots[dbDay] || {
                       active: false,
-                      start: "09:00",
-                      end: "20:00",
+                      ranges: [{ id: "default", start: "09:00", end: "20:00" }],
                     };
                     const isActive = slotConfig.active;
                     return (
@@ -1271,7 +1301,7 @@ export default function CalendarPage() {
                   <p className="px-1 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-white/20">
                     Horarios por Día
                   </p>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {DAYS_FULL.map((dayLabel, i) => {
                       const dbDay = DAYS_DB_MAP[i];
                       const slotConfig = slots[dbDay];
@@ -1280,39 +1310,85 @@ export default function CalendarPage() {
                       return (
                         <div
                           key={dbDay}
-                          className="animate-in fade-in slide-in-from-left flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 duration-300 dark:border-white/5 dark:bg-white/[0.03]"
+                          className="animate-in fade-in slide-in-from-left flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 duration-300 dark:border-white/5 dark:bg-white/[0.03]"
                         >
-                          <span className="text-primary w-12 text-[10px] font-black tracking-widest uppercase">
-                            {DAYS[i]}
-                          </span>
-                          <div className="flex flex-1 items-center gap-2">
-                            <input
-                              type="time"
-                              value={slotConfig.start}
-                              onChange={(e) =>
-                                setSlots((s) => ({
-                                  ...s,
-                                  [dbDay]: { ...slotConfig, start: e.target.value },
-                                }))
-                              }
-                              className="focus:ring-primary flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-1 dark:border-white/10 dark:bg-black/20 dark:text-white"
-                              title="Hora de inicio"
-                            />
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-white/20">
-                              A
+                          <div className="flex items-center justify-between">
+                            <span className="text-primary text-[10px] font-black tracking-widest uppercase">
+                              {DAYS[i]}
                             </span>
-                            <input
-                              type="time"
-                              value={slotConfig.end}
-                              onChange={(e) =>
-                                setSlots((s) => ({
-                                  ...s,
-                                  [dbDay]: { ...slotConfig, end: e.target.value },
-                                }))
-                              }
-                              className="focus:ring-primary flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-1 dark:border-white/10 dark:bg-black/20 dark:text-white"
-                              title="Hora de fin"
-                            />
+                            <button
+                              onClick={() => {
+                                setSlots((s) => {
+                                  const newRanges = [
+                                    ...s[dbDay].ranges,
+                                    {
+                                      id: Math.random().toString(36).substr(2, 9),
+                                      start: "09:00",
+                                      end: "20:00",
+                                    },
+                                  ];
+                                  return { ...s, [dbDay]: { ...s[dbDay], ranges: newRanges } };
+                                });
+                              }}
+                              className="hover:text-primary flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase transition-all"
+                            >
+                              <Plus className="h-3 w-3" /> Añadir
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            {slotConfig.ranges.map((range, rangeIndex) => (
+                              <div key={range.id} className="flex items-center gap-2">
+                                <input
+                                  type="time"
+                                  value={range.start}
+                                  onChange={(e) => {
+                                    setSlots((s) => {
+                                      const newRanges = [...s[dbDay].ranges];
+                                      newRanges[rangeIndex].start = e.target.value;
+                                      return { ...s, [dbDay]: { ...s[dbDay], ranges: newRanges } };
+                                    });
+                                  }}
+                                  className="focus:ring-primary flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-1 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                  title="Hora de inicio"
+                                />
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-white/20">
+                                  A
+                                </span>
+                                <input
+                                  type="time"
+                                  value={range.end}
+                                  onChange={(e) => {
+                                    setSlots((s) => {
+                                      const newRanges = [...s[dbDay].ranges];
+                                      newRanges[rangeIndex].end = e.target.value;
+                                      return { ...s, [dbDay]: { ...s[dbDay], ranges: newRanges } };
+                                    });
+                                  }}
+                                  className="focus:ring-primary flex-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:ring-1 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                  title="Hora de fin"
+                                />
+                                {slotConfig.ranges.length > 1 && (
+                                  <button
+                                    onClick={() => {
+                                      setSlots((s) => {
+                                        const newRanges = s[dbDay].ranges.filter(
+                                          (_, idx) => idx !== rangeIndex
+                                        );
+                                        return {
+                                          ...s,
+                                          [dbDay]: { ...s[dbDay], ranges: newRanges },
+                                        };
+                                      });
+                                    }}
+                                    className="p-1 text-slate-300 transition-all hover:text-red-500"
+                                    title="Eliminar franja"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       );

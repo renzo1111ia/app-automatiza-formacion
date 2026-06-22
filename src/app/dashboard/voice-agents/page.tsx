@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -17,7 +19,15 @@ import {
   Building2,
   Cpu,
   RefreshCw,
+  GitBranch,
+  Code2,
+  ExternalLink,
+  Globe,
 } from "lucide-react";
+
+import { RetellIdentityPanel } from "@/components/agents/RetellIdentityPanel";
+import { RetellSettingsPanel } from "@/components/agents/RetellSettingsPanel";
+import { RetellSimulationPanel } from "@/components/agents/RetellSimulationPanel";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { cn } from "@/lib/utils";
@@ -49,7 +59,9 @@ import {
 } from "@/lib/actions/ultravox-sync";
 import { getActiveTenantConfig } from "@/lib/actions/tenant";
 import { VoiceAgent, VoiceAgentVariant } from "@/types/database";
+import { Tenant } from "@/types/tenant";
 import { VoiceConfigModal } from "./RetellConfigModal";
+import { VoicesCatalog } from "./VoicesCatalog";
 import { toast } from "@/components/ui/toast";
 
 interface CallLog {
@@ -66,6 +78,23 @@ interface CallLog {
 interface TranscriptMessage {
   role: string;
   text: string;
+}
+
+// ── Helper: detect Retell response engine type from the agent data ──
+function getRetellEngineType(
+  agent: VoiceAgent | null
+): "retell-llm" | "custom-llm" | "conversation-flow" | null {
+  if (!agent || agent.provider !== "RETELL") return null;
+  const raw =
+    (agent as any)._raw_response_engine_type || (agent.retell_llm_config as any)?._engine_type;
+  if (raw) return raw;
+  // Heuristic: if has retell_llm_id → retell-llm, if has conversation_flow_id → conversation-flow
+  if ((agent as any).conversation_flow_id) return "conversation-flow";
+  if (agent.retell_llm_id) return "retell-llm";
+  // If config exists but no llm_id it might be custom-llm (llm_websocket_url)
+  if ((agent as any).llm_websocket_url) return "custom-llm";
+  if (agent.retell_llm_config) return "retell-llm";
+  return null;
 }
 
 export default function VoiceAgentsPage() {
@@ -144,10 +173,15 @@ export default function VoiceAgentsPage() {
     }
   };
 
-  // Initial load is triggered after tenantId is fetched — see fetchKey useEffect below
+  // When agent changes, load its variants
   useEffect(() => {
-    if (selectedAgent) {
-      async function loadVariants(agentId: string) {
+    if (selectedAgent?.id) {
+      setActiveStateId(null);
+
+      // Initialize editingAgentData with the selected DB agent
+      setEditingAgentData(selectedAgent as Partial<VoiceAgent>);
+
+      const loadVariants = async (agentId: string) => {
         const res = await getVoiceAgentVariants(agentId);
         if (res.success && res.data) {
           const data = res.data as VoiceAgentVariant[];
@@ -172,10 +206,15 @@ export default function VoiceAgentsPage() {
             }
           );
         }
-      }
+      };
       loadVariants(selectedAgent.id);
+
+      // Auto-fetch Retell advanced configs if it's a Retell agent
+      if (selectedAgent.provider === "RETELL" && selectedAgent.provider_agent_id) {
+        handleFetchRetellPrompt(selectedAgent.provider_agent_id);
+      }
     }
-  }, [selectedAgent]);
+  }, [selectedAgent, retellApiKey]);
 
   const handleSaveVariants = async () => {
     if (!selectedAgent) return;
@@ -193,9 +232,17 @@ export default function VoiceAgentsPage() {
     }
   };
 
-  const handleSyncRetellResources = async (keyOverride?: string) => {
+  const handleSyncRetellResources = async (keyOverride?: string, showToast = false) => {
     const key = keyOverride || retellApiKey;
-    if (!key) return;
+    if (!key) {
+      if (showToast)
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "No hay API Key de Retell configurada.",
+        });
+      return;
+    }
     setIsSyncing(true);
     try {
       const res = await syncRetellResources(key);
@@ -203,15 +250,34 @@ export default function VoiceAgentsPage() {
         setAvailableAgents(res.data.agents);
         setAvailableNumbers(res.data.numbers);
         setAvailableVoices(res.data.voices);
+        if (showToast)
+          toast({
+            variant: "success",
+            title: "Sincronización completa",
+            description: "Voces y agentes de Retell actualizados.",
+          });
+      } else {
+        if (showToast)
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Error al sincronizar con Retell.",
+          });
       }
     } catch (e) {
       console.error("[Retell Sync] Error:", e);
+      if (showToast)
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Fallo de conexión al sincronizar.",
+        });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleSyncUltravoxResources = async (keyOverride?: string) => {
+  const handleSyncUltravoxResources = async (keyOverride?: string, showToast = false) => {
     const key = keyOverride || ultravoxApiKey;
     if (!key) return;
     setIsSyncing(true);
@@ -224,12 +290,31 @@ export default function VoiceAgentsPage() {
       if (res.success && res.data) {
         setAvailableUltravoxVoices(res.data.voices);
         setAvailableUltravoxModels(res.data.models);
+        if (showToast)
+          toast({
+            variant: "success",
+            title: "Sincronización completa",
+            description: "Voces de Ultravox actualizadas.",
+          });
+      } else {
+        if (showToast)
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Error al sincronizar con Ultravox.",
+          });
       }
       if (agentsRes.success && agentsRes.data) {
         // Agent state removed as it was reported unused
       }
     } catch (e) {
       console.error("[Ultravox Sync] Error:", e);
+      if (showToast)
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Fallo de conexión al sincronizar.",
+        });
     } finally {
       setIsSyncing(false);
     }
@@ -250,22 +335,6 @@ export default function VoiceAgentsPage() {
       console.error("[Ultravox Calls] Error:", e);
     } finally {
       setIsSyncing(false);
-    }
-  };
-
-  const handleViewTranscript = async (callId: string) => {
-    if (!ultravoxApiKey) return;
-    setSelectedCallId(callId);
-    setLoadingTranscript(true);
-    try {
-      const res = await getUltravoxCallTranscript(ultravoxApiKey, callId);
-      if (res.success && res.data) {
-        setTranscript(res.data);
-      }
-    } catch (e) {
-      console.error("[Ultravox Transcript] Error:", e);
-    } finally {
-      setLoadingTranscript(false);
     }
   };
 
@@ -307,7 +376,23 @@ export default function VoiceAgentsPage() {
   const [ultravoxApiKey, setUltravoxApiKey] = useState("");
 
   const refreshConfiguration = async () => {
-    const tenant = await getActiveTenantConfig();
+    let tenant = await getActiveTenantConfig();
+
+    // Fallback to Zustand store if the server action fails (e.g., cookie issues)
+    if (!tenant) {
+      const storeState = useTenantStore.getState();
+      if (storeState.tenantId) {
+        tenant = {
+          id: storeState.tenantId,
+          name: storeState.tenantName,
+          config: storeState.config,
+          api_type: "internal",
+          is_admin: storeState.isAdmin,
+          username: "",
+        } as Tenant;
+      }
+    }
+
     if (!tenant) return;
 
     setTenantId(tenant.id);
@@ -361,6 +446,7 @@ export default function VoiceAgentsPage() {
       const d = res.data;
       setEditingAgentData((prev) => ({
         ...prev,
+        ...(d._raw as Record<string, any>),
         // Auto-fill name from Retell agent_name if user hasn't typed one yet
         name: prev.name?.trim() ? prev.name : d.agent_name || prev.name || "",
         prompt_text_retell: d.prompt,
@@ -400,17 +486,19 @@ export default function VoiceAgentsPage() {
         return;
       }
 
-      // Step B: Create the Agent with the LLM ID
+      // Step B: Create the Agent pointing to that LLM
       const agentRes = await createRetellAgent(retellApiKey, {
         llm_id: llmRes.data.llm_id,
-        agent_name: editingAgentData.name || "Nuevo Agente",
-        voice_id: editingAgentData.voice_id,
+        agent_name: editingAgentData.name!,
+        voice_id: editingAgentData.voice_id!,
+        language: "es-ES",
         version_description: editingAgentData.description || undefined,
       });
+
       if (!agentRes.success || !agentRes.data?.agent_id) {
         toast({
           variant: "error",
-          title: "Error creando agente en Retell",
+          title: "Error creando Agente en Retell",
           description: agentRes.error,
         });
         setSaving(false);
@@ -419,35 +507,8 @@ export default function VoiceAgentsPage() {
 
       agentDataToSave = {
         ...agentDataToSave,
+        retell_llm_id: llmRes.data.llm_id,
         provider_agent_id: agentRes.data.agent_id,
-        retell_llm_id: agentRes.data.llm_id,
-      };
-    }
-
-    // 0.B AUTO-CREATE IN ULTRAVOX: If no provider_agent_id
-    if (
-      ultravoxApiKey &&
-      editingAgentData.provider === "ULTRAVOX" &&
-      !editingAgentData.provider_agent_id
-    ) {
-      const agentRes = await createUltravoxAgent(ultravoxApiKey, {
-        name: editingAgentData.name || "Nuevo Agente Ultravox",
-        systemPrompt: variantA.prompt_text || "Eres un asistente virtual...",
-        voice: editingAgentData.voice_id || "terrence",
-        model: (editingAgentData as any).provider_agent_id || "fixie-ai/ultravox-70b",
-      });
-      if (!agentRes.success || !agentRes.data?.agentId) {
-        toast({
-          variant: "error",
-          title: "Error creando agente en Ultravox",
-          description: agentRes.error || "Desconocido",
-        });
-        setSaving(false);
-        return;
-      }
-      agentDataToSave = {
-        ...agentDataToSave,
-        provider_agent_id: agentRes.data.agentId,
       };
     }
 
@@ -459,6 +520,17 @@ export default function VoiceAgentsPage() {
             agent_name: agentDataToSave.name || undefined,
             voice_id: agentDataToSave.voice_id || undefined,
             version_description: agentDataToSave.description || undefined,
+            voice_temperature: (agentDataToSave as any).voice_temperature,
+            voice_speed: (agentDataToSave as any).voice_speed,
+            volume: (agentDataToSave as any).volume,
+            responsiveness: (agentDataToSave as any).responsiveness,
+            interruption_sensitivity: (agentDataToSave as any).interruption_sensitivity,
+            enable_backchannel: (agentDataToSave as any).enable_backchannel,
+            backchannel_frequency: (agentDataToSave as any).backchannel_frequency,
+            backchannel_words: (agentDataToSave as any).backchannel_words,
+            ambient_sound: (agentDataToSave as any).ambient_sound,
+            webhook_url: (agentDataToSave as any).webhook_url,
+            max_call_duration: (agentDataToSave as any).max_call_duration,
           })
         : Promise.resolve(null);
 
@@ -519,14 +591,9 @@ export default function VoiceAgentsPage() {
       await loadAgents();
       setSelectedAgent(res.data);
       setIsCreateModalOpen(false);
-      setEditingAgentData({
-        name: "",
-        description: "",
-        provider: "RETELL",
-        provider_agent_id: "",
-        voice_id: "",
-        from_number: "",
-        prompt_text_retell: "",
+      toast({
+        title: "Agent Saved",
+        description: "Configuration synchronized successfully.",
       });
     } else {
       toast({
@@ -538,975 +605,553 @@ export default function VoiceAgentsPage() {
     setSaving(false);
   };
 
-  return (
-    <div className="bg-background text-foreground flex h-[calc(100vh-80px)] flex-col overflow-hidden transition-colors duration-500">
-      {/* Header Area */}
-      <div className="bg-card/20 border-border flex items-center justify-between border-b px-8 py-6">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10">
-            <Mic className="h-6 w-6 text-purple-400" />
+  // ── Render for the Prompt Editor area based on Retell engine type ──
+  const renderPromptEditor = () => {
+    const engineType = getRetellEngineType(selectedAgent);
+    const variant = activeTab === "A" ? variantA : variantB;
+
+    // ── CUSTOM-LLM: External WebSocket backend ──
+    if (engineType === "custom-llm") {
+      const wsUrl = (selectedAgent as any)?.llm_websocket_url || "";
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-6 p-8">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+            <Code2 className="h-8 w-8 text-orange-400" />
           </div>
-          <div>
-            <h1 className="text-2xl font-black tracking-tight uppercase">
-              Gestión de Agentes de Voz
-            </h1>
-            <p className="text-muted-foreground mt-1 text-xs leading-none font-bold tracking-widest uppercase">
-              Configura Retell AI y Ultravox AI para llamadas inteligentes.
+          <div className="max-w-md space-y-3 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1">
+              <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
+              <span className="text-[10px] font-black tracking-widest text-orange-400 uppercase">
+                Custom LLM
+              </span>
+            </div>
+            <h4 className="text-foreground text-lg font-black tracking-tight">
+              Este agente usa un LLM Personalizado
+            </h4>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              El prompt de este agente se gestiona directamente en tu backend externo mediante
+              WebSocket. No se puede editar desde aquí, ya que Retell solo actúa como intermediario
+              de voz.
             </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* API STATUS INDICATOR */}
-          <div
-            onClick={() => setIsConfigModalOpen(true)}
-            className={cn(
-              "group flex h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 transition-all",
-              retellApiKey || ultravoxApiKey
-                ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
-                : "border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10"
-            )}
-            title="Configurar Conexión API (Retell / Ultravox)"
-          >
-            <div
-              className={cn(
-                "h-1.5 w-1.5 animate-pulse rounded-full",
-                retellApiKey || ultravoxApiKey ? "bg-emerald-500" : "bg-red-500"
-              )}
-            />
-            <span className="text-[10px] font-black tracking-widest uppercase">
-              {retellApiKey && ultravoxApiKey
-                ? "Retell & Ultravox OK"
-                : retellApiKey
-                  ? "Retell Conectado"
-                  : ultravoxApiKey
-                    ? "Ultravox Conectado"
-                    : "Configurar API"}
-            </span>
-            <Settings2 className="ml-1 h-3 w-3 text-white/20 transition-colors group-hover:text-white" />
-          </div>
-
-          <button
-            onClick={() => refreshConfiguration()}
-            title="Recargar agentes"
-            aria-label="Recargar agentes"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 font-bold transition-all hover:bg-white/10"
-          >
-            <RotateCcw className="h-4 w-4 text-white/40" />
-          </button>
-          <button
-            onClick={handleSaveVariants}
-            disabled={saving}
-            className="flex h-11 items-center gap-2 rounded-xl bg-purple-600 px-6 text-[11px] font-black tracking-widest text-white uppercase shadow-lg shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? "Publicando..." : "Publicar Cambios"}
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* ── LEFT PANEL: Agents List ── */}
-        <div className="border-border bg-card/40 flex w-80 flex-col border-r">
-          <div className="space-y-3 p-6">
-            {availableProviders.length === 0 && (
-              <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-center">
-                <Cpu className="mx-auto mb-2 h-8 w-8 text-red-400 opacity-50" />
-                <h4 className="text-[10px] font-black tracking-tight text-red-400 uppercase">
-                  Sin Configuración de Voz
-                </h4>
-                <p className="mt-1 text-[9px] leading-tight tracking-tight text-white/40 uppercase">
-                  Configura Retell o Ultravox en los ajustes del sistema.
+            {wsUrl && (
+              <div className="border-border bg-muted/50 rounded-xl border p-3 text-left">
+                <p className="text-muted-foreground mb-1 text-[9px] font-black tracking-widest uppercase">
+                  Endpoint WebSocket
                 </p>
-                <button
-                  onClick={() => setIsConfigModalOpen(true)}
-                  className="mt-3 w-full rounded-xl bg-red-600 px-3 py-2 text-[9px] font-black tracking-widest text-white uppercase transition-all hover:bg-red-700"
-                >
-                  Ir a Ajustes
-                </button>
-              </div>
-            )}
-            <button
-              onClick={async () => {
-                if (availableProviders.length === 0) {
-                  toast({
-                    variant: "warning",
-                    title: "Configura una API Key",
-                    description:
-                      "Primero configura al menos una API Key de voz (Retell o Ultravox).",
-                  });
-                  setIsConfigModalOpen(true);
-                  return;
-                }
-                setEditingAgentData({
-                  name: "",
-                  description: "",
-                  provider: availableProviders[0] as any,
-                  provider_agent_id: "",
-                  voice_id: "",
-                  from_number: "",
-                  prompt_text_retell: "",
-                });
-                setIsCreateModalOpen(true);
-                if (availableProviders.includes("RETELL")) handleSyncRetellResources();
-              }}
-              className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-purple-500/40 text-center text-[10px] font-black tracking-widest text-purple-400 uppercase shadow-lg shadow-purple-500/5 transition-all hover:bg-purple-500/5"
-              title="Crear nuevo agente de voz"
-            >
-              <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
-              Nuevo Agente de Voz
-            </button>
-
-            {/* Retell Sync Status Row */}
-            {retellApiKey && (
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleSyncRetellResources()}
-                    disabled={isSyncing}
-                    title="Sincronizar agentes y números desde Retell"
-                    className="flex h-8 flex-shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-[9px] font-black tracking-widest text-white/40 uppercase transition-all hover:bg-white/10 hover:text-white disabled:opacity-40"
-                  >
-                    <RefreshCw className={cn("h-3 w-3", isSyncing && "animate-spin")} />
-                    {isSyncing ? "Sync..." : "Sync"}
-                  </button>
-                  <div className="flex gap-2 text-[9px] font-bold tracking-widest text-white/30 uppercase">
-                    <span
-                      className={
-                        availableAgents.length > 0 ? "text-emerald-400/70" : "text-white/20"
-                      }
-                    >
-                      {availableAgents.length} agentes
-                    </span>
-                    <span>·</span>
-                    <span
-                      className={
-                        availableNumbers.length > 0 ? "text-emerald-400/70" : "text-white/20"
-                      }
-                    >
-                      {availableNumbers.length} números
-                    </span>
-                  </div>
-                </div>
-                {/* Import button — only visible when Retell has agents not yet in local DB */}
-                {availableAgents.length > agents.length && (
-                  <button
-                    onClick={() => handleImportRetellAgents()}
-                    disabled={isImporting}
-                    className="flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-[9px] font-black tracking-widest text-emerald-400 uppercase transition-all hover:bg-emerald-500/20 disabled:opacity-50"
-                    title="Importar todos los agentes de Retell al panel"
-                  >
-                    {isImporting ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <PlusCircle className="h-3 w-3" />
-                    )}
-                    {isImporting
-                      ? "Importando..."
-                      : `Importar ${availableAgents.length - agents.length} de Retell`}
-                  </button>
-                )}
+                <p className="text-foreground font-mono text-[11px] break-all">{wsUrl}</p>
               </div>
             )}
           </div>
-          <div className="flex-1 space-y-2 overflow-y-auto px-4 pb-10">
-            {agents.length === 0 && (
-              <EmptyState
-                size="sm"
-                icon={<Mic className="h-10 w-10" />}
-                title="Sin agentes de voz"
-                description="Importa o crea un agente de voz con Retell o Ultravox para empezar."
-                className="mx-2 mt-2"
-              />
-            )}
-            {agents.map((agent) => (
-              <button
-                key={agent.id}
-                onClick={() => setSelectedAgent(agent)}
-                className={cn(
-                  "group w-full rounded-2xl border p-4 text-left transition-all",
-                  selectedAgent?.id === agent.id
-                    ? "border-purple-500/20 bg-purple-500/10"
-                    : "border-white/5 bg-white/[0.01] hover:bg-white/[0.03]"
-                )}
-                title={`Seleccionar Agente: ${agent.name}`}
-              >
-                <div className="mb-1 flex items-center justify-between">
-                  <span
-                    className={cn(
-                      "text-[9px] font-black tracking-widest uppercase",
-                      agent.status === "ACTIVE" ? "text-emerald-400" : "text-white/20"
-                    )}
-                  >
-                    {agent.status === "ACTIVE" ? "Activo" : "Pausado"}
-                  </span>
-                  {agent.status === "ACTIVE" && (
-                    <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                  )}
-                </div>
-                <h3 className="text-sm font-bold text-white/90 group-hover:text-white">
-                  {agent.name}
-                </h3>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="rounded bg-white/5 px-1.5 py-0.5 text-[8px] font-black tracking-widest text-white/40 uppercase">
-                    {agent.provider}
-                  </span>
-                  <p className="line-clamp-1 text-[10px] text-white/30">
-                    {agent.voice_id || "Voz base"}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
+          <a
+            href="https://docs.retellai.com/api-references/agent/get-agent"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground flex items-center gap-2 rounded-xl border px-4 py-2 text-[10px] font-black tracking-widest uppercase transition-all"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Ver documentación Custom LLM
+          </a>
         </div>
+      );
+    }
 
-        {/* ── MAIN CONTENT: Editor & Tabs ── */}
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Tabs Navigation */}
-          <div className="flex items-center border-b border-white/5 bg-black/20 px-8">
-            <TabButton
-              active={activeTab === "A"}
-              onClick={() => setActiveTab("A")}
-              icon={Zap}
-              label="Prompt A"
-              color="purple"
-            />
-            <TabButton
-              active={activeTab === "B"}
-              onClick={() => setActiveTab("B")}
-              icon={Layers}
-              label="Prompt B"
-              color="purple"
-            />
-            <TabButton
-              active={activeTab === "CONFIG"}
-              onClick={() => setActiveTab("CONFIG")}
-              icon={Settings2}
-              label="Config A/B"
-              color="purple"
-            />
-            <TabButton
-              active={activeTab === "VOCES"}
-              onClick={() => setActiveTab("VOCES")}
-              icon={Volume2}
-              label="Voces"
-              color="purple"
-            />
-            <TabButton
-              active={activeTab === "METRICS"}
-              onClick={() => {
-                setActiveTab("METRICS");
-                handleLoadCallLogs();
-              }}
-              icon={BarChart3}
-              label="Historial"
-              color="purple"
-            />
-            <button
-              onClick={() => {
-                if (selectedAgent) {
-                  setEditingAgentData(selectedAgent);
-                  setIsCreateModalOpen(true);
-                }
-              }}
-              title="Ajustes técnicos"
-              className="ml-auto flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 text-[10px] font-black tracking-widest text-white/40 uppercase transition-all hover:bg-white/10 hover:text-white"
-            >
-              <Settings2 className="h-3 w-3" />
-              Ajustes Técnicos
-            </button>
+    // ── CONVERSATION-FLOW: Node-based visual builder ──
+    if (engineType === "conversation-flow") {
+      const flowId = (selectedAgent as any)?.conversation_flow_id || "";
+      const nodes = (selectedAgent?.retell_llm_config as any)?.nodes || [];
+      return (
+        <div className="flex h-full flex-col gap-6 overflow-y-auto p-2">
+          {/* Header */}
+          <div className="flex items-center gap-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10">
+              <GitBranch className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-[10px] font-black tracking-widest text-blue-400 uppercase">
+                  Conversation Flow
+                </span>
+                <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-[8px] font-black tracking-widest text-blue-300 uppercase">
+                  {nodes.length} nodos
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Este agente usa un flujo conversacional visual de Retell. Cada nodo tiene su propio
+                prompt contextual.
+              </p>
+            </div>
           </div>
 
-          <div className="relative flex-1 overflow-y-auto p-8">
-            <AnimatePresence mode="wait">
-              {(activeTab === "A" || activeTab === "B") && (
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex h-full flex-col space-y-6"
+          {/* Flow ID chip */}
+          {flowId && (
+            <div className="border-border bg-muted/50 flex items-center gap-2 rounded-xl border px-3 py-2">
+              <Globe className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-muted-foreground text-[8px] font-black tracking-widest uppercase">
+                  Conversation Flow ID
+                </p>
+                <p className="text-foreground truncate font-mono text-[11px]">{flowId}</p>
+              </div>
+              <a
+                href={`https://app.retellai.com/conversation-flow/${flowId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0"
+                title="Abrir en Retell"
+              >
+                <ExternalLink className="text-muted-foreground h-3.5 w-3.5 transition-colors hover:text-blue-400" />
+              </a>
+            </div>
+          )}
+
+          {/* Nodes list */}
+          {nodes.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-muted-foreground px-1 text-[9px] font-black tracking-widest uppercase">
+                Nodos del flujo
+              </p>
+              {nodes.map((node: any, idx: number) => (
+                <div
+                  key={node.id || idx}
+                  className="group border-border bg-card rounded-xl border p-4 transition-all hover:border-blue-500/30 hover:bg-blue-500/5"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10">
-                        <Sparkles className="h-4 w-4 text-emerald-400" />
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-[10px] font-black text-blue-400">
+                        {idx + 1}
                       </div>
-                      <span className="text-[11px] font-black tracking-widest text-emerald-400 uppercase">
-                        Instrucciones Conversacionales
+                      <span className="text-foreground text-[11px] font-black">
+                        {node.name || node.id || `Nodo ${idx + 1}`}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {selectedAgent?.provider === "RETELL" &&
-                        selectedAgent.retell_llm_config?.states && (
-                          <div className="flex items-center gap-1 rounded-xl border border-white/5 bg-white/5 p-1">
-                            <button
-                              onClick={() => setActiveStateId(null)}
-                              className={cn(
-                                "rounded-lg px-3 py-1.5 text-[9px] font-black tracking-widest uppercase transition-all",
-                                activeStateId === null
-                                  ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
-                                  : "text-white/40 hover:text-white/60"
-                              )}
-                            >
-                              General
-                            </button>
-                            {selectedAgent.retell_llm_config.states.map((state) => (
-                              <button
-                                key={state.name}
-                                onClick={() => setActiveStateId(state.name)}
-                                className={cn(
-                                  "rounded-lg px-3 py-1.5 text-[9px] font-black tracking-widest uppercase transition-all",
-                                  activeStateId === state.name
-                                    ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
-                                    : "text-white/40 hover:text-white/60"
-                                )}
-                              >
-                                {state.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold tracking-widest text-white/20 uppercase">
-                        Version {(activeTab === "A" ? variantA : variantB).version_label}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="group relative min-h-[400px] flex-1 text-left">
-                    {selectedAgent?.provider === "RETELL" && !selectedAgent.retell_llm_config && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl border border-white/5 bg-black/60 p-8 text-center backdrop-blur-sm">
-                        <div className="max-w-md space-y-4">
-                          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-500/20 bg-purple-500/10">
-                            <RefreshCw className="h-8 w-8 text-purple-400" />
-                          </div>
-                          <h4 className="text-xl font-black tracking-tight uppercase">
-                            Multiprompt no sincronizado
-                          </h4>
-                          <p className="text-sm text-white/40">
-                            Este agente de Retell puede tener múltiples estados (prompts), pero no
-                            se han cargado todavía en el dashboard.
-                          </p>
-                          <button
-                            onClick={() => handleImportRetellAgents(selectedAgent)}
-                            disabled={isImporting}
-                            className="h-12 rounded-xl bg-purple-600 px-8 text-[11px] font-black tracking-widest text-white uppercase shadow-lg shadow-purple-500/20 transition-all hover:scale-105 disabled:opacity-50"
-                          >
-                            {isImporting ? "Sincronizando..." : "Sincronizar Estados Ahora"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeStateId ? (
-                      <div className="h-full w-full overflow-y-auto rounded-3xl border border-white/10 bg-white/[0.02] p-8 text-sm leading-relaxed font-medium whitespace-pre-wrap text-white/80 shadow-inner">
-                        <div className="mb-4 flex items-center gap-2">
-                          <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
-                          <span className="text-[10px] font-black tracking-widest text-purple-400 uppercase">
-                            Estado: {activeStateId} (Lectura)
-                          </span>
-                        </div>
-                        {selectedAgent?.retell_llm_config?.states?.find(
-                          (s) => s.name === activeStateId
-                        )?.state_prompt || "Sin prompt configurado para este estado."}
-                      </div>
-                    ) : (
-                      <textarea
-                        value={(activeTab === "A" ? variantA : variantB).prompt_text || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (activeTab === "A")
-                            setVariantA((prev) => ({ ...prev, prompt_text: val }));
-                          else setVariantB((prev) => ({ ...prev, prompt_text: val }));
-                        }}
-                        className="h-full w-full resize-none rounded-3xl border border-white/10 bg-white/[0.02] p-8 text-sm leading-relaxed font-medium text-white/80 shadow-inner transition-all focus:ring-4 focus:ring-purple-500/10 focus:outline-none"
-                        placeholder={`Eres un agente de ventas telefónico experto de ${tenantName}...`}
-                        title="Editor de prompt"
-                      />
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-left">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
-                      <Volume2 className="h-5 w-5 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="mb-1 text-[10px] leading-none font-bold tracking-widest text-white/40 uppercase">
-                        Optimización de Voz
-                      </p>
-                      <p className="text-xs leading-none font-medium text-white/80">
-                        Este prompt está configurado para la voz{" "}
-                        <span className="text-purple-400">
-                          {selectedAgent?.voice_id || "Estándar"}
-                        </span>{" "}
-                        en {selectedAgent?.provider}.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === "VOCES" && (
-                <motion.div
-                  key="voces"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="flex h-full flex-col space-y-6"
-                >
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-pink-500/20 bg-pink-500/10">
-                        <Volume2 className="h-4 w-4 text-pink-400" />
-                      </div>
-                      <span className="text-[11px] font-black tracking-widest text-pink-400 uppercase">
-                        Catálogo de Voces Sincronizadas
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-[10px] font-bold tracking-widest text-white/20 uppercase">
-                        {availableVoices.length} voces detectadas
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 pb-20 md:grid-cols-2 lg:grid-cols-3">
-                    {availableVoices.length === 0 && (
-                      <div className="rounded-3xl border border-white/5 bg-white/[0.02] py-20 text-center md:col-span-2 lg:col-span-3">
-                        <Volume2 className="mx-auto mb-4 h-10 w-10 text-white/10" />
-                        <p className="text-[10px] font-black tracking-widest text-white/20 uppercase">
-                          Sincroniza con Retell para ver el catálogo de voces
-                        </p>
-                      </div>
-                    )}
-                    {availableVoices.map((voice) => (
-                      <div
-                        key={voice.id}
-                        className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-5 text-left transition-all hover:border-white/10 hover:bg-white/[0.06]"
-                      >
-                        <div className="absolute top-0 right-0 p-3">
-                          <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[7px] font-black tracking-widest text-white/40 uppercase">
-                            {voice.provider}
-                          </span>
-                        </div>
-
-                        <h4 className="mb-1 text-sm font-bold text-white/90">{voice.name}</h4>
-                        <p className="mb-4 truncate font-mono text-[9px] text-white/20">
-                          {voice.id}
-                        </p>
-
-                        <div className="mb-6 flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "rounded-lg px-2 py-0.5 text-[8px] font-black tracking-widest uppercase",
-                              voice.gender === "male"
-                                ? "bg-blue-500/10 text-blue-400"
-                                : "bg-pink-500/10 text-pink-400"
-                            )}
-                          >
-                            {voice.gender === "male" ? "HOMBRE" : "MUJER"}
-                          </span>
-                          <span className="rounded-lg border border-white/5 bg-white/5 px-2 py-0.5 text-[8px] font-black tracking-widest text-white/40 uppercase">
-                            {voice.accent}
-                          </span>
-                        </div>
-
-                        {voice.preview_url ? (
-                          <div className="relative pt-2">
-                            <audio
-                              controls
-                              className="h-8 w-full opacity-20 transition-opacity hover:opacity-100"
-                            >
-                              <source src={voice.preview_url} type="audio/mpeg" />
-                            </audio>
-                          </div>
-                        ) : (
-                          <div className="flex h-8 items-center justify-center rounded-lg border border-dashed border-white/5">
-                            <span className="text-[8px] font-black tracking-widest text-white/10 uppercase">
-                              Sin vista previa
-                            </span>
-                          </div>
-                        )}
-
-                        <button
-                          onClick={() => {
-                            setEditingAgentData((prev) => ({ ...prev, voice_id: voice.id }));
-                            setIsCreateModalOpen(true);
-                          }}
-                          title={`Seleccionar voz ${voice.name}`}
-                          className="absolute top-0 left-0 h-full w-full cursor-pointer opacity-0"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === "METRICS" && (
-                <motion.div
-                  key="metrics"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="flex h-full flex-col space-y-6"
-                >
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-500/20 bg-blue-500/10">
-                        <BarChart3 className="h-4 w-4 text-blue-400" />
-                      </div>
-                      <span className="text-[11px] font-black tracking-widest text-blue-400 uppercase">
-                        Últimas Llamadas del Agente
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-1 flex-col overflow-hidden rounded-[40px] border border-white/10 bg-white/[0.02]">
-                    <div className="max-h-[300px] overflow-y-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="sticky top-0 z-10 border-b border-white/5 bg-white/5">
-                          <tr>
-                            <th className="px-6 py-4 font-black tracking-widest text-white/40 uppercase">
-                              ID / Fecha
-                            </th>
-                            <th className="px-6 py-4 font-black tracking-widest text-white/40 uppercase">
-                              Estado
-                            </th>
-                            <th className="px-6 py-4 font-black tracking-widest text-white/40 uppercase">
-                              Destino
-                            </th>
-                            <th className="px-6 py-4 font-black tracking-widest text-white/40 uppercase">
-                              Acciones
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {callLogs.map((call) => (
-                            <tr
-                              key={call.callId}
-                              className={cn(
-                                "transition-colors",
-                                selectedCallId === call.callId
-                                  ? "bg-purple-500/5"
-                                  : "hover:bg-white/[0.02]"
-                              )}
-                            >
-                              <td className="px-6 py-4">
-                                <div className="mb-1 font-mono text-[10px] text-white/40">
-                                  {call.callId.slice(0, 12)}...
-                                </div>
-                                <div className="text-[10px] font-bold text-white/60">
-                                  {new Date(call.created).toLocaleString()}
-                                </div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <span
-                                  className={cn(
-                                    "rounded-full px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase",
-                                    call.status === "ended"
-                                      ? "bg-emerald-500/10 text-emerald-400"
-                                      : "bg-blue-500/10 text-blue-400"
-                                  )}
-                                >
-                                  {call.status}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 font-bold text-white/60">
-                                {call.medium?.twilio?.toNumber || "N/A"}
-                              </td>
-                              <td className="px-6 py-4">
-                                <button
-                                  onClick={() => handleViewTranscript(call.callId)}
-                                  className="text-[10px] font-black tracking-widest text-purple-400 uppercase transition-colors hover:text-purple-300"
-                                >
-                                  {loadingTranscript && selectedCallId === call.callId
-                                    ? "Cargando..."
-                                    : "Ver Transcripción"}
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                          {callLogs.length === 0 && !isSyncing && (
-                            <tr>
-                              <td
-                                colSpan={4}
-                                className="px-6 py-12 text-center font-black tracking-widest text-white/20 uppercase"
-                              >
-                                Sin llamadas registradas
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Dynamic Transcript View for Ultravox */}
-                    <div className="flex-1 space-y-6 overflow-y-auto border-t border-white/5 bg-black/40 p-8">
-                      {loadingTranscript ? (
-                        <div className="flex h-32 items-center justify-center">
-                          <RefreshCw className="h-8 w-8 animate-spin text-purple-500/40" />
-                        </div>
-                      ) : transcript.length > 0 ? (
-                        transcript.map((msg, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "flex items-start gap-4",
-                              msg.role === "user" ? "flex-row-reverse" : ""
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[10px] font-black uppercase",
-                                msg.role === "user"
-                                  ? "border-blue-500/30 bg-blue-500/20 text-blue-400"
-                                  : "border-purple-500/30 bg-purple-500/20 text-purple-400"
-                              )}
-                            >
-                              {msg.role === "user" ? "U" : "AI"}
-                            </div>
-                            <div
-                              className={cn(
-                                "max-w-[80%] rounded-2xl border p-4 text-sm",
-                                msg.role === "user"
-                                  ? "rounded-tr-none border-blue-500/20 bg-blue-500/10 text-right font-medium text-white/80"
-                                  : "rounded-tl-none border-purple-500/20 bg-purple-500/10 text-white/80"
-                              )}
-                            >
-                              {msg.text}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="flex h-full flex-col items-center justify-center text-white/20">
-                          <BarChart3 className="mb-4 h-12 w-12 opacity-10" />
-                          <p className="text-[10px] font-black tracking-widest uppercase">
-                            Selecciona una llamada para ver la conversación
-                          </p>
-                        </div>
+                      {node.type && (
+                        <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[8px] font-black tracking-widest uppercase">
+                          {node.type}
+                        </span>
                       )}
                     </div>
+                    {node.edges?.length > 0 && (
+                      <span className="text-muted-foreground/60 text-[8px] font-bold">
+                        → {node.edges.length} transición{node.edges.length > 1 ? "es" : ""}
+                      </span>
+                    )}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {(node.state_prompt || node.prompt || node.content) && (
+                    <p className="text-muted-foreground line-clamp-2 text-[11px] leading-relaxed">
+                      {node.state_prompt || node.prompt || node.content}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border-border flex flex-col items-center gap-3 rounded-2xl border border-dashed py-12 text-center">
+              <GitBranch className="text-muted-foreground/30 h-8 w-8" />
+              <p className="text-muted-foreground/50 text-[10px] font-black tracking-widest uppercase">
+                Sincroniza para ver los nodos del flujo
+              </p>
+              <button
+                onClick={() => handleImportRetellAgents(selectedAgent!)}
+                disabled={isImporting}
+                className="flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-[9px] font-black tracking-widest text-blue-400 uppercase transition-all hover:bg-blue-500/20 disabled:opacity-50"
+              >
+                <RefreshCw className={cn("h-3 w-3", isImporting && "animate-spin")} />
+                {isImporting ? "Sincronizando..." : "Sincronizar Flujo"}
+              </button>
+            </div>
+          )}
+
+          {/* Link to Retell */}
+          <a
+            href="https://app.retellai.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-[10px] font-black tracking-widest uppercase transition-all"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Editar flujo en Retell Studio
+          </a>
+        </div>
+      );
+    }
+
+    // ── RETELL-LLM with STATES (multi-prompt) ──
+    if (engineType === "retell-llm" && selectedAgent?.retell_llm_config?.states?.length) {
+      const states = selectedAgent.retell_llm_config.states;
+      return (
+        <div className="flex h-full flex-col gap-4">
+          {/* State selector tabs */}
+          <div className="flex items-center gap-2">
+            <div className="border-border bg-muted/30 flex flex-wrap gap-1 rounded-xl border p-1">
+              <button
+                onClick={() => setActiveStateId(null)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-[9px] font-black tracking-widest uppercase transition-all",
+                  activeStateId === null
+                    ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                General
+              </button>
+              {states.map((state) => (
+                <button
+                  key={state.name}
+                  onClick={() => setActiveStateId(state.name)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-[9px] font-black tracking-widest uppercase transition-all",
+                    activeStateId === state.name
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {state.name}
+                </button>
+              ))}
+            </div>
+            <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[8px] font-black tracking-widest text-purple-400 uppercase">
+              Multi-Prompt
+            </span>
           </div>
+
+          {/* Content */}
+          <div className="flex-1">
+            {activeStateId === null ? (
+              <textarea
+                value={variant.prompt_text || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (activeTab === "A") setVariantA((prev) => ({ ...prev, prompt_text: val }));
+                  else setVariantB((prev) => ({ ...prev, prompt_text: val }));
+                }}
+                className="border-border bg-card text-foreground h-full w-full resize-none rounded-3xl border p-8 text-sm leading-relaxed font-medium shadow-inner transition-all focus:ring-4 focus:ring-purple-500/10 focus:outline-none"
+                placeholder="Prompt general (se aplica a todos los estados)..."
+                title="Editor de prompt general"
+              />
+            ) : (
+              <div className="border-border bg-card h-full w-full overflow-y-auto rounded-3xl border p-8">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                  <span className="text-[10px] font-black tracking-widest text-purple-600 uppercase dark:text-purple-400">
+                    Estado: {activeStateId}
+                  </span>
+                  <span className="text-muted-foreground text-[9px]">
+                    (Solo lectura — edita en Retell Studio)
+                  </span>
+                </div>
+                <p className="text-foreground text-sm leading-relaxed font-medium whitespace-pre-wrap">
+                  {states.find((s) => s.name === activeStateId)?.state_prompt ||
+                    "Sin prompt configurado para este estado."}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ── RETELL-LLM simple (single prompt) or default ──
+    // This is the editable case
+    const isRetellAgentWithoutConfig =
+      selectedAgent?.provider === "RETELL" && !selectedAgent.retell_llm_config;
+
+    return (
+      <div className="flex h-full flex-col gap-4">
+        {isRetellAgentWithoutConfig && (
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3">
+            <RefreshCw className="h-4 w-4 flex-shrink-0 text-amber-400" />
+            <p className="flex-1 text-[11px] text-amber-400/80">
+              El prompt se cargará al sincronizar con Retell.
+            </p>
+            <button
+              onClick={() => handleImportRetellAgents(selectedAgent!)}
+              disabled={isImporting}
+              className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[9px] font-black tracking-widest text-amber-400 uppercase transition-all hover:bg-amber-500/20 disabled:opacity-50"
+            >
+              {isImporting ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              Sincronizar
+            </button>
+          </div>
+        )}
+        <div className="flex-1">
+          <textarea
+            value={variant.prompt_text || ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (activeTab === "A") setVariantA((prev) => ({ ...prev, prompt_text: val }));
+              else setVariantB((prev) => ({ ...prev, prompt_text: val }));
+            }}
+            className="border-border bg-card text-foreground h-full w-full resize-none rounded-3xl border p-8 text-sm leading-relaxed font-medium shadow-inner transition-all focus:ring-4 focus:ring-purple-500/10 focus:outline-none"
+            placeholder={`Eres un agente de ventas telefónico experto de ${tenantName}...`}
+            title="Editor de prompt"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-background text-foreground flex h-[calc(100vh-80px)] w-full overflow-hidden">
+      {/* Left Sidebar: Agents */}
+      <div className="border-border bg-card flex w-64 flex-shrink-0 flex-col border-r">
+        <div className="border-border flex items-center justify-between border-b px-4 py-4">
+          <h2 className="text-sm font-bold tracking-tight">Agents</h2>
+          <button
+            onClick={() => {
+              setSelectedAgent(null);
+              setEditingAgentData({
+                name: "",
+                description: "",
+                provider: "RETELL",
+                provider_agent_id: "",
+                voice_id: "",
+                from_number: "",
+                prompt_text_retell: "",
+                retell_llm_id: "",
+              });
+              setIsCreateModalOpen(true);
+            }}
+            className="flex items-center justify-center rounded bg-purple-500/10 p-1.5 text-purple-600 transition-colors hover:bg-purple-500/20"
+            title="Create new agent"
+          >
+            <PlusCircle className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 space-y-1 overflow-y-auto p-2">
+          {(() => {
+            // Combine local agents and unimported Retell agents
+            const localIds = new Set(agents.map((a) => a.provider_agent_id).filter(Boolean));
+
+            // Deduplicate availableAgents by id to prevent React key errors
+            const uniqueAvailableAgents = Array.from(
+              new Map(availableAgents.map((a) => [a.id, a])).values()
+            );
+            const unimportedRetell = uniqueAvailableAgents.filter((a) => !localIds.has(a.id));
+
+            const hasAnyAgents = agents.length > 0 || unimportedRetell.length > 0;
+
+            if (!hasAnyAgents) {
+              return (
+                <div className="flex flex-col items-center gap-3 px-3 py-6 text-center text-xs">
+                  <p className="text-muted-foreground">No agents found.</p>
+                  {!retellApiKey && (
+                    <button
+                      onClick={() => setIsConfigModalOpen(true)}
+                      className="rounded-md bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-500 transition-colors hover:text-purple-400"
+                    >
+                      Configurar API Key
+                    </button>
+                  )}
+                  {retellApiKey && (
+                    <p className="text-[10px] opacity-50">
+                      API conectada, pero no hay agentes en Retell.
+                    </p>
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <>
+                {/* Local Agents */}
+                {agents.map((a) => (
+                  <button
+                    key={`local-${a.id}`}
+                    onClick={() => setSelectedAgent(a)}
+                    className={cn(
+                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                      selectedAgent?.id === a.id
+                        ? "bg-purple-500/10 font-medium text-purple-600 dark:text-purple-400"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    {a.name}
+                  </button>
+                ))}
+
+                {/* Unimported Retell Agents */}
+                {unimportedRetell.map((a) => (
+                  <button
+                    key={`retell-${a.id}`}
+                    onClick={() =>
+                      handleImportRetellAgents({ provider_agent_id: a.id } as VoiceAgent)
+                    }
+                    className="text-muted-foreground/60 hover:bg-muted hover:text-foreground flex w-full items-center justify-between rounded-lg border border-dashed border-transparent px-3 py-2 text-left text-sm transition-colors hover:border-purple-500/30"
+                    title="Agente en Retell (Click para importar)"
+                  >
+                    <span className="truncate">{a.name}</span>
+                    <RefreshCw className="h-3 w-3 flex-shrink-0 opacity-50" />
+                  </button>
+                ))}
+              </>
+            );
+          })()}
         </div>
       </div>
 
-      {/* ── CREATE / EDIT MODAL ── */}
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Retell Style Header */}
+        <div className="border-border bg-card/50 flex items-center justify-between border-b px-6 py-4">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
+              <Mic className="h-5 w-5 text-purple-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold tracking-tight">Voice Agent Configuration</h1>
+                {selectedAgent && (
+                  <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-black text-emerald-500 uppercase">
+                    {selectedAgent.name}
+                  </span>
+                )}
+              </div>
+              <div className="text-muted-foreground flex items-center gap-3 text-[10px] font-bold uppercase">
+                {selectedAgent?.provider === "RETELL" ? "Retell AI" : selectedAgent?.provider || ""}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {availableAgents.length > 0 && (
+              <button
+                onClick={() => handleImportRetellAgents()}
+                disabled={isImporting}
+                className="flex h-9 items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-4 text-xs font-bold text-purple-600 transition-all hover:bg-purple-500/20 disabled:opacity-50"
+                title="Importar agentes existentes desde Retell"
+              >
+                <RefreshCw className={cn("h-3 w-3", isImporting && "animate-spin")} />
+                {isImporting ? "Importando..." : "Importar de Retell"}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                handleSaveVariants();
+                handleCreateOrUpdateAgent();
+              }}
+              disabled={saving || !selectedAgent}
+              className="bg-foreground text-background flex h-9 items-center gap-2 rounded-lg px-4 text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50"
+            >
+              {saving ? "Publishing..." : "Publish"}
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Columns Layout */}
+        {!selectedAgent ? (
+          <div className="bg-background flex flex-1 flex-col items-center justify-center">
+            <EmptyState
+              size="sm"
+              icon={<Mic className="h-10 w-10" />}
+              title="Sin agente seleccionado"
+              description="Selecciona un agente en el menú lateral o crea uno nuevo."
+            />
+          </div>
+        ) : (
+          <div className="bg-background flex flex-1 overflow-hidden">
+            {/* Column 1: Identity & Prompt (Expands) */}
+            <div className="border-border min-w-[400px] flex-1 border-r">
+              <RetellIdentityPanel
+                selectedAgent={selectedAgent}
+                variant={activeTab === "A" ? variantA : variantB}
+                setVariant={activeTab === "A" ? setVariantA : setVariantB}
+                engineType={getRetellEngineType(selectedAgent)}
+                tenantName={tenantName}
+                availableVoices={availableVoices}
+                onVoiceChange={(voiceId) => {
+                  const newAgent = { ...selectedAgent, voice_id: voiceId };
+                  setSelectedAgent(newAgent);
+                  saveVoiceAgent(newAgent, tenantId);
+                  if (retellApiKey && newAgent.provider_agent_id) {
+                    updateRetellAgent(retellApiKey, newAgent.provider_agent_id, {
+                      voice_id: voiceId,
+                    });
+                  }
+                }}
+              />
+            </div>
+
+            {/* Column 2: Settings (Fixed Width) */}
+            <div className="border-border w-[350px] flex-shrink-0 border-r">
+              <RetellSettingsPanel
+                agentData={editingAgentData}
+                setAgentData={setEditingAgentData}
+              />
+            </div>
+
+            {/* Column 3: Simulation (Fixed Width) */}
+            <div className="w-[380px] flex-shrink-0">
+              <RetellSimulationPanel
+                agentId={selectedAgent.provider_agent_id || undefined}
+                tenantId={tenantId}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Create Modal */}
       <AnimatePresence>
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 text-left">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-              onClick={() => setIsCreateModalOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative max-h-[90vh] w-full max-w-2xl space-y-8 overflow-y-auto rounded-[40px] border border-white/10 bg-slate-900 p-10 shadow-2xl"
-            >
-              <div className="space-y-4 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-purple-500/20 bg-purple-500/10">
-                  <Volume2 className="h-8 w-8 text-purple-400" />
-                </div>
-                <h3 className="text-3xl font-black tracking-tight uppercase">
-                  {editingAgentData.id ? "Editar Agente" : "Nuevo Agente de Voz"}
-                </h3>
-                <p className="text-sm font-medium text-white/40">
-                  Vincula los parámetros técnicos del proveedor de voz.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-3 md:col-span-2">
-                  <label className="ml-4 text-[10px] font-black tracking-widest text-white/30 uppercase">
-                    Nombre Comercial
-                  </label>
-                  <input
-                    autoFocus
-                    value={editingAgentData.name}
-                    onChange={(e) =>
-                      setEditingAgentData({ ...editingAgentData, name: e.target.value })
-                    }
-                    className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40 focus:ring-4 focus:ring-purple-500/10"
-                    placeholder="Ej: Retell Sales Agent v2"
-                    title="Nombre del agente"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <label
-                    className="ml-4 flex items-center gap-2 text-[10px] font-black tracking-widest text-white/30 uppercase"
-                    htmlFor="provider-select"
-                  >
-                    <Building2 className="h-3 w-3" /> Proveedor
-                  </label>
-                  <select
-                    id="provider-select"
-                    value={editingAgentData.provider}
-                    onChange={(e) =>
-                      setEditingAgentData({ ...editingAgentData, provider: e.target.value as any })
-                    }
-                    className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                    title="Seleccionar proveedor de voz"
-                  >
-                    {availableProviders.includes("RETELL") && (
-                      <option value="RETELL" className="bg-slate-900">
-                        Retell AI
-                      </option>
-                    )}
-                    {availableProviders.includes("ULTRAVOX") && (
-                      <option value="ULTRAVOX" className="bg-slate-900">
-                        Ultravox AI
-                      </option>
-                    )}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="ml-4 flex items-center gap-2 text-[10px] font-black tracking-tight text-white/30 uppercase">
-                    <Cpu className="h-3 w-3" />
-                    {editingAgentData.provider === "RETELL"
-                      ? "ID del Agente (Retell)"
-                      : "Modelo de IA (Ultravox)"}
-                  </label>
-
-                  {editingAgentData.provider === "RETELL" ? (
-                    availableAgents.length > 0 ? (
-                      <select
-                        title="Seleccionar ID del Agente"
-                        value={editingAgentData.provider_agent_id || ""}
-                        onChange={(e) => {
-                          const selectedId = e.target.value;
-                          const cached = availableAgents.find((a) => a.id === selectedId);
-                          setEditingAgentData((prev) => ({
-                            ...prev,
-                            provider_agent_id: selectedId,
-                            retell_llm_id: cached?.llm_id || prev.retell_llm_id || "",
-                            voice_id: cached?.voice_id || prev.voice_id || "",
-                          }));
-                          if (selectedId) handleFetchRetellPrompt(selectedId);
-                        }}
-                        className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                      >
-                        <option value="">✨ Crear Nuevo en Retell...</option>
-                        {availableAgents.map((a) => (
-                          <option key={a.id} value={a.id} className="bg-slate-900">
-                            {a.is_published ? "✓ " : ""}
-                            {a.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        value={editingAgentData.provider_agent_id || ""}
-                        onChange={(e) =>
-                          setEditingAgentData({
-                            ...editingAgentData,
-                            provider_agent_id: e.target.value,
-                          })
-                        }
-                        className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-6 font-mono text-sm transition-all outline-none focus:border-purple-500/40"
-                        placeholder="Déjalo vacío para crear automáticamente"
-                      />
-                    )
-                  ) : (
-                    <select
-                      title="Seleccionar Modelo de IA"
-                      value={editingAgentData.provider_agent_id || ""}
-                      onChange={(e) =>
-                        setEditingAgentData({
-                          ...editingAgentData,
-                          provider_agent_id: e.target.value,
-                        })
-                      }
-                      className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                    >
-                      <option value="">Selecciona un Modelo...</option>
-                      {availableUltravoxModels.map((m) => (
-                        <option key={m.id} value={m.id} className="bg-slate-900">
-                          {m.name}
-                        </option>
-                      ))}
-                      {availableUltravoxModels.length === 0 && (
-                        <option value="fixie-ai/ultravox-70b" className="bg-slate-900">
-                          Ultravox 70B (Default)
-                        </option>
-                      )}
-                    </select>
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <label className="ml-4 flex items-center gap-2 text-[10px] font-black tracking-tight text-white/30 uppercase">
-                    <Volume2 className="h-3 w-3" /> Voz del Agente
-                  </label>
-
-                  <select
-                    title="Seleccionar Voz del Agente"
-                    value={editingAgentData.voice_id || ""}
-                    onChange={(e) =>
-                      setEditingAgentData({ ...editingAgentData, voice_id: e.target.value })
-                    }
-                    className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                  >
-                    <option value="">Selecciona una Voz...</option>
-                    {editingAgentData.provider === "RETELL" ? (
-                      <>
-                        {availableVoices.length > 0 ? (
-                          availableVoices.map((v) => (
-                            <option key={v.id} value={v.id} className="bg-slate-900">
-                              {v.name} ({v.accent} - {v.gender === "male" ? "M" : "F"})
-                            </option>
-                          ))
-                        ) : (
-                          <>
-                            <option value="terrence" className="bg-slate-900">
-                              Terrence (Retell)
-                            </option>
-                            <option value="sarah" className="bg-slate-900">
-                              Sarah (Retell)
-                            </option>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        {availableUltravoxVoices.map((v) => (
-                          <option key={v.id} value={v.id} className="bg-slate-900">
-                            {v.name}
-                          </option>
-                        ))}
-                        {availableUltravoxVoices.length === 0 && (
-                          <option value="terrence" className="bg-slate-900">
-                            Terrence (Ultravox)
-                          </option>
-                        )}
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="ml-4 flex items-center gap-2 text-[10px] font-black tracking-widest text-white/30 uppercase">
-                    <Phone className="h-3 w-3" /> Número de Salida
-                  </label>
-                  {availableNumbers.length > 0 ? (
-                    <select
-                      value={editingAgentData.from_number || ""}
-                      onChange={(e) =>
-                        setEditingAgentData({ ...editingAgentData, from_number: e.target.value })
-                      }
-                      className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                      title="Seleccionar número de salida"
-                    >
-                      <option value="">Selecciona un Número...</option>
-                      {availableNumbers.map((n) => (
-                        <option key={n.id} value={n.id} className="bg-slate-900">
-                          {n.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      value={editingAgentData.from_number || ""}
-                      onChange={(e) =>
-                        setEditingAgentData({ ...editingAgentData, from_number: e.target.value })
-                      }
-                      className="h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-6 font-mono text-sm transition-all outline-none focus:border-purple-500/40"
-                      placeholder="+1..."
-                      title="Número de teléfono de salida"
-                    />
-                  )}
-                </div>
-
-                <div className="space-y-3">
-                  <label
-                    className="ml-4 text-[10px] font-black tracking-widest text-white/30 uppercase"
-                    htmlFor="status-select"
-                  >
-                    Estado Inicial
-                  </label>
-                  <select
-                    id="status-select"
-                    value={editingAgentData.status}
-                    onChange={(e) =>
-                      setEditingAgentData({ ...editingAgentData, status: e.target.value as any })
-                    }
-                    className="h-14 w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-bold transition-all outline-none focus:border-purple-500/40"
-                    title="Seleccionar estado"
-                  >
-                    <option value="PAUSED" className="bg-slate-900">
-                      Pausado (Draft)
-                    </option>
-                    <option value="ACTIVE" className="bg-slate-900">
-                      Activo (Listo)
-                    </option>
-                  </select>
-                </div>
-
-                <div className="space-y-3 md:col-span-2">
-                  <div className="mb-2 flex items-center justify-between px-4">
-                    <label className="text-[10px] font-black tracking-widest text-white/30 uppercase">
-                      Notas Internas
-                    </label>
-                    {isSyncing && (
-                      <span className="animate-pulse text-[9px] font-black tracking-widest text-purple-400 uppercase">
-                        Sincronizando con Retell...
-                      </span>
-                    )}
-                  </div>
-                  <textarea
-                    value={editingAgentData.description || ""}
-                    onChange={(e) =>
-                      setEditingAgentData({ ...editingAgentData, description: e.target.value })
-                    }
-                    className="h-24 w-full resize-none rounded-2xl border border-white/10 bg-white/5 p-6 text-sm font-medium transition-all outline-none focus:border-purple-500/40"
-                    placeholder="Ej: Este agente se usará para campañas de Outbound en México..."
-                    title="Descripción interna"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+            <div className="border-border bg-card w-full max-w-md rounded-2xl border p-6 shadow-2xl">
+              <h3 className="mb-4 text-lg font-bold">Crear Nuevo Agente</h3>
+              <input
+                type="text"
+                placeholder="Nombre del Agente"
+                value={editingAgentData.name || ""}
+                onChange={(e) => setEditingAgentData({ ...editingAgentData, name: e.target.value })}
+                className="border-border bg-background mb-4 w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              />
+              <select
+                title="Seleccionar Voz"
+                value={editingAgentData.voice_id || ""}
+                onChange={(e) =>
+                  setEditingAgentData({ ...editingAgentData, voice_id: e.target.value })
+                }
+                className="border-border bg-background mb-4 w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              >
+                <option value="">Seleccionar Voz...</option>
+                {availableVoices.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2">
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="h-14 flex-1 rounded-2xl border border-white/10 bg-white/5 text-[10px] font-black font-bold tracking-widest uppercase transition-all hover:bg-white/10"
+                  className="bg-muted flex-1 rounded-xl py-3 text-sm font-bold"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleCreateOrUpdateAgent}
-                  disabled={saving || !editingAgentData.name?.trim()}
-                  className="h-14 flex-1 rounded-2xl bg-purple-600 text-[10px] font-black tracking-widest text-white uppercase shadow-xl shadow-purple-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 rounded-xl bg-purple-600 py-3 text-sm font-bold text-white"
                 >
-                  {saving ? "Guardando..." : "Guardar Agente"}
+                  Crear
                 </button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>
-
       <VoiceConfigModal
         isOpen={isConfigModalOpen}
         onClose={() => setIsConfigModalOpen(false)}
         currentRetellKey={retellApiKey}
         currentUltravoxKey={ultravoxApiKey}
         tenantId={tenantId}
-        onSuccess={(provider, newKey) => {
-          if (provider === "retell") {
-            setRetellApiKey(newKey);
-            handleSyncRetellResources(newKey);
-          } else {
-            setUltravoxApiKey(newKey);
-            handleSyncUltravoxResources(newKey);
-          }
+        onSuccess={() => {
+          refreshConfiguration();
+          toast({
+            title: "Configuración Actualizada",
+            description: "API Key guardada correctamente. Recargando agentes...",
+            variant: "success",
+          });
         }}
       />
     </div>
@@ -1518,7 +1163,7 @@ function TabButton({
   icon: Icon,
   label,
   onClick,
-  color = "primary",
+  color = "purple",
 }: {
   active: boolean;
   icon: React.ElementType;
@@ -1529,23 +1174,17 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      title={`Pestaña ${label}`}
       className={cn(
-        "relative flex h-[72px] items-center gap-3 px-6 text-[11px] font-black tracking-widest uppercase transition-all",
-        active ? `text-${color}-400` : "text-white/30 hover:text-white/60"
+        "relative flex h-14 items-center gap-2 px-5 text-[10px] font-black tracking-widest uppercase transition-all",
+        active ? `text-${color}-400` : "text-muted-foreground hover:text-foreground"
       )}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-3.5 w-3.5" />
       {label}
       {active && (
         <motion.div
-          layoutId="activeTabBadgeVoice"
-          className={cn(
-            "absolute right-0 bottom-0 left-0 h-1 rounded-t-full",
-            color === "purple"
-              ? "bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
-              : "bg-primary shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)]"
-          )}
+          layoutId="tab-indicator"
+          className={`absolute bottom-0 left-0 h-0.5 w-full bg-${color}-500`}
         />
       )}
     </button>

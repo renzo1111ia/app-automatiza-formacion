@@ -31,7 +31,8 @@ export interface AuditLogRow {
 export async function getAuditLog(opts: AuditQueryOptions): Promise<AuditLogRow[]> {
   const supabase = await getSupabaseServerClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase.from("crm_write_audit" as any) as any)
+  let query = supabase
+    .from("crm_write_audit")
     .select(
       "id, tenant_id, integration_id, provider, lead_id, field_name, old_value, new_value, write_policy, actor_id, created_at"
     )

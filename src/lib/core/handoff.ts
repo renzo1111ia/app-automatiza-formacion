@@ -51,7 +51,8 @@ export async function handleUnreachable(
     const supabase = await getSupabaseServerClient();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("lead" as any) as any)
+    const { error } = await supabase
+      .from("lead")
       .update({
         current_stage: LeadStageEnum.enum.UNREACHABLE,
         tipo_lead: "ilocalizable",

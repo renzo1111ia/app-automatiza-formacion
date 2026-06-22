@@ -103,7 +103,11 @@ export class MetaWhatsAppClient {
         .maybeSingle();
 
       if (error) {
-        log.warn("Opt-out check failed — blocking (fail-closed)", { tenantId, phone, error: error.message });
+        log.warn("Opt-out check failed — blocking (fail-closed)", {
+          tenantId,
+          phone,
+          error: error.message,
+        });
         return true; // fail-closed
       }
       return !!data;
@@ -117,14 +121,20 @@ export class MetaWhatsAppClient {
   /**
    * Add a phone number to the opt-out blacklist.
    */
-  async addToOptOut(tenantId: string, phone: string, reason?: string): Promise<{ success: boolean; error?: string }> {
+  async addToOptOut(
+    tenantId: string,
+    phone: string,
+    reason?: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const supabase = this.getSupabase();
       const normalized = normalizeWhatsAppNumber(phone);
-      const { error } = await supabase.from("whatsapp_opt_out").upsert(
-        { tenant_id: tenantId, phone: normalized, reason, is_active: true },
-        { onConflict: "tenant_id,phone" }
-      );
+      const { error } = await supabase
+        .from("whatsapp_opt_out")
+        .upsert(
+          { tenant_id: tenantId, phone: normalized, reason, is_active: true },
+          { onConflict: "tenant_id,phone" }
+        );
       if (error) return { success: false, error: error.message };
       log.info("Phone added to opt-out list", { tenantId, phone: normalized, reason });
       return { success: true };
@@ -136,7 +146,10 @@ export class MetaWhatsAppClient {
   /**
    * Remove a phone number from the opt-out blacklist (re-opt-in).
    */
-  async removeFromOptOut(tenantId: string, phone: string): Promise<{ success: boolean; error?: string }> {
+  async removeFromOptOut(
+    tenantId: string,
+    phone: string
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       const supabase = this.getSupabase();
       const normalized = normalizeWhatsAppNumber(phone);
@@ -159,13 +172,23 @@ export class MetaWhatsAppClient {
    * Checks opt-out before sending.
    */
   async sendTemplate(options: SendTemplateOptions): Promise<SendResult> {
-    const { to, templateName, language, components, config, tenantId, leadId, templateId } = options;
+    const { to, templateName, language, components, config, tenantId, leadId, templateId } =
+      options;
 
     // 1. Opt-out check
     const optedOut = await this.isOptedOut(tenantId, to);
     if (optedOut) {
       log.info("Send blocked: phone is in opt-out list", { tenantId, to });
-      await this.writeLog(tenantId, to, "failed", leadId, templateId, undefined, "OPT_OUT", "Number is in opt-out blacklist");
+      await this.writeLog(
+        tenantId,
+        to,
+        "failed",
+        leadId,
+        templateId,
+        undefined,
+        "OPT_OUT",
+        "Number is in opt-out blacklist"
+      );
       return { success: false, blocked: "OPT_OUT", error: "Number is in opt-out blacklist" };
     }
 
@@ -201,10 +224,21 @@ export class MetaWhatsAppClient {
     } catch (error) {
       const err = error as AxiosError<{ error?: { message?: string; code?: number } }>;
       const errorMessage = err.response?.data?.error?.message ?? err.message ?? "Unknown error";
-      const errorCode = String(err.response?.data?.error?.code ?? err.response?.status ?? "unknown");
+      const errorCode = String(
+        err.response?.data?.error?.code ?? err.response?.status ?? "unknown"
+      );
 
       log.error("Template send failed", { tenantId, to, templateName, errorMessage, errorCode });
-      await this.writeLog(tenantId, to, "failed", leadId, templateId, undefined, errorCode, errorMessage);
+      await this.writeLog(
+        tenantId,
+        to,
+        "failed",
+        leadId,
+        templateId,
+        undefined,
+        errorCode,
+        errorMessage
+      );
 
       // 429: rate limit — caller should use outbox
       if (err.response?.status === 429) {
@@ -319,7 +353,11 @@ export class MetaWhatsAppClient {
           .from("whatsapp_message_outbox")
           .update({ status: "pending", last_error: result.error, scheduled_at: retryAt })
           .eq("id", row.id);
-        log.warn("Rate limited — rescheduled with backoff", { tenantId, outboxId: row.id, retryAt });
+        log.warn("Rate limited — rescheduled with backoff", {
+          tenantId,
+          outboxId: row.id,
+          retryAt,
+        });
       } else {
         await supabase
           .from("whatsapp_message_outbox")
@@ -460,10 +498,7 @@ export class MetaWhatsAppClient {
         updates.error_code = errorCode;
         updates.error_message = errorMessage;
       }
-      await supabase
-        .from("whatsapp_message_logs")
-        .update(updates)
-        .eq("message_sid", messageSid);
+      await supabase.from("whatsapp_message_logs").update(updates).eq("message_sid", messageSid);
     } catch (e) {
       log.warn("Failed to update log from webhook", { messageSid, error: String(e) });
     }

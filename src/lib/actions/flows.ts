@@ -13,7 +13,7 @@ export async function getAgentFlow(agentId: string) {
   try {
     const ctx = await requireApiUser();
     if (ctx instanceof NextResponse) throw new Error("No autenticado");
-    
+
     const tenantId = await getActiveTenantId();
     if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
 
@@ -66,7 +66,13 @@ export async function getAgentFlow(agentId: string) {
     });
 
     const edges: FlowEdge[] = (edgesData || []).map((e: any) => {
-      const row = e as { edge_id: string; source: string; target: string; source_handle?: string | null; target_handle?: string | null };
+      const row = e as {
+        edge_id: string;
+        source: string;
+        target: string;
+        source_handle?: string | null;
+        target_handle?: string | null;
+      };
       return {
         id: row.edge_id,
         source: row.source,
@@ -86,7 +92,10 @@ export async function getAgentFlow(agentId: string) {
 /**
  * Guarda y publica la configuración de un flujo (nodos y conexiones) de un agente.
  */
-export async function saveAgentFlow(agentId: string, flow: { nodes: FlowNode[]; edges: FlowEdge[] }) {
+export async function saveAgentFlow(
+  agentId: string,
+  flow: { nodes: FlowNode[]; edges: FlowEdge[] }
+) {
   try {
     const ctx = await requireApiUser();
     if (ctx instanceof NextResponse) throw new Error("No autenticado");

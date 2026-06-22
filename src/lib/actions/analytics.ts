@@ -181,7 +181,8 @@ export async function getKpiGenerales(
   try {
     const [lRes, llRes, cRes, aRes, wRes] = await Promise.all([
       applyLeadFilters(
-        (supabase.from("lead" as any) as any)
+        supabase
+          .from("lead")
           .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
           .eq("tenant_id", tenantId)
           .gte("fecha_ingreso_crm", from)
@@ -189,7 +190,8 @@ export async function getKpiGenerales(
         filters
       ),
       applyLeadFilters(
-        (supabase.from("llamadas" as any) as any)
+        supabase
+          .from("llamadas")
           .select(
             `id, estado_llamada, razon_termino, fecha_inicio, duracion_segundos, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`
           )
@@ -199,7 +201,8 @@ export async function getKpiGenerales(
         filters
       ),
       applyLeadFilters(
-        (supabase.from("lead_cualificacion" as any) as any)
+        supabase
+          .from("lead_cualificacion")
           .select(
             `cualificacion, motivo_anulacion, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`
           )
@@ -209,7 +212,8 @@ export async function getKpiGenerales(
         filters
       ),
       applyLeadFilters(
-        (supabase.from("agendamientos" as any) as any)
+        supabase
+          .from("agendamientos")
           .select(
             `id, fecha_agendada_cliente, confirmado, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`
           )
@@ -220,7 +224,8 @@ export async function getKpiGenerales(
         filters
       ),
       applyLeadFilters(
-        (supabase.from("conversaciones_whatsapp" as any) as any)
+        supabase
+          .from("conversaciones_whatsapp")
           .select(`id_lead, lead:id_lead!inner(id, pais, origen, campana, tipo_lead)`)
           .eq("tenant_id", tenantId)
           .gte("fecha_ultimo_mensaje", from)
@@ -332,7 +337,8 @@ export async function getKpiMinutos(
   if (!tenantId) return empty;
   try {
     const q = applyLeadFilters(
-      (supabase.from("llamadas" as any) as any)
+      supabase
+        .from("llamadas")
         .select(
           `id, estado_llamada, duracion_segundos, fecha_inicio, lead:id_lead!inner(id, pais, origen, campana)`
         )
@@ -393,7 +399,8 @@ export async function getKpiWhatsapp(
   try {
     // 1. Fetch WhatsApp conversations for the tenant in range
     // We fetch id_lead and handle filtering/joining manually to avoid schema cache issues
-    const q = (supabase.from("conversaciones_whatsapp" as any) as any)
+    const q = supabase
+      .from("conversaciones_whatsapp")
       .select(`id, id_lead, fecha_ultimo_mensaje`)
       .eq("tenant_id", tenantId)
       .gte("fecha_ultimo_mensaje", from)
@@ -410,7 +417,8 @@ export async function getKpiWhatsapp(
 
     // 2. Fetch ALL leads for this tenant once to perform in-memory join
     // This is more reliable than joins when schema cache is problematic
-    let lq = (supabase.from("lead" as any) as any)
+    let lq = supabase
+      .from("lead")
       .select("id, pais, origen, campana, tipo_lead")
       .eq("tenant_id", tenantId);
 
@@ -432,13 +440,12 @@ export async function getKpiWhatsapp(
 
     // 4. Fetch Appointments and Qualifications for THESE leads
     const [aRes, qRes] = await Promise.all([
-      (supabase.from("agendamientos" as any) as any)
+      supabase
+        .from("agendamientos")
         .select("id, id_lead")
         .in("id_lead", leadIds)
         .eq("confirmado", true),
-      (supabase.from("lead_cualificacion" as any) as any)
-        .select("id_lead, cualificacion")
-        .in("id_lead", leadIds),
+      supabase.from("lead_cualificacion").select("id_lead, cualificacion").in("id_lead", leadIds),
     ]);
 
     const agendaData = (aRes.data || []) as any[];
@@ -533,7 +540,8 @@ export async function getKpiCampanas(
     let fromIdx = 0;
     const PAGE_SIZE = 1000;
     while (true) {
-      let lq = (supabase.from("lead" as any) as any)
+      let lq = supabase
+        .from("lead")
         .select("id, campana, pais, origen, tipo_lead")
         .eq("tenant_id", tenantId);
 
@@ -550,23 +558,27 @@ export async function getKpiCampanas(
 
     // 2. Fetch all related fact tables for the date range
     const [llRes, aRes, qRes, wRes] = await Promise.all([
-      (supabase.from("llamadas" as any) as any)
+      supabase
+        .from("llamadas")
         .select("id, id_lead, estado_llamada, duracion_segundos")
         .eq("tenant_id", tenantId)
         .gte("fecha_inicio", from)
         .lte("fecha_inicio", to),
-      (supabase.from("agendamientos" as any) as any)
+      supabase
+        .from("agendamientos")
         .select("id, id_lead")
         .eq("tenant_id", tenantId)
         .eq("confirmado", true)
         .gte("fecha_creacion", from)
         .lte("fecha_creacion", to),
-      (supabase.from("lead_cualificacion" as any) as any)
+      supabase
+        .from("lead_cualificacion")
         .select("id, id_lead, cualificacion")
         .eq("tenant_id", tenantId)
         .gte("fecha_creacion", from)
         .lte("fecha_creacion", to),
-      (supabase.from("conversaciones_whatsapp" as any) as any)
+      supabase
+        .from("conversaciones_whatsapp")
         .select("id_lead")
         .eq("tenant_id", tenantId)
         .gte("fecha_ultimo_mensaje", from)
@@ -668,7 +680,8 @@ export async function getUniqueCampaigns(): Promise<string[]> {
   const tenantId = await getActiveTenantId();
   if (!tenantId) return [];
   try {
-    const { data } = await (supabase.from("lead" as any) as any)
+    const { data } = await supabase
+      .from("lead")
       .select("campana")
       .eq("tenant_id", tenantId)
       .not("campana", "is", null)
@@ -696,7 +709,8 @@ export async function getHeatmapData(
     let fromIdx = 0;
     const PAGE_SIZE = 1000;
     while (true) {
-      let lq = (supabase.from("lead" as any) as any)
+      let lq = supabase
+        .from("lead")
         .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
         .eq("tenant_id", tenantId)
         .range(fromIdx, fromIdx + PAGE_SIZE - 1);
@@ -711,7 +725,8 @@ export async function getHeatmapData(
     const leadsMap = new Map(allLeads.map((l: any) => [l.id, l]));
 
     // 2. Fetch fact rows
-    const q = (supabase.from(targetTable as any) as any)
+    const q = supabase
+      .from(targetTable as any)
       .select(`${targetCol}, id_lead`)
       .eq("tenant_id", tenantId)
       .gte(targetCol, from)
@@ -772,7 +787,8 @@ async function getGenericPartData(
   const timeCol = TIME_COL_MAP[table] || "fecha_creacion";
 
   // 1. Fetch leads for filtering
-  let lq = (supabase.from("lead" as any) as any)
+  let lq = supabase
+    .from("lead")
     .select("id, pais, origen, campana, tipo_lead")
     .eq("tenant_id", tenantId);
   lq = applyLeadFilters(lq, filters);
@@ -780,7 +796,8 @@ async function getGenericPartData(
   const leadsMap = new Map((leadsRaw || []).map((l: any) => [l.id, l]));
 
   // 2. Fetch fact rows
-  let q = (supabase.from(table as any) as any)
+  let q = supabase
+    .from(table as any)
     .select(isGrouped ? `${timeCol}, ${col}, id_lead` : `${col}, id_lead`)
     .eq("tenant_id", tenantId)
     .gte(timeCol, from)
@@ -1003,7 +1020,8 @@ export async function getDynamicChartSeries(
   let fromIdx = 0;
   const PAGE_SIZE = 1000;
   while (true) {
-    let lq = (supabase.from("lead" as any) as any)
+    let lq = supabase
+      .from("lead")
       .select("id, pais, origen, campana, tipo_lead, fecha_ingreso_crm")
       .eq("tenant_id", tenantId)
       .range(fromIdx, fromIdx + PAGE_SIZE - 1);
@@ -1058,7 +1076,8 @@ export async function getDynamicChartSeries(
         if (baseTable === "lead") selectFields.add("id");
         selectFields.add(timeCol);
 
-        let q = (supabase.from(baseTable as any) as any)
+        let q = supabase
+          .from(baseTable as any)
           .select(Array.from(selectFields).join(", "))
           .eq("tenant_id", tenantId)
           .gte(timeCol, from)

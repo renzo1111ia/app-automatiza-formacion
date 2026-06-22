@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -524,6 +525,7 @@ export default function AIAgentInbox() {
     // Find template to get its language and variables
     const tpl = templates.find((t) => t.name === templateName);
     const lang = tpl?.language || "es";
+    const mapping = tpl?.variable_mapping || {};
 
     // Detect variables in BODY and HEADER (Case-insensitive)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -534,46 +536,80 @@ export default function AIAgentInbox() {
     const bodyText = bodyComponent?.text || "";
     const headerText = headerComponent?.text || "";
 
-    const bodyVarCount = (bodyText.match(/{{[0-9]+}}/g) || []).length;
-    const headerVarCount = (headerText.match(/{{[0-9]+}}/g) || []).length;
+    const buildParams = (text: string) => {
+      const matches = [...text.matchAll(/\{\{([^}]+)\}\}/g)];
+      if (matches.length === 0) return null;
 
-    console.log(
-      `[TEMPLATE DEBUG] ${templateName}: BodyVars=${bodyVarCount}, HeaderVars=${headerVarCount}`
-    );
+      const params = [];
+      for (const m of matches) {
+        const varName = m[1];
+        const fieldKey = mapping[varName];
+        let val = "";
+
+        if (fieldKey) {
+          if (fieldKey === "nombre") val = selectedLead.nombre || "";
+          else if (fieldKey === "apellido") val = selectedLead.apellido || "";
+          else if (fieldKey === "nombre_completo")
+            val = `${selectedLead.nombre || ""} ${selectedLead.apellido || ""}`.trim();
+          else if (fieldKey === "telefono") val = selectedLead.telefono || "";
+          else if (fieldKey === "email") val = selectedLead.email || "";
+          else if (fieldKey === "estado") val = selectedLead.tipo_lead || "";
+          else if (fieldKey === "origen") val = selectedLead.origen || "";
+          else if (fieldKey === "ciudad") val = selectedLead.pais || "";
+          else {
+            const meta = (selectedLead.metadata as Record<string, unknown>) || {};
+            val = (meta[fieldKey] as string) || "";
+          }
+        } else {
+          // Fallbacks if not mapped
+          if (varName === "1" || varName.toLowerCase() === "nombre")
+            val = selectedLead.nombre || "Cliente";
+          else if (varName === "2") {
+            const meta = (selectedLead.metadata as Record<string, unknown>) || {};
+            val = (meta.course_name as string) || (meta.curso as string) || "nuestro programa";
+          } else if (varName === "3") {
+            const meta = (selectedLead.metadata as Record<string, unknown>) || {};
+            val =
+              (meta.appointment_date as string) || (meta.fecha_cita as string) || "próximamente";
+          }
+        }
+        const paramObj: any = { type: "text", text: val || "—" };
+        // Si la variable es texto (ej: {{nombre}}) y no un número (ej: {{1}}),
+        // Meta exige incluir el parameter_name en el payload.
+        if (isNaN(Number(varName))) {
+          paramObj.parameter_name = varName;
+        }
+        params.push(paramObj);
+      }
+      return params;
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const components: any[] = [];
 
     // 1. Handle Header Parameters
-    if (headerVarCount > 0) {
-      const headerParams = [];
-      for (let i = 1; i <= headerVarCount; i++) {
-        headerParams.push({ type: "text", text: selectedLead.nombre || "Cliente" });
-      }
+    const headerParams = buildParams(headerText);
+    if (headerParams) {
       components.push({ type: "header", parameters: headerParams });
     }
 
     // 2. Handle Body Parameters
-    // If we detect variables OR if we have no component info (cache fail),
-    // we send at least the name as a safety measure for {{1}}
-    if (bodyVarCount > 0 || (!bodyComponent && selectedLead.nombre)) {
-      const bodyParams = [];
-      const count = bodyVarCount > 0 ? bodyVarCount : 1;
-
-      for (let i = 1; i <= count; i++) {
-        let val = "";
-        if (i === 1) val = selectedLead.nombre || "Cliente";
-        else if (i === 2) {
-          const meta = (selectedLead.metadata as Record<string, unknown>) ?? {};
-          val = (meta.course_name as string) || (meta.curso as string) || "nuestro programa";
-        } else if (i === 3)
-          val =
-            ((selectedLead.metadata as Record<string, unknown>)?.appointment_date as string) ||
-            "próximamente";
-        else val = "...";
-        bodyParams.push({ type: "text", text: val });
-      }
+    const bodyParams = buildParams(bodyText);
+    if (bodyParams) {
       components.push({ type: "body", parameters: bodyParams });
+    } else if (!bodyComponent && selectedLead.nombre) {
+      // Saftey fallback if template cache has no components at all but might have {{1}}
+      components.push({ type: "body", parameters: [{ type: "text", text: selectedLead.nombre }] });
+    }
+
+    // Generate fully mapped text to save to DB so UI shows the mapped version
+    let fullMappedText = bodyText;
+    if (bodyParams) {
+      const matches = [...bodyText.matchAll(/\{\{([^}]+)\}\}/g)];
+      matches.forEach((m, i) => {
+        const val = bodyParams[i]?.text || "";
+        fullMappedText = fullMappedText.replace(m[0], val);
+      });
     }
 
     console.log(`[TEMPLATE DEBUG] Sending components:`, JSON.stringify(components, null, 2));
@@ -583,7 +619,8 @@ export default function AIAgentInbox() {
       templateName,
       "TEMPLATE",
       lang,
-      components
+      components,
+      fullMappedText
     );
     if (res.success && res.data) {
       const newMessage = res.data;

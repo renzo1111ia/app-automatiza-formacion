@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+s# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # onboarding bundles (contienen secretos — NUNCA commit)
 onboarding-team-*.zip
@@ -104,3 +104,7 @@ plans/RoadMap.md.backup-*
 
 # Salida temporal del gate npm audit del workflow security.yml (se regenera)
 audit-prod.json
+/scratch-*
+/test-*
+/*.sql
+/templates.json

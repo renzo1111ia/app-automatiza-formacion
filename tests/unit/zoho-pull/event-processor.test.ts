@@ -43,9 +43,8 @@ vi.mock("@/lib/core/orchestrator", () => ({
   orchestrator: { handleNewLead: handleNewLeadMock },
 }));
 
-// deriveCountryFromPhone — no necesita lógica real en unit test.
 vi.mock("@/lib/integrations/sheets/phone-country", () => ({
-  deriveCountryFromPhone: vi.fn().mockReturnValue(null),
+  resolveLeadCountry: vi.fn().mockReturnValue("España"),
 }));
 
 import { processZohoLeadEvent } from "@/lib/integrations/zoho-pull/event-processor";

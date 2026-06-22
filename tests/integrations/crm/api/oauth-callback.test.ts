@@ -188,6 +188,6 @@ describe("oauth-callback route", () => {
       request as Parameters<typeof GET>[0],
       context as Parameters<typeof GET>[1]
     );
-    expect(res.headers.get("location")).toContain("success=zoho");
+    expect(res.headers.get("location")).toContain("success=1");
   });
 });

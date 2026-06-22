@@ -46,7 +46,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
 
   // 1. Cargar sheet_connection
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: connRow, error: connErr } = await (supabase.from("sheet_connections" as any) as any)
+  const { data: connRow, error: connErr } = await supabase
+    .from("sheet_connections")
     .select("*")
     .eq("id", job.sheet_connection_id)
     .eq("tenant_id", job.tenant_id)
@@ -149,7 +150,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
 
     // 4. Idempotencia: hash == ultimo procesado?
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existing } = await (supabase.from("sheet_row_processed" as any) as any)
+    const { data: existing } = await supabase
+      .from("sheet_row_processed")
       .select("id, row_hash, lead_id")
       .eq("sheet_connection_id", conn.id)
       .eq("row_index", i)
@@ -169,7 +171,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         const cellEmpty = cell === undefined || cell === null || String(cell).trim() === "";
         if (cellEmpty) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: leadRow } = await (supabase.from("lead" as any) as any)
+          const { data: leadRow } = await supabase
+            .from("lead")
             .select("current_stage")
             .eq("id", existingLeadId)
             .maybeSingle();
@@ -182,7 +185,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("sheet_row_processed" as any) as any)
+      await supabase
+        .from("sheet_row_processed")
         .update({
           last_seen_at: new Date().toISOString(),
           ...(touchedHash ? { row_hash: touchedHash } : {}),
@@ -219,7 +223,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         // los que ya tienen valor (leads históricos pre-código-nuevo: sin
         // origen/pais/fecha_ingreso_crm — BUG-4-10).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: cur } = await (supabase.from("lead" as any) as any)
+        const { data: cur } = await supabase
+          .from("lead")
           .select("pais, origen, tipo_lead, fecha_ingreso_crm")
           .eq("id", existingLeadId)
           .maybeSingle();
@@ -250,7 +255,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         if (!c.fecha_ingreso_crm) updatePayload.fecha_ingreso_crm = new Date().toISOString();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error: updErr } = await (supabase.from("lead" as any) as any)
+        const { error: updErr } = await supabase
+          .from("lead")
           .update(updatePayload)
           .eq("id", existingLeadId)
           .eq("tenant_id", job.tenant_id);
@@ -274,16 +280,19 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         const cualifPayload = mapped.lead_cualificacion;
         if (cualifPayload && Object.keys(cualifPayload).length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase.from("lead_cualificacion" as any) as any).upsert(
-            { tenant_id: job.tenant_id, id_lead: leadId, ...cualifPayload },
-            { onConflict: "id_lead" }
-          );
+          await supabase
+            .from("lead_cualificacion")
+            .upsert(
+              { tenant_id: job.tenant_id, id_lead: leadId, ...cualifPayload },
+              { onConflict: "id_lead" }
+            );
         }
 
         // Actualizar el hash de la fila (NO re-disparamos orchestrator: no es
         // un lead nuevo, ya está en el pipeline).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("sheet_row_processed" as any) as any)
+        await supabase
+          .from("sheet_row_processed")
           .update({ row_hash: mapped.rowHash, last_seen_at: new Date().toISOString() })
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .eq("id", (existing as any).id);
@@ -333,7 +342,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: leadRow, error: leadErr } = await (supabase.from("lead" as any) as any)
+      const { data: leadRow, error: leadErr } = await supabase
+        .from("lead")
         .insert(leadPayload)
         .select("id")
         .single();
@@ -357,7 +367,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       const cualifPayload = mapped.lead_cualificacion;
       if (cualifPayload && Object.keys(cualifPayload).length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from("lead_cualificacion" as any) as any).insert({
+        await supabase.from("lead_cualificacion").insert({
           tenant_id: job.tenant_id,
           id_lead: leadId,
           ...cualifPayload,
@@ -373,7 +383,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
 
       // 7. Registrar row processed (idempotencia)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("sheet_row_processed" as any) as any).upsert(
+      await supabase.from("sheet_row_processed").upsert(
         {
           sheet_connection_id: conn.id,
           row_index: i,
@@ -416,7 +426,8 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
 
   // 9. Actualizar last_synced_at en la connection
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("sheet_connections" as any) as any)
+  await supabase
+    .from("sheet_connections")
     .update({
       last_synced_at: new Date().toISOString(),
       last_sync_error: result.errors.length > 0 ? result.errors.slice(0, 5).join("; ") : null,

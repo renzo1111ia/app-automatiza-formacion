@@ -85,7 +85,8 @@ export class CRMFactory {
 
     const supabase = await getAdminSupabaseClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("integrations" as any) as any)
+    const { data, error } = await supabase
+      .from("integrations")
       .select("id, crm_type, data_center, metadata")
       .eq("id", integrationId)
       .single();

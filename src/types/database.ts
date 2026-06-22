@@ -3,7 +3,7 @@ export type { Tenant };
 
 // ─── LEAD ────────────────────────────────────────────────────────────────────
 
-export interface Lead {
+export type Lead = {
   id: string;
   tenant_id: string;
   id_lead_externo?: string | null;
@@ -36,11 +36,13 @@ export interface Lead {
   is_ai_paused?: boolean;
   ai_agent_id?: string | null;
   inactivity_sent_count?: number;
-}
+
+  [key: string]: any;
+};
 
 // ─── LLAMADA (resumen de una llamada individual) ──────────────────────────────
 
-export interface Llamada {
+export type Llamada = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -57,7 +59,8 @@ export interface Llamada {
   fecha_creacion?: string | null;
   // Joined from `lead`
   lead?: Lead;
-}
+  [key: string]: any;
+};
 
 export type LlamadaConLead = Llamada & { lead: Lead };
 
@@ -65,7 +68,7 @@ export type LlamadaConLead = Llamada & { lead: Lead };
  * Resumen de una llamada individual dentro del timeline de un lead.
  * Se usa en HistorialRow.llamadas[].
  */
-export interface LlamadaResumen {
+export type LlamadaResumen = {
   id: string;
   estado_llamada?: string | null;
   razon_termino?: string | null;
@@ -75,11 +78,12 @@ export interface LlamadaResumen {
   resumen?: string | null;
   tipo_agente?: string | null;
   numero_intento?: number | null; // si existe en intentos_llamadas
-}
+  [key: string]: any;
+};
 
 // ─── INTENTOS LLAMADAS ────────────────────────────────────────────────────────
 
-export interface IntentoLlamada {
+export type IntentoLlamada = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -93,11 +97,12 @@ export interface IntentoLlamada {
   // Joined
   lead?: Lead;
   llamada?: Llamada;
-}
+  [key: string]: any;
+};
 
 // ─── CONVERSACIONES WHATSAPP ──────────────────────────────────────────────────
 
-export interface ConversacionWhatsapp {
+export type ConversacionWhatsapp = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -108,11 +113,12 @@ export interface ConversacionWhatsapp {
   fecha_creacion?: string | null;
   // Joined
   lead?: Lead;
-}
+  [key: string]: any;
+};
 
 // ─── AGENDAMIENTOS ────────────────────────────────────────────────────────────
 
-export interface Agendamiento {
+export type Agendamiento = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -122,11 +128,12 @@ export interface Agendamiento {
   fecha_creacion?: string | null;
   // Joined
   lead?: Lead;
-}
+  [key: string]: any;
+};
 
 // ─── LEAD CUALIFICACION ───────────────────────────────────────────────────────
 
-export interface LeadCualificacion {
+export type LeadCualificacion = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -142,11 +149,12 @@ export interface LeadCualificacion {
   // Joined
   lead?: Lead;
   llamada?: Llamada;
-}
+  [key: string]: any;
+};
 
 // ─── PROGRAMAS ────────────────────────────────────────────────────────────────
 
-export interface Programa {
+export type Programa = {
   id: string;
   tenant_id: string;
   nombre: string;
@@ -161,9 +169,10 @@ export interface Programa {
   fechas_inicio?: string | null;
   requisitos_cualificacion?: string | null;
   fecha_creacion?: string | null;
-}
+  [key: string]: any;
+};
 
-export interface LeadPrograma {
+export type LeadPrograma = {
   id: string;
   id_lead: string;
   id_programa: string;
@@ -171,18 +180,20 @@ export interface LeadPrograma {
   // Joined
   lead?: Lead;
   programa?: Programa;
-}
+  [key: string]: any;
+};
 
-export interface AdvisorPrograma {
+export type AdvisorPrograma = {
   id: string;
   advisor_id: string;
   programa_id: string;
   created_at?: string;
-}
+  [key: string]: any;
+};
 
 // ─── NOTIFICACIONES ───────────────────────────────────────────────────────────
 
-export interface Notificacion {
+export type Notificacion = {
   id: string;
   tenant_id: string;
   id_lead: string;
@@ -192,11 +203,12 @@ export interface Notificacion {
   fecha_creacion?: string | null;
   // Joined
   lead?: Lead;
-}
+  [key: string]: any;
+};
 
 // ─── CAMPANAS ────────────────────────────────────────────────────────────────
 
-export interface Campana {
+export type Campana = {
   id: string;
   tenant_id: string;
   nombre: string;
@@ -207,11 +219,12 @@ export interface Campana {
   agente_texto_id?: string | null;
   agente_llamada_id?: string | null;
   fecha_creacion?: string | null;
-}
+  [key: string]: any;
+};
 
 // ─── NEW V2.0 TABLES ─────────────────────────────────────────────────────────
 
-export interface OrchestrationRule {
+export type OrchestrationRule = {
   id: string;
   tenant_id: string;
   workflow_id: string;
@@ -222,9 +235,10 @@ export interface OrchestrationRule {
   trigger_node_id?: string | null;
   is_active?: boolean;
   created_at?: string;
-}
+  [key: string]: any;
+};
 
-export interface Workflow {
+export type Workflow = {
   id: string;
   tenant_id: string;
   name: string;
@@ -233,17 +247,19 @@ export interface Workflow {
   is_primary?: boolean;
   created_at?: string;
   updated_at?: string;
-}
+  [key: string]: any;
+};
 
-export interface OrchestrationGraph {
+export type OrchestrationGraph = {
   id: string;
   tenant_id: string;
   workflow_id: string;
   graph_data: unknown;
   updated_at?: string;
-}
+  [key: string]: any;
+};
 
-export interface PlannedAction {
+export type PlannedAction = {
   id: string;
   tenant_id: string;
   lead_id: string;
@@ -255,9 +271,10 @@ export interface PlannedAction {
   error_message?: string | null;
   created_at?: string;
   updated_at?: string;
-}
+  [key: string]: any;
+};
 
-export interface AIAgent {
+export type AIAgent = {
   id: string;
   tenant_id: string;
   name: string;
@@ -274,9 +291,10 @@ export interface AIAgent {
   crm_config?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
-export interface AIAgentVariant {
+export type AIAgentVariant = {
   id: string;
   agent_id: string;
   version_label: string;
@@ -296,9 +314,10 @@ export interface AIAgentVariant {
   knowledge_base_ids?: string[];
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
-export interface WebWidget {
+export type WebWidget = {
   id: string;
   tenant_id: string;
   name: string;
@@ -313,18 +332,20 @@ export interface WebWidget {
   rate_limit_per_minute: number;
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
-export interface FeatureFlag {
+export type FeatureFlag = {
   id: string;
   tenant_id?: string | null;
   flag_key: string;
   is_enabled: boolean;
   metadata?: Record<string, unknown> | null;
   created_at?: string;
-}
+  [key: string]: any;
+};
 
-export interface KnowledgeItem {
+export type KnowledgeItem = {
   id: string;
   tenant_id: string;
   name: string;
@@ -333,9 +354,10 @@ export interface KnowledgeItem {
   file_url: string | null;
   content_hash: string | null;
   created_at: string;
-}
+  [key: string]: any;
+};
 
-export interface Advisor {
+export type Advisor = {
   id: string;
   tenant_id: string;
   name: string;
@@ -345,9 +367,10 @@ export interface Advisor {
   specialties?: string[];
   handled_lead_types?: string[];
   created_at: string;
-}
+  [key: string]: any;
+};
 
-export interface Appointment {
+export type Appointment = {
   id: string;
   tenant_id: string;
   advisor_id: string | null;
@@ -365,50 +388,55 @@ export interface Appointment {
   updated_at: string;
   // Joined
   lead?: Lead;
-}
+  [key: string]: any;
+};
 
-export interface KnowledgeEmbedding {
+export type KnowledgeEmbedding = {
   id: string;
   tenant_id: string;
   content: string;
   embedding: number[];
   metadata: Record<string, unknown>;
   created_at: string;
-}
+  [key: string]: any;
+};
 
 // ─── RETELL TYPES ─────────────────────────────────────────────────────────────
 
-export interface RetellTool {
+export type RetellTool = {
   type: string;
   name: string;
   description: string;
   parameters?: Record<string, unknown>;
   url?: string; // for webhooks
-}
+  [key: string]: any;
+};
 
-export interface RetellEdge {
+export type RetellEdge = {
   destination_state_name: string;
   description: string;
   conditions?: unknown[];
-}
+  [key: string]: any;
+};
 
-export interface RetellState {
+export type RetellState = {
   name: string;
   state_prompt: string;
   edges?: RetellEdge[];
   tools?: RetellTool[];
-}
+  [key: string]: any;
+};
 
-export interface RetellLLMConfig {
+export type RetellLLMConfig = {
   model: string;
   general_prompt: string;
   states?: RetellState[];
   tools?: RetellTool[];
   begin_message?: string;
-  [key: string]: unknown; // fallback for other Retell props
-}
+  [key: string]: any;
+};
 
-export interface VoiceAgent {
+export type VoiceAgent = {
   id: string;
   tenant_id: string;
   name: string;
@@ -423,9 +451,10 @@ export interface VoiceAgent {
   retell_llm_config: RetellLLMConfig | null;
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
-export interface VoiceAgentVariant {
+export type VoiceAgentVariant = {
   id: string;
   agent_id: string;
   version_label: string;
@@ -436,11 +465,12 @@ export interface VoiceAgentVariant {
   metrics: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
 // ─── CLIENT CONFIG (v2.0) ────────────────────────────────────────────────────────
 
-export interface ClientConfig {
+export type ClientConfig = {
   id: string;
   tenant_id: string;
   routing_rules: {
@@ -461,14 +491,15 @@ export interface ClientConfig {
   };
   created_at: string;
   updated_at: string;
-}
+  [key: string]: any;
+};
 
 // ─── COMBINED / VIEW TYPES ────────────────────────────────────────────────────
 
 /**
  * Una fila del Historial = UN LEAD con toda su actividad consolidada.
  */
-export interface HistorialRow {
+export type HistorialRow = {
   // ── Identidad del lead ──
   id: string; // lead.id (clave única, sin duplicados)
   nombre?: string | null;
@@ -520,8 +551,8 @@ export interface HistorialRow {
   total_llamadas: number; // = llamadas.length
 
   // ── Dynamic / Extra Fields ──
-  [key: string]: unknown;
-}
+  [key: string]: any;
+};
 
 /** Supabase database shape (for createClient generic) */
 export type Database = {
@@ -531,6 +562,7 @@ export type Database = {
         Row: Lead;
         Insert: Omit<Lead, "id" | "fecha_creacion" | "fecha_actualizacion">;
         Update: Partial<Lead>;
+        Relationships: any[];
       };
       llamadas: {
         Row: Llamada;
@@ -556,6 +588,7 @@ export type Database = {
         Row: LeadCualificacion;
         Insert: Omit<LeadCualificacion, "id" | "fecha_creacion">;
         Update: Partial<LeadCualificacion>;
+        Relationships: any[];
       };
       programas: {
         Row: Programa;
@@ -629,17 +662,19 @@ export type Database = {
       };
       tenant_orchestrator_config: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           config: Record<string, unknown>;
           created_at: string;
           updated_at: string;
         };
-        Insert: { tenant_id: string; config: Record<string, unknown> };
-        Update: { config?: Record<string, unknown> };
+        Insert: { [key: string]: any; tenant_id: string; config: Record<string, unknown> };
+        Update: { [key: string]: any; config?: Record<string, unknown> };
       };
       advisors: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           name: string;
@@ -655,6 +690,7 @@ export type Database = {
           created_at: string;
         };
         Insert: {
+          [key: string]: any;
           tenant_id: string;
           name: string;
           email?: string | null;
@@ -668,6 +704,7 @@ export type Database = {
           courses?: string[] | null;
         };
         Update: Partial<{
+          [key: string]: any;
           name: string;
           email: string | null;
           phone: string | null;
@@ -687,6 +724,7 @@ export type Database = {
       };
       availability_slots: {
         Row: {
+          [key: string]: any;
           id: string;
           advisor_id: string;
           day_of_week: number;
@@ -695,16 +733,23 @@ export type Database = {
           slot_duration_minutes: number;
         };
         Insert: {
+          [key: string]: any;
           advisor_id: string;
           day_of_week: number;
           start_time: string;
           end_time: string;
           slot_duration_minutes?: number;
         };
-        Update: Partial<{ day_of_week: number; start_time: string; end_time: string }>;
+        Update: Partial<{
+          [key: string]: any;
+          day_of_week: number;
+          start_time: string;
+          end_time: string;
+        }>;
       };
       appointments: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           advisor_id: string | null;
@@ -722,6 +767,7 @@ export type Database = {
           reminder_sent_at: string | null;
         };
         Insert: {
+          [key: string]: any;
           tenant_id: string;
           advisor_id?: string | null;
           lead_id?: string | null;
@@ -736,6 +782,7 @@ export type Database = {
           reminder_sent_at?: string | null;
         };
         Update: Partial<{
+          [key: string]: any;
           advisor_id: string | null;
           status: string;
           notes: string | null;
@@ -747,6 +794,7 @@ export type Database = {
       };
       orchestration_logs: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           lead_id: string | null;
@@ -761,6 +809,7 @@ export type Database = {
           executed_at: string;
         };
         Insert: {
+          [key: string]: any;
           tenant_id: string;
           lead_id?: string | null;
           workflow_id?: string | null;
@@ -772,10 +821,11 @@ export type Database = {
           error_message?: string | null;
           metadata?: Record<string, unknown>;
         };
-        Update: Partial<{ result: string }>;
+        Update: Partial<{ [key: string]: any; result: string }>;
       };
       chat_messages: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           lead_id: string;
@@ -789,6 +839,7 @@ export type Database = {
         };
         Insert: Omit<
           {
+            [key: string]: any;
             id: string;
             tenant_id: string;
             lead_id: string;
@@ -802,7 +853,7 @@ export type Database = {
           },
           "id" | "created_at"
         >;
-        Update: Partial<{ status: string; metadata: Record<string, unknown> }>;
+        Update: Partial<{ [key: string]: any; status: string; metadata: Record<string, unknown> }>;
       };
       web_widgets: {
         Row: WebWidget;
@@ -826,6 +877,7 @@ export type Database = {
       };
       system_logs: {
         Row: {
+          [key: string]: any;
           id: string;
           tenant_id: string;
           level: string;
@@ -836,6 +888,7 @@ export type Database = {
         };
         Insert: Omit<
           {
+            [key: string]: any;
             id: string;
             tenant_id: string;
             level: string;
@@ -847,7 +900,7 @@ export type Database = {
           "id" | "created_at"
         >;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Update: Partial<{ level: string; message: string; metadata: any }>;
+        Update: Partial<{ [key: string]: any; level: string; message: string; metadata: any }>;
       };
     };
 

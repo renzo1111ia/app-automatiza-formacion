@@ -1,26 +1,26 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-const filePath = path.resolve('d:\\esden-dashboard\\src\\components\\agents\\AIAgentInbox.tsx');
+const filePath = path.resolve("d:\\esden-dashboard\\src\\components\\agents\\AIAgentInbox.tsx");
 
 function main() {
-  let content = fs.readFileSync(filePath, 'utf8');
-  
+  let content = fs.readFileSync(filePath, "utf8");
+
   // Find start and end markers
   const startMarker = `{/* Build unified list: all metadata keys + pending tracked vars */}`;
   const endMarker = `const hasAnything = capturedKeys.length > 0 || pendingVars.length > 0;`;
-  
+
   const startIndex = content.indexOf(startMarker);
   const endIndex = content.indexOf(endMarker);
-  
+
   if (startIndex === -1 || endIndex === -1) {
-    console.error('Start or End marker not found in AIAgentInbox.tsx');
+    console.error("Start or End marker not found in AIAgentInbox.tsx");
     return;
   }
-  
+
   const prefix = content.substring(0, startIndex + startMarker.length);
   const suffix = content.substring(endIndex);
-  
+
   const replacement = `
                                  {(() => {
                                      // 1. Create a normalized copy of metadata (uppercase keys, internal spaces removed)
@@ -123,10 +123,12 @@ function main() {
                                      });
 
                                      `;
-                                     
+
   const newContent = prefix + replacement + suffix;
-  fs.writeFileSync(filePath, newContent, 'utf8');
-  console.log('Successfully adjusted AIAgentInbox.tsx to prioritize human-friendly selected dates over post-analysis hallucinations!');
+  fs.writeFileSync(filePath, newContent, "utf8");
+  console.log(
+    "Successfully adjusted AIAgentInbox.tsx to prioritize human-friendly selected dates over post-analysis hallucinations!"
+  );
 }
 
 main();

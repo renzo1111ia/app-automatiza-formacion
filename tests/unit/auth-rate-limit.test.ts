@@ -26,19 +26,27 @@ process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
 process.env.SERVICE_ROLE_KEY ??= "test-service-role-key";
 process.env.ENCRYPTION_KEY ??= "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
-const rateLimitMock = vi.fn();
-const headersMock = vi.fn();
-const signInWithPasswordMock = vi.fn();
-const resetPasswordForEmailMock = vi.fn();
-const getTenantByUserIdMock = vi.fn();
-const setTenantCookiesMock = vi.fn();
-const redirectMock = vi.fn((url: string) => {
-  // Next.js redirect lanza para abortar la ejecución
-  const err = new Error("NEXT_REDIRECT");
-  // marcar como redirect para que el catch interno de auth.ts lo re-lance
-  (err as Error & { url?: string }).url = url;
-  throw err;
-});
+const {
+  rateLimitMock,
+  headersMock,
+  signInWithPasswordMock,
+  resetPasswordForEmailMock,
+  getTenantByUserIdMock,
+  setTenantCookiesMock,
+  redirectMock,
+} = vi.hoisted(() => ({
+  rateLimitMock: vi.fn(),
+  headersMock: vi.fn(),
+  signInWithPasswordMock: vi.fn(),
+  resetPasswordForEmailMock: vi.fn(),
+  getTenantByUserIdMock: vi.fn(),
+  setTenantCookiesMock: vi.fn(),
+  redirectMock: vi.fn((url: string) => {
+    const err = new Error("NEXT_REDIRECT");
+    (err as Error & { url?: string }).url = url;
+    throw err;
+  }),
+}));
 
 vi.mock("@/lib/rate-limiter", async () => {
   const actual = await vi.importActual<typeof import("@/lib/rate-limiter")>("@/lib/rate-limiter");

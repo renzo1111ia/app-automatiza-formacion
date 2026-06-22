@@ -1,8 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-import path from 'path';
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -233,9 +233,9 @@ async function main() {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   // 1. Fetch all agent variants
-  const { data: variants, error: fetchErr } = await supabase.from('ai_agent_variants').select('*');
+  const { data: variants, error: fetchErr } = await supabase.from("ai_agent_variants").select("*");
   if (fetchErr || !variants) {
-    console.error('Error fetching variants:', fetchErr);
+    console.error("Error fetching variants:", fetchErr);
     return;
   }
 
@@ -243,15 +243,18 @@ async function main() {
 
   // 2. Identify the active one or the ones mentioning Virginia
   for (const variant of variants) {
-    const isVirginia = variant.prompt_text?.includes('Virginia') || variant.prompt_text?.includes('Esden') || variant.id === 'd046ccac-d1ea-4d13-a8a6-170c910b1fdf';
-    
+    const isVirginia =
+      variant.prompt_text?.includes("Virginia") ||
+      variant.prompt_text?.includes("Esden") ||
+      variant.id === "d046ccac-d1ea-4d13-a8a6-170c910b1fdf";
+
     if (isVirginia) {
       console.log(`Updating Virginia Agent Variant with ID: ${variant.id}...`);
-      
+
       const { data, error } = await supabase
-        .from('ai_agent_variants')
+        .from("ai_agent_variants")
         .update({ prompt_text: newPrompt })
-        .eq('id', variant.id)
+        .eq("id", variant.id)
         .select();
 
       if (error) {
@@ -263,28 +266,28 @@ async function main() {
   }
 
   // Also update FIX_VIRGINIA_PROMPT.sql locally so the file is updated in the git repository!
-  const sqlFilePath = path.resolve(process.cwd(), 'supabase', 'FIX_VIRGINIA_PROMPT.sql');
+  const sqlFilePath = path.resolve(process.cwd(), "supabase", "FIX_VIRGINIA_PROMPT.sql");
   try {
-    let sqlContent = fs.readFileSync(sqlFilePath, 'utf8');
+    let sqlContent = fs.readFileSync(sqlFilePath, "utf8");
     // We can replace the prompt_text content inside the SQL file
-    const startTag = 'prompt_text = $$';
-    const endTag = '$$,';
+    const startTag = "prompt_text = $$";
+    const endTag = "$$,";
     const startIndex = sqlContent.indexOf(startTag);
     const endIndex = sqlContent.indexOf(endTag, startIndex);
-    
+
     if (startIndex !== -1 && endIndex !== -1) {
       const before = sqlContent.substring(0, startIndex + startTag.length);
       const after = sqlContent.substring(endIndex);
-      const updatedSql = before + newPrompt + '\n' + after;
-      fs.writeFileSync(sqlFilePath, updatedSql, 'utf8');
-      console.log('Successfully updated local supabase/FIX_VIRGINIA_PROMPT.sql file!');
+      const updatedSql = before + newPrompt + "\n" + after;
+      fs.writeFileSync(sqlFilePath, updatedSql, "utf8");
+      console.log("Successfully updated local supabase/FIX_VIRGINIA_PROMPT.sql file!");
     }
   } catch (err) {
-    console.error('Error updating local SQL file:', err);
+    console.error("Error updating local SQL file:", err);
   }
 }
 
 // We need fs module
-import fs from 'fs';
+import fs from "fs";
 
 main();

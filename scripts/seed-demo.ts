@@ -23,7 +23,7 @@ import * as path from "path";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL ?? "demo@af.local";
 const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD;

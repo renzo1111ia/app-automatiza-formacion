@@ -51,7 +51,8 @@ export class IntegrationsRepository {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: inserted, error } = await (supabase.from("integrations") as any)
+      const { data: inserted, error } = await supabase
+        .from("integrations")
         .insert(payload)
         .select()
         .single();
@@ -66,7 +67,8 @@ export class IntegrationsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updated, error } = await (supabase.from("integrations") as any)
+      const { data: updated, error } = await supabase
+        .from("integrations")
         .update({ is_active: false })
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -107,7 +109,8 @@ export class CrmWriteAuditRepository {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: inserted, error } = await (supabase.from("crm_write_audit") as any)
+      const { data: inserted, error } = await supabase
+        .from("crm_write_audit")
         .insert(payload)
         .select()
         .single();

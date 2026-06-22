@@ -797,17 +797,7 @@ export default function AgentsPage() {
                         </div>
 
                         <div className="bg-card/20 border-border flex flex-wrap gap-3 rounded-[32px] border p-8">
-                          {(
-                            variantA.tracked_variables || [
-                              "USER_NAME",
-                              "ID_LEAD",
-                              "USER_COUNTRY",
-                              "USER_PHONE",
-                              "COURSE_NAME",
-                              "QUALIFIED",
-                              "CORRECTO",
-                            ]
-                          ).map((tag, idx) => {
+                          {(variantA.tracked_variables || []).map((tag, idx) => {
                             const isEditing = editingTag === tag;
                             const dynVars =
                               variantA.dynamic_variables &&
@@ -1157,13 +1147,13 @@ export default function AgentsPage() {
                       <div className="space-y-6">
                         <div className="flex items-center gap-4">
                           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10">
-                            <DbIcon className="h-6 w-6 text-emerald-400" />
+                            <DbIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-black tracking-tight uppercase">
+                            <h3 className="text-xl font-black tracking-tight text-slate-900 uppercase dark:text-white">
                               Biblioteca de Conocimiento
                             </h3>
-                            <p className="mt-1 text-[10px] font-black tracking-widest text-white/40 uppercase">
+                            <p className="mt-1 text-[10px] font-black tracking-widest text-slate-400 uppercase dark:text-white/40">
                               Entrena al agente con tus documentos PDF
                             </p>
                           </div>
@@ -1187,7 +1177,7 @@ export default function AgentsPage() {
                                   "group flex h-24 items-center justify-between rounded-[32px] border p-6 text-left transition-all",
                                   isSelected
                                     ? "border-emerald-500/40 bg-emerald-500/10 shadow-xl shadow-emerald-500/10"
-                                    : "border-white/5 bg-white/[0.01] hover:bg-white/[0.03]"
+                                    : "border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-white/5 dark:bg-white/[0.01] dark:hover:bg-white/[0.03]"
                                 )}
                               >
                                 <div className="flex items-center gap-4 overflow-hidden">
@@ -1196,7 +1186,7 @@ export default function AgentsPage() {
                                       "flex h-12 w-12 items-center justify-center rounded-2xl transition-all",
                                       isSelected
                                         ? "bg-emerald-500 text-white"
-                                        : "bg-white/5 text-white/20"
+                                        : "bg-slate-200 text-slate-400 dark:bg-white/5 dark:text-white/20"
                                     )}
                                   >
                                     <DbIcon className="h-6 w-6" />
@@ -1205,12 +1195,14 @@ export default function AgentsPage() {
                                     <h4
                                       className={cn(
                                         "truncate text-sm font-black tracking-tight uppercase",
-                                        isSelected ? "text-white" : "text-white/40"
+                                        isSelected
+                                          ? "text-emerald-900 dark:text-white"
+                                          : "text-slate-500 dark:text-white/40"
                                       )}
                                     >
                                       {kb.name}
                                     </h4>
-                                    <p className="truncate text-[10px] font-bold text-white/20 uppercase">
+                                    <p className="truncate text-[10px] font-bold text-slate-400 uppercase dark:text-white/20">
                                       {kb.description || "Documento indexado"}
                                     </p>
                                   </div>
@@ -1919,18 +1911,18 @@ export default function AgentsPage() {
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
-                className="absolute top-0 right-0 bottom-0 z-50 flex w-[500px] flex-col overflow-hidden border-l border-white/5 bg-slate-900 shadow-2xl"
+                className="absolute top-0 right-0 bottom-0 z-50 flex w-[500px] flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl dark:border-white/5 dark:bg-slate-900"
               >
-                <div className="flex items-center justify-between border-b border-white/5 bg-black/20 p-8">
+                <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/50 p-8 dark:border-white/5 dark:bg-black/20">
                   <div className="flex items-center gap-3">
                     <div className="bg-primary/10 border-primary/20 flex h-10 w-10 items-center justify-center rounded-xl border">
                       <Terminal className="text-primary h-5 w-5" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-black tracking-tight uppercase">
+                      <h3 className="text-lg font-black tracking-tight text-slate-900 uppercase dark:text-white">
                         Simulador Vivo
                       </h3>
-                      <p className="text-[9px] font-black tracking-widest text-white/20 uppercase">
+                      <p className="text-[9px] font-black tracking-widest text-slate-500 uppercase dark:text-white/20">
                         Prueba el Cerebro en Tiempo Real
                       </p>
                     </div>
@@ -1938,14 +1930,14 @@ export default function AgentsPage() {
                   <button
                     title="Cerrar Simulador"
                     onClick={() => setIsSimulatorOpen(false)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-white/20 transition-all hover:bg-white/5 hover:text-white"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-900 dark:text-white/20 dark:hover:bg-white/5 dark:hover:text-white"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 </div>
 
-                <div className="scrollbar-thin scrollbar-thumb-white/5 flex-1 space-y-6 overflow-y-auto p-8">
-                  <div className="space-y-3 rounded-[24px] border border-white/5 bg-white/[0.02] p-6">
+                <div className="scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/5 flex-1 space-y-6 overflow-y-auto p-8">
+                  <div className="space-y-3 rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm dark:border-white/5 dark:bg-white/[0.02]">
                     <p className="text-primary text-[10px] font-black tracking-widest uppercase">
                       Orquestación Log:
                     </p>
@@ -1966,7 +1958,7 @@ export default function AgentsPage() {
 
                   <div className="space-y-4">
                     <div className="flex justify-start">
-                      <div className="max-w-[80%] rounded-[20px] rounded-tl-none border border-white/10 bg-white/5 p-4 text-sm text-white/80">
+                      <div className="max-w-[80%] rounded-[20px] rounded-tl-none border border-slate-200 bg-slate-100 p-4 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white/80">
                         ¡Hola! Estoy configurado con tu nuevo ADN. ¿Qué quieres probar primero?
                       </div>
                     </div>
@@ -1983,7 +1975,7 @@ export default function AgentsPage() {
                             "max-w-[80%] rounded-[20px] p-4 text-sm shadow-sm",
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground rounded-tr-none"
-                              : "rounded-tl-none border border-white/10 bg-white/5 text-white/80"
+                              : "rounded-tl-none border border-slate-200 bg-slate-100 text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white/80"
                           )}
                         >
                           {msg.content}
@@ -1992,11 +1984,11 @@ export default function AgentsPage() {
                     ))}
                     {isSimLoading && (
                       <div className="flex animate-pulse justify-start">
-                        <div className="flex h-10 w-24 items-center justify-center rounded-[20px] rounded-tl-none border border-white/10 bg-white/5">
+                        <div className="flex h-10 w-24 items-center justify-center rounded-[20px] rounded-tl-none border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5">
                           <div className="flex gap-1">
-                            <div className="h-1 w-1 animate-bounce rounded-full bg-white/40" />
-                            <div className="h-1 w-1 animate-bounce rounded-full bg-white/40 [animation-delay:0.2s]" />
-                            <div className="h-1 w-1 animate-bounce rounded-full bg-white/40 [animation-delay:0.4s]" />
+                            <div className="h-1 w-1 animate-bounce rounded-full bg-slate-400 dark:bg-white/40" />
+                            <div className="h-1 w-1 animate-bounce rounded-full bg-slate-400 [animation-delay:0.2s] dark:bg-white/40" />
+                            <div className="h-1 w-1 animate-bounce rounded-full bg-slate-400 [animation-delay:0.4s] dark:bg-white/40" />
                           </div>
                         </div>
                       </div>
@@ -2027,7 +2019,7 @@ export default function AgentsPage() {
                   )}
                 </div>
 
-                <div className="border-t border-white/5 bg-black/40 p-8">
+                <div className="border-t border-slate-200 bg-slate-50/50 p-8 dark:border-white/5 dark:bg-black/40">
                   <div className="relative">
                     <input
                       title="Mensaje de prueba"
@@ -2037,7 +2029,7 @@ export default function AgentsPage() {
                       onChange={(e) => setSimInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSimSend()}
                       disabled={isSimLoading}
-                      className="focus:border-primary/40 h-14 w-full rounded-2xl border border-white/10 bg-white/5 px-6 pr-16 text-sm transition-all outline-none disabled:opacity-50"
+                      className="focus:border-primary/40 h-14 w-full rounded-2xl border border-slate-200 bg-white px-6 pr-16 text-sm text-slate-900 transition-all outline-none placeholder:text-slate-400 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white"
                     />
                     <button
                       title="Enviar mensaje de prueba"
@@ -2052,7 +2044,7 @@ export default function AgentsPage() {
                       )}
                     </button>
                   </div>
-                  <p className="mt-4 text-center text-[9px] font-black tracking-widest text-white/20 uppercase">
+                  <p className="mt-4 text-center text-[9px] font-black tracking-widest text-slate-500 uppercase dark:text-white/20">
                     La IA analizará este mensaje usando el ADN actual
                   </p>
                 </div>

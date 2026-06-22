@@ -145,7 +145,8 @@ interface IntegrationRow {
 async function doRefresh(integrationId: string): Promise<TokenState> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .select("id, crm_type, data_center, credentials_cipher, expires_at, metadata")
     .eq("id", integrationId)
     .single();
@@ -192,7 +193,8 @@ async function doRefresh(integrationId: string): Promise<TokenState> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateErr } = await (supabase.from("integrations" as any) as any)
+  const { error: updateErr } = await supabase
+    .from("integrations")
     .update(updatePayload)
     .eq("id", integrationId);
 

@@ -22,7 +22,8 @@ export async function GET(req: Request) {
 
     const supabase = await getAdminSupabaseClient();
 
-    const { data, error } = await (supabase.from("orchestration_graphs" as any) as any)
+    const { data, error } = await supabase
+      .from("orchestration_graphs")
       .select("*")
       .eq("workflow_id", workflowId)
       .single();

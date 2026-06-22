@@ -11,13 +11,13 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const tenantId = "47e84fa2-73f3-4e23-9267-1e49d4442f70";
 
 async function main() {
-    const { data: tenant } = await supabase
-        .from("tenants")
-        .select("config")
-        .eq("id", tenantId)
-        .single();
-    
-    console.log(JSON.stringify(tenant?.config?.kpis || [], null, 2));
+  const { data: tenant } = await supabase
+    .from("tenants")
+    .select("config")
+    .eq("id", tenantId)
+    .single();
+
+  console.log(JSON.stringify(tenant?.config?.kpis || [], null, 2));
 }
 
 main().catch(console.error);

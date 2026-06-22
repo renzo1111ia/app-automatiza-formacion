@@ -16,7 +16,8 @@ sprint_2b_progress: "🟢 Released v0.2.8/v0.2.9"
 sprint_3_progress: "🟢 Released v0.3.0-rc.1"
 sprint_4_progress: "🟢 Released v0.4.0"
 sprint_5_progress: "🟢 Released v0.5.1 (tag + release GitHub + RLS hardening + Zoho event-driven)"
-sprint_6_progress: "🔘 Pendiente — 🆕 Llamadas de Voz (v0.6.0) · 👤 Renzo"
+sprint_6_progress: "🟢 Completada — 🆕 Llamadas de Voz (v0.6.0) · 👤 Renzo"
+sprint_7_progress: "🟢 Completada — Refinamiento Herramientas Internas (v0.7.0) · 👤 Renzo"
 sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tests verdes (3 commits), PR sin merge aún, deploy VPS diferido a pre-deploy"
 ---
 
@@ -62,9 +63,9 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 
 | &nbsp; | &nbsp; |
 | ---: | :--- |
-| 🟢 &nbsp;**Último cerrado** | **Sprint 4 — Google Sheets** `v0.4.0` · publicado 08-06 (release + tag) |
-| 🟡 &nbsp;**Mergeado (sin tag)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · PR #25 mergeado a `developer` · deploy a staging/main diferido |
-| 🔜 &nbsp;**En cola (próximo)** | **Sprint 6 — Llamadas de Voz** `v0.6.0` · conversaciones de voz (clon WhatsApp) + lanzador `/calls` |
+| 🟢 &nbsp;**Último cerrado** | **Sprint 6 — Llamadas de Voz** `v0.6.0` · (Renzo) |
+| 🟡 &nbsp;**Mergeado (sin tag)** | **Sprint 5 — Zoho CRM entrada de leads** `v0.5.0` · PR #25 mergeado a `developer` |
+| 🔜 &nbsp;**En cola (próximo)** | **Sprint 7 — Refinamiento Herramientas** `v0.7.0` |
 | 🎯 &nbsp;**Hito MVP** | 👤 SP-4B Validación Pre-MVP (Renzo) → 🟢 **cerrado de facto** vía E2E VPS 03-06 PASS · bump **MVP GA `v0.3.0`** (tag+release) pendiente acción usuario |
 | ✅ &nbsp;**Salud** | 321/325 tests · 20/20 E2C · 0 críticos seguridad · E2E VPS 03-06 🟢 PASS |
 | 🗺️ &nbsp;**En cartera** | Llamadas de Voz · Refinamiento · Costes-LLM · Salesforce · GHL · ActiveCampaign · WhatsApp |
@@ -84,9 +85,9 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 | SP-4B               | `v0.3.0` GA         | 🟢 Cerrado (de facto)        | 👤 Validación pre-MVP (Renzo) · 🟢 vía E2E VPS 03-06 PASS · bump v0.3.0 GA pendiente acción usuario |
 | Sprint 4            | `v0.4.0`            | 🟢 Released (08-06)          | Google Sheets bidireccional · cierre formal (CLOSE-1/1.5/2/4) |
 | Sprint 5            | `v0.5.1`            | 🟢 Released (10-06)          | **Zoho CRM entrada de leads + RLS hardening (21/21 tablas) + npm cross-platform lock fix** · tag + release GitHub · PR #25 mergeado a `developer` · deploy staging/main diferido |
-| Sprint 5.7          | `v0.5.70`           | 🟡 En Desarrollo               | Output-WhatsApp (Meta WABA) · Plantillas · Logs · Envíos |
-| Sprint 6            | `v0.6.0`            | 🔘 Pendiente                 | 👤 **🆕 Llamadas de Voz** (Renzo) · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
-| Sprint 7            | `v0.7.0`            | 🔘 Pendiente                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
+| Sprint 5.7          | `v0.5.70`           | 🟢 Completada                | Output-WhatsApp (Meta WABA) · Plantillas · Logs · Envíos |
+| Sprint 6            | `v0.6.0`            | 🟢 Completada                | 👤 **🆕 Llamadas de Voz** (Renzo) · Conversaciones de Voz (clon WhatsApp) · config voz centralizada · llamadas→dashboard+Lista de Leads |
+| Sprint 7            | `v0.7.0`            | 🟢 Completada                 | 👤 Refinamiento herramientas internas (Renzo) · Simulator (lo de `/calls` voz → Sprint 6) |
 | Sprint 8            | `v0.8.0`            | 🔘 Pendiente                 | Centro de costes LLM · tracking de tokens                     |
 | Sprint 9            | `v0.9.0`            | 🔘 Pendiente                 | Salesforce adapter                                            |
 | Sprint 10           | `v0.10.0`           | 🔘 Pendiente                 | GoHighLevel adapter                                           |
@@ -132,8 +133,8 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 | Sprint                                                      | Versión     | Fechas                  | Estim           | Estado       | Notas                                              |
 | ----------------------------------------------------------- | ----------- | ----------------------- | --------------- | ------------ | -------------------------------------------------- |
 | 👤 **SP-4B — Sprint Validación Pre-MVP**                    | `v0.3.0 GA` | 16-06-2026 → 19-06-2026 | 40-55h          | 🟢 Cerrado (de facto) | QA en VPS de los Sprints 0+1+2+2B+3. **Cerrado vía run E2E VPS 03-06 PASS** · _ver nota↓_ |
-| 👤 **Sprint 6 — Llamadas de Voz** 🆕                        | `v0.6.0`    | post-Zoho               | 8-14h           | 🔘 Pendiente | Conversaciones de Voz (clon WhatsApp) + config voz + dashboard + Lista de Leads · _ver nota↓_ |
-| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.7.0`    | Post Llamadas de Voz    | 22-28h + cierre | 🔘 Pendiente | Simulator + Lanzador (NO-voz) + DEPS · _ver nota↓_ |
+| 👤 **Sprint 6 — Llamadas de Voz** 🆕                        | `v0.6.0`    | post-Zoho               | 8-14h           | 🟢 Completada | Conversaciones de Voz (clon WhatsApp) + config voz + dashboard + Lista de Leads · _ver nota↓_ |
+| 👤 **Sprint Refinamiento Herramientas Internas (post-MVP)** | `v0.7.0`    | Post Llamadas de Voz    | 22-28h + cierre | 🟢 Completada | Simulator + Lanzador (NO-voz) + DEPS · _ver nota↓_ |
 
 > **Nota fila `👤 SP-4B — Sprint Validación Pre-MVP` · Notas**: 🟢 **CERRADO DE FACTO 10-06-2026 (decisión Javi HP)** — ejecutado por **Renzo + equipo Renzo** (icono 👤). El objetivo del sprint (validación QA en VPS de los Sprints 0+1+2+2B+3) se considera cumplido por el **run autónomo E2E VPS del 03-06-2026 → 🟢 PASS** (`plans/260603-2210-e2etotal-run/`): fases bloqueantes 00-02 al 100%, ~392 tests, **0 CRIT / 0 HIGH**, 5 regresiones HIGH/CRIT de runs previos verificadas RESUELTAS en VPS (ver memoria `project-e2e-vps-run-030626`). **Salvedad de honestidad**: Phase 02 (Validación Sprint 1) y Phase 03b (Validación Sprint 2B) NO se rellenaron formalmente como plantillas individuales — su cobertura quedó absorbida en el run consolidado E2E VPS. CLOSE-1..5 formal no se ejecutó como ritual separado; el bump a `v0.3.0 GA` (tag + release) queda pendiente de acción del usuario cuando se decida la promoción. QA en VPS de los Sprints 0+1+2+2B+3 + manual humano absorbido de CLOSE-3. Detalle: [`plans/260522-1700-sprint-validacion-pre-mvp/plan.md`](260522-1700-sprint-validacion-pre-mvp/plan.md)
 >
@@ -212,9 +213,9 @@ sprint_8_progress: "🔵 Subida rama pendiente v0.8.0 — código completo + tes
 | **🎯 MVP v0.3.0 GA** (tag + release notes)                                      | —               | —                  | Javi HP + Renzo | **22-jun-2026**          |
 | Sprint 4 — Google Sheets bidireccional (`v0.4.0`) ✅ CERRADO                     | 60-100h         | **~14h 30min**     | Javi HP         | 🟢 08-jun-2026           |
 | Sprint 5 — Zoho CRM entrada de leads (`v0.5.0`) 🟡 MERGEADO                      | —               | **~6h**            | Javi HP         | 🟡 08-jun (PR #25) · deploy diferido |
-| Sprint 5.7 — Output-WhatsApp (`v0.5.70`) 🟡 EN DESARROLLO                        | 20-30h          | **15-20h**         | Javi HP         | 🟡 En progreso           |
-| **Sprint 6 — Llamadas de Voz (`v0.6.0`)** 🔜 PRÓXIMO — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h** | 👤 Renzo  | post-Zoho                |
-| Sprint 7 — Refinamiento Herramientas (`v0.7.0`) — Renzo + Javi HP               | 22-28h          | **14-18h**         | Renzo + Javi HP | post-Llamadas de Voz     |
+| Sprint 5.7 — Output-WhatsApp (`v0.5.70`) ✅ CERRADO                      | 20-30h          | **15-20h**         | Javi HP         | 🟢 Completado |
+| **Sprint 6 — Llamadas de Voz (`v0.6.0`)** ✅ CERRADO — Conversaciones de Voz + dashboard + Lista de Leads | — | **8-14h** | 👤 Renzo  | 🟢 Completado                |
+| **Sprint 7 — Refinamiento Herramientas (`v0.7.0`)** ✅ CERRADO — Simulator + Lanzador  | 22-28h          | **14-18h**         | 👤 Renzo | 🟢 Completado     |
 | Sprint 8 — Costes-LLM (`v0.8.0`)                                                | 23-31h          | **5-7h**           | Javi HP         | post-Refinamiento        |
 | Sprint 9 — Salesforce (`v0.9.0`)                                                | 60-100h         | **12-18h**         | Javi HP         | post-Costes-LLM          |
 | Sprint 10 — GoHighLevel (`v0.10.0`)                                             | 40-80h          | **8-14h**          | Javi HP         | post-Salesforce          |
@@ -495,9 +496,9 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 | Item                                | Estado       | Estim.  | ⏱ Push | ⏱ Cierre | Notas                                                  |
 | ----------------------------------- | ------------ | ------- | ------ | -------- | ------------------------------------------------------ |
-| 👤 **🚀 Sprint 6**                  | 🔘 Pendiente | 8-14h   | —      | —        | **v0.6.0** · `feature/sprint-06-llamadas-voz` · 🆕 Nuevo sprint insertado Javi HP 10-06-2026 · **Asignado a Renzo** |
-| 👤 ▸ Tareas de desarrollo (Fase 6)  | 🔘           | 8-14h   | —      | —        | Conversaciones de Voz (clon WhatsApp) + config voz centralizada + llamadas→dashboard+Lista de Leads |
-| 👤 ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🔘        | 5h 30min + bugs | — | —   | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| 👤 **🚀 Sprint 6**                  | 🟢 Completada | 8-14h   | —      | —        | **v0.6.0** · `feature/sprint-06-llamadas-voz` · 🆕 Nuevo sprint insertado Javi HP 10-06-2026 · **Asignado a Renzo** |
+| 👤 ▸ Tareas de desarrollo (Fase 6)  | 🟢           | 8-14h   | —      | —        | Conversaciones de Voz (clon WhatsApp) + config voz centralizada + llamadas→dashboard+Lista de Leads |
+| 👤 ▸ Cierre Sprint 6 (SP-7-CLOSE-1..5) | 🟢        | 5h 30min + bugs | — | —   | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
 ---
 
@@ -505,11 +506,11 @@ Si cualquier condición falla → paso 7 OMITIDO + nota en `SP-N-CLOSE-5`: "E2E 
 
 | Item                                               | Estado        | Estim.              | ⏱ Push    | ⏱ Cierre  | Notas                                                                    |
 | -------------------------------------------------- | ------------- | ------------------- | --------- | --------- | ------------------------------------------------------------------------ |
-| 👤 **🚀 Sprint 7**                                 | 🔘 Pendiente  | **18-22h + cierre** | —         | —         | **v0.7.0** · `feature/sprint-07-refinamiento-herramientas` · … _ver nota↓_ |
-| 👤 ▸ Fase 01 — Simulator persistencia (NO-voz)     | 🔘            | 8-10h               | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: persistir variables en BD (texto) + historial recarga · … _ver nota↓_ |
-| 👤 ▸ Fase 02 — Lanzador `/calls` (NO-voz)          | 🔘            | 10-12h              | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: refinamiento NO-voz del lanzador · … _ver nota↓_ |
+| 👤 **🚀 Sprint 7**                                 | 🟢 Completada  | **18-22h + cierre** | —         | —         | **v0.7.0** · `feature/sprint-07-refinamiento-herramientas` · … _ver nota↓_ |
+| 👤 ▸ Fase 01 — Simulator persistencia (NO-voz)     | 🟢            | 8-10h               | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: persistir variables en BD (texto) + historial recarga · … _ver nota↓_ |
+| 👤 ▸ Fase 02 — Lanzador `/calls` (NO-voz)          | 🟢            | 10-12h              | —         | —         | ⚠️ La parte de VOZ se MOVIÓ al Sprint 6. Aquí: refinamiento NO-voz del lanzador · … _ver nota↓_ |
 | ▸ Fase 03 — **SP-7-DEPS-AUDIT-26** Vulns prod      | 🟢 Completada | 4-6h                | ~1h 15min | ~1h 45min | 🟢 MERGEADA developer 03-06-2026 — 25→4 vulns (-84%) · ID histórico SP-7-DEPS-AUDIT-26 NO se renumera (ya en commits/CI) · … _ver nota↓_ |
-| 👤 ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5)             | 🔘            | **4h 30min + bugs** | —         | —         | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
+| 👤 ▸ Cierre Sprint 7 (SP-8-CLOSE-1..5)             | 🟢            | **4h 30min + bugs** | —         | —         | Sigue [Protocolo estándar de cierre](#protocolo-estándar-de-cierre-de-sprint-close-1-5--paso-6-condicional) |
 
 > **Nota fila `👤 🚀 Sprint 7` · Notas**: **v0.7.0** · `feature/sprint-07-refinamiento-herramientas` · **Asignado a Renzo + equipo Renzo** para Fases 01-02 (Simulator + Lanzador, parte NO-voz). **Fase 03 SP-7-DEPS-AUDIT-26 🟢 ADELANTADA Y CERRADA 02-06-2026** por Javi HP (25→4 vulns, −84%, rama `feature/sp-7-deps-audit-26`). El sprint padre estima ahora 18-22h + cierre (sin Fase 03). creado 22-05-2026 por decisión Bea + Renzo: Simulator y Lanzador `/calls` fuera del MVP. **Renumerado de Sprint 6 a Sprint 7 el 10-06-2026 (inserción Sprint 6 Llamadas de Voz).** Detalle: [`plans/260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md`](260522-1830-sprint-refinamiento-herramientas-post-mvp/plan.md)
 >
@@ -2082,8 +2083,8 @@ Aplican los gates estándar de cierre, además:
 | **Sprint 3 (v0.4.0 — cierre MVP)** | `npx playwright test` → 0 failed (6+ golden path flows) · … _ver nota↓_                               |
 | **Sprint 4 (v0.4.0)**              | Tenant conecta Google vía OAuth2 desde UI admin · … _ver nota↓_                                       |
 | **Sprint 5 (v0.5.0)**              | Tenant conecta Zoho como entrada de leads · pull leads Zoho→CRM + writeback bidireccional + audit R-014 · … _ver nota↓_ |
-| **Sprint 6 (v0.6.0)** 🆕           | (pendiente extraer del plan.md cuando se cree) — esperado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK · … _ver nota↓_ |
-| **Sprint 7 (v0.7.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: Refinamiento Herramientas Internas · … _ver nota↓_ |
+| **Sprint 6 (v0.6.0)** 🆕           | ✅ Completado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK · … _ver nota↓_ |
+| **Sprint 7 (v0.7.0)**              | ✅ Completado: Refinamiento Herramientas Internas · … _ver nota↓_ |
 | **Sprint 8 (v0.8.0)**              | Tabla `llm_usage_logs` con RLS multi-tenant funcional · … _ver nota↓_                                 |
 | **Sprint 9 (v0.9.0)**              | (pendiente extraer del plan.md cuando se cree) — esperado: tenant conecta Salesforce · … _ver nota↓_  |
 | **Sprint 10 (v0.10.0)**            | (pendiente extraer del plan.md cuando se cree) — esperado: GoHighLevel adapter · … _ver nota↓_        |
@@ -2104,9 +2105,9 @@ Aplican los gates estándar de cierre, además:
 >
 > **Nota fila `Sprint 5 (v0.5.0)` · Cierre = OK cuando...**: Tenant conecta Zoho como fuente de entrada de leads desde UI admin · pull leads Zoho→CRM interno funcional · writeback bidireccional cambios de stage → Zoho · sin duplicados (idempotencia) · sin bucle push/pull infinito · `crm_write_audit` registra todo sync (R-014, `overwrite_with_audit`) · autorelleno campos (origen, fecha_ingreso_crm, tipo_lead, país por prefijo) · RLS tenant-only · typecheck+lint+build+tests sin errores
 >
-> **Nota fila `Sprint 6 (v0.6.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree — planner genera tareas al arrancar sprint) — esperado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK + WebSocket transcripción en vivo · tests sandbox pass. **🆕 Sprint insertado 10-06-2026 (decisión Javi HP: mover Llamadas de Voz de Sprint 7 Refinamiento a sprint dedicado).**
+> **Nota fila `Sprint 6 (v0.6.0)` · Cierre = OK cuando...**: ✅ Completado: Simulator persistencia BD + voz funcional · Lanzador `/calls` real Retell SDK + WebSocket transcripción en vivo · tests sandbox pass. **🆕 Sprint insertado 10-06-2026 (decisión Javi HP: mover Llamadas de Voz de Sprint 7 Refinamiento a sprint dedicado).**
 >
-> **Nota fila `Sprint 7 (v0.7.0)` · Cierre = OK cuando...**: (pendiente extraer del plan.md cuando se cree) — esperado: Refinamiento Herramientas Internas · tareas NO-voz de Fase 01/02 Simulator/Lanzador que quedaron en Refinamiento completadas · otras herramientas internas pulidas. **Renumerado de Sprint 6 a Sprint 7 el 10-06-2026.**
+> **Nota fila `Sprint 7 (v0.7.0)` · Cierre = OK cuando...**: ✅ Completado: Refinamiento Herramientas Internas · tareas NO-voz de Fase 01/02 Simulator/Lanzador que quedaron en Refinamiento completadas · otras herramientas internas pulidas. **Renumerado de Sprint 6 a Sprint 7 el 10-06-2026.**
 >
 > **Nota fila `Sprint 8 (v0.8.0)` · Cierre = OK cuando...**: Tabla `llm_usage_logs` con RLS multi-tenant funcional · `llm-cost-tracker.ts` captura todas llamadas LangChain · `recordLlmUsage()` invocado en 5 call sites OpenAI directos · `chat_messages.metadata.token_usage` poblado para nuevos mensajes · Dashboard admin (`/admin/costs`) muestra costes por proveedor/mes + evolución tenant/semana · Vista tenant muestra sólo sus propios costes · Precios mayo 2026 (DA-4-005 cerrado) · CHANGELOG `[v0.8.0]` completo. **Renumerado de Sprint 7 a Sprint 8 el 10-06-2026.**
 >
@@ -2135,8 +2136,8 @@ Aplican los gates estándar de cierre, además:
 | **Sprint 3** (Fase 3)            | v0.3.0-rc.1      | 🟢 Completada (merged) | 22 dev (-1 movida a Sprint Costes-LLM) + 4 BUG-SEC           | 112-144h estim · ⏱ Real ~25h 42min (−80%)        | 8h + bugs       |
 | **Sprint 4** (Fase 4)            | v0.4.0           | 🟢 Completada (merged) | 6 (Google Sheets bidireccional) · SPIKE + E2E real + cierre  | 60-100h estim · ⏱ Real ~14h 30min                | ~1h 30min       |
 | **Sprint 5** (Fase 5)            | v0.5.0           | 🟢 Completada (merged) | 4 (Zoho CRM entrada de leads, bidireccional) · clon Sheets   | 10-15h realista                                  | 5h 30min + bugs |
-| **Sprint 6** (Fase 6) 🆕         | v0.6.0           | 🔘 Pendiente           | (TBD — planner genera tareas al arrancar) Llamadas de Voz    | TBD                                              | 5h 30min + bugs |
-| **Sprint 7** (Fase 7)            | v0.7.0           | 🔘 Pendiente           | 👤 Refinamiento Herramientas Internas (Renzo)                 | 18-22h + cierre                                  | 5h 30min + bugs |
+| **Sprint 6** (Fase 6) 🆕         | v0.6.0           | 🟢 Completada           | (TBD — planner genera tareas al arrancar) Llamadas de Voz    | TBD                                              | 5h 30min + bugs |
+| **Sprint 7** (Fase 7)            | v0.7.0           | 🟢 Completada           | 👤 Refinamiento Herramientas Internas (Renzo)                 | 18-22h + cierre                                  | 5h 30min + bugs |
 | **Sprint 8** (Fase 8)            | v0.8.0           | 🔘 Pendiente           | 3 (C-01, C-02, C-03 — Costes-LLM)                           | 23-31h (post-Refinamiento, antes de Salesforce)  | 5h 30min + bugs |
 | **Sprint 9** (Fase 9)            | v0.9.0           | 🔘 Pendiente           | 6 (Salesforce adapter)                                       | 60-100h                                          | 5h 30min + bugs |
 | **Sprint 10** (Fase 10)          | v0.10.0          | 🔘 Pendiente           | 5 (GoHighLevel adapter)                                      | 40-80h                                           | 5h 30min + bugs |

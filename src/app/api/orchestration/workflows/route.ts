@@ -30,7 +30,8 @@ export async function GET(req: Request) {
     if (tenantGuard) return tenantGuard;
 
     const supabase = await getAdminSupabaseClient();
-    const { data, error } = await (supabase.from("workflows" as any) as any)
+    const { data, error } = await supabase
+      .from("workflows")
       .select("*")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
@@ -73,7 +74,8 @@ export async function POST(req: Request) {
 
     // If setting as primary, unset others first
     if (isPrimary) {
-      const { error: clearError } = await (supabase.from("workflows" as any) as any)
+      const { error: clearError } = await supabase
+        .from("workflows")
         .update({ is_primary: false })
         .eq("tenant_id", tenantId);
 
@@ -83,9 +85,8 @@ export async function POST(req: Request) {
     }
 
     // 1. Create the workflow record
-    const { data: workflowData, error: workflowError } = await (
-      supabase.from("workflows" as any) as any
-    )
+    const { data: workflowData, error: workflowError } = await supabase
+      .from("workflows")
       .insert({
         tenant_id: tenantId,
         name: name,
@@ -100,9 +101,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Initialize a blank graph for this workflow
-    const { error: graphError } = await (
-      supabase.from("orchestration_graphs" as any) as any
-    ).insert({
+    const { error: graphError } = await supabase.from("orchestration_graphs").insert({
       tenant_id: tenantId,
       workflow_id: (workflowData as any).id,
       graph_data: { nodes: [], edges: [] },
@@ -137,7 +136,8 @@ export async function DELETE(req: Request) {
 
     const supabase = await getAdminSupabaseClient();
 
-    const { error } = await (supabase.from("workflows" as any) as any)
+    const { error } = await supabase
+      .from("workflows")
       .delete()
       .eq("id", id)
       .eq("tenant_id", tenantId);

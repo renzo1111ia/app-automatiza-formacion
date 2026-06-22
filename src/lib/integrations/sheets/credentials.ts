@@ -54,7 +54,8 @@ export interface SheetsIntegrationRow {
 export async function getSheetsIntegration(tenantId: string): Promise<SheetsIntegrationRow | null> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .select(
       "id, tenant_id, crm_type, is_active, app_client_id_cipher, app_client_secret_cipher, credentials_cipher, scopes, expires_at, metadata"
     )
@@ -96,7 +97,8 @@ export async function setAppCredentials(
 
   if (existing) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase.from("integrations" as any) as any)
+    const { error } = await supabase
+      .from("integrations")
       .update({
         app_client_id_cipher: cipherId,
         app_client_secret_cipher: cipherSecret,
@@ -113,7 +115,8 @@ export async function setAppCredentials(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .insert({
       tenant_id: tenantId,
       crm_type: "google_sheets",
@@ -171,7 +174,8 @@ export async function saveOAuthTokens(
   const supabase = await getAdminSupabaseClient();
   const cipher = encryptToken(JSON.stringify(tokens));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("integrations" as any) as any)
+  const { error } = await supabase
+    .from("integrations")
     .update({
       credentials_cipher: cipher,
       expires_at: tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : null,

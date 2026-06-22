@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 /**
@@ -45,6 +46,7 @@ import {
   removeFromOptOutList,
   getOptOutList,
 } from "@/lib/actions/whatsapp";
+import { getAllTrackedVariables } from "@/lib/actions/inbox";
 import type { WhatsAppDBTemplate } from "@/lib/integrations/whatsapp/client";
 
 // ---------------------------------------------------------------------------
@@ -76,20 +78,65 @@ const LEAD_FIELDS = [
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-    APPROVED: { icon: <CheckCircle2 size={12} />, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", label: "Aprobada" },
-    PENDING: { icon: <Clock size={12} />, color: "text-amber-400 bg-amber-500/10 border-amber-500/20", label: "Pendiente" },
-    REJECTED: { icon: <XCircle size={12} />, color: "text-red-400 bg-red-500/10 border-red-500/20", label: "Rechazada" },
-    PAUSED: { icon: <AlertCircle size={12} />, color: "text-slate-400 bg-slate-500/10 border-slate-500/20", label: "Pausada" },
-    sent: { icon: <CheckCircle2 size={12} />, color: "text-blue-400 bg-blue-500/10 border-blue-500/20", label: "Enviado" },
-    delivered: { icon: <CheckCircle2 size={12} />, color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20", label: "Entregado" },
-    read: { icon: <Eye size={12} />, color: "text-purple-400 bg-purple-500/10 border-purple-500/20", label: "Leído" },
-    failed: { icon: <XCircle size={12} />, color: "text-red-400 bg-red-500/10 border-red-500/20", label: "Fallido" },
-    queued: { icon: <Clock size={12} />, color: "text-slate-400 bg-slate-500/10 border-slate-500/20", label: "En cola" },
+    APPROVED: {
+      icon: <CheckCircle2 size={12} />,
+      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      label: "Aprobada",
+    },
+    PENDING: {
+      icon: <Clock size={12} />,
+      color: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+      label: "Pendiente",
+    },
+    REJECTED: {
+      icon: <XCircle size={12} />,
+      color: "text-red-400 bg-red-500/10 border-red-500/20",
+      label: "Rechazada",
+    },
+    PAUSED: {
+      icon: <AlertCircle size={12} />,
+      color: "text-slate-400 bg-slate-500/10 border-slate-500/20",
+      label: "Pausada",
+    },
+    sent: {
+      icon: <CheckCircle2 size={12} />,
+      color: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+      label: "Enviado",
+    },
+    delivered: {
+      icon: <CheckCircle2 size={12} />,
+      color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+      label: "Entregado",
+    },
+    read: {
+      icon: <Eye size={12} />,
+      color: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+      label: "Leído",
+    },
+    failed: {
+      icon: <XCircle size={12} />,
+      color: "text-red-400 bg-red-500/10 border-red-500/20",
+      label: "Fallido",
+    },
+    queued: {
+      icon: <Clock size={12} />,
+      color: "text-slate-400 bg-slate-500/10 border-slate-500/20",
+      label: "En cola",
+    },
   };
 
-  const def = map[status] ?? { icon: null, color: "text-slate-400 bg-slate-500/10 border-slate-500/20", label: status };
+  const def = map[status] ?? {
+    icon: null,
+    color: "text-slate-400 bg-slate-500/10 border-slate-500/20",
+    label: status,
+  };
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest", def.color)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase",
+        def.color
+      )}
+    >
       {def.icon}
       {def.label}
     </span>
@@ -100,9 +147,14 @@ function StatusBadge({ status }: { status: string }) {
 // Template Card with mapping editor
 // ---------------------------------------------------------------------------
 
-function TemplateCard({ template, onMappingSaved }: {
+function TemplateCard({
+  template,
+  onMappingSaved,
+  dynamicFields,
+}: {
   template: WhatsAppDBTemplate;
   onMappingSaved: () => void;
+  dynamicFields: string[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [mapping, setMapping] = useState<Record<string, string>>(template.variable_mapping ?? {});
@@ -112,7 +164,7 @@ function TemplateCard({ template, onMappingSaved }: {
   const indices = new Set<string>();
   template.components.forEach((comp) => {
     const text = (comp as unknown as { text?: string }).text ?? "";
-    const matches = [...text.matchAll(/\{\{(\d+)\}\}/g)];
+    const matches = [...text.matchAll(/\{\{([^}]+)\}\}/g)];
     matches.forEach((m) => indices.add(m[1]));
   });
   const sortedIndices = [...indices].sort((a, b) => Number(a) - Number(b));
@@ -130,20 +182,24 @@ function TemplateCard({ template, onMappingSaved }: {
   }
 
   return (
-    <div className="rounded-xl border border-white/5 bg-white/3 p-4 transition-colors hover:bg-white/5">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 transition-colors hover:bg-slate-100 dark:border-white/5 dark:bg-white/3 dark:hover:bg-white/5">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm font-bold text-white truncate">{template.name}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate font-mono text-sm font-bold text-slate-900 dark:text-white">
+              {template.name}
+            </span>
             <StatusBadge status={template.status} />
-            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{template.category}</span>
+            <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+              {template.category}
+            </span>
             <span className="text-[10px] text-slate-600">{template.language}</span>
           </div>
-          <p className="mt-0.5 text-xs text-slate-500 truncate">ID Meta: {template.meta_id}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-500">ID Meta: {template.meta_id}</p>
         </div>
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+          className="shrink-0 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
           aria-label="Expandir"
         >
           {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -153,10 +209,12 @@ function TemplateCard({ template, onMappingSaved }: {
       {expanded && (
         <div className="mt-4 space-y-3 border-t border-white/5 pt-4">
           {sortedIndices.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">Esta plantilla no tiene variables parametrizadas.</p>
+            <p className="text-xs text-slate-500 italic">
+              Esta plantilla no tiene variables parametrizadas.
+            </p>
           ) : (
             <>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+              <p className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
                 Mapeo de variables → Campo del lead
               </p>
               <div className="space-y-2">
@@ -171,12 +229,25 @@ function TemplateCard({ template, onMappingSaved }: {
                       aria-label={`Campo del lead para variable {{${idx}}}`}
                       value={mapping[idx] ?? ""}
                       onChange={(e) => setMapping((prev) => ({ ...prev, [idx]: e.target.value }))}
-                      className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+                      className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
                     >
                       <option value="">— Seleccionar campo —</option>
-                      {LEAD_FIELDS.map((f) => (
-                        <option key={f.value} value={f.value}>{f.label}</option>
-                      ))}
+                      <optgroup label="Campos Estándar">
+                        {LEAD_FIELDS.map((f) => (
+                          <option key={f.value} value={f.value}>
+                            {f.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      {dynamicFields.length > 0 && (
+                        <optgroup label="Variables de IA">
+                          {dynamicFields.map((f) => (
+                            <option key={f} value={f}>
+                              {f} (IA)
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
                 ))}
@@ -186,7 +257,7 @@ function TemplateCard({ template, onMappingSaved }: {
                 size="sm"
                 onClick={handleSave}
                 disabled={saving}
-                className="mt-2 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white"
+                className="mt-2 gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500"
               >
                 <Save size={13} />
                 {saving ? "Guardando..." : "Guardar mapeo"}
@@ -196,14 +267,20 @@ function TemplateCard({ template, onMappingSaved }: {
 
           {/* Preview of components */}
           <div className="mt-3 space-y-1">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Componentes</p>
+            <p className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase">
+              Componentes
+            </p>
             {template.components.map((comp, i) => {
               const c = comp as unknown as { type: string; text?: string; format?: string };
               return (
-                <div key={i} className="rounded bg-black/20 px-3 py-2">
-                  <span className="text-[9px] font-bold uppercase text-slate-500">{c.type}</span>
-                  {c.text && <p className="mt-0.5 text-xs text-slate-300">{c.text}</p>}
-                  {c.format && !c.text && <p className="mt-0.5 text-xs text-slate-500 italic">{c.format}</p>}
+                <div key={i} className="rounded bg-slate-100 px-3 py-2 dark:bg-black/20">
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">{c.type}</span>
+                  {c.text && (
+                    <p className="mt-0.5 text-xs text-slate-700 dark:text-slate-300">{c.text}</p>
+                  )}
+                  {c.format && !c.text && (
+                    <p className="mt-0.5 text-xs text-slate-500 italic">{c.format}</p>
+                  )}
                 </div>
               );
             })}
@@ -219,7 +296,13 @@ function TemplateCard({ template, onMappingSaved }: {
 // ---------------------------------------------------------------------------
 
 function CredentialsTab() {
-  const [form, setForm] = useState({ wabaId: "", phoneNumberId: "", accessToken: "", displayName: "", webhookVerifyToken: "" });
+  const [form, setForm] = useState({
+    wabaId: "",
+    phoneNumberId: "",
+    accessToken: "",
+    displayName: "",
+    webhookVerifyToken: "",
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -240,38 +323,66 @@ function CredentialsTab() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.wabaId || !form.phoneNumberId || !form.accessToken) {
-      toast({ variant: "error", title: "Campos requeridos", description: "WABA ID, Phone Number ID y Access Token son obligatorios." });
+    if (!form.wabaId || !form.phoneNumberId) {
+      toast({
+        variant: "error",
+        title: "Campos requeridos",
+        description: "WABA ID y Phone Number ID son obligatorios.",
+      });
       return;
     }
     setSaving(true);
     const result = await saveWABAConfig(form);
     setSaving(false);
     if (result.success) {
-      toast({ variant: "success", title: "Configuración guardada", description: "Credenciales WABA actualizadas correctamente." });
+      toast({
+        variant: "success",
+        title: "Configuración guardada",
+        description: "Credenciales WABA actualizadas correctamente.",
+      });
       setForm((prev) => ({ ...prev, accessToken: "" })); // clear sensitive field
     } else {
       toast({ variant: "error", title: "Error al guardar", description: result.error });
     }
   }
 
-  if (loading) return <div className="py-8 text-center text-sm text-slate-500">Cargando configuración...</div>;
+  if (loading)
+    return <div className="py-8 text-center text-sm text-slate-500">Cargando configuración...</div>;
 
   return (
-    <form onSubmit={handleSave} className="space-y-5 max-w-lg">
+    <form onSubmit={handleSave} className="max-w-lg space-y-5">
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-300">
-        <strong>Seguridad:</strong> El Access Token se guarda cifrado en la base de datos. Nunca lo compartas ni lo incluyas en logs.
+        <strong>Seguridad:</strong> El Access Token se guarda cifrado en la base de datos. Nunca lo
+        compartas ni lo incluyas en logs.
       </div>
 
       {[
         { id: "wabaId", label: "WABA ID", placeholder: "123456789", required: true },
         { id: "phoneNumberId", label: "Phone Number ID", placeholder: "987654321", required: true },
-        { id: "accessToken", label: "Access Token", placeholder: "EAABs... (dejar vacío para mantener el actual)", required: false },
-        { id: "displayName", label: "Nombre de pantalla (opcional)", placeholder: "Mi Empresa S.L.", required: false },
-        { id: "webhookVerifyToken", label: "Webhook Verify Token (opcional)", placeholder: "my_random_token", required: false },
+        {
+          id: "accessToken",
+          label: "Access Token",
+          placeholder: "EAABs... (dejar vacío para mantener el actual)",
+          required: false,
+        },
+        {
+          id: "displayName",
+          label: "Nombre de pantalla (opcional)",
+          placeholder: "Mi Empresa S.L.",
+          required: false,
+        },
+        {
+          id: "webhookVerifyToken",
+          label: "Webhook Verify Token (opcional)",
+          placeholder: "my_random_token",
+          required: false,
+        },
       ].map(({ id, label, placeholder, required }) => (
         <div key={id} className="space-y-1.5">
-          <Label htmlFor={`cred-${id}`} className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+          <Label
+            htmlFor={`cred-${id}`}
+            className="text-xs font-semibold tracking-widest text-slate-400 uppercase"
+          >
             {label}
           </Label>
           <Input
@@ -281,7 +392,7 @@ function CredentialsTab() {
             required={required}
             value={form[id as keyof typeof form]}
             onChange={(e) => setForm((prev) => ({ ...prev, [id]: e.target.value }))}
-            className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:border-emerald-500/50"
+            className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-emerald-500/50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-600"
           />
         </div>
       ))}
@@ -290,7 +401,7 @@ function CredentialsTab() {
         id="save-waba-credentials"
         type="submit"
         disabled={saving}
-        className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white"
+        className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500"
       >
         <Save size={14} />
         {saving ? "Guardando..." : "Guardar credenciales"}
@@ -310,13 +421,19 @@ export default function WhatsAppSettingsPage() {
   const [loadingTemplates, setLoadingTemplates] = useState(true);
   const [logs, setLogs] = useState<Awaited<ReturnType<typeof getWhatsAppLogs>>["data"]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
-  const [optOutList, setOptOutList] = useState<Awaited<ReturnType<typeof getOptOutList>>["data"]>([]);
+  const [optOutList, setOptOutList] = useState<Awaited<ReturnType<typeof getOptOutList>>["data"]>(
+    []
+  );
   const [loadingOptOut, setLoadingOptOut] = useState(false);
   const [newOptOutPhone, setNewOptOutPhone] = useState("");
   const [addingOptOut, setAddingOptOut] = useState(false);
+  const [dynamicFields, setDynamicFields] = useState<string[]>([]);
 
   useEffect(() => {
     loadTemplates();
+    getAllTrackedVariables().then((res) => {
+      if (res.success && res.data) setDynamicFields(res.data);
+    });
   }, []);
 
   useEffect(() => {
@@ -397,7 +514,7 @@ export default function WhatsAppSettingsPage() {
   return (
     <div className="w-full space-y-6 pb-10">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#25d366]">
             <svg viewBox="0 0 24 24" className="h-6 w-6 fill-white">
@@ -406,10 +523,10 @@ export default function WhatsAppSettingsPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-white">
-              WhatsApp <span className="text-emerald-400">WABA</span>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              WhatsApp <span className="text-emerald-600 dark:text-emerald-400">WABA</span>
             </h1>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+            <p className="text-xs font-semibold tracking-widest text-slate-500 uppercase">
               Configuración de plantillas y canal de salida
             </p>
           </div>
@@ -420,7 +537,7 @@ export default function WhatsAppSettingsPage() {
             id="sync-whatsapp-templates"
             onClick={handleSync}
             disabled={isPending}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white"
+            className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500"
           >
             <RefreshCw size={14} className={cn(isPending && "animate-spin")} />
             {isPending ? "Sincronizando..." : "Sincronizar desde Meta"}
@@ -429,17 +546,17 @@ export default function WhatsAppSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl border border-white/5 bg-white/3 p-1">
+      <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-white/5 dark:bg-white/3">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             id={`whatsapp-tab-${tab.id}`}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all",
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold tracking-wider uppercase transition-all",
               activeTab === tab.id
                 ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/20"
-                : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                : "text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-white/5 dark:hover:text-slate-300"
             )}
           >
             {tab.icon}
@@ -456,22 +573,36 @@ export default function WhatsAppSettingsPage() {
           {loadingTemplates ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-white/3" />
+                <div
+                  key={i}
+                  className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/3"
+                />
               ))}
             </div>
           ) : templates.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 py-16 text-center dark:border-white/10">
               <MessageSquare size={32} className="mb-3 text-slate-600" />
-              <p className="text-sm font-semibold text-slate-400">No hay plantillas sincronizadas</p>
+              <p className="text-sm font-semibold text-slate-400">
+                No hay plantillas sincronizadas
+              </p>
               <p className="mt-1 text-xs text-slate-600">
-                Haz clic en &quot;Sincronizar desde Meta&quot; para importar tus plantillas aprobadas.
+                Haz clic en &quot;Sincronizar desde Meta&quot; para importar tus plantillas
+                aprobadas.
               </p>
             </div>
           ) : (
             <>
-              <p className="text-xs text-slate-500">{templates.length} plantilla{templates.length !== 1 ? "s" : ""} encontrada{templates.length !== 1 ? "s" : ""}</p>
+              <p className="text-xs text-slate-500">
+                {templates.length} plantilla{templates.length !== 1 ? "s" : ""} encontrada
+                {templates.length !== 1 ? "s" : ""}
+              </p>
               {templates.map((t) => (
-                <TemplateCard key={t.id} template={t} onMappingSaved={loadTemplates} />
+                <TemplateCard
+                  key={t.id}
+                  template={t}
+                  onMappingSaved={loadTemplates}
+                  dynamicFields={dynamicFields}
+                />
               ))}
             </>
           )}
@@ -483,35 +614,64 @@ export default function WhatsAppSettingsPage() {
           {loadingLogs ? (
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-12 animate-pulse rounded-xl bg-white/3" />
+                <div
+                  key={i}
+                  className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/3"
+                />
               ))}
             </div>
           ) : !logs?.length ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-16 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 py-16 text-center dark:border-white/10">
               <Eye size={32} className="mb-3 text-slate-600" />
               <p className="text-sm font-semibold text-slate-400">No hay logs de envío</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-white/5">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/5">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/3">
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-widest text-slate-500">Teléfono</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-widest text-slate-500">Estado</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-widest text-slate-500">Message SID</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-widest text-slate-500">Error</th>
-                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-widest text-slate-500">Fecha</th>
+                  <tr className="border-b border-slate-200 bg-slate-50 dark:border-white/5 dark:bg-white/3">
+                    <th className="px-4 py-3 text-left font-semibold tracking-widest text-slate-500 uppercase">
+                      Teléfono
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold tracking-widest text-slate-500 uppercase">
+                      Estado
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold tracking-widest text-slate-500 uppercase">
+                      Message SID
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold tracking-widest text-slate-500 uppercase">
+                      Error
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold tracking-widest text-slate-500 uppercase">
+                      Fecha
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((log) => (
-                    <tr key={log.id} className="border-b border-white/3 hover:bg-white/3">
-                      <td className="px-4 py-3 font-mono text-white">{log.phone_to}</td>
-                      <td className="px-4 py-3"><StatusBadge status={log.status} /></td>
-                      <td className="px-4 py-3 font-mono text-slate-500 text-[10px]">{log.message_sid ?? "—"}</td>
-                      <td className="px-4 py-3 text-red-400 max-w-[200px] truncate">{log.error_message ?? "—"}</td>
+                    <tr
+                      key={log.id}
+                      className="border-b border-slate-100 hover:bg-slate-50 dark:border-white/3 dark:hover:bg-white/3"
+                    >
+                      <td className="px-4 py-3 font-mono text-slate-900 dark:text-white">
+                        {log.phone_to}
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={log.status} />
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[10px] text-slate-500">
+                        {log.message_sid ?? "—"}
+                      </td>
+                      <td className="max-w-[200px] truncate px-4 py-3 text-red-400">
+                        {log.error_message ?? "—"}
+                      </td>
                       <td className="px-4 py-3 text-slate-500">
-                        {new Date(log.created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(log.created_at).toLocaleString("es-ES", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </td>
                     </tr>
                   ))}
@@ -525,9 +685,12 @@ export default function WhatsAppSettingsPage() {
       {activeTab === "optout" && (
         <div className="space-y-6">
           {/* Add form */}
-          <form onSubmit={handleAddOptOut} className="flex gap-3 items-end max-w-lg">
+          <form onSubmit={handleAddOptOut} className="flex max-w-lg items-end gap-3">
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="optout-phone" className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <Label
+                htmlFor="optout-phone"
+                className="text-xs font-semibold tracking-widest text-slate-400 uppercase"
+              >
                 Añadir número a la blacklist
               </Label>
               <Input
@@ -536,14 +699,14 @@ export default function WhatsAppSettingsPage() {
                 placeholder="+34612345678"
                 value={newOptOutPhone}
                 onChange={(e) => setNewOptOutPhone(e.target.value)}
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-600"
               />
             </div>
             <Button
               id="add-optout-number"
               type="submit"
               disabled={addingOptOut || !newOptOutPhone.trim()}
-              className="gap-2 bg-red-600 hover:bg-red-500 text-white"
+              className="gap-2 bg-red-600 text-white hover:bg-red-500"
             >
               <Ban size={14} />
               {addingOptOut ? "Añadiendo..." : "Añadir"}
@@ -554,28 +717,39 @@ export default function WhatsAppSettingsPage() {
           {loadingOptOut ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-12 animate-pulse rounded-xl bg-white/3" />
+                <div
+                  key={i}
+                  className="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/3"
+                />
               ))}
             </div>
           ) : !optOutList?.length ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 py-12 text-center">
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 py-12 text-center dark:border-white/10">
               <Ban size={28} className="mb-3 text-slate-600" />
               <p className="text-sm font-semibold text-slate-400">Blacklist vacía</p>
-              <p className="text-xs text-slate-600 mt-1">Ningún número está en la lista de exclusión.</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Ningún número está en la lista de exclusión.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
               {optOutList.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/3 px-4 py-3">
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/5 dark:bg-white/3"
+                >
                   <div>
-                    <p className="font-mono text-sm font-semibold text-white">{entry.phone}</p>
+                    <p className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                      {entry.phone}
+                    </p>
                     <p className="text-[10px] text-slate-500">
-                      {entry.reason ?? "Sin motivo"} · {new Date(entry.opted_out_at).toLocaleDateString("es-ES")}
+                      {entry.reason ?? "Sin motivo"} ·{" "}
+                      {new Date(entry.opted_out_at).toLocaleDateString("es-ES")}
                     </p>
                   </div>
                   <button
                     onClick={() => handleRemoveOptOut(entry.phone)}
-                    className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:border-emerald-500/30 hover:text-emerald-400 transition-colors"
+                    className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-400 transition-colors hover:border-emerald-500/30 hover:text-emerald-400"
                     title="Eliminar de la blacklist"
                   >
                     <RotateCcw size={12} />

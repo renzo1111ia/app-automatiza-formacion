@@ -1,12 +1,11 @@
 # ============================================================
-# Docker Compose — Desarrollo Local (SOLO Redis)
+# Docker Compose — Desarrollo Local
 # 
 # Uso:
 #   docker-compose -f docker-compose.dev.yml up -d
 #   docker-compose -f docker-compose.dev.yml down
 #
-# Esto levanta únicamente Redis para que BullMQ funcione
-# mientras corres el dashboard con: npm run dev
+# Esto levanta Redis y MinIO para el desarrollo local
 # ============================================================
 
 version: '3.8'
@@ -35,6 +34,31 @@ services:
       - "com.af.service=redis-dev"
       - "com.af.environment=development"
 
+  minio:
+    image: minio/minio
+    container_name: af-minio-dev
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_dev_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    labels:
+      - "com.af.service=minio-dev"
+      - "com.af.environment=development"
+
 volumes:
   redis_dev_data:
     driver: local
+  minio_dev_data:
+    driver: local
+

@@ -35,23 +35,15 @@ export class GlobalLogger {
         error_code: errorCode,
       };
 
-      const { error } = await (
-        supabase.from("system_logs" as never) as unknown as {
-          insert: (data: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
-        }
-      ).insert(payload);
+      const { error } = await supabase.from("system_logs").insert(payload);
 
       if (error) {
         // If the error is about the source column missing in schema cache, retry without it
         if (error.message.includes("column") && error.message.includes("source")) {
           const { source: _s, ...payloadWithoutSource } = payload;
-          const { error: retryError } = await (
-            supabase.from("system_logs" as never) as unknown as {
-              insert: (
-                data: Record<string, unknown>
-              ) => Promise<{ error: { message: string } | null }>;
-            }
-          ).insert(payloadWithoutSource);
+          const { error: retryError } = await supabase
+            .from("system_logs")
+            .insert(payloadWithoutSource);
 
           if (retryError) {
             console.error(

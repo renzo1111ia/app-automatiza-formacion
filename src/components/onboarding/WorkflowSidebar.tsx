@@ -324,7 +324,7 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
         </button>
 
         {configOpen && (
-          <div className="animate-in slide-in-from-top-2 space-y-4 px-5 pb-5 duration-200">
+          <div className="animate-in slide-in-from-top-2 scrollbar-thin max-h-[50vh] space-y-4 overflow-y-auto px-5 pb-5 duration-200">
             {/* Time range */}
             <div className="space-y-2">
               <p className="text-[9px] font-black tracking-widest text-slate-400 uppercase dark:text-white/30">
@@ -425,38 +425,38 @@ export function WorkflowSidebar({ tenantId, selectedWorkflowId, onSelect }: Work
 
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[8px] font-black tracking-widest text-white/30 uppercase">
+                  <label className="text-[8px] font-black tracking-widest text-slate-500 uppercase dark:text-white/30">
                     Ventana (min)
                   </label>
                   <input
                     type="number"
                     value={pacingMinutes}
                     onChange={(e) => setPacingMinutes(parseInt(e.target.value))}
-                    className="h-8 w-full rounded-lg border border-white/5 bg-black/20 px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                    className="h-8 w-full rounded-lg border border-slate-200 bg-white/50 px-3 text-[10px] font-bold text-slate-900 outline-none focus:border-orange-500/40 dark:border-white/5 dark:bg-black/20 dark:text-white"
                     title="Ventana de tiempo en minutos"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[8px] font-black tracking-widest text-white/30 uppercase">
+                  <label className="text-[8px] font-black tracking-widest text-slate-500 uppercase dark:text-white/30">
                     Límite
                   </label>
                   <input
                     type="number"
                     value={messagesPerSlot}
                     onChange={(e) => setMessagesPerSlot(parseInt(e.target.value))}
-                    className="h-8 w-full rounded-lg border border-white/5 bg-black/20 px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                    className="h-8 w-full rounded-lg border border-slate-200 bg-white/50 px-3 text-[10px] font-bold text-slate-900 outline-none focus:border-orange-500/40 dark:border-white/5 dark:bg-black/20 dark:text-white"
                     title="Límite de mensajes por ventana"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[8px] font-black tracking-widest text-white/30 uppercase">
+                  <label className="text-[8px] font-black tracking-widest text-slate-500 uppercase dark:text-white/30">
                     Recordatorio (h)
                   </label>
                   <input
                     type="number"
                     value={reminderHours}
                     onChange={(e) => setReminderHours(parseInt(e.target.value))}
-                    className="h-8 w-full rounded-lg border border-white/5 bg-black/20 px-3 text-[10px] font-bold text-white outline-none focus:border-orange-500/40"
+                    className="h-8 w-full rounded-lg border border-slate-200 bg-white/50 px-3 text-[10px] font-bold text-slate-900 outline-none focus:border-orange-500/40 dark:border-white/5 dark:bg-black/20 dark:text-white"
                     title="Horas antes para enviar recordatorio"
                   />
                 </div>

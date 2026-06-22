@@ -37,7 +37,8 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from("integrations" as any) as any)
+  const { error } = await supabase
+    .from("integrations")
     .update({
       is_active: false,
       credentials_cipher: null,

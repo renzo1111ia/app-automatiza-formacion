@@ -40,7 +40,7 @@ function extractHost(rawUrl: string | null): string | null {
 function hostMatchesPattern(host: string, pattern: string): boolean {
   const normalized = pattern.trim().toLowerCase();
   if (!normalized) return false;
-  if (normalized.startsWith('*.')) {
+  if (normalized.startsWith("*.")) {
     const suffix = normalized.slice(2); // 'ejemplo.com'
     if (!suffix) return false;
     return host.endsWith(`.${suffix}`);
@@ -59,33 +59,33 @@ function hostMatchesPattern(host: string, pattern: string): boolean {
 export function validateWidgetOrigin(
   requestHeaders: { get(name: string): string | null },
   allowedDomains: string[] | null | undefined,
-  widgetId: string,
+  widgetId: string
 ): OriginCheckResult {
-  const list = (allowedDomains ?? []).filter(d => typeof d === 'string' && d.trim().length > 0);
+  const list = (allowedDomains ?? []).filter((d) => typeof d === "string" && d.trim().length > 0);
 
   // Modo LEGACY: sin allowlist configurada → ALLOW, con warning una vez por widget.
   if (list.length === 0) {
     if (!legacyWarnedWidgets.has(widgetId)) {
       legacyWarnedWidgets.add(widgetId);
       console.warn(
-        `[widget-security] widget ${widgetId} sin allowed_domains configurado — modo LEGACY (ALLOW). Configurar para hardening.`,
+        `[widget-security] widget ${widgetId} sin allowed_domains configurado — modo LEGACY (ALLOW). Configurar para hardening.`
       );
     }
     return { ok: true };
   }
 
-  const originHeader = requestHeaders.get('origin');
-  const refererHeader = requestHeaders.get('referer');
+  const originHeader = requestHeaders.get("origin");
+  const refererHeader = requestHeaders.get("referer");
   const originHost = extractHost(originHeader) ?? extractHost(refererHeader);
 
   if (!originHost) {
     return {
       ok: false,
-      reason: 'missing Origin/Referer header (allowlist enforced)',
+      reason: "missing Origin/Referer header (allowlist enforced)",
     };
   }
 
-  const matched = list.some(pattern => hostMatchesPattern(originHost, pattern));
+  const matched = list.some((pattern) => hostMatchesPattern(originHost, pattern));
   if (!matched) {
     return {
       ok: false,

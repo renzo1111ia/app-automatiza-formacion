@@ -38,16 +38,23 @@ export async function generateAIWhatsAppResponse(
     // 0. Deduplication check - Handled by Webhook Processor to avoid self-blocking
 
     // 1. Get Lead Context
-    const { data: lead } = await (supabase.from("lead" as unknown as string) as any)
-      .select("*")
-      .eq("id", leadId)
-      .single();
+    const { data: lead } = await supabase.from("lead").select("*").eq("id", leadId).single();
     if (!lead) return;
 
     // 2. Identify Active Agent & Variant
-    const agentId = (lead as any).ai_agent_id;
+    const agentId = (
+      lead as unknown as {
+        ai_agent_id?: string;
+        pais?: string;
+        telefono?: string;
+        nombre?: string;
+        email?: string;
+        metadata?: Record<string, unknown>;
+      }
+    ).ai_agent_id;
 
-    let variantQuery = (supabase.from("ai_agent_variants" as unknown as string) as any)
+    let variantQuery = supabase
+      .from("ai_agent_variants")
       .select("*")
       .eq("is_active", true)
       .neq("prompt_text", "")
@@ -59,16 +66,30 @@ export async function generateAIWhatsAppResponse(
       variantQuery = variantQuery.eq("agent_id", agentId);
     } else {
       // Fallback to first active variant of the tenant
-      const { data: tenantAgents } = await (supabase.from("ai_agents" as unknown as string) as any)
+      const { data: tenantAgents } = await supabase
+        .from("ai_agents")
         .select("id")
         .eq("tenant_id", tenantId);
-      const agentIds = (tenantAgents || []).map((a: any) => a.id);
+      const agentIds = (tenantAgents || []).map((a: { id: string }) => a.id);
       variantQuery = variantQuery.in("agent_id", agentIds);
     }
 
     let { data: variants } = await variantQuery;
 
-    if (!variants || (variants as any[]).length === 0) {
+    if (
+      !variants ||
+      (
+        variants as unknown as {
+          id?: string;
+          api_key?: string;
+          knowledge_base_ids?: string[];
+          tracked_variables?: string[];
+          dynamic_variables?: Record<string, string>;
+          prompt_text?: string;
+          model_name?: string;
+        }[]
+      ).length === 0
+    ) {
       console.warn(
         `[AI PROCESSOR] ⚠️ No active AI variant with prompt found for lead ${leadId}. Checking for ANY variant...`
       );
@@ -88,11 +109,21 @@ export async function generateAIWhatsAppResponse(
         );
         return;
       }
-      variants = anyVariants as any;
+      variants = anyVariants;
     }
 
     // Si hay varias, intentamos elegir la que tenga prompt_text más largo o simplemente la primera (que por el orden será Variant A si existe)
-    const activeVariant = (variants as any[])[0];
+    const activeVariant = (
+      variants as unknown as {
+        id?: string;
+        api_key?: string;
+        knowledge_base_ids?: string[];
+        tracked_variables?: string[];
+        dynamic_variables?: Record<string, string>;
+        prompt_text?: string;
+        model_name?: string;
+      }[]
+    )[0];
     const apiKey =
       activeVariant.api_key && activeVariant.api_key !== "your_api_key_here"
         ? activeVariant.api_key
@@ -144,7 +175,18 @@ export async function generateAIWhatsAppResponse(
             input: incomingMessage,
           });
           const embedding = embedRes.data[0].embedding;
-          const kbIds = (activeVariant as any).knowledge_base_ids || [];
+          const kbIds =
+            (
+              activeVariant as unknown as {
+                id?: string;
+                api_key?: string;
+                knowledge_base_ids?: string[];
+                tracked_variables?: string[];
+                dynamic_variables?: Record<string, string>;
+                prompt_text?: string;
+                model_name?: string;
+              }
+            ).knowledge_base_ids || [];
           const kbResults = await KnowledgeBaseService.search(tenantId, embedding, 0.4, 3, kbIds);
           return kbResults.map((r) => `- ${r.content}`).join("\n");
         } catch (kbErr) {
@@ -153,10 +195,7 @@ export async function generateAIWhatsAppResponse(
         }
       })(),
       // 6. Get Tenant WhatsApp Config
-      (supabase.from("tenants" as unknown as string) as any)
-        .select("config")
-        .eq("id", tenantId)
-        .single(),
+      supabase.from("tenants").select("config").eq("id", tenantId).single(),
       // 7. Get Lead Appointments
       AppointmentService.getLeadAppointments(leadId).catch((err) => {
         console.warn("[AI PROCESSOR] Appointments fetch skipped:", err);
@@ -169,8 +208,11 @@ export async function generateAIWhatsAppResponse(
       (supabase.from("programas") as any).select("nombre").eq("tenant_id", tenantId),
     ]);
 
-    const leadPrograms = (leadProgramsData?.data as any[]) || [];
-    const allPrograms = (allProgramsData?.data as any[]) || [];
+    const leadPrograms =
+      (leadProgramsData?.data as {
+        programas?: { nombre: string; requisitos_cualificacion: string };
+      }[]) || [];
+    const allPrograms = (allProgramsData?.data as { nombre: string }[]) || [];
     const allProgramNames = allPrograms
       .map((p) => p.nombre)
       .filter(Boolean)
@@ -185,15 +227,34 @@ export async function generateAIWhatsAppResponse(
       programRequirements += `\n\nCURSOS DISPONIBLES EN LA INSTITUCIÓN: ${allProgramNames}. Si el usuario menciona un curso, DEBE ser uno de estos, de lo contrario asume que se equivocó o no lo extraigas.`;
     }
 
-    const waConfig = (tenantData?.data as any)?.config?.whatsapp;
+    const waConfig = (
+      tenantData?.data as {
+        config?: { whatsapp?: { accessToken?: string; phoneNumberId?: string } };
+      }
+    )?.config?.whatsapp;
 
     // 🟢 EARLY TYPING INDICATOR: Trigger as soon as credentials are ready to show while AI is thinking
     if (waConfig?.accessToken && waConfig?.phoneNumberId && incomingMessageId) {
       whatsappBridge
-        .sendTypingIndicator(ensurePlusPrefix((lead as any).telefono!), incomingMessageId, {
-          accessToken: waConfig.accessToken,
-          phoneNumberId: waConfig.phoneNumberId,
-        })
+        .sendTypingIndicator(
+          ensurePlusPrefix(
+            (
+              lead as unknown as {
+                ai_agent_id?: string;
+                pais?: string;
+                telefono?: string;
+                nombre?: string;
+                email?: string;
+                metadata?: Record<string, unknown>;
+              }
+            ).telefono!
+          ),
+          incomingMessageId,
+          {
+            accessToken: waConfig.accessToken,
+            phoneNumberId: waConfig.phoneNumberId,
+          }
+        )
         .catch(() => {});
     }
 
@@ -204,16 +265,94 @@ export async function generateAIWhatsAppResponse(
     const TZ = "Europe/Madrid";
     const now = new Date();
     const leadPais =
-      (lead as any).pais &&
-      (lead as any).pais !== "Desconocido" &&
-      (lead as any).pais !== "Identificando..."
-        ? (lead as any).pais
-        : resolveCountryFromPhone((lead as any).telefono) || "Desconocido";
+      (
+        lead as unknown as {
+          ai_agent_id?: string;
+          pais?: string;
+          telefono?: string;
+          nombre?: string;
+          email?: string;
+          metadata?: Record<string, unknown>;
+        }
+      ).pais &&
+      (
+        lead as unknown as {
+          ai_agent_id?: string;
+          pais?: string;
+          telefono?: string;
+          nombre?: string;
+          email?: string;
+          metadata?: Record<string, unknown>;
+        }
+      ).pais !== "Desconocido" &&
+      (
+        lead as unknown as {
+          ai_agent_id?: string;
+          pais?: string;
+          telefono?: string;
+          nombre?: string;
+          email?: string;
+          metadata?: Record<string, unknown>;
+        }
+      ).pais !== "Identificando..."
+        ? (
+            lead as unknown as {
+              ai_agent_id?: string;
+              pais?: string;
+              telefono?: string;
+              nombre?: string;
+              email?: string;
+              metadata?: Record<string, unknown>;
+            }
+          ).pais
+        : resolveCountryFromPhone(
+            (
+              lead as unknown as {
+                ai_agent_id?: string;
+                pais?: string;
+                telefono?: string;
+                nombre?: string;
+                email?: string;
+                metadata?: Record<string, unknown>;
+              }
+            ).telefono
+          ) || "Desconocido";
     const leadTZ = getTimezoneByCountry(leadPais);
     const variableMap: Record<string, string> = {
-      nombre: (lead as any).nombre || "estudiante",
-      email: (lead as any).email || "",
-      telefono: ensurePlusPrefix((lead as any).telefono || ""),
+      nombre:
+        (
+          lead as unknown as {
+            ai_agent_id?: string;
+            pais?: string;
+            telefono?: string;
+            nombre?: string;
+            email?: string;
+            metadata?: Record<string, unknown>;
+          }
+        ).nombre || "estudiante",
+      email:
+        (
+          lead as unknown as {
+            ai_agent_id?: string;
+            pais?: string;
+            telefono?: string;
+            nombre?: string;
+            email?: string;
+            metadata?: Record<string, unknown>;
+          }
+        ).email || "",
+      telefono: ensurePlusPrefix(
+        (
+          lead as unknown as {
+            ai_agent_id?: string;
+            pais?: string;
+            telefono?: string;
+            nombre?: string;
+            email?: string;
+            metadata?: Record<string, unknown>;
+          }
+        ).telefono || ""
+      ),
       fecha: now.toLocaleDateString("es-ES", { timeZone: leadTZ }),
       hora: now.toLocaleTimeString("es-ES", { timeZone: leadTZ }),
       now: now.toLocaleString("es-ES", { timeZone: leadTZ }),
@@ -238,7 +377,18 @@ export async function generateAIWhatsAppResponse(
     });
 
     // 2. Overlay captured metadata
-    Object.entries((lead as any).metadata || {}).forEach(([k, val]) => {
+    Object.entries(
+      (
+        lead as unknown as {
+          ai_agent_id?: string;
+          pais?: string;
+          telefono?: string;
+          nombre?: string;
+          email?: string;
+          metadata?: Record<string, unknown>;
+        }
+      ).metadata || {}
+    ).forEach(([k, val]) => {
       const clean = k
         .replace(/^\{\{|\}\}$/g, "")
         .replace(/\s+/g, "")
@@ -396,8 +546,22 @@ ${conversationContext}
 
 CITAS PROGRAMADAS PARA ESTE LEAD:
 ${
-  (leadAppointments as any[]).length > 0
-    ? (leadAppointments as any[])
+  (
+    leadAppointments as {
+      id: string;
+      scheduled_at: string;
+      status: string;
+      advisors?: { name?: string };
+    }[]
+  ).length > 0
+    ? (
+        leadAppointments as {
+          id: string;
+          scheduled_at: string;
+          status: string;
+          advisors?: { name?: string };
+        }[]
+      )
         .map(
           (a) =>
             `- ID: ${a.id} | Fecha/Hora: ${new Date(a.scheduled_at).toLocaleString("es-ES", { timeZone: "Europe/Madrid" })} (Madrid) | Estado: ${a.status} | Asesor: ${a.advisors?.name || "Por asignar"}`
@@ -529,7 +693,18 @@ ${
             );
             result = JSON.stringify(res);
           } else if (name === "check_availability") {
-            const leadTimezone = getTimezoneByCountry((lead as any).pais);
+            const leadTimezone = getTimezoneByCountry(
+              (
+                lead as unknown as {
+                  ai_agent_id?: string;
+                  pais?: string;
+                  telefono?: string;
+                  nombre?: string;
+                  email?: string;
+                  metadata?: Record<string, unknown>;
+                }
+              ).pais
+            );
             const res = await AppointmentService.checkAvailability(
               tenantId,
               args.date,
@@ -589,14 +764,25 @@ ${
         }
 
         await whatsappBridge.sendTextMessage(
-          ensurePlusPrefix((lead as any).telefono),
+          ensurePlusPrefix(
+            (
+              lead as unknown as {
+                ai_agent_id?: string;
+                pais?: string;
+                telefono?: string;
+                nombre?: string;
+                email?: string;
+                metadata?: Record<string, unknown>;
+              }
+            ).telefono
+          ),
           aiResponse,
           waConfig
         );
 
         // 11b. Resilient Save to Database (Ensures visibility in Dashboard)
         // Using EXACT SAME format as Inbound messages which are working
-        const messagePayload: any = {
+        const messagePayload: Record<string, unknown> = {
           tenant_id: tenantId,
           lead_id: leadId,
           direction: "OUTBOUND",
@@ -612,7 +798,7 @@ ${
         };
 
         const stripOrder = ["metadata", "sent_by", "status", "message_type"];
-        let lastInsertError: any = null;
+        let lastInsertError: unknown = null;
 
         // Create a working copy to avoid modifying the original payload during retries
         let currentPayload = { ...messagePayload };
@@ -641,7 +827,7 @@ ${
             if (fieldToRemove) {
               const rest = { ...currentPayload };
               delete (rest as any)[fieldToRemove];
-              currentPayload = rest as any;
+              currentPayload = rest;
             } else {
               break;
             }
@@ -683,7 +869,18 @@ ${
         // 12b. Inject System Variables into metadata automatically
         const systemFacts: Record<string, string> = {
           AGENT_MESSAGE: aiResponse.substring(0, 500),
-          USER_PHONE: ensurePlusPrefix((lead as any).telefono || ""),
+          USER_PHONE: ensurePlusPrefix(
+            (
+              lead as unknown as {
+                ai_agent_id?: string;
+                pais?: string;
+                telefono?: string;
+                nombre?: string;
+                email?: string;
+                metadata?: Record<string, unknown>;
+              }
+            ).telefono || ""
+          ),
           USER_COUNTRY: variableMap.pais,
         };
 

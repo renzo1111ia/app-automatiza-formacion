@@ -56,9 +56,16 @@ export async function GET(req: Request) {
     try {
       const result = await metaWhatsAppClient.processOutbox(cfg.tenant_id, wabaConfig, 5);
       results.push({ tenantId: cfg.tenant_id, processed: result.processed, failed: result.failed });
-      log.info("Outbox processed", { tenantId: cfg.tenant_id, processed: result.processed, failed: result.failed });
+      log.info("Outbox processed", {
+        tenantId: cfg.tenant_id,
+        processed: result.processed,
+        failed: result.failed,
+      });
     } catch (e) {
-      log.error("Outbox processing failed for tenant", { tenantId: cfg.tenant_id, error: String(e) });
+      log.error("Outbox processing failed for tenant", {
+        tenantId: cfg.tenant_id,
+        error: String(e),
+      });
       results.push({ tenantId: cfg.tenant_id, processed: 0, failed: 0 });
     }
   }

@@ -105,7 +105,7 @@ export async function getWABAConfig(): Promise<{
 export async function saveWABAConfig(params: {
   wabaId: string;
   phoneNumberId: string;
-  accessToken: string;
+  accessToken?: string;
   displayName?: string;
   webhookVerifyToken?: string;
 }): Promise<{ success: boolean; error?: string }> {
@@ -113,12 +113,33 @@ export async function saveWABAConfig(params: {
   if (!tenant) return { success: false, error: "No tenant found" };
 
   const supabase = getServiceClient();
+
+  let finalAccessToken = params.accessToken;
+
+  // Si no se envía accessToken, recuperamos el actual para no sobrescribirlo con null
+  if (!finalAccessToken) {
+    const { data: existing } = await supabase
+      .from("waba_configurations")
+      .select("access_token")
+      .eq("tenant_id", tenant.id)
+      .maybeSingle();
+
+    if (existing?.access_token) {
+      finalAccessToken = existing.access_token;
+    } else {
+      return {
+        success: false,
+        error: "El Access Token es obligatorio para una nueva configuración.",
+      };
+    }
+  }
+
   const { error } = await supabase.from("waba_configurations").upsert(
     {
       tenant_id: tenant.id,
       waba_id: params.wabaId,
       phone_number_id: params.phoneNumberId,
-      access_token: params.accessToken,
+      access_token: finalAccessToken,
       display_name: params.displayName ?? null,
       webhook_verify_token: params.webhookVerifyToken ?? null,
       is_active: true,
@@ -143,7 +164,10 @@ export async function syncWhatsAppTemplatesToDB(): Promise<{
 }> {
   const cfg = await resolveConfig();
   if (!cfg) {
-    return { success: false, error: "WABA configuration not found. Please configure credentials first." };
+    return {
+      success: false,
+      error: "WABA configuration not found. Please configure credentials first.",
+    };
   }
 
   const result = await metaWhatsAppClient.syncTemplates(cfg.tenantId, cfg.wabaConfig);

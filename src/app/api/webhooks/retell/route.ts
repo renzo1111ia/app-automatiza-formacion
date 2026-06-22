@@ -78,9 +78,8 @@ export async function POST(req: Request) {
     const supabaseAdmin = getAdminSupabase();
 
     // 1. Insert formal call record in `llamadas` table for Analytics and History
-    const { error: llamadaError, data: llamadaInsertRaw } = await (
-      supabaseAdmin.from("llamadas" as any) as any
-    )
+    const { error: llamadaError, data: llamadaInsertRaw } = await supabaseAdmin
+      .from("llamadas")
       .insert({
         tenant_id: tenantId,
         id_lead: leadId,
@@ -119,23 +118,21 @@ export async function POST(req: Request) {
     }).catch((err) => console.error("[RETELL WEBHOOK] Post-Analysis Error:", err));
 
     // 3. Insert as a system log type message in the Inbox
-    const { error: insertError } = await (supabaseAdmin.from("chat_messages" as any) as any).insert(
-      {
-        tenant_id: tenantId,
-        lead_id: leadId,
-        direction: "OUTBOUND",
-        message_type: "SYSTEM_LOG",
-        content: summaryText,
-        sent_by: "Retell AI",
-        status: "DELIVERED",
-        metadata: {
-          call_id: callData.call_id,
-          recording_url: recordingUrl,
-          analysis: callAnalysis,
-          llamada_db_id: llamadaInsert?.id,
-        },
-      } as any
-    );
+    const { error: insertError } = await supabaseAdmin.from("chat_messages").insert({
+      tenant_id: tenantId,
+      lead_id: leadId,
+      direction: "OUTBOUND",
+      message_type: "SYSTEM_LOG",
+      content: summaryText,
+      sent_by: "Retell AI",
+      status: "DELIVERED",
+      metadata: {
+        call_id: callData.call_id,
+        recording_url: recordingUrl,
+        analysis: callAnalysis,
+        llamada_db_id: llamadaInsert?.id,
+      },
+    } as any);
 
     if (insertError) {
       console.error("[RETELL WEBHOOK] Failed to insert chat_message:", insertError);

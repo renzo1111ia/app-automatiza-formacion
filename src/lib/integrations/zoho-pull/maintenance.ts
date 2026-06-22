@@ -56,7 +56,8 @@ export async function renewExpiringZohoSubscriptions(): Promise<{
   const threshold = new Date(Date.now() + RENEW_MARGIN_MS).toISOString();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("zoho_sync_connections" as any) as any)
+  const { data, error } = await supabase
+    .from("zoho_sync_connections")
     .select("id, integration_id, tenant_id, subscription_expiry")
     .eq("is_active", true)
     .eq("subscription_method", "notifications_api")
@@ -121,7 +122,8 @@ export async function runZohoReconciliation(): Promise<{
   // Conexiones activas cuyo last_synced_at sea de ayer o antes, o null
   // (nunca reconciliadas). PostgREST: or() combina "<= ayer" con "is null".
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("zoho_sync_connections" as any) as any)
+  const { data, error } = await supabase
+    .from("zoho_sync_connections")
     .select("id, integration_id, tenant_id, last_synced_at")
     .eq("is_active", true)
     .or(`last_synced_at.lt.${dueThreshold},last_synced_at.is.null`);
@@ -145,7 +147,8 @@ export async function runZohoReconciliation(): Promise<{
       await reconcileConnection(conn, result);
       // Sella el cursor para que no se reconcilie de nuevo hasta mañana.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from("zoho_sync_connections" as any) as any)
+      await supabase
+        .from("zoho_sync_connections")
         .update({ last_synced_at: new Date().toISOString() })
         .eq("id", conn.id);
     } catch (err) {

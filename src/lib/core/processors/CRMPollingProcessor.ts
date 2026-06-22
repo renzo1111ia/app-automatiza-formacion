@@ -48,7 +48,8 @@ export class CRMPollingProcessor {
 
             // 3. Upsert into local DB using generic fields from the provider
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: lead, error: upsertError } = await (supabase.from("lead") as any)
+            const { data: lead, error: upsertError } = await supabase
+              .from("lead")
               .upsert(
                 {
                   tenant_id: tenant.id,

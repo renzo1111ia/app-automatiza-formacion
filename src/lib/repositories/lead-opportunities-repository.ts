@@ -98,7 +98,8 @@ export class LeadOpportunitiesRepository {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: inserted, error: insErr } = await (supabase.from(TABLE) as any)
+      const { data: inserted, error: insErr } = await supabase
+        .from(TABLE)
         .insert(payload)
         .select()
         .single();
@@ -134,7 +135,8 @@ export class LeadOpportunitiesRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updated, error } = await (supabase.from(TABLE) as any)
+      const { data: updated, error } = await supabase
+        .from(TABLE)
         .update({ is_duplicate_of: originalId })
         .eq("id", id)
         .eq("tenant_id", tenantId)
@@ -155,7 +157,8 @@ export class LeadOpportunitiesRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: updated, error } = await (supabase.from(TABLE) as any)
+      const { data: updated, error } = await supabase
+        .from(TABLE)
         .update({ estado_oportunidad: status })
         .eq("id", id)
         .eq("tenant_id", tenantId)

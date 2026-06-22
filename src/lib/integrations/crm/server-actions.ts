@@ -53,7 +53,8 @@ export async function getIntegrationByProvider(
 ): Promise<IntegrationRow | null> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .select(SELECT_COLUMNS)
     .eq("tenant_id", tenantId)
     .eq("crm_type", provider)
@@ -69,7 +70,8 @@ export async function getIntegrationById(
 ): Promise<IntegrationRow | null> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .select(SELECT_COLUMNS)
     .eq("id", id)
     .eq("tenant_id", tenantId)
@@ -81,7 +83,8 @@ export async function getIntegrationById(
 export async function listIntegrations(tenantId: string): Promise<IntegrationRow[]> {
   const supabase = await getAdminSupabaseClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase.from("integrations" as any) as any)
+  const { data, error } = await supabase
+    .from("integrations")
     .select(SELECT_COLUMNS)
     .eq("tenant_id", tenantId);
   if (error) throw new Error(`listIntegrations: ${error.message}`);
