@@ -52,7 +52,7 @@ export async function getHolidays(input: {
   const startDate = `${parsed.data.year}-01-01`;
   const endDate = `${parsed.data.year}-12-31`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
+   
   const { data, error } = await supabase
     .from("tenant_holidays")
     .select("id, tenant_id, country_code, date, name")
@@ -93,7 +93,7 @@ export async function addHoliday(input: {
   if (!tenant) return { success: false, error: "Tenant no encontrado" };
 
   const supabase = await getSupabaseServerClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
+   
   const { data, error } = await supabase
     .from("tenant_holidays")
     .insert({
@@ -184,7 +184,7 @@ export async function isBusinessDay(
   const dateStr = date.toISOString().slice(0, 10);
   const supabase = await getSupabaseServerClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar
+   
   const { data, error } = await supabase
     .from("tenant_holidays")
     .select("id")

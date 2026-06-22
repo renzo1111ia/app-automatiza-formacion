@@ -114,7 +114,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
   const supabase = await getAdminSupabaseClient();
 
   // Paso 1a — Seleccionar IDs pending ordenados por antigüedad.
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   const { data: pendingIds, error: selErr } = await supabase
     .from("zoho_writeback_outbox")
     .select("id")
@@ -122,7 +122,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
     .lt("attempts", MAX_ATTEMPTS)
     .order("created_at", { ascending: true })
     .limit(MAX_BATCH);
-  /* eslint-enable @typescript-eslint/no-explicit-any */
+   
 
   if (selErr) {
     log.error("outbox select pendientes falló", { error: selErr.message });
@@ -134,14 +134,14 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
   if (idsToClaim.length === 0) return result;
 
   // Paso 1b — Marcar como processing (solo los que siguen pending para evitar race).
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   const { data: claimed, error: claimErr } = await supabase
     .from("zoho_writeback_outbox")
     .update({ status: "processing" })
     .in("id", idsToClaim)
     .eq("status", "pending")
     .select("id, lead_id, tenant_id, changes, attempts");
-  /* eslint-enable @typescript-eslint/no-explicit-any */
+   
 
   if (claimErr) {
     log.error("outbox claim falló", { error: claimErr.message });
@@ -170,7 +170,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
         // Todo falló → reintentar más tarde (o marcar failed si alcanzó MAX_ATTEMPTS).
         const newAttempts = row.attempts + 1;
         const finalFailed = newAttempts >= MAX_ATTEMPTS;
-        /* eslint-disable @typescript-eslint/no-explicit-any */
+         
         await supabase
           .from("zoho_writeback_outbox")
           .update({
@@ -179,13 +179,13 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
             last_error: wb.errors.slice(0, 3).join("; "),
           })
           .eq("id", row.id);
-        /* eslint-enable @typescript-eslint/no-explicit-any */
+         
         result.failed++;
         continue;
       }
 
       // Al menos un campo escrito → marcar done.
-      /* eslint-disable @typescript-eslint/no-explicit-any */
+       
       await supabase
         .from("zoho_writeback_outbox")
         .update({
@@ -194,7 +194,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
           last_error: wb.errors.length > 0 ? wb.errors.join("; ") : null,
         })
         .eq("id", row.id);
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+       
 
       // R-014: audit append-only por cada campo escrito exitosamente.
       // Best-effort: no rollback del writeback si el audit falla.
@@ -214,7 +214,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
       const newAttempts = row.attempts + 1;
       const finalFailed = newAttempts >= MAX_ATTEMPTS;
 
-      /* eslint-disable @typescript-eslint/no-explicit-any */
+       
       await supabase
         .from("zoho_writeback_outbox")
         .update({
@@ -223,7 +223,7 @@ export async function runZohoWritebackOutbox(): Promise<OutboxRunResult> {
           last_error: msg,
         })
         .eq("id", row.id);
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+       
 
       result.failed++;
       result.errors.push(`lead ${row.lead_id}: ${msg}`);

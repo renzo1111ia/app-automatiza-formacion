@@ -88,7 +88,7 @@ export class AppointmentsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("appointments")
         .insert(payload)
@@ -108,7 +108,7 @@ export class AppointmentsRepository {
   ): Promise<RepoResult<Appointment>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: updated, error } = await supabase
         .from("appointments")
         .update(data)
@@ -172,7 +172,7 @@ export class CallsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("llamadas")
         .insert(payload)
@@ -210,7 +210,7 @@ export class AttemptsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("intentos_llamadas")
         .insert(payload)

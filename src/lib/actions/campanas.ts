@@ -24,7 +24,7 @@ export async function createCampaign(data: Partial<Campana>) {
       agente_llamada_id: data.agente_llamada_id || null,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: newCampaign, error } = await client
       .from("campanas")
       .insert(campaignData)

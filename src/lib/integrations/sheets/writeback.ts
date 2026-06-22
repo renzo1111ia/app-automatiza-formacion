@@ -62,7 +62,7 @@ export async function writeBackLeadChange(
   const supabase = await getAdminSupabaseClient();
 
   // 1. Localizar todas las filas de sheets que apuntan a este lead.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: rows, error } = await supabase
     .from("sheet_row_processed")
     .select(

@@ -187,7 +187,7 @@ export class AppointmentService {
         if (!isSchemaError) break;
 
         if (i < stripOrder.length) {
-          let fieldToRemove = stripOrder[i];
+          const fieldToRemove = stripOrder[i];
           delete currentData[fieldToRemove];
         } else {
           const { error: syncError } = await supabase.from("google_calendar_sync").insert({

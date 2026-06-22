@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: conn, error } = await supabase
     .from("zoho_sync_connections")
     .select("id, tenant_id, integration_id, subscription_token, is_active")

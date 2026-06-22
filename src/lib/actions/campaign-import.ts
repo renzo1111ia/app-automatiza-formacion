@@ -112,7 +112,7 @@ async function _importCampaignFromExcel(input: {
     .replace(/^-|-$/g, "")
     .slice(0, 60);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar (tabla campaigns Sprint 3)
+   
   const { data: campaign, error: campaignErr } = await supabase
     .from("campaigns")
     .insert({
@@ -185,7 +185,7 @@ async function _importCampaignFromExcel(input: {
   let skipped = 0;
 
   if (validLeads.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- typegen sin actualizar (columna tags en leads Sprint 3)
+     
     const { data: insertedRows, error: insertErr } = await supabase
       .from("leads")
       .upsert(validLeads, { onConflict: "tenant_id,telefono", ignoreDuplicates: true })

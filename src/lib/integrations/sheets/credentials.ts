@@ -53,7 +53,7 @@ export interface SheetsIntegrationRow {
  */
 export async function getSheetsIntegration(tenantId: string): Promise<SheetsIntegrationRow | null> {
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data, error } = await supabase
     .from("integrations")
     .select(
@@ -96,7 +96,7 @@ export async function setAppCredentials(
   const cipherSecret = encryptToken(creds.clientSecret.trim());
 
   if (existing) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from("integrations")
       .update({
@@ -114,7 +114,7 @@ export async function setAppCredentials(
     return existing.id;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data, error } = await supabase
     .from("integrations")
     .insert({
@@ -173,7 +173,7 @@ export async function saveOAuthTokens(
 ): Promise<void> {
   const supabase = await getAdminSupabaseClient();
   const cipher = encryptToken(JSON.stringify(tokens));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await supabase
     .from("integrations")
     .update({

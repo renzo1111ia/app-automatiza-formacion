@@ -19,7 +19,7 @@ export class ChatMemoryService {
   static async getRecentContext(leadId: string): Promise<Array<{ role: string; content: string }>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data, error } = await supabase
         .from("chat_messages")
         .select("direction, content")

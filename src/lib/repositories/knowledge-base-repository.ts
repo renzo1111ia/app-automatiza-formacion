@@ -47,7 +47,7 @@ export class KnowledgeBaseRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("knowledge_base")
         .insert(payload)
@@ -84,7 +84,7 @@ export class KnowledgeEmbeddingsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("knowledge_base_embeddings")
         .insert(payload)
@@ -119,7 +119,7 @@ export class ChatMessagesRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("chat_messages")
         .insert(payload)

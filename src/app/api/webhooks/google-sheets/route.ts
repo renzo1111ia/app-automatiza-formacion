@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: row, error } = await supabase
     .from("sheet_connections")
     .select("id, tenant_id, drive_channel_token, is_active")

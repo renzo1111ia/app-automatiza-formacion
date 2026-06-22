@@ -18,7 +18,7 @@ async function resolveApiKey(tenantId?: string): Promise<string> {
   if (tenantId) {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data } = await supabase
         .from("ai_agent_variants")
         .select("api_key")

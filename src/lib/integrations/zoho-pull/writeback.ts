@@ -110,7 +110,7 @@ export async function writeBackLeadChangeToZoho(
   const supabase = await getAdminSupabaseClient();
 
   // 1. Resolver zoho_lead_id + conexión desde zoho_lead_synced.
-  /* eslint-disable @typescript-eslint/no-explicit-any */
+   
   const { data: syncRow, error: syncErr } = await supabase
     .from("zoho_lead_synced")
     .select(
@@ -118,7 +118,7 @@ export async function writeBackLeadChangeToZoho(
     )
     .eq("lead_id", leadId)
     .maybeSingle();
-  /* eslint-enable @typescript-eslint/no-explicit-any */
+   
 
   if (syncErr) {
     log.error("Error consultando zoho_lead_synced", {

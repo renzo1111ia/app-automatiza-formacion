@@ -48,7 +48,7 @@ export class AiAgentsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("ai_agents")
         .insert(payload)
@@ -64,7 +64,7 @@ export class AiAgentsRepository {
   async update(id: string, tenantId: string, data: UpdateAiAgent): Promise<RepoResult<AiAgent>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: updated, error } = await supabase
         .from("ai_agents")
         .update(data)
@@ -133,7 +133,7 @@ export class AiAgentVariantsRepository {
   ): Promise<RepoResult<AiAgentVariant>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: result, error } = await supabase
         .from("ai_agent_variants")
         .upsert(data, { onConflict: "agent_id,is_variant_b", ignoreDuplicates: false })

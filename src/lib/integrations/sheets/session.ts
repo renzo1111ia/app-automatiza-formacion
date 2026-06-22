@@ -49,7 +49,7 @@ export async function requireCurrentTenant(): Promise<CurrentTenantInfo> {
   const activeTenantId = cookieStore.get("esden-tenant-id")?.value || null;
 
   if (activeTenantId) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: active, error: activeErr } = await admin
       .from("tenants")
       .select("id, auth_user_id")
@@ -70,7 +70,7 @@ export async function requireCurrentTenant(): Promise<CurrentTenantInfo> {
 
   // Fallback: tenant del que el usuario es dueño (clientes sin selector, o
   // cookie ausente/no autorizada).
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: tenantRow, error: tenantErr } = await admin
     .from("tenants")
     .select("id")

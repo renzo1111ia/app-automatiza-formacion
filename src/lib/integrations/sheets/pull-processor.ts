@@ -45,7 +45,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
   const supabase = await getAdminSupabaseClient();
 
   // 1. Cargar sheet_connection
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: connRow, error: connErr } = await supabase
     .from("sheet_connections")
     .select("*")
@@ -149,7 +149,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
     result.warnings += mapped.warnings.length;
 
     // 4. Idempotencia: hash == ultimo procesado?
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: existing } = await supabase
       .from("sheet_row_processed")
       .select("id, row_hash, lead_id")
@@ -170,7 +170,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         const cell = rowValues[stageColIdx];
         const cellEmpty = cell === undefined || cell === null || String(cell).trim() === "";
         if (cellEmpty) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const { data: leadRow } = await supabase
             .from("lead")
             .select("current_stage")
@@ -184,7 +184,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase
         .from("sheet_row_processed")
         .update({
@@ -222,7 +222,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         // Leer el estado actual para completar autogenerados FALTANTES sin pisar
         // los que ya tienen valor (leads históricos pre-código-nuevo: sin
         // origen/pais/fecha_ingreso_crm — BUG-4-10).
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { data: cur } = await supabase
           .from("lead")
           .select("pais, origen, tipo_lead, fecha_ingreso_crm")
@@ -254,7 +254,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         if (!c.tipo_lead) updatePayload.tipo_lead = "sheet_import";
         if (!c.fecha_ingreso_crm) updatePayload.fecha_ingreso_crm = new Date().toISOString();
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error: updErr } = await supabase
           .from("lead")
           .update(updatePayload)
@@ -279,7 +279,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         // Refrescar cualificación si la edición trae campos nuevos.
         const cualifPayload = mapped.lead_cualificacion;
         if (cualifPayload && Object.keys(cualifPayload).length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           await supabase
             .from("lead_cualificacion")
             .upsert(
@@ -290,7 +290,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
 
         // Actualizar el hash de la fila (NO re-disparamos orchestrator: no es
         // un lead nuevo, ya está en el pipeline).
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         await supabase
           .from("sheet_row_processed")
           .update({ row_hash: mapped.rowHash, last_seen_at: new Date().toISOString() })
@@ -341,7 +341,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
         leadPayload.id_lead_externo = `sheet_${conn.id.slice(0, 8)}_row_${i}`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: leadRow, error: leadErr } = await supabase
         .from("lead")
         .insert(leadPayload)
@@ -366,7 +366,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       // 6. Insertar lead_cualificacion si hay campos para ello
       const cualifPayload = mapped.lead_cualificacion;
       if (cualifPayload && Object.keys(cualifPayload).length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         await supabase.from("lead_cualificacion").insert({
           tenant_id: job.tenant_id,
           id_lead: leadId,
@@ -382,7 +382,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
       const refreshedHash = await autofillStageCell(i, rowValues, insertedStage);
 
       // 7. Registrar row processed (idempotencia)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase.from("sheet_row_processed").upsert(
         {
           sheet_connection_id: conn.id,
@@ -425,7 +425,7 @@ export async function processSheetPullJob(job: SheetPullJob): Promise<PullResult
   }
 
   // 9. Actualizar last_synced_at en la connection
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await supabase
     .from("sheet_connections")
     .update({

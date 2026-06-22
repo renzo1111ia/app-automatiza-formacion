@@ -50,7 +50,7 @@ export class IntegrationsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("integrations")
         .insert(payload)
@@ -66,7 +66,7 @@ export class IntegrationsRepository {
   async deactivate(id: string, tenantId: string): Promise<RepoResult<Integration>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: updated, error } = await supabase
         .from("integrations")
         .update({ is_active: false })
@@ -108,7 +108,7 @@ export class CrmWriteAuditRepository {
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from("crm_write_audit")
         .insert(payload)

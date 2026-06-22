@@ -61,7 +61,7 @@ export async function getZohoSyncStatusAction(): Promise<
     }
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error } = await supabase
       .from("zoho_sync_connections")
       .select("*")
@@ -108,7 +108,7 @@ export async function saveZohoSyncConfigAction(
       created_by: userId,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from("zoho_sync_connections")
       .upsert(upsertData, { onConflict: "tenant_id,integration_id" });
@@ -135,7 +135,7 @@ export async function subscribeZohoNotificationsAction(): Promise<
     // Asegurar que existe la fila en zoho_sync_connections antes de suscribir
     // (subscription.ts actualiza esa fila con los datos del channel).
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: existing } = await supabase
       .from("zoho_sync_connections")
       .select("id")
@@ -144,7 +144,7 @@ export async function subscribeZohoNotificationsAction(): Promise<
       .maybeSingle();
 
     if (!existing) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase.from("zoho_sync_connections").insert({
         tenant_id: tenantId,
         integration_id: integration.id,
@@ -193,7 +193,7 @@ export async function getZohoWebhookUrlAction(): Promise<
     if (!integration) throw new Error("Integración Zoho no encontrada para este tenant");
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error: fetchErr } = await supabase
       .from("zoho_sync_connections")
       .select("id, subscription_token")
@@ -225,7 +225,7 @@ export async function getZohoWebhookUrlAction(): Promise<
         });
         if (insertErr) throw insertErr;
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const { error: updErr } = await supabase
           .from("zoho_sync_connections")
           .update({ subscription_token: token, subscription_method: "workflow_webhook" })
@@ -257,7 +257,7 @@ export async function setManualWebhookModeAction(): Promise<
     if (!integration) throw new Error("Integración Zoho no encontrada para este tenant");
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: existing } = await supabase
       .from("zoho_sync_connections")
       .select("id, subscription_token, subscription_channel_id")
@@ -289,14 +289,14 @@ export async function setManualWebhookModeAction(): Promise<
     };
 
     if (existing) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase
         .from("zoho_sync_connections")
         .update(payload)
         .eq("tenant_id", tenantId)
         .eq("integration_id", integration.id);
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase.from("zoho_sync_connections").insert({
         ...payload,
         field_mapping: [],
@@ -323,7 +323,7 @@ export async function toggleZohoSyncActiveAction(
     if (!integration) throw new Error("Integración Zoho no encontrada para este tenant");
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from("zoho_sync_connections")
       .update({ is_active: isActive })
@@ -349,7 +349,7 @@ export async function toggleZohoWritebackAction(
     if (!integration) throw new Error("Integración Zoho no encontrada para este tenant");
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from("zoho_sync_connections")
       .update({ writeback_enabled: enabled })
@@ -412,7 +412,7 @@ export async function disconnectZohoAction(): Promise<{ ok: true } | { ok: false
     }
 
     // 2. Borrar la config de pull del tenant.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     await supabase
       .from("zoho_sync_connections")
       .delete()
@@ -430,7 +430,7 @@ export async function disconnectZohoAction(): Promise<{ ok: true } | { ok: false
     CRMFactory.invalidateProvider(integration.id);
 
     // 4. Soft-delete de la integración OAuth (mantiene row para audit).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase
       .from("integrations")
       .update({

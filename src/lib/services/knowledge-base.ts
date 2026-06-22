@@ -28,7 +28,7 @@ export class KnowledgeBaseService {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data, error } = await (
         supabase.rpc as unknown as (
           name: string,

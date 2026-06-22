@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- casts legacy Supabase, refactor pendiente en Sprint 1 tarea 2-22 */
+ 
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { LeadWebhookSchema } from "@/lib/validations/lead";

@@ -103,7 +103,7 @@ export async function processZohoLeadEvent(job: ZohoPullJob): Promise<ZohoEventR
   const supabase = await getAdminSupabaseClient();
 
   // Cargar la connection (field_mapping). Una por integración.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: connRow } = await supabase
     .from("zoho_sync_connections")
     .select("id, field_mapping")
@@ -152,7 +152,7 @@ export async function processZohoLeadEvent(job: ZohoPullJob): Promise<ZohoEventR
       const zohoModified = (raw.Modified_Time as string | undefined) ?? null;
 
       // ¿Ya sincronizado?
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: synced } = await supabase
         .from("zoho_lead_synced")
         .select("id, lead_id, zoho_modified_time")
@@ -178,7 +178,7 @@ export async function processZohoLeadEvent(job: ZohoPullJob): Promise<ZohoEventR
   }
 
   // Actualizar last_synced_at / last_sync_error de la connection.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await supabase
     .from("zoho_sync_connections")
     .update({

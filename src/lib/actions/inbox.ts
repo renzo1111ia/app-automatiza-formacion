@@ -305,7 +305,7 @@ export async function sendManualMessage(
   content: string,
   type: "TEXT" | "TEMPLATE" = "TEXT",
   languageCode: string = "es",
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   templateComponents?: any[],
   fullMappedText?: string
 ): Promise<{ success: boolean; data?: ChatMessage; error?: string }> {
@@ -324,11 +324,11 @@ export async function sendManualMessage(
     .single();
 
   if (leadError || !leadRaw) return { success: false, error: "Lead no encontrado" };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const lead = leadRaw as any;
 
   // 2. Resolve WhatsApp Config
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const conf = tenant.config as any;
   const waConfig: WhatsAppConfig = {
     accessToken: conf?.whatsapp?.accessToken,
@@ -371,7 +371,7 @@ export async function sendManualMessage(
       console.error("[INBOX] WhatsApp Send Error:", errorMsg);
 
       // Log to system_logs for the user to see
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await supabase.from("system_logs").insert({
         tenant_id: tenant.id,
         event_type: "WHATSAPP_SEND_ERROR",
@@ -465,7 +465,7 @@ export async function toggleLeadAI(
   const { error } = await (
     supabase
       .from("lead")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .update({ is_ai_enabled: enabled } as never) as any
   )
     .eq("id", leadId)
@@ -496,7 +496,7 @@ export async function assignAgentToLead(leadId: string, agentId: string | null) 
   const supabase = await getAdminSupabaseClient();
   const { error } = await (
     supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from("lead" as any) as any
   )
     .update({ ai_agent_id: agentId } as never)
@@ -526,11 +526,11 @@ export async function deleteLead(leadId: string): Promise<{ success: boolean; er
   const supabase = await getAdminSupabaseClient();
 
   // 1. Delete associated chat messages first (manual cascading if not in DB)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await supabase.from("chat_messages").delete().eq("lead_id", leadId).eq("tenant_id", tenant.id);
 
   // 2. Delete the lead
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await supabase
     .from("lead")
     .delete()
@@ -552,7 +552,7 @@ export async function deleteChatHistory(
   if (!tenant) return { success: false, error: "No tenant" };
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await supabase
     .from("chat_messages")
     .delete()
@@ -574,7 +574,7 @@ export async function deleteLeadFacts(
   if (!tenant) return { success: false, error: "No tenant" };
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await supabase
     .from("lead")
     .update({ metadata: {} } as never)
@@ -602,7 +602,7 @@ export async function updateLeadInfo(
   const supabase = await getAdminSupabaseClient();
   const { error } = await (
     supabase
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from("lead" as any) as any
   )
     .update(safeUpdates)
@@ -625,7 +625,7 @@ export async function getAgentTrackedVariables(
   if (!tenant) return { success: false, error: "No tenant" };
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let query = supabase
       .from("ai_agent_variants")
       .select("tracked_variables")
@@ -636,7 +636,7 @@ export async function getAgentTrackedVariables(
       query = query.eq("agent_id", agentId);
     } else {
       // Fallback: find any agent for this tenant
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: agents } = await supabase
         .from("ai_agents")
         .select("id")

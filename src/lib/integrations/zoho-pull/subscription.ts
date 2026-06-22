@@ -130,7 +130,7 @@ export async function subscribeZohoNotifications(integrationId: string): Promise
   });
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error } = await supabase
     .from("zoho_sync_connections")
     .update({
@@ -154,7 +154,7 @@ export async function subscribeZohoNotifications(integrationId: string): Promise
 /** Desactiva la suscripción en Zoho y limpia las columnas en BD. */
 export async function unsubscribeZohoNotifications(integrationId: string): Promise<void> {
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: conn } = await supabase
     .from("zoho_sync_connections")
     .select("subscription_channel_id")
@@ -178,7 +178,7 @@ export async function unsubscribeZohoNotifications(integrationId: string): Promi
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await supabase
     .from("zoho_sync_connections")
     .update({
@@ -200,7 +200,7 @@ export async function unsubscribeZohoNotifications(integrationId: string): Promi
  */
 export async function renewZohoNotifications(integrationId: string): Promise<SubscribeResult> {
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { data: conn } = await supabase
     .from("zoho_sync_connections")
     .select("subscription_channel_id, subscription_token")
@@ -230,7 +230,7 @@ export async function renewZohoNotifications(integrationId: string): Promise<Sub
     ],
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   await supabase
     .from("zoho_sync_connections")
     .update({ subscription_expiry: expiry, subscription_method: "notifications_api" })

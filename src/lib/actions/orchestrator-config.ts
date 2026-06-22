@@ -143,7 +143,7 @@ export async function getOrchestratorConfig(): Promise<{
     if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error } = await supabase
       .from("tenant_orchestrator_config")
       .select("config, flow_graph")
@@ -204,7 +204,7 @@ export async function saveOrchestratorConfig(
         `Config keys: ${Object.keys(mergedConfig).join(",")}`
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error } = await supabase.from("tenant_orchestrator_config").upsert(
       {
         tenant_id: tenantId,
@@ -237,7 +237,7 @@ export async function getOrchestratorConfigForTenant(
 ): Promise<TenantOrchestratorConfig> {
   try {
     const supabase = await getAdminSupabaseClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data } = await supabase
       .from("tenant_orchestrator_config")
       .select("config")

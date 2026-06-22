@@ -84,7 +84,7 @@ export class LeadsRepository implements IRepository<Lead, CreateLead, UpdateLead
     try {
       const supabase = await getAdminSupabaseClient();
       const payload = { ...data, tenant_id: tenantId };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: inserted, error } = await supabase
         .from(TABLE)
         .insert(payload)
@@ -100,7 +100,7 @@ export class LeadsRepository implements IRepository<Lead, CreateLead, UpdateLead
   async update(id: string, tenantId: string, data: UpdateLead): Promise<RepoResult<Lead>> {
     try {
       const supabase = await getAdminSupabaseClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: updated, error } = await supabase
         .from(TABLE)
         .update(data)

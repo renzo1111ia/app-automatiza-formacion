@@ -435,7 +435,7 @@ export default function VoiceAgentsPage() {
   // Load Retell/Ultravox API Key and tenant ID on mount — auto-sync if keys exist
   useEffect(() => {
     refreshConfiguration();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleFetchRetellPrompt = async (agentId: string) => {
