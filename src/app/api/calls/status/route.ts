@@ -38,11 +38,14 @@ export async function GET(req: Request) {
     const supabase = await getSupabaseServerClient();
 
     // 1. Fetch Call Log from DB first
-    const { data: callLog } = await supabase
+    const { data: callLogRaw } = await supabase
       .from("llamadas_log")
       .select("*")
       .eq("id_llamada", validCallId)
       .single();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const callLog = callLogRaw as any;
 
     if (callLog) {
       return NextResponse.json({
@@ -54,20 +57,23 @@ export async function GET(req: Request) {
     }
 
     // 2. Fetch Tenant Config for Ultravox API Key if not in DB
-    const { data: tenant, error: tenantError } = await supabase
+    const { data: tenantRaw, error: tenantError } = await supabase
       .from("tenants")
       .select("*")
       .eq("id", validTenantId)
       .single();
 
-    if (tenantError || !tenant) {
+    if (tenantError || !tenantRaw) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tenant = tenantRaw as any;
     const config = (tenant.config || {}) as Record<string, unknown>;
     const ultravox = (config.ultravox || {}) as Record<string, unknown>;
 
-    const apiKey = typeof ultravox.apiKey === "string" ? ultravox.apiKey : process.env.ULTRAVOX_API_KEY || "";
+    const apiKey =
+      typeof ultravox.apiKey === "string" ? ultravox.apiKey : process.env.ULTRAVOX_API_KEY || "";
     const ultravoxConfig: UltravoxConfig = { apiKey };
 
     if (!ultravoxConfig.apiKey) {
@@ -84,7 +90,9 @@ export async function GET(req: Request) {
       return NextResponse.json({
         success: true,
         status: "completed",
-        transcript: Array.isArray(transcriptData) ? transcriptData.map((m: { text?: string }) => m.text).join("\n") : "",
+        transcript: Array.isArray(transcriptData)
+          ? transcriptData.map((m: { text?: string }) => m.text).join("\n")
+          : "",
         recordingUrl: "",
       });
     } catch {
