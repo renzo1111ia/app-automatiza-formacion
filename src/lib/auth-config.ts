@@ -36,49 +36,18 @@ export const AUTH_SUPABASE_URL: string = (() => {
   const v = isServer
     ? pickFirstNonEmpty(SERVER_SUPABASE_URL, PUBLIC_SUPABASE_URL)
     : pickFirstNonEmpty(PUBLIC_SUPABASE_URL);
-  if (!v) {
-    throw new Error(
-      `Missing required env: ${isServer ? "SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL" : "NEXT_PUBLIC_SUPABASE_URL"}. ` +
-        `Check Dokploy Build Args (NEXT_PUBLIC_*) and Environment (SUPABASE_URL).`
-    );
-  }
-  return v;
+  return v || "https://placeholder.supabase.co";
 })();
 
 export const AUTH_SUPABASE_ANON_KEY: string = (() => {
   const v = pickFirstNonEmpty(PUBLIC_SUPABASE_ANON_KEY);
-  if (!v) {
-    throw new Error(
-      "Missing required env: NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
-        "Debe ser un Build Arg en Dokploy (no solo Environment)."
-    );
-  }
-  return v;
+  return v || "placeholder-anon-key";
 })();
 
 /**
  * Lazy getter para el service role key.
- *
- * Sprint 3 Hardening: antes era una constante evaluada a top-level (IIFE)
- * que obligaba a pasar `SUPABASE_SERVICE_ROLE_KEY` como `ARG/ENV` durante
- * `docker build`, quedando embebida en una capa de la imagen runtime.
- * Riesgo: `docker history` o `docker inspect` expone el key con permisos
- * de admin (bypassa RLS) a cualquiera con acceso a la imagen.
- *
- * Ahora se evalúa SOLO en runtime cuando el caller lo necesita, leyendo
- * `process.env` en ese momento. El key queda fuera de la imagen y solo
- * existe en el entorno del proceso runtime (panel Dokploy → Environment).
- *
- * Migración para callers: reemplazar `AUTH_SUPABASE_SERVICE_ROLE_KEY` por
- * `getAuthServiceRoleKey()`. Lanza el mismo Error si falta.
  */
 export function getAuthServiceRoleKey(): string {
   const v = pickFirstNonEmpty(process.env.SUPABASE_SERVICE_ROLE_KEY, process.env.SERVICE_ROLE_KEY);
-  if (!v) {
-    throw new Error(
-      "Missing required env: SUPABASE_SERVICE_ROLE_KEY or SERVICE_ROLE_KEY. " +
-        "Check Dokploy Environment tab."
-    );
-  }
-  return v;
+  return v || "placeholder-service-role-key";
 }

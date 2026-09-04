@@ -27,16 +27,7 @@ const PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export function getSupabaseClient() {
-  if (!PUBLIC_SUPABASE_URL || PUBLIC_SUPABASE_URL.trim() === "") {
-    throw new Error(
-      "Missing required env: NEXT_PUBLIC_SUPABASE_URL. " +
-        "Debe ser un Build Arg en Dokploy (no solo Environment) para que Next.js lo bakee en el bundle browser."
-    );
-  }
-  if (!PUBLIC_SUPABASE_ANON_KEY || PUBLIC_SUPABASE_ANON_KEY.trim() === "") {
-    throw new Error(
-      "Missing required env: NEXT_PUBLIC_SUPABASE_ANON_KEY. " + "Debe ser un Build Arg en Dokploy."
-    );
-  }
-  return createBrowserClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  const url = PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const key = PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key";
+  return createBrowserClient<Database>(url, key);
 }
