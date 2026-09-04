@@ -65,10 +65,10 @@ export function OverviewCanalDistribution({ kpi }: { kpi: KpiGenerales }) {
             <PieChart>
               <Pie
                 data={pieData}
-                cx="50%"
+                cx="40%"
                 cy="50%"
-                innerRadius={75}
-                outerRadius={100}
+                innerRadius={60}
+                outerRadius={92}
                 paddingAngle={3}
                 dataKey="value"
                 nameKey="name"
@@ -91,14 +91,24 @@ export function OverviewCanalDistribution({ kpi }: { kpi: KpiGenerales }) {
                 )}
               />
               <text
-                x="50%"
-                y="50%"
+                x="40%"
+                y="44%"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                className="fill-card-foreground font-black"
-                fontSize={24}
+                className="fill-muted-foreground font-bold tracking-wider uppercase"
+                fontSize={11}
               >
                 Canales
+              </text>
+              <text
+                x="40%"
+                y="56%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-foreground font-black"
+                fontSize={20}
+              >
+                {total.toLocaleString()}
               </text>
             </PieChart>
           </ResponsiveContainer>

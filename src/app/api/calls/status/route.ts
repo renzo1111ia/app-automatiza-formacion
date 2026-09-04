@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { retellBridge, RetellConfig } from "@/lib/integrations/retell";
+import { ultravoxBridge, UltravoxConfig } from "@/lib/integrations/ultravox";
 import { z } from "zod";
-import { Tenant } from "@/types/tenant";
 import { requireApiUser, requireTenantAccess } from "@/lib/api-auth";
 
 const statusSchema = z.object({
@@ -12,7 +11,7 @@ const statusSchema = z.object({
 
 /**
  * API: CALL STATUS (Polling)
- * Fetches current status and transcript of an active Retell AI call.
+ * Fetches current status and transcript of an active voice call via Ultravox or Supabase log.
  */
 
 export async function GET(req: Request) {
@@ -38,7 +37,23 @@ export async function GET(req: Request) {
 
     const supabase = await getSupabaseServerClient();
 
-    // 1. Fetch Tenant Config (API Keys)
+    // 1. Fetch Call Log from DB first
+    const { data: callLog } = await supabase
+      .from("llamadas_log")
+      .select("*")
+      .eq("id_llamada", validCallId)
+      .single();
+
+    if (callLog) {
+      return NextResponse.json({
+        success: true,
+        status: callLog.estado || "completed",
+        transcript: callLog.transcripcion || "",
+        recordingUrl: callLog.grabacion_url || "",
+      });
+    }
+
+    // 2. Fetch Tenant Config for Ultravox API Key if not in DB
     const { data: tenant, error: tenantError } = await supabase
       .from("tenants")
       .select("*")
@@ -49,29 +64,37 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
-    const tenantData = tenant as unknown as Tenant;
-    const config = (tenantData.config || {}) as Record<string, unknown>;
-    const retell = (config.retell || {}) as Record<string, unknown>;
+    const config = (tenant.config || {}) as Record<string, unknown>;
+    const ultravox = (config.ultravox || {}) as Record<string, unknown>;
 
-    const apiKey = typeof retell.apiKey === "string" ? retell.apiKey : "";
-    const retellConfig: RetellConfig = { apiKey };
+    const apiKey = typeof ultravox.apiKey === "string" ? ultravox.apiKey : process.env.ULTRAVOX_API_KEY || "";
+    const ultravoxConfig: UltravoxConfig = { apiKey };
 
-    if (!retellConfig.apiKey) {
-      return NextResponse.json(
-        { error: "Retell configuration incomplete for this tenant" },
-        { status: 400 }
-      );
+    if (!ultravoxConfig.apiKey) {
+      return NextResponse.json({
+        success: true,
+        status: "queued",
+        transcript: "",
+        recordingUrl: "",
+      });
     }
 
-    // 2. Fetch Call via Bridge
-    const callData = await retellBridge.getCall(validCallId, retellConfig);
-
-    return NextResponse.json({
-      success: true,
-      status: callData.call_status,
-      transcript: callData.transcript,
-      recordingUrl: callData.recording_url,
-    });
+    try {
+      const transcriptData = await ultravoxBridge.getCallTranscript(validCallId, ultravoxConfig);
+      return NextResponse.json({
+        success: true,
+        status: "completed",
+        transcript: Array.isArray(transcriptData) ? transcriptData.map((m: { text?: string }) => m.text).join("\n") : "",
+        recordingUrl: "",
+      });
+    } catch {
+      return NextResponse.json({
+        success: true,
+        status: "in-progress",
+        transcript: "",
+        recordingUrl: "",
+      });
+    }
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "An unknown error occurred";
     console.error("[API_CALL_STATUS] Error:", msg);

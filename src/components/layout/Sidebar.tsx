@@ -32,6 +32,7 @@ import {
   Sheet,
   SlidersHorizontal,
   RefreshCw,
+  Utensils,
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -103,6 +104,11 @@ const NAV_ITEMS: NavItem[] = [
     label: "Calendario",
     href: "/dashboard/calendar",
     icon: <Calendar className="h-5 w-5" strokeWidth={1.8} />,
+  },
+  {
+    label: "Pedidos & Mesas",
+    href: "/dashboard/pedidos",
+    icon: <Utensils className="h-5 w-5" strokeWidth={1.8} />,
   },
   {
     label: "Campañas",
@@ -364,18 +370,20 @@ export function Sidebar({
         >
           {!collapsed ? (
             <NextImage
-              src="/logo.png"
-              alt="App Automatiza"
-              width={180}
-              height={36}
-              className="h-9 w-auto object-contain"
+              src="/logo-login.png"
+              alt="Renton Call App"
+              width={400}
+              height={200}
+              className="w-full h-auto object-contain invert brightness-0 invert"
             />
           ) : (
-            <div className="bg-primary/10 mx-auto flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors">
-              <svg viewBox="0 0 24 24" className="text-primary h-7 w-7" fill="currentColor">
-                <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z" />
-              </svg>
-            </div>
+            <NextImage
+              src="/favicon-renton.png"
+              alt="Renton"
+              width={40}
+              height={40}
+              className="mx-auto h-9 w-9 object-contain"
+            />
           )}
           {onMobileClose && (
             <button

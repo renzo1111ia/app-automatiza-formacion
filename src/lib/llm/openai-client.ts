@@ -11,8 +11,8 @@ export function getOpenAIClient(apiKey: string) {
     baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : undefined,
     defaultHeaders: isOpenRouter
       ? {
-          "HTTP-Referer": "https://automatizaformacion.com",
-          "X-Title": "Automatiza Formacion",
+          "HTTP-Referer": "https://rentoncallapp.com",
+          "X-Title": "Renton Call App",
         }
       : undefined,
   });

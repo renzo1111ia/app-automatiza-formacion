@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { retellBridge, RetellConfig } from "@/lib/integrations/retell";
+import { ultravoxBridge, UltravoxConfig } from "@/lib/integrations/ultravox";
+import { TelephonyFactory } from "@/lib/integrations/telephony/factory";
 import { z } from "zod";
 import { Tenant } from "@/types/tenant";
 import { requireApiUser, requireTenantAccess, requireOrchestrationEnabled } from "@/lib/api-auth";
@@ -45,31 +46,42 @@ export async function POST(req: Request) {
 
     const tenantData = tenant as unknown as Tenant;
     const config = (tenantData.config || {}) as Record<string, unknown>;
-    const retell = (config.retell || {}) as Record<string, unknown>;
+    const ultravox = (config.ultravox || {}) as Record<string, unknown>;
 
-    const apiKey = typeof retell.apiKey === "string" ? retell.apiKey : "";
+    const apiKey = typeof ultravox.api_key === "string" ? ultravox.api_key : "";
     const targetAgentId =
-      agentId || (typeof retell.qualifyAgentId === "string" ? retell.qualifyAgentId : "");
-    const fromNumber = typeof retell.fromNumber === "string" ? retell.fromNumber : "";
+      agentId || (typeof ultravox.agentId === "string" ? ultravox.agentId : "");
+    const fromNumber = typeof (config.telephony as any)?.credentials?.fromNumber === "string" ? (config.telephony as any).credentials.fromNumber : "";
 
-    const retellConfig: RetellConfig = { apiKey };
+    const ultravoxConfig: UltravoxConfig = { apiKey };
 
-    if (!retellConfig.apiKey || !targetAgentId || !fromNumber) {
+    if (!ultravoxConfig.apiKey || !targetAgentId || !fromNumber) {
       return NextResponse.json(
-        { error: "Retell configuration incomplete for this tenant" },
+        { error: "Ultravox or Telephony configuration incomplete for this tenant" },
         { status: 400 }
       );
     }
 
     // 2. Trigger Call via Bridge
-    const callData = await retellBridge.createCall(
-      phoneNumber,
+    const callData = await ultravoxBridge.createAgentCall(
       targetAgentId,
-      fromNumber,
-      { source: "manual_dialer", tenant_id: tenantId },
-      {}, // No dynamic variables for manual call
-      retellConfig
+      {
+        templateContext: { source: "manual_dialer", tenant_id: tenantId },
+        medium: { twilio: {} },
+        recordingEnabled: true,
+      },
+      ultravoxConfig
     );
+    
+    if (callData.join_url) {
+      const telephonyProvider = TelephonyFactory.getProvider(tenantData.config as any);
+      await telephonyProvider.triggerCall({
+        to: phoneNumber,
+        from: fromNumber,
+        joinUrl: callData.join_url,
+        recordingEnabled: true,
+      });
+    }
 
     return NextResponse.json({ success: true, callId: callData.call_id });
   } catch (error: unknown) {

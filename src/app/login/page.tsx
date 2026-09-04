@@ -53,8 +53,8 @@ export default function LoginPage() {
         <div className="w-full max-w-[440px] px-6 py-12">
           <div className="mb-10 flex items-center justify-start">
             <NextImage
-              src="/logo.png"
-              alt="App Automatiza"
+              src="/logo-login.png"
+              alt="Renton Call App"
               width={240}
               height={64}
               className="h-16 w-auto object-contain"
@@ -103,7 +103,7 @@ export default function LoginPage() {
                   Recuperar contraseña
                 </h1>
                 <p className="mt-2 text-base font-medium text-slate-500">
-                  Ingresá tu email y te enviaremos un link para crear una nueva contraseña.
+                  Control total sobre tus agentes de IA de llamadas, agendamiento automatizado y métricas de contactabilidad en un solo lugar.
                 </p>
               </div>
 
@@ -141,7 +141,7 @@ export default function LoginPage() {
           )}
 
           <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-            © {new Date().getFullYear()} App Automatiza
+            © {new Date().getFullYear()} Renton Call App
           </p>
         </div>
       </div>
@@ -149,29 +149,29 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#f8fafc]">
+    <div className="relative flex min-h-screen items-center justify-center bg-[#120b2e]">
       <div className="w-full max-w-[440px] px-6 py-12">
-        <div className="mb-10 flex items-center justify-start">
+        <div className="-mb-4 flex items-center justify-center">
           <NextImage
-            src="/logo.png"
-            alt="App Automatiza"
-            width={240}
-            height={64}
-            className="h-16 w-auto object-contain"
+            src="/logo-login.png"
+            alt="Renton Call App"
+            width={600}
+            height={300}
+            className="w-full max-w-[280px] sm:max-w-[340px] h-auto object-contain invert brightness-0"
             priority
           />
         </div>
 
         <div className="mb-10">
-          <h1 className="text-3xl font-black tracking-tight text-[#0f172a]">Bienvenido de nuevo</h1>
-          <p className="mt-2 text-base font-medium text-slate-500">
+          <h1 className="text-3xl font-black tracking-tight text-white">Bienvenido de nuevo</h1>
+          <p className="mt-2 text-base font-medium text-slate-400">
             Ingresa tus credenciales para acceder a tu cuenta
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-bold text-slate-700">
+            <Label htmlFor="email" className="text-sm font-bold text-slate-300">
               Email
             </Label>
             <Input
@@ -181,13 +181,13 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-12 rounded-xl border-slate-200 bg-white text-slate-900 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100"
+              className="h-12 rounded-xl border-slate-700 bg-slate-800/50 text-white transition-all placeholder:text-slate-500 focus:border-amber-400 focus:ring-amber-400/20"
             />
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-sm font-bold text-slate-700">
+              <Label htmlFor="password" className="text-sm font-bold text-slate-300">
                 Contraseña
               </Label>
               <button
@@ -196,7 +196,7 @@ export default function LoginPage() {
                   setIsForgotPassword(true);
                   setError(null);
                 }}
-                className="text-sm font-bold text-blue-500 transition-colors hover:text-blue-600"
+                className="text-sm font-bold text-amber-400 transition-colors hover:text-amber-300"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -208,7 +208,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required={!isForgotPassword}
-              className="h-12 rounded-xl border-slate-200 bg-white text-slate-900 transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-100"
+              className="h-12 rounded-xl border-slate-700 bg-slate-800/50 text-white transition-all placeholder:text-slate-500 focus:border-amber-400 focus:ring-amber-400/20"
             />
           </div>
 
@@ -221,7 +221,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="h-12 w-full rounded-xl bg-[#0ea5e9] text-base font-black text-white shadow-lg shadow-blue-200/50 transition-all hover:bg-[#0284c7] active:scale-[0.98]"
+            className="h-12 w-full rounded-xl bg-amber-400 text-base font-black text-slate-900 shadow-lg shadow-amber-200/50 transition-all hover:bg-amber-500 active:scale-[0.98]"
           >
             {loading ? (
               <span className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-          © {new Date().getFullYear()} App Automatiza
+          © {new Date().getFullYear()} Renton Call App
         </p>
       </div>
     </div>

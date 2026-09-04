@@ -5,20 +5,28 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "App Automatiza",
-  description: "Dashboard de análisis de rendimiento de bots de llamadas IA",
+  title: "Renton Call App",
+  description: "Plataforma SaaS de gestión de llamadas IA, agendamiento y contactabilidad para cualquier tipo de negocio",
+  icons: {
+    icon: "/favicon-renton.png",
+    shortcut: "/favicon-renton.png",
+    apple: "/favicon-renton.png",
+  },
 };
 
 import { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { SkipLink } from "@/components/layout/SkipLink";
+import Script from "next/script";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="theme-initializer"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {

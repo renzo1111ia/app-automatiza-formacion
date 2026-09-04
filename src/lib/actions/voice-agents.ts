@@ -72,7 +72,7 @@ export async function saveVoiceAgent(agent: Partial<VoiceAgent>, tenantId: strin
       if (error) throw error;
 
       // Crear variantes iniciales por defecto A y B
-      await supabase.from("voice_agent_variants").insert([
+      await (supabase.from("voice_agent_variants") as any).insert([
         {
           agent_id: data.id,
           is_variant_b: false,
@@ -120,58 +120,37 @@ export async function saveVoiceVariant(variant: Partial<VoiceAgentVariant>) {
 /**
  * Bulk-imports Retell agents into the local voice_agents table.
  */
-export async function importRetellAgents(
+export async function importUltravoxAgents(
   tenantId: string,
-  retellAgents: {
+  ultravoxAgents: {
     id: string;
     name: string;
-    llm_id: string | null;
-    voice_id: string | null;
-    language: string;
+    systemPrompt: string;
+    model: string;
+    voice: string;
   }[],
-  retellApiKey: string
+  ultravoxApiKey: string
 ) {
   try {
-    const { getRetellAgent } = await import("./retell-sync");
     const supabase = await getAdminSupabaseClient();
 
-    console.log(`[importRetellAgents] Syncing ${retellAgents.length} agents...`);
+    console.log(`[importUltravoxAgents] Syncing ${ultravoxAgents.length} agents...`);
 
     const records: any[] = [];
-    const chunkSize = 5;
-    for (let i = 0; i < retellAgents.length; i += chunkSize) {
-      const chunk = retellAgents.slice(i, i + chunkSize);
-      const details = await Promise.all(chunk.map((a) => getRetellAgent(retellApiKey, a.id)));
+    
+    for (let i = 0; i < ultravoxAgents.length; i++) {
+      const a = ultravoxAgents[i];
 
-      for (let j = 0; j < chunk.length; j++) {
-        const a = chunk[j];
-        const detail = details[j];
-
-        const prompt = detail.success && detail.data ? detail.data.prompt : "";
-        const llmConfigRaw = detail.success && detail.data ? detail.data.llm_config : null;
-
-        let llmConfig = llmConfigRaw;
-        if (llmConfigRaw && llmConfigRaw.states) {
-          llmConfig = { ...llmConfigRaw };
-          llmConfig.states = llmConfig.states.map((s: any) => ({
-            name: s.name,
-            state_prompt: s.state_prompt,
-            edges: s.edges,
-          }));
-        }
-
-        records.push({
-          tenant_id: tenantId,
-          name: a.name || a.id,
-          provider: "RETELL",
-          provider_agent_id: a.id,
-          retell_llm_id: a.llm_id || null,
-          voice_id: a.voice_id || null,
-          prompt_text_retell: prompt,
-          retell_llm_config: llmConfig,
-          status: "ACTIVE",
-        });
-      }
+      records.push({
+        tenant_id: tenantId,
+        name: a.name || a.id,
+        provider: "ULTRAVOX",
+        provider_agent_id: a.id,
+        voice_id: a.voice || null,
+        prompt_text_retell: a.systemPrompt || "", // Usamos esta columna como almacenamiento del prompt base temporalmente
+        retell_llm_id: a.model || null, // Usamos esta para el modelo temporalmente
+        status: "ACTIVE",
+      });
     }
 
     const inserted: any[] = [];
@@ -212,15 +191,15 @@ export async function importRetellAgents(
     });
 
     if (variantRows.length > 0) {
-      await supabase
-        .from("voice_agent_variants")
+      await (supabase
+        .from("voice_agent_variants") as any)
         .upsert(variantRows, { onConflict: "agent_id,version_label,is_variant_b" });
     }
 
     revalidatePath("/dashboard/voice-agents");
-    return { success: true, imported: retellAgents.length };
+    return { success: true, imported: ultravoxAgents.length };
   } catch (error: unknown) {
-    console.error("Error importRetellAgents:", error);
+    console.error("Error importUltravoxAgents:", error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }

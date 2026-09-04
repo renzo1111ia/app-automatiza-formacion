@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import Retell from "retell-sdk";
+import { ultravoxBridge, UltravoxConfig } from "@/lib/integrations/ultravox";
 import { z } from "zod";
 import { Tenant } from "@/types/tenant";
 import { requireApiUser, requireTenantAccess } from "@/lib/api-auth";
@@ -41,9 +41,9 @@ export async function POST(req: Request) {
 
     const tenantData = tenant as unknown as Tenant;
     const config = (tenantData.config || {}) as Record<string, unknown>;
-    const retellConfig = (config.retell || {}) as Record<string, unknown>;
+    const ultravoxConfig = (config.ultravox || {}) as Record<string, unknown>;
 
-    const apiKey = typeof retellConfig.apiKey === "string" ? retellConfig.apiKey : "";
+    const apiKey = typeof ultravoxConfig.api_key === "string" ? ultravoxConfig.api_key : "";
 
     if (!apiKey) {
       return NextResponse.json(
@@ -52,19 +52,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Initialize Retell Backend Client
-    const retell = new Retell({ apiKey });
+    // 2. Create Web Call
+    const webCallResponse = await ultravoxBridge.createAgentCall(
+      agentId,
+      {
+        templateContext: { source: "web_simulator" },
+        medium: { webRTC: {} }, // Note: Ultravox might use a different medium for web, assuming webRTC or just omit
+      },
+      { apiKey }
+    );
 
-    // 3. Create Web Call
-    const webCallResponse = await retell.call.createWebCall({
-      agent_id: agentId,
-    });
-
-    console.log(`[API_WEB_CALL] Generated access token for agent ${agentId}`);
+    console.log(`[API_WEB_CALL] Generated join url for agent ${agentId}`);
 
     return NextResponse.json({
       success: true,
-      accessToken: webCallResponse.access_token,
+      joinUrl: webCallResponse.join_url,
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : "An unknown error occurred";

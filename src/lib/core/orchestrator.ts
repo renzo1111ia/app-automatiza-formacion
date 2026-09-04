@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isFeatureEnabled } from "./feature-flags";
 import { buildComplianceDecision } from "./compliance";
 import { whatsappBridge, WhatsAppConfig } from "../integrations/whatsapp";
-import { retellBridge, RetellConfig } from "../integrations/retell";
+
 import { ultravoxBridge } from "../integrations/ultravox";
 import { getAgentVariants } from "../actions/agents";
 import {
@@ -582,9 +582,8 @@ export class Orchestrator {
       await new Promise((r) => setTimeout(r, 1000));
     } else {
       // DETECT PROVIDER
-      const provider = (internalId && (vAgent as any)?.provider) || "RETELL";
-
-      if (provider === "ULTRAVOX") {
+      const provider = (internalId && (vAgent as any)?.provider) || "ULTRAVOX";
+      if (provider === "ULTRAVOX" || provider === "RETELL") {
         const uApiKey = (config as any).ultravox?.api_key;
         if (!uApiKey) {
           console.error(`[ORCHESTRATOR] Ultravox API Key missing for tenant ${tenantId}`);
@@ -625,28 +624,6 @@ export class Orchestrator {
 
         console.log(
           `[ORCHESTRATOR] Ultravox call triggered via ${(config as any).telephony?.provider}. ID: ${telRes.providerCallId}`
-        );
-      } else {
-        // DEFAULT: RETELL
-        if (!apiKey || !technicalAgentId || !fromNumber) {
-          console.error(
-            `[ORCHESTRATOR] Retell config or Technical Agent ID missing for tenant ${tenantId}`
-          );
-          return;
-        }
-
-        await retellBridge.createCall(
-          lead.telefono || "",
-          technicalAgentId,
-          fromNumber,
-          {
-            lead_id: lead.id,
-            tenant_id: tenantId,
-            agent_uuid: internalId || undefined,
-            ab_variant: variant,
-          },
-          dynamicVariables,
-          { apiKey: apiKey as string }
         );
       }
     }
@@ -1022,15 +999,34 @@ export class Orchestrator {
 
     switch (action_type) {
       case "CALL": {
-        const retellConfig: RetellConfig = { apiKey: tenantConf?.retell?.apiKey };
-        await retellBridge.createCall(
-          lead.telefono || "",
+        const uApiKey = tenantConf?.ultravox?.api_key;
+        if (!uApiKey) {
+           console.error("Ultravox configuration missing");
+           break;
+        }
+        
+        const ultravoxRes = await ultravoxBridge.createAgentCall(
           conf?.agentId,
-          tenantConf?.retell?.fromNumber,
-          { lead_id: lead.id },
-          {}, // empty dynamic variables for legacy
-          retellConfig
+          {
+            templateContext: { lead_id: lead.id },
+            medium: { twilio: {} }, 
+            recordingEnabled: true,
+          },
+          { apiKey: uApiKey }
         );
+        
+        if (ultravoxRes.join_url) {
+           const telephonyProvider = TelephonyFactory.getProvider(tenantConf as any);
+           const fromNum = tenantConf?.telephony?.credentials?.fromNumber;
+           if (fromNum) {
+             await telephonyProvider.triggerCall({
+               to: lead.telefono || "",
+               from: fromNum,
+               joinUrl: ultravoxRes.join_url,
+               recordingEnabled: true,
+             });
+           }
+        }
         break;
       }
       case "WHATSAPP": {

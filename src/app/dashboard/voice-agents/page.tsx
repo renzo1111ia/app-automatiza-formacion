@@ -25,9 +25,6 @@ import {
   Globe,
 } from "lucide-react";
 
-import { RetellIdentityPanel } from "@/components/agents/RetellIdentityPanel";
-import { RetellSettingsPanel } from "@/components/agents/RetellSettingsPanel";
-import { RetellSimulationPanel } from "@/components/agents/RetellSimulationPanel";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { cn } from "@/lib/utils";
@@ -38,17 +35,7 @@ import {
   getVoiceAgentVariants,
   saveVoiceAgent,
   saveVoiceVariant,
-  importRetellAgents,
 } from "@/lib/actions/voice-agents";
-import {
-  syncRetellResources,
-  getRetellAgent,
-  updateRetellAgentPrompt,
-  updateRetellAgent,
-  bindAgentToPhoneNumber,
-  createRetellLLM,
-  createRetellAgent,
-} from "@/lib/actions/retell-sync";
 import {
   syncUltravoxResources,
   listUltravoxAgents,
@@ -60,7 +47,7 @@ import {
 import { getActiveTenantConfig } from "@/lib/actions/tenant";
 import { VoiceAgent, VoiceAgentVariant } from "@/types/database";
 import { Tenant } from "@/types/tenant";
-import { VoiceConfigModal } from "./RetellConfigModal";
+import { UltravoxConfigPanel } from "./UltravoxConfigPanel";
 import { VoicesCatalog } from "./VoicesCatalog";
 import { toast } from "@/components/ui/toast";
 
@@ -209,10 +196,7 @@ export default function VoiceAgentsPage() {
       };
       loadVariants(selectedAgent.id);
 
-      // Auto-fetch Retell advanced configs if it's a Retell agent
-      if (selectedAgent.provider === "RETELL" && selectedAgent.provider_agent_id) {
-        handleFetchRetellPrompt(selectedAgent.provider_agent_id);
-      }
+
     }
   }, [selectedAgent, retellApiKey]);
 
@@ -232,50 +216,7 @@ export default function VoiceAgentsPage() {
     }
   };
 
-  const handleSyncRetellResources = async (keyOverride?: string, showToast = false) => {
-    const key = keyOverride || retellApiKey;
-    if (!key) {
-      if (showToast)
-        toast({
-          variant: "error",
-          title: "Error",
-          description: "No hay API Key de Retell configurada.",
-        });
-      return;
-    }
-    setIsSyncing(true);
-    try {
-      const res = await syncRetellResources(key);
-      if (res.success && res.data) {
-        setAvailableAgents(res.data.agents);
-        setAvailableNumbers(res.data.numbers);
-        setAvailableVoices(res.data.voices);
-        if (showToast)
-          toast({
-            variant: "success",
-            title: "Sincronización completa",
-            description: "Voces y agentes de Retell actualizados.",
-          });
-      } else {
-        if (showToast)
-          toast({
-            variant: "error",
-            title: "Error",
-            description: "Error al sincronizar con Retell.",
-          });
-      }
-    } catch (e) {
-      console.error("[Retell Sync] Error:", e);
-      if (showToast)
-        toast({
-          variant: "error",
-          title: "Error",
-          description: "Fallo de conexión al sincronizar.",
-        });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+
 
   const handleSyncUltravoxResources = async (keyOverride?: string, showToast = false) => {
     const key = keyOverride || ultravoxApiKey;
@@ -338,39 +279,7 @@ export default function VoiceAgentsPage() {
     }
   };
 
-  const handleImportRetellAgents = async (specificAgent?: VoiceAgent) => {
-    const agentsToImport = specificAgent
-      ? availableAgents.filter((a) => a.id === specificAgent.provider_agent_id)
-      : availableAgents;
 
-    if (!tenantId || agentsToImport.length === 0 || !retellApiKey) return;
-    setIsImporting(true);
-    try {
-      const res = await importRetellAgents(tenantId, agentsToImport, retellApiKey);
-      if (res.success) {
-        if (specificAgent) {
-          toast({
-            variant: "success",
-            title: "Agente sincronizado",
-            description: `Datos de "${specificAgent.name}" sincronizados correctamente.`,
-          });
-        } else {
-          toast({
-            variant: "success",
-            title: "Agentes importados",
-            description: `Importados/Actualizados: ${res.imported} agentes.`,
-          });
-        }
-        loadAgents(tenantId); // Refresh the left panel
-      } else {
-        toast({ variant: "error", title: "Error al importar", description: res.error });
-      }
-    } catch (e) {
-      toast({ variant: "error", title: "Error inesperado al importar", description: String(e) });
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   const [availableProviders, setAvailableProviders] = useState<string[]>([]);
   const [ultravoxApiKey, setUltravoxApiKey] = useState("");
@@ -402,14 +311,6 @@ export default function VoiceAgentsPage() {
     const uKey = config.ultravox?.api_key || "";
 
     const providers: string[] = [];
-    if (rKey) {
-      providers.push("RETELL");
-      setRetellApiKey(rKey);
-      handleSyncRetellResources(rKey);
-    } else {
-      setRetellApiKey("");
-    }
-
     if (uKey) {
       providers.push("ULTRAVOX");
       setUltravoxApiKey(uKey);
@@ -438,26 +339,7 @@ export default function VoiceAgentsPage() {
      
   }, []);
 
-  const handleFetchRetellPrompt = async (agentId: string) => {
-    if (!retellApiKey || !agentId) return;
-    setIsSyncing(true);
-    const res = await getRetellAgent(retellApiKey, agentId);
-    if (res.success && res.data) {
-      const d = res.data;
-      setEditingAgentData((prev) => ({
-        ...prev,
-        ...(d._raw as Record<string, any>),
-        // Auto-fill name from Retell agent_name if user hasn't typed one yet
-        name: prev.name?.trim() ? prev.name : d.agent_name || prev.name || "",
-        prompt_text_retell: d.prompt,
-        retell_llm_id: d.llm_id,
-        voice_id: d.voice_id || prev.voice_id,
-      }));
-      // Mirror prompt to variant A
-      setVariantA((prev) => ({ ...prev, prompt_text: d.prompt }));
-    }
-    setIsSyncing(false);
-  };
+
 
   const handleCreateOrUpdateAgent = async () => {
     if (!editingAgentData.name?.trim()) return;
@@ -465,98 +347,10 @@ export default function VoiceAgentsPage() {
 
     let agentDataToSave = { ...editingAgentData };
 
-    // 0. AUTO-CREATE IN RETELL: If no provider_agent_id, create LLM + Agent from scratch
-    if (
-      retellApiKey &&
-      editingAgentData.provider === "RETELL" &&
-      !editingAgentData.provider_agent_id &&
-      editingAgentData.voice_id
-    ) {
-      const prompt = variantA.prompt_text || "";
-
-      // Step A: Create the LLM with the prompt
-      const llmRes = await createRetellLLM(retellApiKey, prompt);
-      if (!llmRes.success || !llmRes.data?.llm_id) {
-        toast({
-          variant: "error",
-          title: "Error creando LLM en Retell",
-          description: llmRes.error,
-        });
-        setSaving(false);
-        return;
-      }
-
-      // Step B: Create the Agent pointing to that LLM
-      const agentRes = await createRetellAgent(retellApiKey, {
-        llm_id: llmRes.data.llm_id,
-        agent_name: editingAgentData.name!,
-        voice_id: editingAgentData.voice_id!,
-        language: "es-ES",
-        version_description: editingAgentData.description || undefined,
-      });
-
-      if (!agentRes.success || !agentRes.data?.agent_id) {
-        toast({
-          variant: "error",
-          title: "Error creando Agente en Retell",
-          description: agentRes.error,
-        });
-        setSaving(false);
-        return;
-      }
-
-      agentDataToSave = {
-        ...agentDataToSave,
-        retell_llm_id: llmRes.data.llm_id,
-        provider_agent_id: agentRes.data.agent_id,
-      };
-    }
-
-    // 1. SYNC AGENT METADATA: If editing an existing Retell agent, PATCH its name/voice/language
-    //    Runs in parallel with the LLM prompt mirror below since they're independent
-    const agentMetaUpdatePromise =
-      retellApiKey && agentDataToSave.provider_agent_id && agentDataToSave.provider === "RETELL"
-        ? updateRetellAgent(retellApiKey, agentDataToSave.provider_agent_id, {
-            agent_name: agentDataToSave.name || undefined,
-            voice_id: agentDataToSave.voice_id || undefined,
-            version_description: agentDataToSave.description || undefined,
-            voice_temperature: (agentDataToSave as any).voice_temperature,
-            voice_speed: (agentDataToSave as any).voice_speed,
-            volume: (agentDataToSave as any).volume,
-            responsiveness: (agentDataToSave as any).responsiveness,
-            interruption_sensitivity: (agentDataToSave as any).interruption_sensitivity,
-            enable_backchannel: (agentDataToSave as any).enable_backchannel,
-            backchannel_frequency: (agentDataToSave as any).backchannel_frequency,
-            backchannel_words: (agentDataToSave as any).backchannel_words,
-            ambient_sound: (agentDataToSave as any).ambient_sound,
-            webhook_url: (agentDataToSave as any).webhook_url,
-            max_call_duration: (agentDataToSave as any).max_call_duration,
-          })
-        : Promise.resolve(null);
-
-    // Steps 1+2 run in parallel — both are independent Retell API calls:
-    //   1. PATCH /update-agent  → sync name, voice_id, description
-    //   2. PATCH /update-retell-llm → sync the prompt
-    const [, promptPushResult] = await Promise.all([
-      agentMetaUpdatePromise,
-      (() => {
-        const llmIdForSync = agentDataToSave.retell_llm_id || editingAgentData.retell_llm_id;
-        if (editingAgentData.provider === "RETELL" && llmIdForSync && variantA.prompt_text) {
-          return updateRetellAgentPrompt(retellApiKey, llmIdForSync, variantA.prompt_text);
-        }
-        return Promise.resolve(null);
-      })(),
-    ]);
-
-    if (promptPushResult && !promptPushResult.success) {
-      console.error("Retell Mirror Push Failed:", (promptPushResult as { error?: string }).error);
-    }
-
-    // 2.B SYNC ULTRAVOX METADATA
     if (
       ultravoxApiKey &&
-      agentDataToSave.provider_agent_id &&
-      agentDataToSave.provider === "ULTRAVOX"
+      agentDataToSave.provider === "ULTRAVOX" &&
+      agentDataToSave.provider_agent_id
     ) {
       await updateUltravoxAgent(ultravoxApiKey, agentDataToSave.provider_agent_id, {
         name: agentDataToSave.name || undefined,
@@ -565,7 +359,6 @@ export default function VoiceAgentsPage() {
       });
     }
 
-    // 3. Save to local DB
     const res = await saveVoiceAgent(
       {
         ...agentDataToSave,
@@ -575,25 +368,13 @@ export default function VoiceAgentsPage() {
     );
 
     if (res.success && res.data) {
-      // Also save variant A with the mirrored prompt
       await saveVoiceVariant({ ...variantA, agent_id: res.data.id });
-
-      // 3. BIND agent to phone number in Retell (if number is configured)
-      if (retellApiKey && res.data.provider_agent_id && res.data.from_number) {
-        await bindAgentToPhoneNumber(
-          retellApiKey,
-          res.data.from_number,
-          res.data.provider_agent_id,
-          { also_inbound: false }
-        );
-      }
-
       await loadAgents();
       setSelectedAgent(res.data);
       setIsCreateModalOpen(false);
       toast({
-        title: "Agent Saved",
-        description: "Configuration synchronized successfully.",
+        title: "Agente Guardado",
+        description: "Configuración guardada exitosamente.",
       });
     } else {
       toast({
@@ -750,7 +531,7 @@ export default function VoiceAgentsPage() {
                 Sincroniza para ver los nodos del flujo
               </p>
               <button
-                onClick={() => handleImportRetellAgents(selectedAgent!)}
+                onClick={() => console.log("Sincronizar no soportado")}
                 disabled={isImporting}
                 className="flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-[9px] font-black tracking-widest text-blue-400 uppercase transition-all hover:bg-blue-500/20 disabled:opacity-50"
               >
@@ -863,7 +644,7 @@ export default function VoiceAgentsPage() {
               El prompt se cargará al sincronizar con Retell.
             </p>
             <button
-              onClick={() => handleImportRetellAgents(selectedAgent!)}
+              onClick={() => console.log("Sincronizar")}
               disabled={isImporting}
               className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-[9px] font-black tracking-widest text-amber-400 uppercase transition-all hover:bg-amber-500/20 disabled:opacity-50"
             >
@@ -976,9 +757,7 @@ export default function VoiceAgentsPage() {
                 {unimportedRetell.map((a) => (
                   <button
                     key={`retell-${a.id}`}
-                    onClick={() =>
-                      handleImportRetellAgents({ provider_agent_id: a.id } as VoiceAgent)
-                    }
+                    onClick={() => console.log("Import not supported")}
                     className="text-muted-foreground/60 hover:bg-muted hover:text-foreground flex w-full items-center justify-between rounded-lg border border-dashed border-transparent px-3 py-2 text-left text-sm transition-colors hover:border-purple-500/30"
                     title="Agente en Retell (Click para importar)"
                   >
@@ -1016,17 +795,7 @@ export default function VoiceAgentsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {availableAgents.length > 0 && (
-              <button
-                onClick={() => handleImportRetellAgents()}
-                disabled={isImporting}
-                className="flex h-9 items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/10 px-4 text-xs font-bold text-purple-600 transition-all hover:bg-purple-500/20 disabled:opacity-50"
-                title="Importar agentes existentes desde Retell"
-              >
-                <RefreshCw className={cn("h-3 w-3", isImporting && "animate-spin")} />
-                {isImporting ? "Importando..." : "Importar de Retell"}
-              </button>
-            )}
+
             <button
               onClick={() => {
                 handleSaveVariants();
@@ -1052,41 +821,19 @@ export default function VoiceAgentsPage() {
           </div>
         ) : (
           <div className="bg-background flex flex-1 overflow-hidden">
-            {/* Column 1: Identity & Prompt (Expands) */}
-            <div className="border-border min-w-[400px] flex-1 border-r">
-              <RetellIdentityPanel
-                selectedAgent={selectedAgent}
+            {/* Main Config Column */}
+            <div className="border-border min-w-[400px] flex-1 border-r p-6">
+              <UltravoxConfigPanel
+                agent={selectedAgent}
                 variant={activeTab === "A" ? variantA : variantB}
-                setVariant={activeTab === "A" ? setVariantA : setVariantB}
-                engineType={getRetellEngineType(selectedAgent)}
-                tenantName={tenantName}
-                availableVoices={availableVoices}
-                onVoiceChange={(voiceId) => {
-                  const newAgent = { ...selectedAgent, voice_id: voiceId };
-                  setSelectedAgent(newAgent);
-                  saveVoiceAgent(newAgent, tenantId);
-                  if (retellApiKey && newAgent.provider_agent_id) {
-                    updateRetellAgent(retellApiKey, newAgent.provider_agent_id, {
-                      voice_id: voiceId,
-                    });
-                  }
+                onVariantChange={activeTab === "A" ? setVariantA : setVariantB as any}
+                voices={availableUltravoxVoices}
+                models={availableUltravoxModels}
+                onSave={() => {
+                  handleSaveVariants();
+                  handleCreateOrUpdateAgent();
                 }}
-              />
-            </div>
-
-            {/* Column 2: Settings (Fixed Width) */}
-            <div className="border-border w-[350px] flex-shrink-0 border-r">
-              <RetellSettingsPanel
-                agentData={editingAgentData}
-                setAgentData={setEditingAgentData}
-              />
-            </div>
-
-            {/* Column 3: Simulation (Fixed Width) */}
-            <div className="w-[380px] flex-shrink-0">
-              <RetellSimulationPanel
-                agentId={selectedAgent.provider_agent_id || undefined}
-                tenantId={tenantId}
+                isSaving={saving}
               />
             </div>
           </div>
@@ -1139,21 +886,7 @@ export default function VoiceAgentsPage() {
           </div>
         )}
       </AnimatePresence>
-      <VoiceConfigModal
-        isOpen={isConfigModalOpen}
-        onClose={() => setIsConfigModalOpen(false)}
-        currentRetellKey={retellApiKey}
-        currentUltravoxKey={ultravoxApiKey}
-        tenantId={tenantId}
-        onSuccess={() => {
-          refreshConfiguration();
-          toast({
-            title: "Configuración Actualizada",
-            description: "API Key guardada correctamente. Recargando agentes...",
-            variant: "success",
-          });
-        }}
-      />
+
     </div>
   );
 }

@@ -54,7 +54,7 @@ export default function ResetPasswordPage() {
         <div className="mb-10 flex items-center justify-start">
           <NextImage
             src="/logo.png"
-            alt="App Automatiza"
+            alt="Renton Call App"
             width={240}
             height={64}
             className="h-16 w-auto object-contain"
@@ -155,7 +155,7 @@ export default function ResetPasswordPage() {
         )}
 
         <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-          © {new Date().getFullYear()} App Automatiza
+          © {new Date().getFullYear()} Renton Call App
         </p>
       </div>
     </div>

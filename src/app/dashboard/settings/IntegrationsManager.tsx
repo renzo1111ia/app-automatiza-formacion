@@ -16,7 +16,7 @@ import {
   FileSpreadsheet,
   Search,
 } from "lucide-react";
-import { syncRetellResources } from "@/lib/actions/retell-sync";
+import { syncUltravoxResources } from "@/lib/actions/ultravox-sync";
 import { syncWhatsAppTemplates } from "@/lib/actions/whatsapp-sync";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -73,9 +73,6 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
     verifyToken: "",
   };
 
-  // ── Retell AI Config ──
-  const retell = (config?.retell as { api_key?: string }) || {};
-  const retellApiKey = retell.api_key || "";
 
   // ── Ultravox AI Config ──
   const ultravox = (config?.ultravox as { api_key?: string }) || {};
@@ -87,10 +84,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
   const updateField = (category: string, fields: Record<string, unknown>) => {
     const categoryData = { ...((config[category] as Record<string, unknown>) || {}), ...fields };
 
-    if (category === "retell") {
-      delete categoryData.apiKey;
-      delete categoryData.agentId;
-    }
+
 
     if (category === "ultravox" && (categoryData as Record<string, unknown>).apiKey) {
       const data = categoryData as Record<string, unknown>;
@@ -115,16 +109,16 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
     }
     setIsSyncing(true);
     try {
-      const res = await syncRetellResources(apiKey);
+      const res = await syncUltravoxResources(apiKey);
       if (!res.success) {
         toast({
           variant: "error",
-          title: "Error al sincronizar con Retell",
+          title: "Error al sincronizar con Ultravox",
           description: res.error,
         });
       }
     } catch {
-      toast({ variant: "error", title: "Fallo crítico en la conexión con Retell" });
+      toast({ variant: "error", title: "Fallo crítico en la conexión con Ultravox" });
     } finally {
       setIsSyncing(false);
     }
@@ -184,52 +178,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
         </label>
       </div>
 
-      {/* ── SECTION: RETELL AI ── */}
-      {matchesFilter("retell ai voz llamada motor conversacional voice agent") && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-600">
-                <PhoneCall className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight text-slate-900 uppercase dark:text-white">
-                  Retell AI Integration
-                </h3>
-                <p className="text-left text-[10px] font-bold tracking-widest text-slate-400 uppercase">
-                  Motor de Voz Conversacional de Baja Latencia
-                </p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleSync(retellApiKey)}
-              disabled={isSyncing || !retellApiKey}
-              className="h-8 gap-2 rounded-lg border-blue-100 bg-blue-50 text-[10px] font-black tracking-widest text-blue-600 uppercase hover:bg-blue-100"
-            >
-              <RefreshCw className={cn("h-3 w-3", isSyncing && "animate-spin")} />
-              {isSyncing ? "Sincronizando..." : "Sincronizar Recursos"}
-            </Button>
-          </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-left text-[10px] font-black tracking-widest text-slate-500 uppercase">
-                <Key className="h-3 w-3" /> API Key
-              </Label>
-              <Input
-                value={retellApiKey}
-                onChange={(e) => updateField("retell", { api_key: e.target.value })}
-                type="password"
-                placeholder="key_..."
-                className="h-11 rounded-xl border-slate-200 bg-white font-mono text-xs dark:border-slate-800 dark:bg-slate-950"
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── SECTION: ULTRAVOX AI ── */}
       {matchesFilter("ultravox voz voice agent realtime inference web-native") && (
@@ -248,6 +197,17 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                 </p>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleSync(ultravoxApiKey)}
+              disabled={isSyncing || !ultravoxApiKey}
+              className="h-8 gap-2 rounded-lg border-purple-100 bg-purple-50 text-[10px] font-black tracking-widest text-purple-600 uppercase hover:bg-purple-100"
+            >
+              <RefreshCw className={cn("h-3 w-3", isSyncing && "animate-spin")} />
+              {isSyncing ? "Sincronizando..." : "Sincronizar Recursos"}
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
@@ -385,7 +345,7 @@ export function IntegrationsManager({ tenantId, config, onChange }: Integrations
                   Endpoint URL (POST)
                 </p>
                 <code className="font-mono text-[10px] break-all text-orange-600 select-all dark:text-orange-400">
-                  https://app.automatizaformacion.com/api/webhooks/crm
+                  https://app.rentoncallapp.com/api/webhooks/crm
                 </code>
               </div>
               <div className="border-t border-slate-100 pt-2 dark:border-slate-800">

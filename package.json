@@ -1,5 +1,5 @@
 {
-  "name": "af-dashboard",
+  "name": "renton-call-app",
   "version": "0.5.1",
   "private": true,
   "engines": {
@@ -86,8 +86,6 @@
     "recharts": "^3.7.0",
     "redis": "^5.11.0",
     "remark-gfm": "^4.0.1",
-    "retell-client-js-sdk": "^2.0.8",
-    "retell-sdk": "^5.12.0",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"

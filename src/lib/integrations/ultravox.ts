@@ -18,6 +18,7 @@ export interface UltravoxCallParams {
       fromNumber?: string;
       toNumber?: string;
     };
+    webRTC?: Record<string, unknown>;
   };
   templateContext?: Record<string, unknown>;
   firstSpeakerSettings?: Record<string, unknown>;

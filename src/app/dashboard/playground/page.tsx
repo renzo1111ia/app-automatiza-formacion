@@ -237,7 +237,7 @@ export default function OrchestratorPlaygroundPage() {
             icon={Globe}
             title="Webhook Status"
             status={health.supabase.ok ? "ONLINE" : "OFFLINE"}
-            desc="app.automatizaformacion.com"
+            desc="app.rentoncallapp.com"
           />
           <HealthCard
             icon={MessageSquare}
