@@ -84,13 +84,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   const supabase = await getAdminSupabaseClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: row, error: dbErr } = await supabase
+
+  const { data: rowRaw, error: dbErr } = await supabase
     .from("integrations")
     .select("id, tenant_id, oauth_state")
     .eq("tenant_id", tenantId)
     .eq("crm_type", providerKey)
     .maybeSingle();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const row = rowRaw as any;
   if (dbErr || !row || row.oauth_state !== state) {
     return settingsRedirect(`error=csrf_mismatch&provider=${providerKey}`);
   }
@@ -154,7 +156,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const credentialsCipher = encryptJson({ accessToken, refreshToken });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateErr } = await supabase
+  const { error: updateErr } = await (supabase as any)
     .from("integrations")
     .update({
       credentials_cipher: credentialsCipher,
