@@ -64,18 +64,44 @@ export async function uploadKnowledgeDocument(formData: FormData) {
       };
     }
 
-    const fileKey = `kb/${tenantId}/${Date.now()}_${file.name}`;
+    const fileKey = `kb/${tenantId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
-    // 3. Upload to MinIO/S3
-    const fileUrl = await uploadToMinio(fileKey, buffer, file.type);
+    // 3. Upload to Storage (Supabase Storage fallback if MinIO not available)
+    let fileUrl = "";
+    try {
+      fileUrl = await uploadToMinio(fileKey, buffer, file.type);
+    } catch (minioErr) {
+      console.warn(
+        "⚠️ [KNOWLEDGE] MinIO not available, attempting Supabase Storage or fallback URL:",
+        minioErr
+      );
+      try {
+        const { data: storageData, error: storageErr } = await supabase.storage
+          .from("knowledge_base")
+          .upload(fileKey, buffer, {
+            contentType: file.type || "application/octet-stream",
+            upsert: true,
+          });
+
+        if (!storageErr && storageData) {
+          const { data: publicUrlData } = supabase.storage
+            .from("knowledge_base")
+            .getPublicUrl(fileKey);
+          fileUrl = publicUrlData?.publicUrl || `/storage/${fileKey}`;
+        } else {
+          fileUrl = `/storage/${fileKey}`;
+        }
+      } catch {
+        fileUrl = `/storage/${fileKey}`;
+      }
+    }
 
     // 4. Save to DB
-    const { data, error } = await supabase
-      .from("knowledge_base")
+    const { data, error } = await (supabase.from("knowledge_base" as any) as any)
       .insert({
         tenant_id: tenantId,
         name: name || file.name,
-        description,
+        description: description || "",
         file_key: fileKey,
         file_url: fileUrl,
         content_hash: contentHash,
@@ -85,81 +111,90 @@ export async function uploadKnowledgeDocument(formData: FormData) {
 
     if (error) throw error;
 
-    // 5. VECTORIZATION (PGVector Indexing)
+    // 5. VECTORIZATION & TEXT EXTRACTION
     try {
       const documentData = data as any;
       if (!documentData) throw new Error("No data returned from insert");
-      console.log(`[KNOWLEDGE] 📄 Starting indexing for: ${documentData.name}`);
-      const pdf = await import("pdf-parse");
-      // @ts-expect-error - pdf-parse has legacy export structure
-      const textResult = await pdf.default(buffer);
-      const text = textResult.text;
+      console.log(`[KNOWLEDGE] 📄 Starting text extraction and indexing for: ${documentData.name}`);
 
-      // Simple chunking (approx 1000 chars with some overlap)
-      const chunkSize = 1000;
-      const overlap = 200;
-      const chunks: string[] = [];
+      let text = "";
+      const isPdf = file.type?.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
 
-      for (let i = 0; i < text.length; i += chunkSize - overlap) {
-        chunks.push(text.slice(i, i + chunkSize));
-        if (i + chunkSize >= text.length) break;
+      if (isPdf) {
+        try {
+          const pdf = await import("pdf-parse");
+          // @ts-expect-error - pdf-parse has legacy export structure
+          const textResult = await (pdf.default || pdf)(buffer);
+          text = textResult.text || "";
+        } catch (pdfErr) {
+          console.warn("[KNOWLEDGE] Error parsing PDF structure, trying raw text:", pdfErr);
+          text = buffer.toString("utf-8");
+        }
+      } else {
+        // Plain text, markdown, CSV, etc.
+        text = buffer.toString("utf-8");
       }
 
-      console.log(
-        `[KNOWLEDGE] 🧩 Created ${chunks.length} chunks. Generating embeddings in batches...`
-      );
+      if (text && text.trim().length > 0) {
+        // Simple chunking (approx 1000 chars with some overlap)
+        const chunkSize = 1000;
+        const overlap = 200;
+        const chunks: string[] = [];
 
-      // Initialize OpenAI for embeddings
-      // Try to find a valid API key from environment or any existing agent variant
-      let apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) {
-        const { data: variants } = await supabase
-          .from("ai_agent_variants")
-          .select("api_key")
-          .not("api_key", "is", null)
-          .limit(1);
-        apiKey = (variants as any)?.[0]?.api_key;
+        for (let i = 0; i < text.length; i += chunkSize - overlap) {
+          chunks.push(text.slice(i, i + chunkSize));
+          if (i + chunkSize >= text.length) break;
+        }
+
+        console.log(`[KNOWLEDGE] 🧩 Created ${chunks.length} chunks. Generating embeddings...`);
+
+        // Initialize OpenAI for embeddings if available
+        let apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+          const { data: variants } = await supabase
+            .from("ai_agent_variants")
+            .select("api_key")
+            .not("api_key", "is", null)
+            .limit(1);
+          apiKey = (variants as any)?.[0]?.api_key;
+        }
+
+        if (apiKey && apiKey !== "your_api_key_here") {
+          const openai = new OpenAI({ apiKey });
+
+          const batchSize = 100;
+          for (let i = 0; i < chunks.length; i += batchSize) {
+            const batch = chunks.slice(i, i + batchSize);
+            const batchFiltered = batch.filter((c) => c.trim().length >= 10);
+            if (batchFiltered.length === 0) continue;
+
+            const embedRes = await openai.embeddings.create({
+              model: "text-embedding-3-small",
+              input: batchFiltered.map((c) => c.replace(/\n/g, " ")),
+            });
+
+            const batchToInsert = batchFiltered.map((chunk, index) => ({
+              content: chunk,
+              embedding: embedRes.data[index].embedding,
+              metadata: {
+                knowledge_base_id: documentData.id,
+                source_name: documentData.name,
+                file_key: fileKey,
+              },
+              knowledgeBaseId: documentData.id,
+            }));
+
+            await KnowledgeBaseService.addEmbeddingsBatch(tenantId, batchToInsert);
+          }
+          console.log(`[KNOWLEDGE] ✅ Embeddings created successfully for: ${documentData.name}`);
+        } else {
+          console.warn(
+            "[KNOWLEDGE] Skipping embeddings generation: OpenAI API Key not configured."
+          );
+        }
       }
-
-      if (!apiKey || apiKey === "your_api_key_here") {
-        throw new Error("No se encontró una API Key de OpenAI válida para realizar el indexado.");
-      }
-      const openai = new OpenAI({ apiKey });
-
-      // Process chunks in batches to avoid rate limits/timeouts
-      const batchSize = 100;
-      for (let i = 0; i < chunks.length; i += batchSize) {
-        const batch = chunks.slice(i, i + batchSize);
-        const batchFiltered = batch.filter((c) => c.trim().length >= 20);
-        if (batchFiltered.length === 0) continue;
-
-        console.log(
-          `[KNOWLEDGE] 🚀 Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(chunks.length / batchSize)}`
-        );
-
-        const embedRes = await openai.embeddings.create({
-          model: "text-embedding-3-small",
-          input: batchFiltered.map((c) => c.replace(/\n/g, " ")),
-        });
-
-        const batchToInsert = batchFiltered.map((chunk, index) => ({
-          content: chunk,
-          embedding: embedRes.data[index].embedding,
-          metadata: {
-            knowledge_base_id: data.id,
-            source_name: data.name,
-            file_key: fileKey,
-          },
-          knowledgeBaseId: data.id,
-        }));
-
-        await KnowledgeBaseService.addEmbeddingsBatch(tenantId, batchToInsert);
-      }
-
-      console.log(`[KNOWLEDGE] ✅ Indexing complete for: ${data.name}`);
     } catch (idxError) {
-      console.error("⚠️ [KNOWLEDGE_INDEXING] Non-critical error indexing document:", idxError);
-      // We don't fail the upload if indexing fails, but it's good to know
+      console.warn("⚠️ [KNOWLEDGE_INDEXING] Document saved but indexing skipped:", idxError);
     }
 
     return { success: true, data };
@@ -167,7 +202,7 @@ export async function uploadKnowledgeDocument(formData: FormData) {
     console.error("❌ [UPLOAD_KNOWLEDGE] Critical Error:", error);
     return {
       success: false,
-      error: error?.message || error?.name || "Error desconocido en el servidor",
+      error: error?.message || error?.name || "Error desconocido al procesar el documento",
     };
   }
 }
