@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   INITIAL_TABLES,
   INITIAL_RESERVATIONS,
@@ -56,7 +56,7 @@ export default function PedidosPage() {
   const [isZoneManagerOpen, setIsZoneManagerOpen] = useState<boolean>(false);
 
   // Sincronización en vivo con el servidor / WhatsApp
-  const loadRestaurantData = async () => {
+  const loadRestaurantData = useCallback(async () => {
     if (!tenantId) return;
     try {
       const res = await fetch(`/api/restaurant/state?tenantId=${tenantId}`);
@@ -69,13 +69,13 @@ export default function PedidosPage() {
     } catch (e) {
       console.warn("[PedidosPage] Error loading state:", e);
     }
-  };
+  }, [tenantId]);
 
   useEffect(() => {
     loadRestaurantData();
     const interval = setInterval(loadRestaurantData, 6000);
     return () => clearInterval(interval);
-  }, [tenantId]);
+  }, [loadRestaurantData]);
 
   const persistServerState = async (
     updatedTables?: Table[],
@@ -181,6 +181,40 @@ export default function PedidosPage() {
 
   const handleDeleteTable = (tableId: string) => {
     const updated = tables.filter((t) => t.id !== tableId);
+    setTables(updated);
+    persistServerState(updated);
+  };
+
+  const handleDuplicateTable = (sourceTable: Table) => {
+    // Calcular siguiente número de mesa disponible
+    const existingNumbers = tables.map((t) => t.number || 0);
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+    // Generar nombre sugerido sin perder la convención
+    const hasNumberedName = /mesa\s*\d+/i.test(sourceTable.name);
+    const newName = hasNumberedName ? `Mesa ${nextNumber}` : `${sourceTable.name} (Copia)`;
+
+    // Posición con desplazamiento leve para que se distinga inmediatamente
+    const nextX =
+      sourceTable.position.x >= 85 ? sourceTable.position.x - 6 : sourceTable.position.x + 6;
+    const nextY =
+      sourceTable.position.y >= 85 ? sourceTable.position.y - 6 : sourceTable.position.y + 6;
+
+    const duplicatedTable: Table = {
+      id: `table-${Date.now()}`,
+      name: newName,
+      number: nextNumber,
+      capacity: sourceTable.capacity,
+      shape: sourceTable.shape,
+      zone: sourceTable.zone,
+      status: "disponible",
+      position: {
+        x: Math.min(92, Math.max(8, nextX)),
+        y: Math.min(92, Math.max(8, nextY)),
+      },
+    };
+
+    const updated = [...tables, duplicatedTable];
     setTables(updated);
     persistServerState(updated);
   };
@@ -462,6 +496,7 @@ export default function PedidosPage() {
           onSelectTable={(table) => setActiveTable(table)}
           onEditTable={(table) => setEditingTable(table)}
           onDeleteTable={handleDeleteTable}
+          onDuplicateTable={handleDuplicateTable}
           onUpdateTablePosition={handleUpdateTablePosition}
         />
       ) : (
@@ -491,6 +526,7 @@ export default function PedidosPage() {
           onClose={() => setEditingTable(undefined)}
           onSave={handleSaveTableData}
           onDelete={handleDeleteTable}
+          onDuplicate={handleDuplicateTable}
         />
       )}
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   ShieldCheck,
@@ -12,8 +14,15 @@ import {
   ListChecks,
   Activity,
   ExternalLink,
+  Building2,
+  SlidersHorizontal,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getTenants, setTenantCookies } from "@/lib/actions/tenant";
+import { useTenantStore } from "@/store/tenant";
+import { Tenant } from "@/types/tenant";
+import Link from "next/link";
 
 /**
  * INTERNAL ADMIN PANEL (v2.0)
@@ -27,6 +36,32 @@ const FINANCIAL_DATA = [
 ];
 
 export default function AdminPage() {
+  const router = useRouter();
+  const { tenantId: activeTenantId, setTenant } = useTenantStore();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loadingTenants, setLoadingTenants] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoadingTenants(true);
+      const data = await getTenants();
+      setTenants(data);
+      setLoadingTenants(false);
+    }
+    load();
+  }, []);
+
+  const handleSwitchTenant = async (t: Tenant) => {
+    setTenant({
+      tenantId: t.id,
+      tenantName: t.name,
+      config: t.config,
+      isAdmin: !!t.is_admin,
+    });
+    await setTenantCookies(t.id, t.name);
+    router.push("/dashboard");
+    router.refresh();
+  };
   return (
     <div className="animate-in fade-in flex flex-col gap-8 p-8 duration-700">
       {/* Header Area */}
@@ -98,15 +133,122 @@ export default function AdminPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
               <Users className="h-5 w-5" />
             </div>
-            <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-black text-orange-600">
-              8 TENANTS
+            <span className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-black text-orange-600">
+              {loadingTenants ? "..." : `${tenants.length} CLIENTES`}
             </span>
           </div>
           <div className="text-left">
-            <p className="text-muted-foreground text-sm font-semibold">Leads Procesados (24h)</p>
-            <h2 className="text-2xl font-black">1,242</h2>
+            <p className="text-muted-foreground text-sm font-semibold">Tenants / Empresas</p>
+            <h2 className="text-2xl font-black">{loadingTenants ? "..." : tenants.length}</h2>
           </div>
         </div>
+      </div>
+
+      {/* Clientes Registrados / Multi-Tenant Overview */}
+      <div className="bg-card space-y-6 rounded-3xl border p-8 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight">
+              <Building2 className="text-primary h-5 w-5" />
+              Clientes y Empresas Creadas
+            </h2>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Lista de todos los tenants registrados en el sistema con acceso rápido para
+              administradores.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/settings"
+              className="border-border bg-card/80 hover:bg-card text-foreground flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold shadow-sm transition-all"
+            >
+              <SlidersHorizontal className="h-4 w-4 text-indigo-400" />
+              Gestionar en Ajustes
+            </Link>
+          </div>
+        </div>
+
+        {loadingTenants ? (
+          <div className="py-12 text-center text-sm text-slate-400">Cargando clientes...</div>
+        ) : tenants.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-700/60 p-8 text-center">
+            <Building2 className="mx-auto h-8 w-8 text-slate-500" />
+            <p className="mt-2 text-sm font-bold text-white">
+              No se encontraron clientes o permisos insuficientes
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Verifica que tu usuario tenga el rol de administrador en Supabase Auth (
+              <code className="text-indigo-400">app_metadata.is_admin: true</code>).
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {tenants.map((t) => {
+              const isCurrent = activeTenantId === t.id;
+              return (
+                <div
+                  key={t.id}
+                  className={cn(
+                    "flex flex-col justify-between rounded-2xl border p-5 transition-all",
+                    isCurrent
+                      ? "border-primary/50 bg-primary/5 shadow-primary/5 shadow-md"
+                      : "border-border bg-card/60 hover:bg-card hover:border-slate-700"
+                  )}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-foreground flex items-center gap-2 text-base font-bold">
+                        {t.name}
+                        {t.is_admin && (
+                          <span className="rounded-md border border-purple-500/30 bg-purple-500/20 px-1.5 py-0.5 text-[9px] font-black text-purple-400">
+                            ADMIN
+                          </span>
+                        )}
+                      </span>
+                      {isCurrent && (
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                          ACTIVO
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-muted-foreground space-y-1 text-xs">
+                      {t.client_email && (
+                        <p className="truncate">
+                          <span className="text-slate-500">Email:</span> {t.client_email}
+                        </p>
+                      )}
+                      {t.username && (
+                        <p className="truncate">
+                          <span className="text-slate-500">Usuario:</span> {t.username}
+                        </p>
+                      )}
+                      <p className="truncate font-mono text-[10px] text-slate-500">ID: {t.id}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-border/60 mt-4 flex items-center justify-between border-t pt-3">
+                    <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                      Tipo: {t.api_type || "internal"}
+                    </span>
+                    <button
+                      onClick={() => handleSwitchTenant(t)}
+                      className={cn(
+                        "flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                        isCurrent
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
+                      )}
+                    >
+                      {isCurrent ? "Seleccionado" : "Entrar como"}
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Charts & Notion-style Tasks */}
