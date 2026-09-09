@@ -53,8 +53,8 @@ export default function LoginPage() {
         <div className="w-full max-w-[440px] px-6 py-12">
           <div className="mb-10 flex items-center justify-start">
             <NextImage
-              src="/logo-login.png"
-              alt="Renton Call App"
+              src="/logo-reforma-light.png"
+              alt="Re_ FORMA Social Media Partner"
               width={240}
               height={64}
               className="h-16 w-auto object-contain"
@@ -141,7 +141,7 @@ export default function LoginPage() {
           )}
 
           <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-            © {new Date().getFullYear()} Renton Call App
+            © {new Date().getFullYear()} Re_ FORMA
           </p>
         </div>
       </div>
@@ -151,18 +151,18 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[#120b2e]">
       <div className="w-full max-w-[440px] px-6 py-12">
-        <div className="-mb-4 flex items-center justify-center">
+        <div className="mb-4 flex items-center justify-center">
           <NextImage
             src="/logo-login.png"
-            alt="Renton Call App"
-            width={600}
-            height={300}
-            className="w-full max-w-[280px] sm:max-w-[340px] h-auto object-contain invert brightness-0"
+            alt="Re_ FORMA Social Media Partner"
+            width={400}
+            height={200}
+            className="w-full max-w-[220px] sm:max-w-[260px] h-auto object-contain"
             priority
           />
         </div>
 
-        <div className="mb-10">
+        <div className="mb-10 text-center">
           <h1 className="text-3xl font-black tracking-tight text-white">Bienvenido de nuevo</h1>
           <p className="mt-2 text-base font-medium text-slate-400">
             Ingresa tus credenciales para acceder a tu cuenta
@@ -245,7 +245,7 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-          © {new Date().getFullYear()} Renton Call App
+          © {new Date().getFullYear()} Re_ FORMA
         </p>
       </div>
     </div>

@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Renton Call App",
+  title: "Re_ FORMA",
   description: "Plataforma SaaS de gestión de llamadas IA, agendamiento y contactabilidad para cualquier tipo de negocio",
   icons: {
     icon: "/favicon-renton.png",

@@ -369,17 +369,20 @@ export function Sidebar({
           )}
         >
           {!collapsed ? (
-            <NextImage
-              src="/logo-login.png"
-              alt="Renton Call App"
-              width={400}
-              height={200}
-              className="w-full h-auto object-contain invert brightness-0 invert"
-            />
+            <div className="flex items-center px-1">
+              <NextImage
+                src="/logo-login.png"
+                alt="Re_ FORMA Social Media Partner"
+                width={260}
+                height={130}
+                className="h-10 sm:h-12 w-auto object-contain"
+                priority
+              />
+            </div>
           ) : (
             <NextImage
               src="/favicon-renton.png"
-              alt="Renton"
+              alt="Re_"
               width={40}
               height={40}
               className="mx-auto h-9 w-9 object-contain"
