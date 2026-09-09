@@ -6,3 +6,4 @@ export * from "./ai-agents-repository";
 export * from "./knowledge-base-repository";
 export * from "./integrations-repository";
 export * from "./lead-opportunities-repository";
+export * from "./inventory-repository";

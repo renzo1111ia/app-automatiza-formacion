@@ -1,7 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
-import { Table, Reservation, Zone, DeliveryOrder, RestaurantState, ReservationSource } from "@/types/pedidos";
+import {
+  RestaurantState,
+  Reservation,
+  DeliveryOrder,
+  ReservationSource,
+  MenuProduct,
+} from "@/types/pedidos";
 import { INITIAL_TABLES, INITIAL_ZONES } from "@/lib/mock-pedidos-data";
 import { requireEnvAny } from "@/lib/env";
+import { InventoryService } from "./inventory-service";
 
 function getAdminClient() {
   const url = requireEnvAny(["SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"]);
@@ -37,7 +44,9 @@ export class RestaurantService {
         };
       }
 
-      const restConfig = (tenant.config as Record<string, unknown>)?.restaurant as RestaurantState | undefined;
+      const restConfig = (tenant.config as Record<string, unknown>)?.restaurant as
+        | RestaurantState
+        | undefined;
       if (!restConfig || !restConfig.tables) {
         return {
           zones: INITIAL_ZONES,
@@ -232,7 +241,7 @@ export class RestaurantService {
       customerName: string;
       customerPhone: string;
       deliveryAddress: string;
-      items: any[];
+      items: unknown[] | unknown;
       totalAmount: number;
       notes?: string;
       source?: ReservationSource;
@@ -251,7 +260,15 @@ export class RestaurantService {
         try {
           parsedItems = JSON.parse(params.items);
         } catch {
-          parsedItems = [{ id: "item-1", name: params.items, quantity: 1, unitPrice: params.totalAmount, category: "principal" }];
+          parsedItems = [
+            {
+              id: "item-1",
+              name: params.items,
+              quantity: 1,
+              unitPrice: params.totalAmount,
+              category: "principal",
+            },
+          ];
         }
       }
 
@@ -292,5 +309,95 @@ export class RestaurantService {
         message: `Error al registrar el pedido delivery: ${errMsg}`,
       };
     }
+  }
+
+  /**
+   * Guardrail anti-prompt injection para sanitizar mensajes provenientes de clientes en WhatsApp
+   */
+  static sanitizeUserMessage(input: string): string {
+    if (!input || typeof input !== "string") return "";
+
+    // 1. Limitar longitud máxima para prevenir ataques DoS / Context Overflow
+    let sanitized = input.trim().slice(0, 1000);
+
+    // 2. Patrones comunes de jailbreak y prompt injection
+    const injectionPatterns = [
+      /ignore\s+(all\s+)?(previous|prior)\s+(instructions|prompts|directions)/gi,
+      /olvida\s+(todas\s+)?(las\s+)?(instrucciones|reglas)\s+(anteriores|previas)/gi,
+      /you\s+are\s+now\s+(in\s+)?(developer\s+mode|dan|jailbreak)/gi,
+      /ahora\s+eres\s+(un\s+)?(modo\s+desarrollador|sin\s+restricciones)/gi,
+      /system\s+prompt/gi,
+      /<\|im_start\|>/gi,
+      /<\|im_end\|>/gi,
+      /<\|system\|>/gi,
+      /\[SYSTEM\]/gi,
+    ];
+
+    for (const pattern of injectionPatterns) {
+      sanitized = sanitized.replace(pattern, "[mensaje filtrado]");
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Verifica la disponibilidad de un plato antes de que la IA lo ofrezca o confirme al cliente.
+   * Si está agotado por falta de stock de insumos, devuelve automáticamente alternativas recomendadas.
+   */
+  static async checkAndOfferProduct(
+    tenantId: string,
+    productIdOrName: string
+  ): Promise<{
+    available: boolean;
+    product?: MenuProduct;
+    alternatives?: MenuProduct[];
+    message: string;
+  }> {
+    try {
+      const menu = await InventoryService.getMenu(tenantId);
+      const target = menu.find(
+        (p) =>
+          p.id === productIdOrName ||
+          p.name.toLowerCase().trim() === productIdOrName.toLowerCase().trim()
+      );
+
+      if (!target) {
+        return {
+          available: false,
+          message: `El plato "${productIdOrName}" no se encuentra en nuestra carta actual.`,
+        };
+      }
+
+      if (target.stockStatus === "agotado") {
+        const alternatives = await InventoryService.getAlternatives(tenantId, target.id);
+        return {
+          available: false,
+          product: target,
+          alternatives,
+          message: `Lamentablemente "${target.name}" se encuentra agotado por el momento. Te puedo ofrecer como alternativa: ${
+            alternatives.map((a) => a.name).join(", ") || "otros platos de nuestra carta"
+          }.`,
+        };
+      }
+
+      return {
+        available: true,
+        product: target,
+        message: `"${target.name}" está disponible ($${target.price.toLocaleString("es-CL")}).`,
+      };
+    } catch (e) {
+      console.error("[RestaurantService] checkAndOfferProduct error:", e);
+      return {
+        available: true,
+        message: `Plato disponible sujeto a confirmación.`,
+      };
+    }
+  }
+
+  /**
+   * Genera el contexto de la carta en tiempo real para el System Prompt del agente de WhatsApp
+   */
+  static async getMenuContextForIA(tenantId: string): Promise<string> {
+    return InventoryService.getMenuContextForIA(tenantId);
   }
 }

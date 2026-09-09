@@ -83,3 +83,63 @@ export interface RestaurantState {
   reservations: Record<string, Reservation>;
   orders: DeliveryOrder[];
 }
+
+// -------------------------------------------------------------
+// INVENTARIO & CARTA (Fudo POS Omnicanal)
+// -------------------------------------------------------------
+
+export type MenuCategory = "entrante" | "principal" | "postre" | "bebida" | "especial";
+export type StockUnit = "unidad" | "kg" | "gr" | "lt" | "ml";
+export type StockMovementType = "venta" | "merma" | "reposicion" | "ajuste_manual";
+export type StockStatus = "disponible" | "bajo" | "agotado";
+
+export interface RecipeItem {
+  id?: string;
+  ingredientId: string;
+  ingredientName?: string;
+  quantity: number;
+  unit?: StockUnit;
+}
+
+export interface MenuProduct {
+  id: string;
+  tenantId: string;
+  name: string;
+  description?: string;
+  category: MenuCategory;
+  price: number;
+  isActive: boolean;
+  preparationTime?: number;
+  allergens?: string[];
+  imageKnowledgeBaseId?: string;
+  recipe?: RecipeItem[];
+  stockStatus?: StockStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Ingredient {
+  id: string;
+  tenantId: string;
+  name: string;
+  unit: StockUnit;
+  stockCurrent: number;
+  stockMin: number;
+  costPerUnit: number;
+  stockStatus: StockStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StockMovement {
+  id: string;
+  tenantId: string;
+  ingredientId: string;
+  ingredientName?: string;
+  movementType: StockMovementType;
+  quantity: number;
+  reason?: string;
+  orderId?: string;
+  reservationId?: string;
+  createdAt: string;
+}
