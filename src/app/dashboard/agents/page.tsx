@@ -144,54 +144,112 @@ export default function AgentsPage() {
   const handleCreateAgent = async () => {
     if (!newAgentName.trim()) return;
     setSaving(true);
-    const res = await saveAIAgent({
-      name: newAgentName,
-      description: newAgentDescription,
-      status: "ACTIVE",
-      type: "QUALIFY",
-    });
-    if (res.success && res.data) {
-      await loadData();
-      setSelectedAgent(res.data);
-      setIsCreateModalOpen(false);
-      setNewAgentName("");
-      setNewAgentDescription("");
-    } else {
-      toast({ variant: "error", title: "Error al crear agente" });
+    try {
+      const res = await saveAIAgent({
+        name: newAgentName.trim(),
+        description: newAgentDescription.trim(),
+        status: "ACTIVE",
+        type: "QUALIFY",
+      });
+      if (res.success && res.data) {
+        await loadData();
+        setSelectedAgent(res.data);
+        setIsCreateModalOpen(false);
+        setNewAgentName("");
+        setNewAgentDescription("");
+        toast({
+          variant: "success",
+          title: "Maestro Creado",
+          description: "El agente ha sido configurado con éxito.",
+        });
+      } else {
+        toast({
+          variant: "error",
+          title: "Error al crear agente",
+          description:
+            res.error || "No se pudo crear el agente. Verifica que haya un cliente seleccionado.",
+        });
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast({
+        variant: "error",
+        title: "Error al crear agente",
+        description: error.message || "Error inesperado al contactar con el servidor.",
+      });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleUpdateAgent = async () => {
     if (!selectedAgent || !newAgentName.trim()) return;
     setSaving(true);
-    const res = await saveAIAgent({
-      id: selectedAgent.id,
-      name: newAgentName,
-      description: newAgentDescription,
-    });
-    if (res.success && res.data) {
-      await loadData();
-      setSelectedAgent(res.data);
-      setIsEditModalOpen(false);
-    } else {
-      toast({ variant: "error", title: "Error al actualizar agente" });
+    try {
+      const res = await saveAIAgent({
+        id: selectedAgent.id,
+        name: newAgentName.trim(),
+        description: newAgentDescription.trim(),
+      });
+      if (res.success && res.data) {
+        await loadData();
+        setSelectedAgent(res.data);
+        setIsEditModalOpen(false);
+        toast({
+          variant: "success",
+          title: "Maestro Actualizado",
+          description: "Los datos básicos se actualizaron correctamente.",
+        });
+      } else {
+        toast({
+          variant: "error",
+          title: "Error al actualizar agente",
+          description: res.error || "No se pudo actualizar el agente.",
+        });
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast({
+        variant: "error",
+        title: "Error al actualizar agente",
+        description: error.message || "Error inesperado.",
+      });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDeleteAgent = async () => {
     if (!agentToDelete) return;
     setSaving(true);
-    const res = await deleteAIAgent(agentToDelete.id);
-    if (res.success) {
-      await loadData();
-      if (selectedAgent?.id === agentToDelete.id) setSelectedAgent(null);
-      setIsDeleteModalOpen(false);
-    } else {
-      toast({ variant: "error", title: "Error al eliminar agente" });
+    try {
+      const res = await deleteAIAgent(agentToDelete.id);
+      if (res.success) {
+        await loadData();
+        if (selectedAgent?.id === agentToDelete.id) setSelectedAgent(null);
+        setIsDeleteModalOpen(false);
+        toast({
+          variant: "success",
+          title: "Maestro Eliminado",
+          description: "El agente fue eliminado exitosamente.",
+        });
+      } else {
+        toast({
+          variant: "error",
+          title: "Error al eliminar agente",
+          description: res.error || "No se pudo eliminar el agente.",
+        });
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast({
+        variant: "error",
+        title: "Error al eliminar agente",
+        description: error.message || "Error inesperado.",
+      });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleSave = async () => {

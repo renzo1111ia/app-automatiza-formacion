@@ -8,7 +8,23 @@ import { requireEnv, requireEnvAny } from "@/lib/env";
  */
 export async function getActiveTenantId(): Promise<string | null> {
   const cookieStore = await cookies();
-  return cookieStore.get("esden-tenant-id")?.value || null;
+  const cookieVal = cookieStore.get("esden-tenant-id")?.value;
+  if (cookieVal) return cookieVal;
+
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const { data } = (await supabase
+      .from("tenants")
+      .select("id")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle()) as { data: { id: string } | null };
+
+    if (data?.id) return data.id;
+  } catch (err) {
+    console.error("[getActiveTenantId] Error falling back to default tenant:", err);
+  }
+  return null;
 }
 
 /**

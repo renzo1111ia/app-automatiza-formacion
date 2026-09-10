@@ -64,7 +64,36 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
     .single();
 
   if (error) return { success: false, error: error.message };
-  return { success: true, data: data as AIAgent };
+
+  const createdAgent = data as unknown as AIAgent;
+
+  // If this is a newly created agent, create its initial default variant A
+  if (!agent.id && createdAgent?.id) {
+    try {
+      const defaultVariant = {
+        agent_id: createdAgent.id,
+        is_variant_b: false,
+        is_active: true,
+        version_label: "v1.0",
+        prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
+        model_provider: "OPENAI",
+        model_name: "gpt-4o",
+        automation_rules: {
+          contact_policy: "auto",
+          working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
+          retry_delay: 15,
+          max_retries: 3,
+        },
+        scheduling_config: { enabled: false, duration: 30, buffer: 15 },
+      };
+      // @ts-expect-error - Supabase generic table inference
+      await supabase.from("ai_agent_variants").insert(defaultVariant);
+    } catch (variantErr) {
+      console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+    }
+  }
+
+  return { success: true, data: createdAgent };
 }
 
 /**
