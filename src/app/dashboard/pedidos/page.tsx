@@ -225,6 +225,41 @@ export default function PedidosPage() {
     persistServerState(updated);
   };
 
+  const handleBatchCreateTables = (count: number, templateData: Partial<Table>) => {
+    // Genera N mesas consecutivas con numeración automática
+    const existingNumbers = tables.map((t) => t.number || 0);
+    let nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+    const newTables: Table[] = [];
+    for (let i = 0; i < count; i++) {
+      // Calcula posición escalonada para que no se superpongan
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      newTables.push({
+        id: `table-${Date.now()}-${i}`,
+        name: templateData.name
+          ? count > 1
+            ? `${templateData.name.replace(/\s*\d+$/, "")} ${nextNumber}`
+            : templateData.name
+          : `Mesa ${nextNumber}`,
+        number: nextNumber,
+        capacity: templateData.capacity || 4,
+        shape: templateData.shape || "square",
+        zone: templateData.zone || zones[0]?.id || "principal",
+        status: "disponible",
+        position: {
+          x: Math.min(90, 10 + col * 18),
+          y: Math.min(88, 15 + row * 25),
+        },
+      });
+      nextNumber++;
+    }
+
+    const updated = [...tables, ...newTables];
+    setTables(updated);
+    persistServerState(updated);
+  };
+
   // Zone CRUD
   const handleAddZone = (newZone: Zone) => {
     const updated = [...zones, newZone];
@@ -523,10 +558,12 @@ export default function PedidosPage() {
         <EditTableModal
           table={editingTable}
           zones={zones}
+          existingTables={tables}
           onClose={() => setEditingTable(undefined)}
           onSave={handleSaveTableData}
           onDelete={handleDeleteTable}
           onDuplicate={handleDuplicateTable}
+          onBatchCreate={handleBatchCreateTables}
         />
       )}
 

@@ -2,25 +2,29 @@
 
 import React, { useState } from "react";
 import { Table, TableShape, Zone } from "@/types/pedidos";
-import { X, Utensils, Users, Check, Trash2, Copy } from "lucide-react";
+import { X, Utensils, Users, Check, Trash2, Copy, Layers, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EditTableModalProps {
   table?: Table | null; // If null, we are creating a new table
   zones: Zone[];
+  existingTables?: Table[]; // Para elegir plantilla al crear
   onClose: () => void;
   onSave: (tableData: Partial<Table>) => void;
   onDelete?: (tableId: string) => void;
   onDuplicate?: (table: Table) => void;
+  onBatchCreate?: (count: number, templateData: Partial<Table>) => void; // Crear N mesas de una vez
 }
 
 export const EditTableModal: React.FC<EditTableModalProps> = ({
   table,
   zones,
+  existingTables = [],
   onClose,
   onSave,
   onDelete,
   onDuplicate,
+  onBatchCreate,
 }) => {
   const isEditing = Boolean(table);
 
@@ -30,10 +34,26 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
   const [shape, setShape] = useState<TableShape>(table?.shape || "square");
   const [zoneId, setZoneId] = useState(table?.zone || zones[0]?.id || "terraza");
 
+  // Estado para la sección de plantilla (solo al crear)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [batchCount, setBatchCount] = useState<number>(1);
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
+
+  // Aplica la configuración de la plantilla elegida
+  const applyTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) return;
+    const tpl = existingTables.find((t) => t.id === templateId);
+    if (!tpl) return;
+    setCapacity(tpl.capacity);
+    setShape(tpl.shape);
+    setZoneId(tpl.zone);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      id: table?.id || `table-${Date.now()}`,
+
+    const baseData: Partial<Table> = {
       name,
       number: Number(number),
       capacity: Number(capacity),
@@ -41,7 +61,17 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
       zone: zoneId,
       status: table?.status || "disponible",
       position: table?.position || { x: 50, y: 50 },
-    });
+    };
+
+    if (!isEditing && batchCount > 1 && onBatchCreate) {
+      // Modo lote: delegar la creación en lote al padre
+      onBatchCreate(batchCount, baseData);
+    } else {
+      onSave({
+        id: table?.id || `table-${Date.now()}`,
+        ...baseData,
+      });
+    }
     onClose();
   };
 
@@ -69,6 +99,92 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* Panel de Plantilla / Duplicado (solo al CREAR) */}
+        {!isEditing && existingTables.length > 0 && (
+          <div className="border-b border-slate-800 bg-slate-950/40 px-5 py-3">
+            <button
+              type="button"
+              onClick={() => setShowTemplatePanel(!showTemplatePanel)}
+              className="flex w-full items-center justify-between text-xs font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
+            >
+              <span className="flex items-center gap-1.5">
+                <Copy className="h-3.5 w-3.5" />
+                Copiar configuración de una mesa existente
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  showTemplatePanel && "rotate-180"
+                )}
+              />
+            </button>
+
+            {showTemplatePanel && (
+              <div className="mt-3 space-y-3">
+                {/* Selector de plantilla */}
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold text-slate-400">
+                    Elegir mesa como plantilla:
+                  </label>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => applyTemplate(e.target.value)}
+                    className="w-full rounded-lg border border-emerald-800/60 bg-slate-950 p-2.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                  >
+                    <option value="">— Sin plantilla (desde cero) —</option>
+                    {existingTables.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} · {t.capacity} pers. · {t.shape}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedTemplateId && (
+                    <p className="mt-1 text-[11px] text-emerald-400">
+                      ✓ Capacidad, forma y zona copiadas. Ajusta el nombre si lo deseas.
+                    </p>
+                  )}
+                </div>
+
+                {/* Contador de lote */}
+                {onBatchCreate && (
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold text-slate-400">
+                      <Layers className="mr-1 inline h-3 w-3 text-amber-400" />
+                      Crear en lote (cuántas mesas iguales):
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center overflow-hidden rounded-lg border border-slate-700 bg-slate-950">
+                        <button
+                          type="button"
+                          onClick={() => setBatchCount(Math.max(1, batchCount - 1))}
+                          className="px-3 py-2 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[2.5rem] text-center text-sm font-bold text-white">
+                          {batchCount}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBatchCount(Math.min(20, batchCount + 1))}
+                          className="px-3 py-2 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {batchCount === 1
+                          ? "Se creará 1 mesa"
+                          : `Se crearán ${batchCount} mesas consecutivas`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 p-5 text-xs">
@@ -230,7 +346,12 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({
                 type="submit"
                 className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 font-bold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500"
               >
-                <Check className="h-4 w-4" /> {isEditing ? "Guardar" : "Crear Mesa"}
+                <Check className="h-4 w-4" />
+                {isEditing
+                  ? "Guardar"
+                  : batchCount > 1
+                    ? `Crear ${batchCount} Mesas`
+                    : "Crear Mesa"}
               </button>
             </div>
           </div>
