@@ -209,9 +209,30 @@ export async function processIncomingWhatsApp(
             const fileName = `whatsapp/${tenantId}/${message.id}.${message.type === "audio" ? "ogg" : "jpg"}`;
             const rawCt = fileRes.headers["content-type"];
             const contentTypeHeader = typeof rawCt === "string" ? rawCt : undefined;
-            mediaUrl = await uploadToMinio(fileName, Buffer.from(fileRes.data), contentTypeHeader);
+            const fileBuf = Buffer.from(fileRes.data);
+
+            try {
+              const { data: storageData, error: storageErr } = await supabase.storage
+                .from("knowledge_base")
+                .upload(fileName, fileBuf, {
+                  contentType: contentTypeHeader || "application/octet-stream",
+                  upsert: true,
+                });
+
+              if (!storageErr && storageData) {
+                const { data: publicUrlData } = supabase.storage
+                  .from("knowledge_base")
+                  .getPublicUrl(fileName);
+                mediaUrl = publicUrlData?.publicUrl || `/storage/${fileName}`;
+              } else {
+                mediaUrl = await uploadToMinio(fileName, fileBuf, contentTypeHeader).catch(() => `/storage/${fileName}`);
+              }
+            } catch {
+              mediaUrl = await uploadToMinio(fileName, fileBuf, contentTypeHeader).catch(() => `/storage/${fileName}`);
+            }
+
             content = `[${message.type.toUpperCase()}]: ${mediaUrl}`;
-            console.log(`[WHATSAPP PROCESSOR] Media uploaded to MinIO: ${mediaUrl}`);
+            console.log(`[WHATSAPP PROCESSOR] Media processed and saved: ${mediaUrl}`);
           }
         } catch (mediaErr) {
           console.error("[WHATSAPP PROCESSOR] Failed to process media:", mediaErr);

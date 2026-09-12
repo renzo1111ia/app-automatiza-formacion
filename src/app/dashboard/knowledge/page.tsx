@@ -13,6 +13,8 @@ import {
   Loader2,
   RefreshCw,
   X,
+  AlignLeft,
+  BookOpen,
 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getKnowledgeBase,
   uploadKnowledgeDocument,
+  createDirectTextKnowledge,
   deleteKnowledgeDocument,
 } from "@/lib/actions/knowledge";
 import type { KnowledgeItem } from "@/types/database";
@@ -29,6 +32,7 @@ export default function KnowledgeBasePage() {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"file" | "text">("file");
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -36,6 +40,7 @@ export default function KnowledgeBasePage() {
   const [files, setFiles] = useState<File[]>([]);
   const [kbName, setKbName] = useState("");
   const [description, setDescription] = useState("");
+  const [textContent, setTextContent] = useState("");
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number }>({
     current: 0,
     total: 0,
@@ -65,7 +70,7 @@ export default function KnowledgeBasePage() {
     };
   }, []);
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleUploadFiles = async (e: React.FormEvent) => {
     e.preventDefault();
     if (files.length === 0) return;
 
@@ -82,7 +87,6 @@ export default function KnowledgeBasePage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // If bulk uploading (more than 1 file), append filename to custom name to avoid confusion
       const finalName =
         files.length > 1 && kbName ? `${kbName} (${file.name})` : kbName || file.name;
 
@@ -101,14 +105,17 @@ export default function KnowledgeBasePage() {
       await loadItems();
       if (errors.length === 0) {
         setIsUploadModalOpen(false);
-        setFiles([]);
-        setKbName("");
-        setDescription("");
+        resetForm();
+        toast({
+          variant: "success",
+          title: "Documentos procesados",
+          description: `Se han indexado correctamente ${successCount} documento(s).`,
+        });
       } else {
         toast({
           variant: "warning",
           title: "Subida parcial",
-          description: `Se subieron ${successCount} archivos, pero hubo errores en algunos: ${errors.join(", ")}`,
+          description: `Se subieron ${successCount} archivos, pero hubo errores: ${errors.join(", ")}`,
         });
       }
     } else {
@@ -121,15 +128,48 @@ export default function KnowledgeBasePage() {
     setUploading(false);
   };
 
-  const _handleDelete = async (id: string, fileName: string) => {
-    if (!confirm(`¿Estás seguro de eliminar "${fileName}" de la base de conocimiento?`)) return;
+  const handleCreateText = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kbName.trim() || !textContent.trim()) {
+      toast({
+        variant: "warning",
+        title: "Campos incompletos",
+        description: "Por favor indica un título y el contenido de texto.",
+      });
+      return;
+    }
 
-    const res = await deleteKnowledgeDocument(id);
+    setUploading(true);
+    const res = await createDirectTextKnowledge({
+      name: kbName.trim(),
+      description: description.trim(),
+      content: textContent.trim(),
+    });
+
     if (res.success) {
       await loadItems();
+      setIsUploadModalOpen(false);
+      resetForm();
+      toast({
+        variant: "success",
+        title: "Conocimiento indexado",
+        description: "El texto se ha fragmentado y guardado en la base vectorial con éxito.",
+      });
     } else {
-      toast({ variant: "error", title: "Error al eliminar", description: res.error });
+      toast({
+        variant: "error",
+        title: "Error al guardar texto",
+        description: res.error || "Ocurrió un error al procesar el texto.",
+      });
     }
+    setUploading(false);
+  };
+
+  const resetForm = () => {
+    setFiles([]);
+    setKbName("");
+    setDescription("");
+    setTextContent("");
   };
 
   const removeFile = (index: number) => {
@@ -147,12 +187,12 @@ export default function KnowledgeBasePage() {
           count: 1,
           created_at: item.created_at,
           file_keys: [item.file_key],
+          isText: item.file_key?.startsWith("text/") || item.file_url?.startsWith("text://"),
         };
       } else {
         acc[item.name].ids.push(item.id);
         acc[item.name].file_keys.push(item.file_key);
         acc[item.name].count += 1;
-        // Keep the newest description and date
         if (new Date(item.created_at) > new Date(acc[item.name].created_at)) {
           acc[item.name].description = item.description;
           acc[item.name].created_at = item.created_at;
@@ -169,6 +209,7 @@ export default function KnowledgeBasePage() {
         count: number;
         created_at: string;
         file_keys: string[];
+        isText?: boolean;
       }
     >
   );
@@ -192,7 +233,7 @@ export default function KnowledgeBasePage() {
           <div>
             <h1 className="text-2xl font-black tracking-tight uppercase">Base de Conocimiento</h1>
             <p className="text-muted-foreground mt-1 text-xs leading-none font-bold tracking-widest uppercase">
-              Gestiona los documentos PDF que entrenan a tus agentes.
+              Gestiona PDFs, cartas y textos de entrenamiento indexados en PGVector.
             </p>
           </div>
         </div>
@@ -201,7 +242,7 @@ export default function KnowledgeBasePage() {
             <Search className="text-muted-foreground/40 group-focus-within:text-primary absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 transition-colors" />
             <input
               type="text"
-              placeholder="Buscar documentos..."
+              placeholder="Buscar conocimientos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-card/40 border-border focus:border-primary/40 focus:ring-primary/10 text-foreground h-11 w-64 rounded-xl border pr-6 pl-12 text-sm transition-all outline-none focus:ring-4"
@@ -209,13 +250,13 @@ export default function KnowledgeBasePage() {
           </div>
           <button
             onClick={() => {
-              setFiles([]);
+              resetForm();
               setIsUploadModalOpen(true);
             }}
             className="flex h-11 items-center gap-2 rounded-xl bg-emerald-500 px-6 text-[11px] font-black tracking-widest text-white uppercase shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" />
-            Añadir PDF
+            Añadir Conocimiento
           </button>
         </div>
       </div>
@@ -241,14 +282,17 @@ export default function KnowledgeBasePage() {
               <EmptyState
                 size="lg"
                 icon={<Database className="h-12 w-12" />}
-                title="Sin documentos cargados"
-                description="Sube PDF, DOCX o TXT para alimentar la base de conocimiento de tu agente."
+                title="Sin conocimientos cargados"
+                description="Sube documentos o pega texto/cartas para alimentar el cerebro de tu agente."
                 action={
                   <button
-                    onClick={() => setIsUploadModalOpen(true)}
+                    onClick={() => {
+                      resetForm();
+                      setIsUploadModalOpen(true);
+                    }}
                     className="flex h-10 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.02]"
                   >
-                    <Plus className="h-4 w-4" /> Añadir primer documento
+                    <Plus className="h-4 w-4" /> Añadir primer conocimiento
                   </button>
                 }
               />
@@ -265,14 +309,18 @@ export default function KnowledgeBasePage() {
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-                    <Database className="h-6 w-6" />
+                    {group.isText ? (
+                      <AlignLeft className="h-6 w-6" />
+                    ) : (
+                      <Database className="h-6 w-6" />
+                    )}
                   </div>
                   <div className="flex gap-2 opacity-0 transition-all group-hover:opacity-100">
                     <button
                       onClick={async () => {
                         if (
                           confirm(
-                            `¿Eliminar la base "${group.name}" y sus ${group.count} archivos?`
+                            `¿Eliminar la entrada "${group.name}" y sus ${group.count} registro(s)?`
                           )
                         ) {
                           setLoading(true);
@@ -299,11 +347,13 @@ export default function KnowledgeBasePage() {
                 </div>
                 <div className="border-border mt-6 flex items-center justify-between border-t pt-6">
                   <span className="rounded-full border border-emerald-500/10 bg-emerald-500/5 px-3 py-1 text-[10px] font-black tracking-widest text-emerald-500/60 uppercase">
-                    {group.count} {group.count === 1 ? "Archivo" : "Archivos"}
+                    {group.isText
+                      ? "Texto Directo"
+                      : `${group.count} ${group.count === 1 ? "Archivo" : "Archivos"}`}
                   </span>
-                  <span className="text-muted-foreground/20 flex items-center gap-1.5 text-[10px] font-bold">
-                    <ShieldCheck className="h-3 w-3" />
-                    Indexado
+                  <span className="text-muted-foreground/40 flex items-center gap-1.5 text-[10px] font-bold">
+                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                    Vectorizado
                   </span>
                 </div>
               </motion.div>
@@ -312,7 +362,7 @@ export default function KnowledgeBasePage() {
         )}
       </div>
 
-      {/* ── UPLOAD MODAL ── */}
+      {/* ── MODAL DE CARGA ── */}
       <AnimatePresence>
         {isUploadModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
@@ -327,149 +377,243 @@ export default function KnowledgeBasePage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-card border-border relative max-h-[90vh] w-full max-w-lg space-y-8 overflow-y-auto rounded-[40px] border p-10 shadow-2xl"
+              className="bg-card border-border relative max-h-[90vh] w-full max-w-lg space-y-6 overflow-y-auto rounded-[40px] border p-8 shadow-2xl"
             >
-              <div className="space-y-4 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-emerald-500/20 bg-emerald-500/10">
-                  <FileUp className="h-8 w-8 text-emerald-500" />
+              <div className="space-y-3 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl border border-emerald-500/20 bg-emerald-500/10">
+                  <BookOpen className="h-7 w-7 text-emerald-500" />
                 </div>
-                <h3 className="text-3xl font-black tracking-tight uppercase">
-                  Sincronizar Conocimiento
+                <h3 className="text-2xl font-black tracking-tight uppercase">
+                  Añadir Base de Conocimiento
                 </h3>
-                <p className="text-muted-foreground px-4 text-sm leading-relaxed font-medium">
-                  Selecciona varios PDFs. Se guardarán en MinIO y se indexarán automáticamente.
+                <p className="text-muted-foreground px-4 text-xs leading-relaxed font-medium">
+                  Alimenta la IA con documentos o texto directo que se fragmentan e indexan en PGVector.
                 </p>
               </div>
 
-              <form onSubmit={handleUpload} className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
-                    Archivos PDF
-                  </label>
-                  <div
-                    className={cn(
-                      "relative flex h-32 flex-col items-center justify-center gap-2 overflow-hidden rounded-[24px] border-2 border-dashed transition-all",
-                      files.length > 0
-                        ? "border-emerald-500/50 bg-emerald-500/5"
-                        : "border-border hover:border-primary/20 bg-card/40"
-                    )}
-                  >
-                    <input
-                      type="file"
-                      multiple
-                      accept=".pdf"
-                      title="Subir archivos PDF"
-                      disabled={uploading}
-                      className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          setFiles(Array.from(e.target.files));
-                        }
-                      }}
-                    />
-                    <Upload
+              {/* Selector de Pestañas */}
+              <div className="bg-card/40 border-border flex rounded-2xl border p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("file")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all",
+                    activeTab === "file"
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <FileUp className="h-4 w-4" />
+                  Subir Archivos (PDF/TXT)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("text")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all",
+                    activeTab === "text"
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <AlignLeft className="h-4 w-4" />
+                  Texto / Carta Directa
+                </button>
+              </div>
+
+              {activeTab === "file" ? (
+                <form onSubmit={handleUploadFiles} className="space-y-5">
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Archivos PDF / TXT
+                    </label>
+                    <div
                       className={cn(
-                        "mb-1 h-8 w-8",
-                        files.length > 0 ? "text-emerald-400" : "text-muted-foreground/20"
+                        "relative flex h-28 flex-col items-center justify-center gap-2 overflow-hidden rounded-[24px] border-2 border-dashed transition-all",
+                        files.length > 0
+                          ? "border-emerald-500/50 bg-emerald-500/5"
+                          : "border-border hover:border-primary/20 bg-card/40"
                       )}
-                    />
-                    <p className="text-muted-foreground text-[10px] font-bold tracking-tight uppercase">
-                      {files.length > 0
-                        ? `${files.length} archivos seleccionados`
-                        : "Click o arrastra varios archivos (PDF máx 10MB)"}
-                    </p>
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        accept=".pdf,.txt,.md"
+                        title="Subir archivos"
+                        disabled={uploading}
+                        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            setFiles(Array.from(e.target.files));
+                          }
+                        }}
+                      />
+                      <Upload
+                        className={cn(
+                          "h-7 w-7",
+                          files.length > 0 ? "text-emerald-400" : "text-muted-foreground/20"
+                        )}
+                      />
+                      <p className="text-muted-foreground text-[10px] font-bold tracking-tight uppercase">
+                        {files.length > 0
+                          ? `${files.length} archivo(s) seleccionado(s)`
+                          : "Click o arrastra archivos (PDF, TXT, MD)"}
+                      </p>
+                    </div>
+
+                    {files.length > 0 && (
+                      <div className="custom-scrollbar mt-3 max-h-28 space-y-1.5 overflow-y-auto px-1">
+                        {files.map((f, i) => (
+                          <div
+                            key={i}
+                            className="bg-card/40 border-border flex items-center justify-between rounded-xl border p-2.5 text-xs"
+                          >
+                            <div className="flex items-center gap-2.5 overflow-hidden">
+                              <FileText className="h-4 w-4 flex-shrink-0 text-emerald-500" />
+                              <span className="text-foreground/80 truncate font-semibold">
+                                {f.name}
+                              </span>
+                            </div>
+                            {!uploading && (
+                              <button
+                                type="button"
+                                title={`Eliminar ${f.name}`}
+                                onClick={() => removeFile(i)}
+                                className="text-white/20 transition-colors hover:text-red-400"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Selected Files List */}
-                  {files.length > 0 && (
-                    <div className="custom-scrollbar mt-4 max-h-32 space-y-2 overflow-y-auto px-2">
-                      {files.map((f, i) => (
-                        <div
-                          key={i}
-                          className="bg-card/40 border-border flex items-center justify-between rounded-xl border p-3"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <FileText className="h-4 w-4 flex-shrink-0 text-emerald-500" />
-                            <span className="text-foreground/80 truncate text-xs font-bold">
-                              {f.name}
-                            </span>
-                          </div>
-                          {!uploading && (
-                            <button
-                              type="button"
-                              title={`Eliminar ${f.name}`}
-                              onClick={() => removeFile(i)}
-                              className="text-white/20 transition-colors hover:text-red-400"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Nombre de la Base (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={kbName}
+                      disabled={uploading}
+                      onChange={(e) => setKbName(e.target.value)}
+                      className="bg-card/40 border-border text-foreground h-11 w-full rounded-2xl border px-4 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      placeholder="Ej: Carta Restaurante Verano 2026..."
+                    />
+                  </div>
 
-                <div className="space-y-3">
-                  <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
-                    Nombre de la Base (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={kbName}
-                    disabled={uploading}
-                    onChange={(e) => setKbName(e.target.value)}
-                    className="bg-card/40 border-border text-foreground h-12 w-full rounded-2xl border px-4 text-sm font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
-                    placeholder="Ej: Manual de Ventas 2025..."
-                  />
-                  <p className="text-muted-foreground/40 ml-4 text-[8px] italic">
-                    Si se deja vacío, se usará el nombre del archivo PDF.
-                  </p>
-                </div>
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Descripción (Opcional)
+                    </label>
+                    <textarea
+                      value={description}
+                      disabled={uploading}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="bg-card/40 border-border text-foreground h-16 w-full resize-none rounded-2xl border p-3 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      placeholder="Breve descripción del contenido..."
+                    />
+                  </div>
 
-                <div className="space-y-3">
-                  <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
-                    Descripción General (Opcional)
-                  </label>
-                  <textarea
-                    value={description}
-                    disabled={uploading}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="bg-card/40 border-border text-foreground h-20 w-full resize-none rounded-2xl border p-4 text-sm font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
-                    placeholder="Descripción común para este lote de documentos..."
-                  />
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    disabled={uploading}
-                    onClick={() => setIsUploadModalOpen(false)}
-                    className="bg-card/40 border-border hover:bg-card/60 text-foreground h-14 flex-1 rounded-2xl border text-[10px] font-black font-bold tracking-widest uppercase transition-all disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={uploading || files.length === 0}
-                    className="flex h-14 flex-1 flex-col items-center justify-center rounded-2xl bg-emerald-500 text-[10px] font-black tracking-widest text-white uppercase shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {uploading ? (
-                      <div className="flex flex-col items-center">
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => setIsUploadModalOpen(false)}
+                      className="bg-card/40 border-border hover:bg-card/60 text-foreground h-12 flex-1 rounded-2xl border text-[10px] font-black tracking-widest uppercase transition-all disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={uploading || files.length === 0}
+                      className="flex h-12 flex-1 flex-col items-center justify-center rounded-2xl bg-emerald-500 text-[10px] font-black tracking-widest text-white uppercase shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {uploading ? (
                         <div className="flex items-center gap-2">
                           <RefreshCw className="h-4 w-4 animate-spin" />
-                          <span>Subiendo...</span>
+                          <span>Indexando ({uploadProgress.current}/{uploadProgress.total})...</span>
                         </div>
-                        <span className="mt-1 text-[8px] opacity-60">
-                          {uploadProgress.current} de {uploadProgress.total}
-                        </span>
-                      </div>
-                    ) : (
-                      "Completar Carga"
-                    )}
-                  </button>
-                </div>
-              </form>
+                      ) : (
+                        "Subir e Indexar"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleCreateText} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Título / Nombre del Conocimiento *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={kbName}
+                      disabled={uploading}
+                      onChange={(e) => setKbName(e.target.value)}
+                      className="bg-card/40 border-border text-foreground h-11 w-full rounded-2xl border px-4 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      placeholder="Ej: Carta de Comidas y Promociones"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Descripción Corta
+                    </label>
+                    <input
+                      type="text"
+                      value={description}
+                      disabled={uploading}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="bg-card/40 border-border text-foreground h-11 w-full rounded-2xl border px-4 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      placeholder="Ej: Platos especiales, ingredientes y horarios"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground/40 ml-4 text-[10px] font-black tracking-widest uppercase">
+                      Contenido (Texto / Markdown) *
+                    </label>
+                    <textarea
+                      required
+                      value={textContent}
+                      disabled={uploading}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      rows={6}
+                      className="bg-card/40 border-border text-foreground font-mono w-full resize-none rounded-2xl border p-3.5 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      placeholder={`### Hamburguesas:\n- Clásica: $12.00 (Carne 150g, lechuga, tomate, queso)\n- Bacon Doble: $15.50 (Doble carne, queso cheddar, bacon crujiente)\n\n### Bebidas:\n- Refresco: $3.00\n- Cerveza Artesanal: $5.00`}
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={() => setIsUploadModalOpen(false)}
+                      className="bg-card/40 border-border hover:bg-card/60 text-foreground h-12 flex-1 rounded-2xl border text-[10px] font-black tracking-widest uppercase transition-all disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={uploading || !kbName.trim() || !textContent.trim()}
+                      className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-emerald-500 text-[10px] font-black tracking-widest text-white uppercase shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {uploading ? (
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                          <span>Vectorizando...</span>
+                        </div>
+                      ) : (
+                        "Guardar e Indexar"
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </motion.div>
           </div>
         )}
@@ -477,3 +621,4 @@ export default function KnowledgeBasePage() {
     </div>
   );
 }
+

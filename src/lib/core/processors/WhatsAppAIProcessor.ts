@@ -155,6 +155,7 @@ export async function generateAIWhatsAppResponse(
       leadAppointments,
       leadProgramsData,
       allProgramsData,
+      menuProductsData,
     ] = await Promise.all([
       // 3. Get Recent Context from DB (last 10 messages)
       ChatMemoryService.getRecentContext(leadId).catch((err) => {
@@ -222,6 +223,12 @@ export async function generateAIWhatsAppResponse(
         .select("programas(nombre, requisitos_cualificacion)")
         .eq("id_lead", leadId),
       (supabase.from("programas") as any).select("nombre").eq("tenant_id", tenantId),
+      // 9. Get Active Menu Products (Structured Carta)
+      (supabase.from("menu_products") as any)
+        .select("id, name, description, category, price, preparation_time, allergens")
+        .eq("tenant_id", tenantId)
+        .eq("is_active", true)
+        .order("category"),
     ]);
 
     const leadPrograms =
@@ -241,6 +248,43 @@ export async function generateAIWhatsAppResponse(
 
     if (allProgramNames) {
       programRequirements += `\n\nCURSOS DISPONIBLES EN LA INSTITUCIÓN: ${allProgramNames}. Si el usuario menciona un curso, DEBE ser uno de estos, de lo contrario asume que se equivocó o no lo extraigas.`;
+    }
+
+    const menuProducts =
+      (menuProductsData?.data as {
+        id: string;
+        name: string;
+        description?: string;
+        category: string;
+        price: number;
+        preparation_time?: number;
+        allergens?: string[];
+      }[]) || [];
+
+    let formattedMenu = "";
+    if (menuProducts.length > 0) {
+      const groupedMenu = menuProducts.reduce(
+        (acc: Record<string, typeof menuProducts>, item) => {
+          const cat = item.category || "General";
+          if (!acc[cat]) acc[cat] = [];
+          acc[cat].push(item);
+          return acc;
+        },
+        {}
+      );
+
+      formattedMenu = Object.entries(groupedMenu)
+        .map(([cat, prods]) => {
+          const catTitle = cat.toUpperCase();
+          const itemsStr = prods
+            .map(
+              (p) =>
+                `- **${p.name}** | Precio: $${Number(p.price).toFixed(2)}${p.description ? ` (${p.description})` : ""}${p.allergens && p.allergens.length > 0 ? ` [Alérgenos: ${p.allergens.join(", ")}]` : ""}`
+            )
+            .join("\n");
+          return `### ${catTitle}:\n${itemsStr}`;
+        })
+        .join("\n\n");
     }
 
     const waConfig = (
@@ -608,8 +652,11 @@ VARIABLES A CAPTURAR (OBLIGATORIO):
 ${((activeVariant.tracked_variables as string[]) || []).map((v) => `- ${v}`).join("\n") || "No hay variables específicas configuradas."}
 *Nota: Intenta obtener estos datos de forma sutil durante la charla.*
 
-INFORMACIÓN ADICIONAL (CEREBRO):
-${localKnowledge || "No hay información específica en la base de conocimiento para este mensaje."}
+CARTA Y MENÚ OFICIAL DEL RESTAURANTE (PRECIOS Y PRODUCTOS DISPONIBLES):
+${formattedMenu || "No hay productos cargados en la base de datos de carta actualmente."}
+
+INFORMACIÓN ADICIONAL (CEREBRO / BASE DE CONOCIMIENTO):
+${localKnowledge || "No hay información adicional específica en la base de conocimiento para este mensaje."}
 
 RESUMEN DE CONVERSACIÓN PREVIA:
 ${chatSummary || "Primera interacción con este lead."}
@@ -653,13 +700,14 @@ ${
    - En cuanto tengas estos datos, llama OBLIGATORIAMENTE a la herramienta **'book_restaurant_table'**.
    - Confírmale la reserva al cliente indicando la mesa asignada, fecha, hora y comensales.
 
-2. **SI EL CLIENTE DESEA UN PEDIDO DE DELIVERY / A DOMICILIO:**
+2. **SI EL CLIENTE DESEA UN PEDIDO DE DELIVERY / A DOMICILIO O CONSULTA LA CARTA:**
+   - Consulta los productos y precios exactos en la sección 'CARTA Y MENÚ OFICIAL DEL RESTAURANTE'.
+   - NUNCA inventes precios ni productos fuera de la carta oficial.
    - DEBES solicitar los siguientes datos indispensables:
      1. **Qué platos, bebidas o productos desea pedir** de la carta.
      2. **Nombre de quien recibe**.
      3. **Teléfono de contacto**.
      4. **Dirección exacta de entrega**.
-   - Consulta los precios en la **CARTA / MENÚ** que aparece en la sección 'INFORMACIÓN ADICIONAL (CEREBRO)'.
    - Calcula el total y DEBES informarle al cliente el desglose de productos y el **TOTAL EXACTO a pagar**.
    - Llama OBLIGATORIAMENTE a la herramienta **'create_delivery_order'** para registrar el pedido.
 `;
