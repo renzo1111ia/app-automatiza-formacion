@@ -42,6 +42,7 @@ interface NavItem {
   icon?: React.ReactNode;
   subItems?: NavItem[];
   adminOnly?: boolean;
+  restaurantOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -109,6 +110,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Pedidos & Mesas",
     href: "/dashboard/pedidos",
     icon: <Utensils className="h-5 w-5" strokeWidth={1.8} />,
+    restaurantOnly: true,
   },
   {
     label: "Campañas",
@@ -265,8 +267,17 @@ export function Sidebar({
     );
   };
 
+  const tenantConfig = useTenantStore((s) => s.config);
+  const storeBusinessType = useTenantStore((s) => s.businessType);
+  const businessType =
+    ((tenantConfig as Record<string, unknown>)?.business_type as string | undefined) ||
+    storeBusinessType;
+  // If businessType is not specified (legacy), default to restaurant; otherwise check explicitly
+  const isRestaurant = !businessType || businessType === "restaurant";
+
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (item.adminOnly && !isAdmin) return false;
+    if (item.restaurantOnly && !isRestaurant) return false;
     return true;
   });
 

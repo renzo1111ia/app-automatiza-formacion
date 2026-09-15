@@ -8,19 +8,24 @@ import { ModelNameSchema } from "@/lib/schemas/ai-agents";
  * Fetches all AI Agents for the active tenant.
  */
 export async function getAIAgents() {
-  const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
 
-  if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
+    if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 
-  const { data, error } = await supabase
-    .from("ai_agents")
-    .select("*")
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("ai_agents")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false });
 
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: data as AIAgent[] };
+    if (error) return { success: false, error: error.message };
+    return { success: true, data: data as AIAgent[] };
+  } catch (err) {
+    console.error("[getAIAgents] Error:", err);
+    return { success: false, error: (err as Error).message || "Error al obtener los agentes" };
+  }
 }
 
 /**
@@ -28,15 +33,20 @@ export async function getAIAgents() {
  * Note: Variants are linked via agent_id; RLS should handle tenant isolation.
  */
 export async function getAgentVariants(agentId: string) {
-  const supabase = await getAdminSupabaseClient();
-  const { data, error } = await supabase
-    .from("ai_agent_variants")
-    .select("*")
-    .eq("agent_id", agentId)
-    .order("version_label", { ascending: true });
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const { data, error } = await supabase
+      .from("ai_agent_variants")
+      .select("*")
+      .eq("agent_id", agentId)
+      .order("version_label", { ascending: true });
 
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: data as AIAgentVariant[] };
+    if (error) return { success: false, error: error.message };
+    return { success: true, data: data as AIAgentVariant[] };
+  } catch (err) {
+    console.error("[getAgentVariants] Error:", err);
+    return { success: false, error: (err as Error).message || "Error al obtener las variantes" };
+  }
 }
 
 /**
@@ -44,146 +54,177 @@ export async function getAgentVariants(agentId: string) {
  * Ensures the mandatory tenant_id is injected for proper data isolation.
  */
 export async function saveAIAgent(agent: Partial<AIAgent>) {
-  const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
 
-  if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
+    if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
 
-  const agentData = {
-    ...agent,
-    tenant_id: tenantId,
-  };
+    const agentData = {
+      ...agent,
+      tenant_id: tenantId,
+    };
 
-  // We use a safe cast to avoid inference issues with generic Supabase client
-  // while avoiding the use of 'any' to satisfy lint rules.
-  const { data, error } = await supabase
-    .from("ai_agents")
-    // @ts-expect-error - Supabase inference issue with table keys
-    .upsert(agentData as Database["public"]["Tables"]["ai_agents"]["Insert"])
-    .select()
-    .single();
+    // We use a safe cast to avoid inference issues with generic Supabase client
+    // while avoiding the use of 'any' to satisfy lint rules.
+    const { data, error } = await supabase
+      .from("ai_agents")
+      // @ts-expect-error - Supabase inference issue with table keys
+      .upsert(agentData as Database["public"]["Tables"]["ai_agents"]["Insert"])
+      .select()
+      .single();
 
-  if (error) return { success: false, error: error.message };
-
-  const createdAgent = data as unknown as AIAgent;
-
-  // If this is a newly created agent, create its initial default variant A
-  if (!agent.id && createdAgent?.id) {
-    try {
-      const defaultVariant = {
-        agent_id: createdAgent.id,
-        is_variant_b: false,
-        is_active: true,
-        version_label: "v1.0",
-        prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
-        model_provider: "OPENAI",
-        model_name: "gpt-4o",
-        automation_rules: {
-          contact_policy: "auto",
-          working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
-          retry_delay: 15,
-          max_retries: 3,
-        },
-        scheduling_config: { enabled: false, duration: 30, buffer: 15 },
-      };
-      // @ts-expect-error - Supabase generic table inference
-      await supabase.from("ai_agent_variants").insert(defaultVariant);
-    } catch (variantErr) {
-      console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+    if (error) {
+      console.error("[saveAIAgent] Supabase error:", error);
+      return { success: false, error: error.message };
     }
-  }
 
-  return { success: true, data: createdAgent };
+    const createdAgent = data as unknown as AIAgent;
+
+    // If this is a newly created agent, create its initial default variant A
+    if (!agent.id && createdAgent?.id) {
+      try {
+        const defaultVariant = {
+          agent_id: createdAgent.id,
+          tenant_id: tenantId,
+          is_variant_b: false,
+          is_active: true,
+          version_label: "v1.0",
+          prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
+          model_provider: "OPENAI",
+          model_name: "gpt-4o",
+          automation_rules: {
+            contact_policy: "auto",
+            working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
+            retry_delay: 15,
+            max_retries: 3,
+            scheduling_config: { enabled: false, duration: 30, buffer: 15 },
+          },
+        };
+        // @ts-expect-error - Supabase generic table inference
+        await supabase.from("ai_agent_variants").insert(defaultVariant);
+      } catch (variantErr) {
+        console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+      }
+    }
+
+    return { success: true, data: createdAgent };
+  } catch (err) {
+    console.error("[saveAIAgent] Unexpected error:", err);
+    return { success: false, error: (err as Error).message || "Error inesperado al guardar el agente" };
+  }
 }
 
 /**
  * Saves a prompt variant.
  */
 export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
-  const supabase = await getAdminSupabaseClient();
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
 
-  // 2-35: validar model_name contra whitelist en el boundary (Server Action).
-  if (variant.model_name !== undefined && variant.model_name !== null) {
-    const parsed = ModelNameSchema.safeParse(variant.model_name);
-    if (!parsed.success) {
-      return {
-        success: false,
-        error: `Modelo inválido "${variant.model_name}". Modelos permitidos: ${ModelNameSchema.options.join(", ")}`,
-      };
+    // 2-35: validar model_name contra whitelist en el boundary (Server Action).
+    if (variant.model_name !== undefined && variant.model_name !== null) {
+      const parsed = ModelNameSchema.safeParse(variant.model_name);
+      if (!parsed.success) {
+        return {
+          success: false,
+          error: `Modelo inválido "${variant.model_name}". Modelos permitidos: ${ModelNameSchema.options.join(", ")}`,
+        };
+      }
     }
+
+    // Clean up variant data to remove metadata fields that shouldn't be upserted
+    // but keep fields like api_key, knowledge_base_id and model info
+    const {
+      id: _id,
+      created_at: _created_at,
+      updated_at: _updated_at,
+      metrics: _metrics,
+      ...cleanVariant
+    } = variant;
+    void _id;
+    void _created_at;
+    void _updated_at;
+    void _metrics;
+
+    // Ensure tenant_id is always present
+    const payload = {
+      ...cleanVariant,
+      ...(tenantId ? { tenant_id: tenantId } : {}),
+    };
+
+    // We explicitly include the ID if it exists, otherwise use onConflict
+    const dataToUpsert = variant.id
+      ? { id: variant.id, ...(payload as Partial<AIAgentVariant>) }
+      : (payload as Partial<AIAgentVariant>);
+
+    const { data, error } = await supabase
+      .from("ai_agent_variants")
+      // @ts-expect-error - Supabase inference issue with table keys
+      .upsert(dataToUpsert as Database["public"]["Tables"]["ai_agent_variants"]["Insert"], {
+        onConflict: "agent_id,is_variant_b",
+        ignoreDuplicates: false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[ACTIONS] Error saving agent variant:", error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, data: data as AIAgentVariant };
+  } catch (err) {
+    console.error("[saveAgentVariant] Unexpected error:", err);
+    return { success: false, error: (err as Error).message || "Error al guardar la variante" };
   }
-
-  // Clean up variant data to remove metadata fields that shouldn't be upserted
-  // but keep fields like api_key, knowledge_base_id and model info
-  const {
-    id: _id,
-    created_at: _created_at,
-    updated_at: _updated_at,
-    metrics: _metrics,
-    ...cleanVariant
-  } = variant;
-  void _id;
-  void _created_at;
-  void _updated_at;
-  void _metrics;
-
-  // We explicitly include the ID if it exists, otherwise use onConflict
-  const dataToUpsert = variant.id
-    ? { id: variant.id, ...(cleanVariant as Partial<AIAgentVariant>) }
-    : (cleanVariant as Partial<AIAgentVariant>);
-
-  const { data, error } = await supabase
-    .from("ai_agent_variants")
-    // @ts-expect-error - Supabase inference issue with table keys
-    .upsert(dataToUpsert as Database["public"]["Tables"]["ai_agent_variants"]["Insert"], {
-      onConflict: "agent_id,is_variant_b",
-      ignoreDuplicates: false,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("[ACTIONS] Error saving agent variant:", error);
-    return { success: false, error: error.message };
-  }
-  return { success: true, data: data as AIAgentVariant };
 }
 
 /**
  * Deletes an AI agent.
  */
 export async function deleteAIAgent(agentId: string) {
-  const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
 
-  if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
+    if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
 
-  const { error } = await supabase
-    .from("ai_agents")
-    .delete()
-    .eq("id", agentId)
-    .eq("tenant_id", tenantId);
+    const { error } = await supabase
+      .from("ai_agents")
+      .delete()
+      .eq("id", agentId)
+      .eq("tenant_id", tenantId);
 
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err) {
+    console.error("[deleteAIAgent] Error:", err);
+    return { success: false, error: (err as Error).message || "Error al eliminar el agente" };
+  }
 }
 
 /**
  * Fetches all advisors for the active tenant.
  */
 export async function getAdvisors() {
-  const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await getActiveTenantId();
 
-  if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
+    if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 
-  const { data, error } = await supabase
-    .from("advisors")
-    .select("*")
-    .eq("tenant_id", tenantId)
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+    const { data, error } = await supabase
+      .from("advisors")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .order("name", { ascending: true });
 
-  if (error) return { success: false, error: error.message };
-  return { success: true, data };
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+  } catch (err) {
+    console.error("[getAdvisors] Error:", err);
+    return { success: false, error: (err as Error).message || "Error al obtener asesores" };
+  }
 }

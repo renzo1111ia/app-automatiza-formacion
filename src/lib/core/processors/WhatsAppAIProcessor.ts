@@ -287,11 +287,17 @@ export async function generateAIWhatsAppResponse(
         .join("\n\n");
     }
 
-    const waConfig = (
-      tenantData?.data as {
-        config?: { whatsapp?: { accessToken?: string; phoneNumberId?: string } };
+    const tenantConfig = (
+      tenantData?.data as unknown as {
+        config?: {
+          whatsapp?: { accessToken?: string; phoneNumberId?: string };
+          business_type?: string;
+        };
       }
-    )?.config?.whatsapp;
+    )?.config;
+    const waConfig = tenantConfig?.whatsapp;
+    const businessType = tenantConfig?.business_type || "restaurant";
+    const isRestaurant = !tenantConfig?.business_type || businessType === "restaurant";
 
     // 🟢 EARLY TYPING INDICATOR: Trigger as soon as credentials are ready to show while AI is thinking
     if (waConfig?.accessToken && waConfig?.phoneNumberId && incomingMessageId) {
@@ -572,66 +578,99 @@ export async function generateAIWhatsAppResponse(
           },
         },
       },
-      {
-        type: "function",
-        function: {
-          name: "book_restaurant_table",
-          description:
-            "Crear y confirmar una reserva de mesa en el restaurante. Úsala cuando el cliente desee reservar. Solicita día, hora, cantidad de comensales, nombre y teléfono.",
-          parameters: {
-            type: "object",
-            properties: {
-              date: { type: "string", description: "Fecha de la reserva (ej: YYYY-MM-DD o 'Hoy' / 'Mañana')" },
-              time: { type: "string", description: "Hora de la reserva (ej: 21:00)" },
-              guests: { type: "number", description: "Número de comensales / personas" },
-              customerName: { type: "string", description: "Nombre del cliente para la reserva" },
-              customerPhone: { type: "string", description: "Teléfono de contacto del cliente" },
-              zonePreference: {
-                type: "string",
-                description: "Zona preferida opcional: 'terraza', 'salon_principal', 'pub_bar', 'vip'",
-              },
-              notes: { type: "string", description: "Notas adicionales, ocasión especial o peticiones" },
-            },
-            required: ["date", "time", "guests", "customerName", "customerPhone"],
-          },
-        },
-      },
-      {
-        type: "function",
-        function: {
-          name: "create_delivery_order",
-          description:
-            "Registrar un pedido a domicilio / delivery. Requiere los platos pedidos, nombre, teléfono y dirección de entrega. Calcula el total según los precios de la carta en la base de conocimientos.",
-          parameters: {
-            type: "object",
-            properties: {
-              customerName: { type: "string", description: "Nombre completo del cliente" },
-              customerPhone: { type: "string", description: "Teléfono de contacto" },
-              deliveryAddress: { type: "string", description: "Dirección completa de entrega del pedido" },
-              items: {
-                type: "array",
-                description: "Lista de platos o productos pedidos",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string", description: "Nombre del plato o bebida según la carta" },
-                    quantity: { type: "number", description: "Cantidad pedida" },
-                    unitPrice: { type: "number", description: "Precio unitario según la carta" },
-                    notes: { type: "string", description: "Modificaciones o notas especiales" },
-                  },
-                  required: ["name", "quantity", "unitPrice"],
-                },
-              },
-              totalAmount: { type: "number", description: "Total a pagar según los precios de la carta" },
-              notes: { type: "string", description: "Notas adicionales de entrega o pago" },
-            },
-            required: ["customerName", "customerPhone", "deliveryAddress", "items", "totalAmount"],
-          },
-        },
-      },
     ];
 
+    if (isRestaurant) {
+      tools.push(
+        {
+          type: "function",
+          function: {
+            name: "book_restaurant_table",
+            description:
+              "Crear y confirmar una reserva de mesa en el restaurante. Úsala cuando el cliente desee reservar. Solicita día, hora, cantidad de comensales, nombre y teléfono.",
+            parameters: {
+              type: "object",
+              properties: {
+                date: { type: "string", description: "Fecha de la reserva (ej: YYYY-MM-DD o 'Hoy' / 'Mañana')" },
+                time: { type: "string", description: "Hora de la reserva (ej: 21:00)" },
+                guests: { type: "number", description: "Número de comensales / personas" },
+                customerName: { type: "string", description: "Nombre del cliente para la reserva" },
+                customerPhone: { type: "string", description: "Teléfono de contacto del cliente" },
+                zonePreference: {
+                  type: "string",
+                  description: "Zona preferida opcional: 'terraza', 'salon_principal', 'pub_bar', 'vip'",
+                },
+                notes: { type: "string", description: "Notas adicionales, ocasión especial o peticiones" },
+              },
+              required: ["date", "time", "guests", "customerName", "customerPhone"],
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "create_delivery_order",
+            description:
+              "Registrar un pedido a domicilio / delivery. Requiere los platos pedidos, nombre, teléfono y dirección de entrega. Calcula el total según los precios de la carta en la base de conocimientos.",
+            parameters: {
+              type: "object",
+              properties: {
+                customerName: { type: "string", description: "Nombre completo del cliente" },
+                customerPhone: { type: "string", description: "Teléfono de contacto" },
+                deliveryAddress: { type: "string", description: "Dirección completa de entrega del pedido" },
+                items: {
+                  type: "array",
+                  description: "Lista de platos o productos pedidos",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string", description: "Nombre del plato o bebida según la carta" },
+                      quantity: { type: "number", description: "Cantidad pedida" },
+                      unitPrice: { type: "number", description: "Precio unitario según la carta" },
+                      notes: { type: "string", description: "Modificaciones o notas especiales" },
+                    },
+                    required: ["name", "quantity", "unitPrice"],
+                  },
+                },
+                totalAmount: { type: "number", description: "Total a pagar según los precios de la carta" },
+                notes: { type: "string", description: "Notas adicionales de entrega o pago" },
+              },
+              required: ["customerName", "customerPhone", "deliveryAddress", "items", "totalAmount"],
+            },
+          },
+        }
+      );
+    }
+
     // 8. Build System Prompt
+    const restaurantPromptSection = isRestaurant
+      ? `
+CARTA Y MENÚ OFICIAL DEL RESTAURANTE (PRECIOS Y PRODUCTOS DISPONIBLES):
+${formattedMenu || "No hay productos cargados en la base de datos de carta actualmente."}
+
+### PROTOCOLO DE ATENCIÓN DE RESTAURANTE (RESERVAS & DELIVERY):
+1. **SI EL CLIENTE DESEA HACER UNA RESERVA DE MESA:**
+   - DEBES solicitar los siguientes 4 datos indispensables:
+     1. **Día y Hora** de la reserva (ej: hoy a las 21:00, sábado 14:00).
+     2. **Cantidad de personas / comensales**.
+     3. **Nombre completo** de quien reserva.
+     4. **Número de teléfono** de contacto.
+   - En cuanto tengas estos datos, llama OBLIGATORIAMENTE a la herramienta **'book_restaurant_table'**.
+   - Confírmale la reserva al cliente indicando la mesa asignada, fecha, hora y comensales.
+
+2. **SI EL CLIENTE DESEA UN PEDIDO DE DELIVERY / A DOMICILIO O CONSULTA LA CARTA:**
+   - Consulta los productos y precios exactos en la sección 'CARTA Y MENÚ OFICIAL DEL RESTAURANTE'.
+   - NUNCA inventes precios ni productos fuera de la carta oficial.
+   - DEBES solicitar los siguientes datos indispensables:
+     1. **Qué platos, bebidas o productos desea pedir** de la carta.
+     2. **Nombre de quien recibe**.
+     3. **Teléfono de contacto**.
+     4. **Dirección exacta de entrega**.
+   - Calcula el total y DEBES informarle al cliente el desglose de productos y el **TOTAL EXACTO a pagar**.
+   - Llama OBLIGATORIAMENTE a la herramienta **'create_delivery_order'** para registrar el pedido.
+`
+      : "";
+
     const systemPrompt = `
 ${finalPrompt}
 
@@ -651,9 +690,6 @@ ${programRequirements || "No hay criterios específicos definidos para los progr
 VARIABLES A CAPTURAR (OBLIGATORIO):
 ${((activeVariant.tracked_variables as string[]) || []).map((v) => `- ${v}`).join("\n") || "No hay variables específicas configuradas."}
 *Nota: Intenta obtener estos datos de forma sutil durante la charla.*
-
-CARTA Y MENÚ OFICIAL DEL RESTAURANTE (PRECIOS Y PRODUCTOS DISPONIBLES):
-${formattedMenu || "No hay productos cargados en la base de datos de carta actualmente."}
 
 INFORMACIÓN ADICIONAL (CEREBRO / BASE DE CONOCIMIENTO):
 ${localKnowledge || "No hay información adicional específica en la base de conocimiento para este mensaje."}
@@ -689,28 +725,7 @@ ${
         .join("\n")
     : "No hay citas programadas activas para este lead."
 }
-
-### PROTOCOLO DE ATENCIÓN DE RESTAURANTE (RESERVAS & DELIVERY):
-1. **SI EL CLIENTE DESEA HACER UNA RESERVA DE MESA:**
-   - DEBES solicitar los siguientes 4 datos indispensables:
-     1. **Día y Hora** de la reserva (ej: hoy a las 21:00, sábado 14:00).
-     2. **Cantidad de personas / comensales**.
-     3. **Nombre completo** de quien reserva.
-     4. **Número de teléfono** de contacto.
-   - En cuanto tengas estos datos, llama OBLIGATORIAMENTE a la herramienta **'book_restaurant_table'**.
-   - Confírmale la reserva al cliente indicando la mesa asignada, fecha, hora y comensales.
-
-2. **SI EL CLIENTE DESEA UN PEDIDO DE DELIVERY / A DOMICILIO O CONSULTA LA CARTA:**
-   - Consulta los productos y precios exactos en la sección 'CARTA Y MENÚ OFICIAL DEL RESTAURANTE'.
-   - NUNCA inventes precios ni productos fuera de la carta oficial.
-   - DEBES solicitar los siguientes datos indispensables:
-     1. **Qué platos, bebidas o productos desea pedir** de la carta.
-     2. **Nombre de quien recibe**.
-     3. **Teléfono de contacto**.
-     4. **Dirección exacta de entrega**.
-   - Calcula el total y DEBES informarle al cliente el desglose de productos y el **TOTAL EXACTO a pagar**.
-   - Llama OBLIGATORIAMENTE a la herramienta **'create_delivery_order'** para registrar el pedido.
-`;
+${restaurantPromptSection}`;
 
     // 9. Call OpenAI with Tools
     let modelName = activeVariant.model_name || "gpt-4o";

@@ -135,13 +135,15 @@ export async function getTenants(): Promise<Tenant[]> {
       return [];
     }
 
-    // Map is_admin, username and api_type from config to top level for UI convenience
+    // Map is_admin, username, api_type and business_type from config to top level for UI convenience
     return (data || []).map((t) => ({
       ...t,
       is_admin: !!(t.config as Record<string, unknown>)?.is_admin,
       api_type:
         ((t.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
       username: ((t.config as Record<string, unknown>)?.username as string) || "",
+      business_type:
+        ((t.config as Record<string, unknown>)?.business_type as string) || "restaurant",
     }));
   } catch (e) {
     console.error("CRITICAL ERROR IN getTenants:", e);
@@ -168,6 +170,8 @@ export async function getActiveTenantConfig(): Promise<Tenant | null> {
     api_type:
       ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
     username: ((data.config as Record<string, unknown>)?.username as string) || "",
+    business_type:
+      ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
   } as Tenant;
 }
 
@@ -186,6 +190,8 @@ export async function getTenantByUserId(userId: string): Promise<Tenant | null> 
     api_type:
       ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
     username: ((data.config as Record<string, unknown>)?.username as string) || "",
+    business_type:
+      ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
   } as Tenant;
 }
 
@@ -224,15 +230,19 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
       authUserId = authData.user?.id;
     }
 
-    // We move is_admin, username and api_type into config, then remove them from the top-level insert
+    // We move is_admin, username, api_type and business_type into config, then remove them from the top-level insert
     // password is for auth only
-    const { is_admin, username, api_type, password: _password, ...tenantData } = tenant;
+    const { is_admin, username, api_type, business_type, password: _password, ...tenantData } = tenant;
 
     const config = {
       ...(tenantData.config || {}),
       is_admin: !!is_admin,
       username: username || "",
       api_type: api_type || "internal",
+      business_type:
+        business_type ||
+        ((tenantData.config as Record<string, unknown>)?.business_type as string) ||
+        "restaurant",
     };
 
     const { data, error } = await serviceSupabase
@@ -360,14 +370,15 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
       }
     }
 
-    // We move is_admin, username and api_type into config to avoid needing a new column in the table
+    // We move is_admin, username, api_type and business_type into config to avoid needing a new column in the table
     // password is for auth only
-    const { is_admin, username, api_type, password: _password, ...cleanUpdates } = updates;
+    const { is_admin, username, api_type, business_type, password: _password, ...cleanUpdates } = updates;
 
     const newConfig = { ...((cleanUpdates.config as Record<string, unknown>) || {}) };
     if (is_admin !== undefined) newConfig.is_admin = !!is_admin;
     if (username !== undefined) newConfig.username = username;
     if (api_type !== undefined) newConfig.api_type = api_type;
+    if (business_type !== undefined) newConfig.business_type = business_type;
 
     // Sprint 2B: validar overview_kpis si viene en config (max 8 KPIs hero, shape valido).
     if (newConfig.overview_kpis !== undefined) {
@@ -400,6 +411,8 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
           ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") ||
           "internal",
         username: ((data.config as Record<string, unknown>)?.username as string) || "",
+        business_type:
+          ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
       },
     };
   } catch (e: unknown) {

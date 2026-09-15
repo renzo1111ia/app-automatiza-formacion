@@ -7,7 +7,7 @@ import { useTenantStore } from "@/store/tenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit2, Check, X, Shield, Globe, Building2, Zap } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Shield, Globe, Building2, Zap, ChevronDown, Utensils, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tenant } from "@/types/tenant";
 import { toast } from "@/components/ui/toast";
@@ -21,7 +21,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<
-    Partial<Tenant> & { password?: string; api_type?: "internal" | "client" }
+    Partial<Tenant> & { password?: string; api_type?: "internal" | "client"; business_type?: string }
   >({
     name: "",
     username: "",
@@ -31,6 +31,7 @@ export default function SettingsPage() {
     supabase_anon_key: "",
     api_type: "internal" as "internal" | "client",
     is_admin: false,
+    business_type: "restaurant",
     config: {},
   });
   const [showNewForm, setShowNewForm] = useState(false);
@@ -50,9 +51,17 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const configObj =
-        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config;
-      const result = await createTenant({ ...editForm, config: configObj });
+      const parsedConfig =
+        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config || {};
+      const configObj = {
+        ...parsedConfig,
+        business_type: editForm.business_type || "restaurant",
+      };
+      const result = await createTenant({
+        ...editForm,
+        config: configObj,
+        business_type: editForm.business_type || "restaurant",
+      });
 
       if (result.error) {
         toast({ variant: "error", title: "Error al crear cliente", description: result.error });
@@ -66,6 +75,7 @@ export default function SettingsPage() {
         client_email: "",
         password: "",
         is_admin: false,
+        business_type: "restaurant",
         config: {},
         api_type: "internal",
         supabase_url: "",
@@ -82,13 +92,18 @@ export default function SettingsPage() {
 
   async function handleUpdate(id: string) {
     try {
-      const configObj =
-        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config;
+      const parsedConfig =
+        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config || {};
+      const configObj = {
+        ...parsedConfig,
+        business_type: editForm.business_type || "restaurant",
+      };
       const tenantObj = tenants.find((t) => t.id === id);
 
       const result = await updateTenant(id, {
         ...editForm,
         config: configObj,
+        business_type: editForm.business_type || "restaurant",
         auth_user_id: tenantObj?.auth_user_id,
       });
 
@@ -114,6 +129,7 @@ export default function SettingsPage() {
           tenantName: updated.name || "",
           config: configToStore || {},
           isAdmin: !!updated.is_admin,
+          businessType: updated.business_type,
         });
       }
     } catch (err: unknown) {
@@ -144,6 +160,10 @@ export default function SettingsPage() {
       supabase_url: t.supabase_url || "",
       supabase_anon_key: t.supabase_anon_key || "",
       api_type: t.supabase_url ? "client" : "internal",
+      business_type:
+        ((t.config as Record<string, unknown>)?.business_type as string) ||
+        t.business_type ||
+        "restaurant",
       config: t.config as Record<string, unknown>,
     });
   }
@@ -176,6 +196,7 @@ export default function SettingsPage() {
                   client_email: "",
                   password: "",
                   is_admin: false,
+                  business_type: "restaurant",
                   config: {},
                   api_type: "internal",
                   supabase_url: "",
@@ -205,6 +226,9 @@ export default function SettingsPage() {
                   Email de Acceso
                 </th>
                 <th className="px-6 py-4 text-[10px] font-black tracking-widest text-slate-900 uppercase dark:text-slate-200">
+                  Tipo Negocio
+                </th>
+                <th className="px-6 py-4 text-[10px] font-black tracking-widest text-slate-900 uppercase dark:text-slate-200">
                   Nivel
                 </th>
                 <th className="px-6 py-4 pr-8 text-right text-[10px] font-black tracking-widest text-slate-900 uppercase dark:text-slate-200">
@@ -216,7 +240,7 @@ export default function SettingsPage() {
               {loading && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="animate-pulse px-6 py-12 text-center font-bold text-slate-400"
                   >
                     Sincronizando infraestructura...
@@ -226,7 +250,7 @@ export default function SettingsPage() {
 
               {!loading && tenants.length === 0 && !showNewForm && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center font-bold text-slate-400">
+                  <td colSpan={6} className="px-6 py-20 text-center font-bold text-slate-400">
                     <Globe className="mx-auto mb-4 h-12 w-12 text-slate-100" />
                     No se han detectado clientes configurados.
                   </td>
@@ -236,7 +260,7 @@ export default function SettingsPage() {
               {/* New Tenant Form */}
               {showNewForm && (
                 <tr>
-                  <td colSpan={5} className="p-0">
+                  <td colSpan={6} className="p-0">
                     <div className="animate-in slide-in-from-top border-b border-blue-100 bg-blue-50/30 p-8 duration-300">
                       <form onSubmit={handleSaveNew} className="space-y-6">
                         <div className="mb-4 flex items-center justify-between">
@@ -337,6 +361,34 @@ export default function SettingsPage() {
                               type="password"
                               required={!isEditing}
                             />
+                          </div>
+
+                          {/* Business Type Selector */}
+                          <div className="space-y-2 md:col-span-2">
+                            <Label className="text-[11px] font-black tracking-[0.1em] text-slate-500 uppercase">
+                              Tipo de Negocio / Industria
+                            </Label>
+                            <div className="relative">
+                              <select
+                                value={editForm.business_type || "restaurant"}
+                                onChange={(e) =>
+                                  setEditForm({ ...editForm, business_type: e.target.value })
+                                }
+                                className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm font-bold text-slate-800 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                              >
+                                <option value="restaurant">🍽️ Restaurante (Mesas, Carta y Pedidos)</option>
+                                <option value="sales">💼 Ventas / Servicios (General)</option>
+                                <option value="other">🏢 Otro Tipo de Negocio</option>
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                                <ChevronDown className="h-4 w-4" />
+                              </div>
+                            </div>
+                            <p className="text-[10px] font-medium text-slate-400">
+                              {editForm.business_type === "restaurant"
+                                ? "Activa la sección de Pedidos & Mesas y adapta los agentes con protocolo de reservas y carta de platos."
+                                : "Oculta la sección de Pedidos & Mesas. Adapta los agentes para cualificación y agendamiento general de ventas."}
+                            </p>
                           </div>
 
                           {/* API Type Selector */}
@@ -570,7 +622,7 @@ export default function SettingsPage() {
                   )}
                 >
                   {isEditing === t.id ? (
-                    <td colSpan={5} className="p-8">
+                    <td colSpan={6} className="p-8">
                       <div className="mb-8 flex items-center justify-between gap-6">
                         <h3 className="flex items-center gap-2 text-sm font-black tracking-widest text-slate-900 uppercase dark:text-white">
                           <Edit2 className="h-4 w-4 text-blue-600" /> Editando:{" "}
@@ -649,6 +701,34 @@ export default function SettingsPage() {
                             type="password"
                             placeholder="Opcional"
                           />
+                        </div>
+
+                        {/* Business Type Selector for Edit */}
+                        <div className="space-y-2 md:col-span-2">
+                          <Label className="text-[10px] font-black tracking-widest text-slate-500 uppercase">
+                            Tipo de Negocio / Industria
+                          </Label>
+                          <div className="relative">
+                            <select
+                              value={editForm.business_type || "restaurant"}
+                              onChange={(e) =>
+                                setEditForm({ ...editForm, business_type: e.target.value })
+                              }
+                              className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-10 text-sm font-bold text-slate-800 shadow-sm transition focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                            >
+                              <option value="restaurant">🍽️ Restaurante (Mesas, Carta y Pedidos)</option>
+                              <option value="sales">💼 Ventas / Servicios / General</option>
+                              <option value="other">🏢 Otro Tipo de Negocio</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
+                              <ChevronDown className="h-4 w-4" />
+                            </div>
+                          </div>
+                          <p className="text-[10px] font-medium text-slate-400">
+                            {editForm.business_type === "restaurant"
+                              ? "Habilita la sección de Pedidos & Mesas en el dashboard y en los agentes."
+                              : "Oculta la sección de Pedidos & Mesas para este cliente."}
+                          </p>
                         </div>
 
                         {!editForm.is_admin && (
@@ -780,6 +860,21 @@ export default function SettingsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm font-bold text-slate-900">
                         {t.client_email || "-"}
+                      </td>
+                      <td className="px-6 py-4">
+                        {((t.config as Record<string, unknown>)?.business_type || t.business_type) === "sales" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700 uppercase dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                            <Briefcase className="h-3 w-3" /> Ventas
+                          </span>
+                        ) : ((t.config as Record<string, unknown>)?.business_type || t.business_type) === "other" ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-700 uppercase dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                            <Building2 className="h-3 w-3" /> General
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[9px] font-black text-amber-700 uppercase dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+                            <Utensils className="h-3 w-3" /> Restaurante
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         {t.is_admin ? (

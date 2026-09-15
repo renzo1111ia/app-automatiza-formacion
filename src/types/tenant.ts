@@ -8,6 +8,7 @@ export interface Tenant {
   is_admin?: boolean;
   auth_user_id?: string;
   api_type?: "internal" | "client";
+  business_type?: "restaurant" | "sales" | "other" | string;
   config: Record<string, unknown>;
   api_key?: string | null;
   daily_spend_limit?: number;
@@ -97,4 +98,5 @@ export interface TenantConfig {
   tenantName: string;
   config?: Record<string, unknown>;
   isAdmin?: boolean;
+  businessType?: string;
 }
