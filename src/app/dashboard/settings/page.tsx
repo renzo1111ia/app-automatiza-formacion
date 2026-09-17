@@ -7,12 +7,26 @@ import { useTenantStore } from "@/store/tenant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit2, Check, X, Shield, Globe, Building2, Zap, ChevronDown, Utensils, Briefcase } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  Shield,
+  Globe,
+  Building2,
+  Zap,
+  ChevronDown,
+  Utensils,
+  Briefcase,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tenant } from "@/types/tenant";
 import { toast } from "@/components/ui/toast";
 import { KpiBuilder } from "./KpiBuilder";
 import { IntegrationsManager } from "./IntegrationsManager";
+import { LogoUploader } from "@/components/settings/LogoUploader";
 
 export default function SettingsPage() {
   const { setTenant: setActiveTenant } = useTenantStore();
@@ -21,7 +35,11 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<
-    Partial<Tenant> & { password?: string; api_type?: "internal" | "client"; business_type?: string }
+    Partial<Tenant> & {
+      password?: string;
+      api_type?: "internal" | "client";
+      business_type?: string;
+    }
   >({
     name: "",
     username: "",
@@ -52,7 +70,9 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const parsedConfig =
-        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config || {};
+        typeof editForm.config === "string"
+          ? JSON.parse(editForm.config || "{}")
+          : editForm.config || {};
       const configObj = {
         ...parsedConfig,
         business_type: editForm.business_type || "restaurant",
@@ -93,7 +113,9 @@ export default function SettingsPage() {
   async function handleUpdate(id: string) {
     try {
       const parsedConfig =
-        typeof editForm.config === "string" ? JSON.parse(editForm.config || "{}") : editForm.config || {};
+        typeof editForm.config === "string"
+          ? JSON.parse(editForm.config || "{}")
+          : editForm.config || {};
       const configObj = {
         ...parsedConfig,
         business_type: editForm.business_type || "restaurant",
@@ -376,7 +398,9 @@ export default function SettingsPage() {
                                 }
                                 className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm font-bold text-slate-800 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                               >
-                                <option value="restaurant">🍽️ Restaurante (Mesas, Carta y Pedidos)</option>
+                                <option value="restaurant">
+                                  🍽️ Restaurante (Mesas, Carta y Pedidos)
+                                </option>
                                 <option value="sales">💼 Ventas / Servicios (General)</option>
                                 <option value="other">🏢 Otro Tipo de Negocio</option>
                               </select>
@@ -389,6 +413,35 @@ export default function SettingsPage() {
                                 ? "Activa la sección de Pedidos & Mesas y adapta los agentes con protocolo de reservas y carta de platos."
                                 : "Oculta la sección de Pedidos & Mesas. Adapta los agentes para cualificación y agendamiento general de ventas."}
                             </p>
+                          </div>
+
+                          {/* Custom Logo Uploader */}
+                          <div className="rounded-2xl border border-blue-100 bg-white/80 p-5 shadow-sm md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+                            <LogoUploader
+                              value={(() => {
+                                try {
+                                  const conf =
+                                    typeof editForm.config === "string"
+                                      ? JSON.parse(editForm.config || "{}")
+                                      : editForm.config || {};
+                                  return (conf as Record<string, any>).logo_url || "";
+                                } catch {
+                                  return "";
+                                }
+                              })()}
+                              businessType={editForm.business_type}
+                              businessName={editForm.name}
+                              onChange={(logoUrl) => {
+                                const current =
+                                  typeof editForm.config === "string"
+                                    ? JSON.parse(editForm.config || "{}")
+                                    : editForm.config || {};
+                                setEditForm({
+                                  ...editForm,
+                                  config: { ...current, logo_url: logoUrl },
+                                });
+                              }}
+                            />
                           </div>
 
                           {/* API Type Selector */}
@@ -716,7 +769,9 @@ export default function SettingsPage() {
                               }
                               className="h-11 w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 pr-10 text-sm font-bold text-slate-800 shadow-sm transition focus:border-blue-500 focus:outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
                             >
-                              <option value="restaurant">🍽️ Restaurante (Mesas, Carta y Pedidos)</option>
+                              <option value="restaurant">
+                                🍽️ Restaurante (Mesas, Carta y Pedidos)
+                              </option>
                               <option value="sales">💼 Ventas / Servicios / General</option>
                               <option value="other">🏢 Otro Tipo de Negocio</option>
                             </select>
@@ -729,6 +784,35 @@ export default function SettingsPage() {
                               ? "Habilita la sección de Pedidos & Mesas en el dashboard y en los agentes."
                               : "Oculta la sección de Pedidos & Mesas para este cliente."}
                           </p>
+                        </div>
+
+                        {/* Custom Logo Uploader for Edit */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-2 dark:border-slate-800 dark:bg-slate-900">
+                          <LogoUploader
+                            value={(() => {
+                              try {
+                                const conf =
+                                  typeof editForm.config === "string"
+                                    ? JSON.parse(editForm.config || "{}")
+                                    : editForm.config || {};
+                                return (conf as Record<string, any>).logo_url || "";
+                              } catch {
+                                return "";
+                              }
+                            })()}
+                            businessType={editForm.business_type}
+                            businessName={editForm.name}
+                            onChange={(logoUrl) => {
+                              const current =
+                                typeof editForm.config === "string"
+                                  ? JSON.parse(editForm.config || "{}")
+                                  : editForm.config || {};
+                              setEditForm({
+                                ...editForm,
+                                config: { ...current, logo_url: logoUrl },
+                              });
+                            }}
+                          />
                         </div>
 
                         {!editForm.is_admin && (
@@ -825,11 +909,32 @@ export default function SettingsPage() {
                     <>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-blue-600">
-                            <Building2 className="h-5 w-5" />
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            {((t.config as Record<string, unknown>)?.logo_url as
+                              | string
+                              | undefined) ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={(t.config as Record<string, unknown>)?.logo_url as string}
+                                alt={t.name}
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-slate-50 text-blue-600 dark:bg-slate-800">
+                                {((t.config as Record<string, unknown>)?.business_type ||
+                                  t.business_type) === "restaurant" ? (
+                                  <Utensils className="h-5 w-5 text-amber-600" />
+                                ) : ((t.config as Record<string, unknown>)?.business_type ||
+                                    t.business_type) === "sales" ? (
+                                  <Briefcase className="h-5 w-5 text-emerald-600" />
+                                ) : (
+                                  <Building2 className="h-5 w-5 text-blue-600" />
+                                )}
+                              </div>
+                            )}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-sm font-black tracking-tight text-slate-900">
+                            <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">
                               {t.name}
                             </span>
                             {t.username && (
@@ -862,11 +967,13 @@ export default function SettingsPage() {
                         {t.client_email || "-"}
                       </td>
                       <td className="px-6 py-4">
-                        {((t.config as Record<string, unknown>)?.business_type || t.business_type) === "sales" ? (
+                        {((t.config as Record<string, unknown>)?.business_type ||
+                          t.business_type) === "sales" ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700 uppercase dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                             <Briefcase className="h-3 w-3" /> Ventas
                           </span>
-                        ) : ((t.config as Record<string, unknown>)?.business_type || t.business_type) === "other" ? (
+                        ) : ((t.config as Record<string, unknown>)?.business_type ||
+                            t.business_type) === "other" ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-700 uppercase dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
                             <Building2 className="h-3 w-3" /> General
                           </span>

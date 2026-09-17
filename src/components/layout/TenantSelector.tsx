@@ -112,7 +112,19 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
         onClick={() => setIsOpen(!isOpen)}
         className="bg-card border-border hover:bg-card/60 hover:border-primary/50 flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition"
       >
-        <Building2 className="text-primary h-4 w-4 flex-shrink-0" />
+        {(() => {
+          const activeTenantObj = tenants.find((t) => t.name === tenantName);
+          const logo = (activeTenantObj?.config as Record<string, unknown>)?.logo_url as
+            | string
+            | undefined;
+          if (logo) {
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt="" className="h-4 w-4 flex-shrink-0 rounded-sm object-contain" />
+            );
+          }
+          return <Building2 className="text-primary h-4 w-4 flex-shrink-0" />;
+        })()}
         <span className="text-foreground flex-1 truncate font-semibold">
           {tenantName || (loading ? "Cargando..." : "Seleccionar...")}
         </span>
@@ -127,22 +139,34 @@ export function TenantSelector({ collapsed, isAdmin }: { collapsed: boolean; isA
       {isOpen && (
         <div className="border-border bg-popover absolute right-4 left-4 z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border p-1 shadow-lg shadow-black/20">
           <div className="py-1">
-            {tenants.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleSelect(t)}
-                className={cn(
-                  "hover:bg-accent flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition",
-                  tenantName === t.name
-                    ? "text-primary bg-primary/10 font-bold"
-                    : "text-popover-foreground font-medium"
-                )}
-              >
-                <Building2 className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
-                <span className="flex-1 truncate">{t.name}</span>
-                {tenantName === t.name && <Check className="h-4 w-4" />}
-              </button>
-            ))}
+            {tenants.map((t) => {
+              const logo = (t.config as Record<string, unknown>)?.logo_url as string | undefined;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => handleSelect(t)}
+                  className={cn(
+                    "hover:bg-accent flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition",
+                    tenantName === t.name
+                      ? "text-primary bg-primary/10 font-bold"
+                      : "text-popover-foreground font-medium"
+                  )}
+                >
+                  {logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logo}
+                      alt=""
+                      className="h-4 w-4 flex-shrink-0 rounded-sm object-contain"
+                    />
+                  ) : (
+                    <Building2 className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
+                  )}
+                  <span className="flex-1 truncate">{t.name}</span>
+                  {tenantName === t.name && <Check className="h-4 w-4" />}
+                </button>
+              );
+            })}
           </div>
           {isAdmin && (
             <div className="border-border mt-1 border-t p-1">

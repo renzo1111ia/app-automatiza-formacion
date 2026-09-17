@@ -380,24 +380,44 @@ export function Sidebar({
           )}
         >
           {!collapsed ? (
-            <div className="flex items-center px-1">
-              <NextImage
-                src="/logo-login.png"
-                alt="Re_ FORMA Social Media Partner"
-                width={260}
-                height={130}
-                className="h-10 sm:h-12 w-auto object-contain"
-                priority
-              />
+            <div className="flex items-center overflow-hidden px-1">
+              {((tenantConfig as Record<string, unknown>)?.logo_url as string | undefined) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={(tenantConfig as Record<string, unknown>)?.logo_url as string}
+                  alt="Logo del Negocio"
+                  className="h-10 w-auto max-w-[200px] object-contain transition-all sm:h-12"
+                />
+              ) : (
+                <NextImage
+                  src="/logo-login.png"
+                  alt="Re_ FORMA Social Media Partner"
+                  width={260}
+                  height={130}
+                  className="h-10 w-auto object-contain sm:h-12"
+                  priority
+                />
+              )}
             </div>
           ) : (
-            <NextImage
-              src="/favicon-renton.png"
-              alt="Re_"
-              width={40}
-              height={40}
-              className="mx-auto h-9 w-9 object-contain"
-            />
+            <div className="mx-auto flex items-center justify-center">
+              {((tenantConfig as Record<string, unknown>)?.logo_url as string | undefined) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={(tenantConfig as Record<string, unknown>)?.logo_url as string}
+                  alt="Logo"
+                  className="h-8 w-8 rounded-md object-contain"
+                />
+              ) : (
+                <NextImage
+                  src="/favicon-renton.png"
+                  alt="Re_"
+                  width={40}
+                  height={40}
+                  className="mx-auto h-9 w-9 object-contain"
+                />
+              )}
+            </div>
           )}
           {onMobileClose && (
             <button

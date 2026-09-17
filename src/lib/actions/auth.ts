@@ -96,12 +96,27 @@ async function _loginAction(email: string, password: string) {
         user.app_metadata?.admin === true ||
         user.app_metadata?.admin === "true";
 
-      // ⚡ AUTO-CONFIG FOR CLIENTS
-      // If not admin, find their tenant and set cookies automatically
+      // ⚡ AUTO-CONFIG TENANT COOKIE
+      const currentTenantCookie = cookieStore.get("esden-tenant-id")?.value;
       if (!isAdmin) {
         const tenant = await getTenantByUserId(user.id);
         if (tenant) {
           await setTenantCookies(tenant.id, tenant.name);
+        }
+      } else if (!currentTenantCookie) {
+        // Para admin sin cookie previa, inicializamos con el primer tenant disponible
+        const { data: firstTenant } = await (await import("@/lib/supabase/server"))
+          .getAdminSupabaseClient()
+          .then((client) =>
+            client
+              .from("tenants")
+              .select("id, name")
+              .order("created_at", { ascending: true })
+              .limit(1)
+              .maybeSingle()
+          );
+        if (firstTenant) {
+          await setTenantCookies(firstTenant.id, firstTenant.name);
         }
       }
 

@@ -93,10 +93,21 @@ export interface ChartConfig {
   order?: number;
 }
 
+export interface TenantConfigData {
+  dashboard_title?: string;
+  primary_color?: string;
+  logo_url?: string;
+  headers?: string[];
+  business_type?: "restaurant" | "sales" | "other" | string;
+  kpis?: KpiConfig[];
+  [key: string]: unknown;
+}
+
 export interface TenantConfig {
   tenantId: string;
   tenantName: string;
-  config?: Record<string, unknown>;
+  config?: TenantConfigData | Record<string, unknown>;
   isAdmin?: boolean;
   businessType?: string;
+  logoUrl?: string;
 }

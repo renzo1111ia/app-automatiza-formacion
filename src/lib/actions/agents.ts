@@ -21,7 +21,7 @@ export async function getAIAgents() {
       .order("created_at", { ascending: false });
 
     if (error) return { success: false, error: error.message };
-    return { success: true, data: data as AIAgent[] };
+    return { success: true, data: JSON.parse(JSON.stringify(data || [])) as AIAgent[] };
   } catch (err) {
     console.error("[getAIAgents] Error:", err);
     return { success: false, error: (err as Error).message || "Error al obtener los agentes" };
@@ -42,7 +42,7 @@ export async function getAgentVariants(agentId: string) {
       .order("version_label", { ascending: true });
 
     if (error) return { success: false, error: error.message };
-    return { success: true, data: data as AIAgentVariant[] };
+    return { success: true, data: JSON.parse(JSON.stringify(data || [])) as AIAgentVariant[] };
   } catch (err) {
     console.error("[getAgentVariants] Error:", err);
     return { success: false, error: (err as Error).message || "Error al obtener las variantes" };
@@ -60,58 +60,92 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
 
     if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
 
-    const agentData = {
-      ...agent,
-      tenant_id: tenantId,
-    };
+    let createdAgent: AIAgent | null = null;
 
-    // We use a safe cast to avoid inference issues with generic Supabase client
-    // while avoiding the use of 'any' to satisfy lint rules.
-    const { data, error } = await supabase
-      .from("ai_agents")
-      // @ts-expect-error - Supabase inference issue with table keys
-      .upsert(agentData as Database["public"]["Tables"]["ai_agents"]["Insert"])
-      .select()
-      .single();
+    if (agent.id) {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (agent.name !== undefined) updateData.name = agent.name;
+      if (agent.description !== undefined) updateData.description = agent.description;
+      if (agent.status !== undefined) updateData.status = agent.status;
+      if (agent.type !== undefined) updateData.type = agent.type;
+      if (agent.flow_config !== undefined) updateData.flow_config = agent.flow_config;
+      if (agent.automation_rules !== undefined)
+        updateData.automation_rules = agent.automation_rules;
+      if (agent.crm_config !== undefined) updateData.crm_config = agent.crm_config;
 
-    if (error) {
-      console.error("[saveAIAgent] Supabase error:", error);
-      return { success: false, error: error.message };
-    }
+      const { data, error } = await supabase
+        .from("ai_agents")
+        // @ts-expect-error - Supabase inference issue with table keys
+        .update(updateData)
+        .eq("id", agent.id)
+        .eq("tenant_id", tenantId)
+        .select()
+        .single();
 
-    const createdAgent = data as unknown as AIAgent;
+      if (error) {
+        console.error("[saveAIAgent] Supabase update error:", error);
+        return { success: false, error: error.message };
+      }
+      createdAgent = data as unknown as AIAgent;
+    } else {
+      const insertData = {
+        name: agent.name || "Nuevo Maestro",
+        description: agent.description || "",
+        status: agent.status || "ACTIVE",
+        type: agent.type || "QUALIFY",
+        tenant_id: tenantId,
+      };
 
-    // If this is a newly created agent, create its initial default variant A
-    if (!agent.id && createdAgent?.id) {
-      try {
-        const defaultVariant = {
-          agent_id: createdAgent.id,
-          tenant_id: tenantId,
-          is_variant_b: false,
-          is_active: true,
-          version_label: "v1.0",
-          prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
-          model_provider: "OPENAI",
-          model_name: "gpt-4o",
-          automation_rules: {
-            contact_policy: "auto",
-            working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
-            retry_delay: 15,
-            max_retries: 3,
-            scheduling_config: { enabled: false, duration: 30, buffer: 15 },
-          },
-        };
-        // @ts-expect-error - Supabase generic table inference
-        await supabase.from("ai_agent_variants").insert(defaultVariant);
-      } catch (variantErr) {
-        console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+      const { data, error } = await supabase
+        .from("ai_agents")
+        // @ts-expect-error - Supabase inference issue with table keys
+        .insert([insertData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("[saveAIAgent] Supabase insert error:", error);
+        return { success: false, error: error.message };
+      }
+      createdAgent = data as unknown as AIAgent;
+
+      // If this is a newly created agent, create its initial default variant A
+      if (createdAgent?.id) {
+        try {
+          const defaultVariant = {
+            agent_id: createdAgent.id,
+            tenant_id: tenantId,
+            is_variant_b: false,
+            is_active: true,
+            version_label: "v1.0",
+            prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
+            model_provider: "OPENAI",
+            model_name: "gpt-4o",
+            automation_rules: {
+              contact_policy: "auto",
+              working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
+              retry_delay: 15,
+              max_retries: 3,
+              scheduling_config: { enabled: false, duration: 30, buffer: 15 },
+            },
+          };
+          // @ts-expect-error - Supabase generic table inference
+          await supabase.from("ai_agent_variants").insert([defaultVariant]);
+        } catch (variantErr) {
+          console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+        }
       }
     }
 
-    return { success: true, data: createdAgent };
+    return { success: true, data: JSON.parse(JSON.stringify(createdAgent)) };
   } catch (err) {
     console.error("[saveAIAgent] Unexpected error:", err);
-    return { success: false, error: (err as Error).message || "Error inesperado al guardar el agente" };
+    return {
+      success: false,
+      error: (err as Error).message || "Error inesperado al guardar el agente",
+    };
   }
 }
 
@@ -173,7 +207,7 @@ export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
       console.error("[ACTIONS] Error saving agent variant:", error);
       return { success: false, error: error.message };
     }
-    return { success: true, data: data as AIAgentVariant };
+    return { success: true, data: JSON.parse(JSON.stringify(data)) as AIAgentVariant };
   } catch (err) {
     console.error("[saveAgentVariant] Unexpected error:", err);
     return { success: false, error: (err as Error).message || "Error al guardar la variante" };

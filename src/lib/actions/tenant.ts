@@ -154,25 +154,69 @@ export async function getTenants(): Promise<Tenant[]> {
 export async function getActiveTenantConfig(): Promise<Tenant | null> {
   const cookieStore = await cookies();
   const tenantId = cookieStore.get("esden-tenant-id")?.value;
-  if (!tenantId) return null;
-
   const supabase = await getAdminSupabase();
-  const { data, error } = await supabase.from("tenants").select("*").eq("id", tenantId).single();
 
-  if (error || !data) {
-    console.error("DEBUG: getActiveTenantConfig failed", { tenantId, error, dataIsNull: !data });
-    return null;
+  if (tenantId) {
+    const { data, error } = await supabase
+      .from("tenants")
+      .select("*")
+      .eq("id", tenantId)
+      .maybeSingle();
+    if (data && !error) {
+      return {
+        ...data,
+        is_admin: !!(data.config as Record<string, unknown>)?.is_admin,
+        api_type:
+          ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") ||
+          "internal",
+        username: ((data.config as Record<string, unknown>)?.username as string) || "",
+        business_type:
+          ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
+      } as Tenant;
+    }
   }
 
-  return {
-    ...data,
-    is_admin: !!(data.config as Record<string, unknown>)?.is_admin,
-    api_type:
-      ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
-    username: ((data.config as Record<string, unknown>)?.username as string) || "",
-    business_type:
-      ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
-  } as Tenant;
+  // Fallback al primer tenant disponible si no hay cookie o la cookie es inválida
+  try {
+    const { data: fallbackData } = await supabase
+      .from("tenants")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (fallbackData) {
+      // Intentamos setear la cookie para futuras peticiones
+      try {
+        cookieStore.set("esden-tenant-id", fallbackData.id, {
+          path: "/",
+          maxAge: 30 * 24 * 60 * 60,
+        });
+        cookieStore.set("esden-tenant-name", fallbackData.name, {
+          path: "/",
+          maxAge: 30 * 24 * 60 * 60,
+        });
+      } catch {
+        // En Server Components de solo lectura cookies().set puede no aplicar; ignoramos
+      }
+
+      return {
+        ...fallbackData,
+        is_admin: !!(fallbackData.config as Record<string, unknown>)?.is_admin,
+        api_type:
+          ((fallbackData.config as Record<string, unknown>)?.api_type as "internal" | "client") ||
+          "internal",
+        username: ((fallbackData.config as Record<string, unknown>)?.username as string) || "",
+        business_type:
+          ((fallbackData.config as Record<string, unknown>)?.business_type as string) ||
+          "restaurant",
+      } as Tenant;
+    }
+  } catch (err) {
+    console.error("[getActiveTenantConfig] Fallback error:", err);
+  }
+
+  return null;
 }
 
 export async function getTenantByUserId(userId: string): Promise<Tenant | null> {
@@ -232,7 +276,14 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
 
     // We move is_admin, username, api_type and business_type into config, then remove them from the top-level insert
     // password is for auth only
-    const { is_admin, username, api_type, business_type, password: _password, ...tenantData } = tenant;
+    const {
+      is_admin,
+      username,
+      api_type,
+      business_type,
+      password: _password,
+      ...tenantData
+    } = tenant;
 
     const config = {
       ...(tenantData.config || {}),
@@ -372,7 +423,14 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
 
     // We move is_admin, username, api_type and business_type into config to avoid needing a new column in the table
     // password is for auth only
-    const { is_admin, username, api_type, business_type, password: _password, ...cleanUpdates } = updates;
+    const {
+      is_admin,
+      username,
+      api_type,
+      business_type,
+      password: _password,
+      ...cleanUpdates
+    } = updates;
 
     const newConfig = { ...((cleanUpdates.config as Record<string, unknown>) || {}) };
     if (is_admin !== undefined) newConfig.is_admin = !!is_admin;
