@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import NextImage from "next/image";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -140,7 +141,17 @@ export default function LoginPage() {
             </>
           )}
 
-          <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Al continuar, aceptas nuestra{" "}
+            <Link
+              href="/privacy-policy"
+              className="font-bold text-[#0ea5e9] hover:text-[#0284c7] hover:underline transition-colors"
+            >
+              Política de Privacidad
+            </Link>
+          </p>
+
+          <p className="mt-8 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
             © {new Date().getFullYear()} Re_ FORMA
           </p>
         </div>
@@ -244,7 +255,17 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
+        <p className="mt-6 text-center text-xs text-slate-400">
+          Al iniciar sesión, aceptas nuestra{" "}
+          <Link
+            href="/privacy-policy"
+            className="font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors"
+          >
+            Política de Privacidad
+          </Link>
+        </p>
+
+        <p className="mt-8 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
           © {new Date().getFullYear()} Re_ FORMA
         </p>
       </div>
