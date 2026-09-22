@@ -56,15 +56,23 @@ export async function proxy(request: NextRequest) {
   }
 
   // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata (server-controlled).
-  // Antes leía user_metadata.is_admin que el usuario puede editar via
-  // supabase.auth.updateUser({ data: { is_admin: true } }) — privilege escalation
-  // trivial (DA-2-005). Ahora la fuente de verdad es app_metadata, no escribible
-  // desde el cliente.
+  // Ahora la fuente de verdad es app_metadata, no escribible desde el cliente.
   const isAdmin =
+    user?.app_metadata?.is_super_admin === true ||
+    user?.app_metadata?.is_super_admin === "true" ||
     user?.app_metadata?.is_admin === true ||
     user?.app_metadata?.is_admin === "true" ||
     user?.app_metadata?.admin === true ||
     user?.app_metadata?.admin === "true";
+
+  // Super Admin path: /dashboard/super-admin
+  if (user && pathname.startsWith("/dashboard/super-admin")) {
+    if (!isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+  }
 
   // Admin-only paths: /settings and /admin (including /dashboard/admin)
   const isAdminOnlyPath = pathname.includes("/settings") || pathname.includes("/admin");
