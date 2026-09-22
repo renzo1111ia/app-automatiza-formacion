@@ -155,7 +155,7 @@ export default function ResetPasswordPage() {
         )}
 
         <p className="mt-12 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-          © {new Date().getFullYear()} Renton Call App
+          Una aplicación de Renton Connective {new Date().getFullYear()}
         </p>
       </div>
     </div>

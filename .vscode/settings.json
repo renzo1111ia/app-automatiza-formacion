@@ -31,10 +31,7 @@
     "files.trimTrailingWhitespace": false
   },
 
-  "markdownlint.config": {
-    "MD013": false,
-    "MD033": false,
-    "MD041": false,
-    "MD024": { "siblings_only": true }
+  "files.associations": {
+    "*.sql": "plaintext"
   }
 }

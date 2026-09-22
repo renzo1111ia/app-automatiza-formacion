@@ -1,6 +1,17 @@
 import { z } from "zod";
 import { uuidSchema, tenantIdSchema, nullableTimestampSchema, jsonbSchema } from "./_base";
 
+export const BusinessTypeEnum = z.enum([
+  "restaurante",
+  "salud",
+  "educacion",
+  "retail",
+  "inmobiliaria",
+  "servicios",
+  "general",
+]);
+export type BusinessType = z.infer<typeof BusinessTypeEnum>;
+
 // Tabla: public.tenants
 
 export const TenantSchema = z.object({
@@ -13,6 +24,7 @@ export const TenantSchema = z.object({
   is_admin: z.boolean().optional(),
   auth_user_id: uuidSchema.optional(),
   api_type: z.enum(["internal", "client"]).optional(),
+  business_type: z.string().optional().default("general"),
   config: jsonbSchema,
   api_key: z.string().nullable().optional(),
   daily_spend_limit: z.number().nonnegative().optional(),

@@ -1,7 +1,17 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import NextImage from "next/image";
-import { ArrowLeft, Shield, Eye, Lock, Database, UserCheck, Globe, Mail, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  Shield,
+  Eye,
+  Lock,
+  Database,
+  UserCheck,
+  Globe,
+  Mail,
+  RefreshCw,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Politica de Privacidad | Re_ FORMA",
@@ -164,7 +174,7 @@ export default function PrivacyPolicyPage() {
         </div>
       </header>
 
-      <main id="main-content" className="mx-auto max-w-5xl px-6 pb-24 pt-16">
+      <main id="main-content" className="mx-auto max-w-5xl px-6 pt-16 pb-24">
         {/* Hero */}
         <div className="mb-16 text-center">
           <div className="mb-6 inline-flex items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
@@ -177,11 +187,11 @@ export default function PrivacyPolicyPage() {
             </span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg font-medium text-slate-400">
-            Tu privacidad es fundamental para nosotros. Este documento explica como
-            recopilamos, usamos y protegemos tu informacion personal en Re_ FORMA.
+            Tu privacidad es fundamental para nosotros. Este documento explica como recopilamos,
+            usamos y protegemos tu informacion personal en Re_ FORMA.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 inline-block" />
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Ultima actualizacion: {lastUpdated}
           </div>
         </div>
@@ -191,7 +201,7 @@ export default function PrivacyPolicyPage() {
           aria-label="Tabla de contenidos"
           className="mb-12 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
         >
-          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+          <p className="mb-4 text-xs font-bold tracking-widest text-slate-500 uppercase">
             Contenido
           </p>
           <ol className="grid gap-2 sm:grid-cols-2">
@@ -231,9 +241,7 @@ export default function PrivacyPolicyPage() {
                 <div className="space-y-6">
                   {section.content.map((item, idx) => (
                     <div key={idx} className="border-l-2 border-amber-400/30 pl-6">
-                      <h3 className="mb-2 text-base font-bold text-amber-400">
-                        {item.subtitle}
-                      </h3>
+                      <h3 className="mb-2 text-base font-bold text-amber-400">{item.subtitle}</h3>
                       <p className="leading-relaxed text-slate-400">{item.text}</p>
                     </div>
                   ))}
@@ -265,7 +273,7 @@ export default function PrivacyPolicyPage() {
               >
                 <Mail className="h-5 w-5 shrink-0 text-amber-400" />
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <p className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Email de privacidad
                   </p>
                   <p className="font-bold">privacidad@reforma.ai</p>
@@ -278,7 +286,7 @@ export default function PrivacyPolicyPage() {
               >
                 <Mail className="h-5 w-5 shrink-0 text-amber-400" />
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <p className="text-xs font-bold tracking-wider text-slate-500 uppercase">
                     Soporte general
                   </p>
                   <p className="font-bold">soporte@reforma.ai</p>
@@ -291,8 +299,7 @@ export default function PrivacyPolicyPage() {
         {/* Footer */}
         <div className="mt-16 border-t border-white/10 pt-10 text-center">
           <p className="mb-4 text-sm text-slate-500">
-            Al utilizar Re_ FORMA, aceptas los terminos descritos en esta Politica de
-            Privacidad.
+            Al utilizar Re_ FORMA, aceptas los terminos descritos en esta Politica de Privacidad.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6">
             <Link
@@ -304,7 +311,8 @@ export default function PrivacyPolicyPage() {
             </Link>
             <span className="text-slate-600">|</span>
             <p className="text-sm font-bold tracking-widest text-slate-500 uppercase">
-              {"(c) "}{new Date().getFullYear()}{" Re_ FORMA"}
+              {"Una aplicación de Renton Connective "}
+              {new Date().getFullYear()}
             </p>
           </div>
         </div>

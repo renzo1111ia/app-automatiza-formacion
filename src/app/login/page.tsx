@@ -104,7 +104,8 @@ export default function LoginPage() {
                   Recuperar contraseña
                 </h1>
                 <p className="mt-2 text-base font-medium text-slate-500">
-                  Control total sobre tus agentes de IA de llamadas, agendamiento automatizado y métricas de contactabilidad en un solo lugar.
+                  Control total sobre tus agentes de IA de llamadas, agendamiento automatizado y
+                  métricas de contactabilidad en un solo lugar.
                 </p>
               </div>
 
@@ -145,14 +146,14 @@ export default function LoginPage() {
             Al continuar, aceptas nuestra{" "}
             <Link
               href="/privacy-policy"
-              className="font-bold text-[#0ea5e9] hover:text-[#0284c7] hover:underline transition-colors"
+              className="font-bold text-[#0ea5e9] transition-colors hover:text-[#0284c7] hover:underline"
             >
               Política de Privacidad
             </Link>
           </p>
 
           <p className="mt-8 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-            © {new Date().getFullYear()} Re_ FORMA
+            Una aplicación de Renton Connective {new Date().getFullYear()}
           </p>
         </div>
       </div>
@@ -168,7 +169,7 @@ export default function LoginPage() {
             alt="Re_ FORMA Social Media Partner"
             width={400}
             height={200}
-            className="w-full max-w-[220px] sm:max-w-[260px] h-auto object-contain"
+            className="h-auto w-full max-w-[220px] object-contain sm:max-w-[260px]"
             priority
           />
         </div>
@@ -259,14 +260,14 @@ export default function LoginPage() {
           Al iniciar sesión, aceptas nuestra{" "}
           <Link
             href="/privacy-policy"
-            className="font-bold text-amber-400 hover:text-amber-300 hover:underline transition-colors"
+            className="font-bold text-amber-400 transition-colors hover:text-amber-300 hover:underline"
           >
             Política de Privacidad
           </Link>
         </p>
 
         <p className="mt-8 text-center text-xs font-bold tracking-widest text-slate-400 uppercase">
-          © {new Date().getFullYear()} Re_ FORMA
+          Una aplicación de Renton Connective {new Date().getFullYear()}
         </p>
       </div>
     </div>

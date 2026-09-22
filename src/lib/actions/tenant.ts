@@ -35,6 +35,8 @@ async function assertAdminAccess(): Promise<{ ok: true } | { ok: false; error: s
     }
     const appMeta = data.user.app_metadata ?? {};
     const isAdmin =
+      appMeta.is_super_admin === true ||
+      appMeta.is_super_admin === "true" ||
       appMeta.is_admin === true ||
       appMeta.is_admin === "true" ||
       appMeta.admin === true ||
@@ -135,7 +137,7 @@ export async function getTenants(): Promise<Tenant[]> {
       return [];
     }
 
-    // Map is_admin, username, api_type and business_type from config to top level for UI convenience
+    // Map is_admin, username, api_type and business_type from config/column to top level for UI convenience
     return (data || []).map((t) => ({
       ...t,
       is_admin: !!(t.config as Record<string, unknown>)?.is_admin,
@@ -143,7 +145,9 @@ export async function getTenants(): Promise<Tenant[]> {
         ((t.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
       username: ((t.config as Record<string, unknown>)?.username as string) || "",
       business_type:
-        ((t.config as Record<string, unknown>)?.business_type as string) || "restaurant",
+        (t.business_type as string) ||
+        ((t.config as Record<string, unknown>)?.business_type as string) ||
+        "general",
     }));
   } catch (e) {
     console.error("CRITICAL ERROR IN getTenants:", e);
@@ -171,7 +175,9 @@ export async function getActiveTenantConfig(): Promise<Tenant | null> {
           "internal",
         username: ((data.config as Record<string, unknown>)?.username as string) || "",
         business_type:
-          ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
+          (data.business_type as string) ||
+          ((data.config as Record<string, unknown>)?.business_type as string) ||
+          "general",
       } as Tenant;
     }
   }
@@ -208,8 +214,9 @@ export async function getActiveTenantConfig(): Promise<Tenant | null> {
           "internal",
         username: ((fallbackData.config as Record<string, unknown>)?.username as string) || "",
         business_type:
+          (fallbackData.business_type as string) ||
           ((fallbackData.config as Record<string, unknown>)?.business_type as string) ||
-          "restaurant",
+          "general",
       } as Tenant;
     }
   } catch (err) {
@@ -235,7 +242,9 @@ export async function getTenantByUserId(userId: string): Promise<Tenant | null> 
       ((data.config as Record<string, unknown>)?.api_type as "internal" | "client") || "internal",
     username: ((data.config as Record<string, unknown>)?.username as string) || "",
     business_type:
-      ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
+      (data.business_type as string) ||
+      ((data.config as Record<string, unknown>)?.business_type as string) ||
+      "general",
   } as Tenant;
 }
 
@@ -285,21 +294,24 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
       ...tenantData
     } = tenant;
 
+    const finalBusinessType =
+      business_type ||
+      ((tenantData.config as Record<string, unknown>)?.business_type as string) ||
+      "general";
+
     const config = {
       ...(tenantData.config || {}),
       is_admin: !!is_admin,
       username: username || "",
       api_type: api_type || "internal",
-      business_type:
-        business_type ||
-        ((tenantData.config as Record<string, unknown>)?.business_type as string) ||
-        "restaurant",
+      business_type: finalBusinessType,
     };
 
     const { data, error } = await serviceSupabase
       .from("tenants")
       .insert({
         ...tenantData,
+        business_type: finalBusinessType,
         config,
         auth_user_id: authUserId,
       })
@@ -436,7 +448,10 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
     if (is_admin !== undefined) newConfig.is_admin = !!is_admin;
     if (username !== undefined) newConfig.username = username;
     if (api_type !== undefined) newConfig.api_type = api_type;
-    if (business_type !== undefined) newConfig.business_type = business_type;
+    if (business_type !== undefined) {
+      newConfig.business_type = business_type;
+      (cleanUpdates as Record<string, unknown>).business_type = business_type;
+    }
 
     // Sprint 2B: validar overview_kpis si viene en config (max 8 KPIs hero, shape valido).
     if (newConfig.overview_kpis !== undefined) {
@@ -470,7 +485,9 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
           "internal",
         username: ((data.config as Record<string, unknown>)?.username as string) || "",
         business_type:
-          ((data.config as Record<string, unknown>)?.business_type as string) || "restaurant",
+          (data.business_type as string) ||
+          ((data.config as Record<string, unknown>)?.business_type as string) ||
+          "general",
       },
     };
   } catch (e: unknown) {

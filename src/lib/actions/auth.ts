@@ -91,6 +91,8 @@ async function _loginAction(email: string, password: string) {
       // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata.
       const user = authData.user;
       const isAdmin =
+        user.app_metadata?.is_super_admin === true ||
+        user.app_metadata?.is_super_admin === "true" ||
         user.app_metadata?.is_admin === true ||
         user.app_metadata?.is_admin === "true" ||
         user.app_metadata?.admin === true ||
@@ -112,16 +114,20 @@ async function _loginAction(email: string, password: string) {
               .from("tenants")
               .select("id, name")
               .order("created_at", { ascending: true })
-              .limit(1)
               .maybeSingle()
           );
-        if (firstTenant) {
-          await setTenantCookies(firstTenant.id, firstTenant.name);
+        const t = firstTenant as { id?: string; name?: string } | null;
+        if (t?.id) {
+          await setTenantCookies(t.id, t.name || "");
         }
       }
 
       console.log(`[AUTH] Login completado para ${emailTag}. Redirigiendo...`);
-      redirect("/dashboard");
+      if (isAdmin) {
+        redirect("/dashboard/super-admin");
+      } else {
+        redirect("/dashboard");
+      }
     }
   } catch (e: unknown) {
     const error = e as { message?: string; cause?: { message?: string } };
@@ -207,6 +213,8 @@ export async function getAdminStatus(): Promise<boolean> {
   const user = data.user;
   // Sprint 0 tarea 1-16: leer rol admin SOLO de app_metadata (server-controlled).
   const isAdm =
+    user?.app_metadata?.is_super_admin === true ||
+    user?.app_metadata?.is_super_admin === "true" ||
     user?.app_metadata?.is_admin === true ||
     user?.app_metadata?.is_admin === "true" ||
     user?.app_metadata?.admin === true ||

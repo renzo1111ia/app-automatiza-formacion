@@ -47,6 +47,12 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
+    label: "Super Admin",
+    href: "/dashboard/super-admin",
+    icon: <ShieldCheck className="h-5 w-5 text-amber-500" strokeWidth={1.8} />,
+    adminOnly: true,
+  },
+  {
     label: "Dashboard",
     href: "/dashboard",
     icon: <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />,
@@ -273,7 +279,8 @@ export function Sidebar({
     ((tenantConfig as Record<string, unknown>)?.business_type as string | undefined) ||
     storeBusinessType;
   // If businessType is not specified (legacy), default to restaurant; otherwise check explicitly
-  const isRestaurant = !businessType || businessType === "restaurant";
+  const isRestaurant =
+    !businessType || businessType === "restaurant" || businessType === "restaurante";
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (item.adminOnly && !isAdmin) return false;
