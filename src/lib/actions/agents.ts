@@ -1,16 +1,29 @@
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/actions/session";
 import type { AIAgent, AIAgentVariant, Database } from "@/types/database";
 import { ModelNameSchema } from "@/lib/schemas/ai-agents";
 
 /**
+ * Helper to resolve tenantId from parameter, cookie, or session.
+ */
+async function resolveTenantId(explicitTenantId?: string): Promise<string | null> {
+  if (explicitTenantId) return explicitTenantId;
+  const fromCookie = await getActiveTenantId();
+  if (fromCookie) return fromCookie;
+  const session = await getSessionContext();
+  if (session?.tenantId) return session.tenantId;
+  return null;
+}
+
+/**
  * Fetches all AI Agents for the active tenant.
  */
-export async function getAIAgents() {
+export async function getAIAgents(tenantIdParam?: string) {
   try {
     const supabase = await getAdminSupabaseClient();
-    const tenantId = await getActiveTenantId();
+    const tenantId = await resolveTenantId(tenantIdParam);
 
     if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 
@@ -53,12 +66,16 @@ export async function getAgentVariants(agentId: string) {
  * Saves a new or existing agent.
  * Ensures the mandatory tenant_id is injected for proper data isolation.
  */
-export async function saveAIAgent(agent: Partial<AIAgent>) {
+export async function saveAIAgent(agent: Partial<AIAgent> & { tenant_id?: string }) {
   try {
     const supabase = await getAdminSupabaseClient();
-    const tenantId = await getActiveTenantId();
+    const tenantId = await resolveTenantId(agent.tenant_id);
 
-    if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
+    if (!tenantId)
+      return {
+        success: false,
+        error: "No hay una sesión de cliente activa. Selecciona un cliente primero.",
+      };
 
     let createdAgent: AIAgent | null = null;
 
@@ -120,9 +137,15 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
             is_variant_b: false,
             is_active: true,
             version_label: "v1.0",
+            weight: 0.5,
+            metrics: {},
             prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
             model_provider: "OPENAI",
             model_name: "gpt-4o",
+            knowledge_base_ids: [],
+            dynamic_variables: {},
+            tracked_variables: [],
+            crm_config: {},
             automation_rules: {
               contact_policy: "auto",
               working_hours: { start: "09:00", end: "21:00", days: [1, 2, 3, 4, 5] },
@@ -152,10 +175,10 @@ export async function saveAIAgent(agent: Partial<AIAgent>) {
 /**
  * Saves a prompt variant.
  */
-export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
+export async function saveAgentVariant(variant: Partial<AIAgentVariant> & { tenant_id?: string }) {
   try {
     const supabase = await getAdminSupabaseClient();
-    const tenantId = await getActiveTenantId();
+    const tenantId = await resolveTenantId(variant.tenant_id);
 
     // 2-35: validar model_name contra whitelist en el boundary (Server Action).
     if (variant.model_name !== undefined && variant.model_name !== null) {
@@ -217,10 +240,10 @@ export async function saveAgentVariant(variant: Partial<AIAgentVariant>) {
 /**
  * Deletes an AI agent.
  */
-export async function deleteAIAgent(agentId: string) {
+export async function deleteAIAgent(agentId: string, tenantIdParam?: string) {
   try {
     const supabase = await getAdminSupabaseClient();
-    const tenantId = await getActiveTenantId();
+    const tenantId = await resolveTenantId(tenantIdParam);
 
     if (!tenantId) return { success: false, error: "No hay una sesión de cliente activa." };
 
@@ -241,10 +264,10 @@ export async function deleteAIAgent(agentId: string) {
 /**
  * Fetches all advisors for the active tenant.
  */
-export async function getAdvisors() {
+export async function getAdvisors(tenantIdParam?: string) {
   try {
     const supabase = await getAdminSupabaseClient();
-    const tenantId = await getActiveTenantId();
+    const tenantId = await resolveTenantId(tenantIdParam);
 
     if (!tenantId) return { success: false, error: "No hay un cliente seleccionado." };
 

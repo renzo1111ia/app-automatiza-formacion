@@ -40,6 +40,7 @@ import { getKnowledgeBase } from "@/lib/actions/knowledge";
 import { testAgentVariables } from "@/lib/actions/simulator";
 import type { AIAgent, AIAgentVariant, KnowledgeItem } from "@/types/database";
 import { toast } from "@/components/ui/toast";
+import { useTenantStore } from "@/store/tenant";
 
 interface AIAgentCRMConfig {
   provider: string;
@@ -92,6 +93,8 @@ export default function AgentsPage() {
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState<AIAgent | null>(null);
 
+  const tenantId = useTenantStore((s) => s.tenantId);
+
   const [newAgentName, setNewAgentName] = useState("");
   const [newAgentDescription, setNewAgentDescription] = useState("");
 
@@ -99,18 +102,18 @@ export default function AgentsPage() {
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeItem[]>([]);
 
   const loadData = useCallback(async () => {
-    const res = await getAIAgents();
+    const res = await getAIAgents(tenantId || undefined);
     if (res.success && res.data) {
       setAgents(res.data);
       if (res.data.length > 0 && !selectedAgent) setSelectedAgent(res.data[0]);
     }
     const kbRes = await getKnowledgeBase();
     if (kbRes.success && kbRes.data) setKnowledgeBases(kbRes.data);
-  }, [selectedAgent]);
+  }, [selectedAgent, tenantId]);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, tenantId]);
 
   useEffect(() => {
     if (selectedAgent) {
@@ -150,8 +153,9 @@ export default function AgentsPage() {
         description: newAgentDescription.trim(),
         status: "ACTIVE",
         type: "QUALIFY",
+        tenant_id: tenantId || undefined,
       });
-      if (res.success && res.data) {
+      if (res?.success && res?.data) {
         await loadData();
         setSelectedAgent(res.data);
         setIsCreateModalOpen(false);
@@ -167,7 +171,7 @@ export default function AgentsPage() {
           variant: "error",
           title: "Error al crear agente",
           description:
-            res.error || "No se pudo crear el agente. Verifica que haya un cliente seleccionado.",
+            res?.error || "No se pudo crear el agente. Verifica que haya un cliente seleccionado.",
         });
       }
     } catch (err) {
@@ -175,7 +179,7 @@ export default function AgentsPage() {
       toast({
         variant: "error",
         title: "Error al crear agente",
-        description: error.message || "Error inesperado al contactar con el servidor.",
+        description: error?.message || "Error inesperado al contactar con el servidor.",
       });
     } finally {
       setSaving(false);
@@ -190,8 +194,9 @@ export default function AgentsPage() {
         id: selectedAgent.id,
         name: newAgentName.trim(),
         description: newAgentDescription.trim(),
+        tenant_id: tenantId || undefined,
       });
-      if (res.success && res.data) {
+      if (res?.success && res?.data) {
         await loadData();
         setSelectedAgent(res.data);
         setIsEditModalOpen(false);
@@ -204,7 +209,7 @@ export default function AgentsPage() {
         toast({
           variant: "error",
           title: "Error al actualizar agente",
-          description: res.error || "No se pudo actualizar el agente.",
+          description: res?.error || "No se pudo actualizar el agente.",
         });
       }
     } catch (err) {
@@ -212,7 +217,7 @@ export default function AgentsPage() {
       toast({
         variant: "error",
         title: "Error al actualizar agente",
-        description: error.message || "Error inesperado.",
+        description: error?.message || "Error inesperado.",
       });
     } finally {
       setSaving(false);
@@ -223,7 +228,7 @@ export default function AgentsPage() {
     if (!agentToDelete) return;
     setSaving(true);
     try {
-      const res = await deleteAIAgent(agentToDelete.id);
+      const res = await deleteAIAgent(agentToDelete.id, tenantId || undefined);
       if (res.success) {
         await loadData();
         if (selectedAgent?.id === agentToDelete.id) setSelectedAgent(null);
@@ -261,6 +266,7 @@ export default function AgentsPage() {
         agent_id: selectedAgent.id,
         is_active: true,
         is_variant_b: false,
+        tenant_id: tenantId || undefined,
       } as AIAgentVariant);
       if (!res.success) throw new Error(res.error || "Error al guardar");
       toast({
