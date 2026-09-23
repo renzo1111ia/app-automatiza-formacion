@@ -27,8 +27,10 @@ import {
 } from "@/lib/actions/knowledge";
 import type { KnowledgeItem } from "@/types/database";
 import { toast } from "@/components/ui/toast";
+import { useTenantStore } from "@/store/tenant";
 
 export default function KnowledgeBasePage() {
+  const tenantId = useTenantStore((s) => s.tenantId);
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -48,7 +50,7 @@ export default function KnowledgeBasePage() {
 
   const loadItems = async () => {
     setLoading(true);
-    const res = await getKnowledgeBase();
+    const res = await getKnowledgeBase(tenantId || undefined);
     if (res.success && res.data) {
       setItems(res.data);
     }
@@ -58,7 +60,7 @@ export default function KnowledgeBasePage() {
   useEffect(() => {
     let mounted = true;
     const init = async () => {
-      const res = await getKnowledgeBase();
+      const res = await getKnowledgeBase(tenantId || undefined);
       if (mounted && res.success && res.data) {
         setItems(res.data);
       }
@@ -68,7 +70,7 @@ export default function KnowledgeBasePage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [tenantId]);
 
   const handleUploadFiles = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +94,9 @@ export default function KnowledgeBasePage() {
 
       formData.append("name", finalName);
       formData.append("description", description);
+      if (tenantId) {
+        formData.append("tenant_id", tenantId);
+      }
 
       const res = await uploadKnowledgeDocument(formData);
       if (res.success) {
@@ -144,6 +149,7 @@ export default function KnowledgeBasePage() {
       name: kbName.trim(),
       description: description.trim(),
       content: textContent.trim(),
+      tenant_id: tenantId || undefined,
     });
 
     if (res.success) {
@@ -325,7 +331,7 @@ export default function KnowledgeBasePage() {
                         ) {
                           setLoading(true);
                           for (const id of group.ids) {
-                            await deleteKnowledgeDocument(id);
+                            await deleteKnowledgeDocument(id, tenantId || undefined);
                           }
                           await loadItems();
                         }
@@ -387,7 +393,8 @@ export default function KnowledgeBasePage() {
                   Añadir Base de Conocimiento
                 </h3>
                 <p className="text-muted-foreground px-4 text-xs leading-relaxed font-medium">
-                  Alimenta la IA con documentos o texto directo que se fragmentan e indexan en PGVector.
+                  Alimenta la IA con documentos o texto directo que se fragmentan e indexan en
+                  PGVector.
                 </p>
               </div>
 
@@ -534,7 +541,9 @@ export default function KnowledgeBasePage() {
                       {uploading ? (
                         <div className="flex items-center gap-2">
                           <RefreshCw className="h-4 w-4 animate-spin" />
-                          <span>Indexando ({uploadProgress.current}/{uploadProgress.total})...</span>
+                          <span>
+                            Indexando ({uploadProgress.current}/{uploadProgress.total})...
+                          </span>
                         </div>
                       ) : (
                         "Subir e Indexar"
@@ -583,7 +592,7 @@ export default function KnowledgeBasePage() {
                       disabled={uploading}
                       onChange={(e) => setTextContent(e.target.value)}
                       rows={6}
-                      className="bg-card/40 border-border text-foreground font-mono w-full resize-none rounded-2xl border p-3.5 text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
+                      className="bg-card/40 border-border text-foreground w-full resize-none rounded-2xl border p-3.5 font-mono text-xs font-medium transition-all outline-none focus:border-emerald-500/40 disabled:opacity-50"
                       placeholder={`### Hamburguesas:\n- Clásica: $12.00 (Carne 150g, lechuga, tomate, queso)\n- Bacon Doble: $15.50 (Doble carne, queso cheddar, bacon crujiente)\n\n### Bebidas:\n- Refresco: $3.00\n- Cerveza Artesanal: $5.00`}
                     />
                   </div>
@@ -621,4 +630,3 @@ export default function KnowledgeBasePage() {
     </div>
   );
 }
-

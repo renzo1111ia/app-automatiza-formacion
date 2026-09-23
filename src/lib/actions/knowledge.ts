@@ -2,11 +2,24 @@
 "use server";
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
+import { getSessionContext } from "@/lib/actions/session";
 import { deleteFromMinio } from "@/lib/integrations/minio";
 import type { KnowledgeItem } from "@/types/database";
 import OpenAI from "openai";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
 import crypto from "crypto";
+
+/**
+ * Helper to resolve tenantId from parameter, cookie, or session.
+ */
+async function resolveTenantId(explicitTenantId?: string): Promise<string | null> {
+  if (explicitTenantId) return explicitTenantId;
+  const fromCookie = await getActiveTenantId();
+  if (fromCookie) return fromCookie;
+  const session = await getSessionContext();
+  if (session?.tenantId) return session.tenantId;
+  return null;
+}
 
 /**
  * Helper to chunk text and generate embeddings with PGVector
@@ -21,8 +34,8 @@ async function indexKnowledgeText(
 ) {
   if (!text || text.trim().length === 0) return;
 
-  const chunkSize = 1000;
-  const overlap = 200;
+  const chunkSize = 1200;
+  const overlap = 150;
   const chunks: string[] = [];
 
   for (let i = 0; i < text.length; i += chunkSize - overlap) {
@@ -78,9 +91,9 @@ async function indexKnowledgeText(
 /**
  * Fetches all knowledge base documents for the active tenant.
  */
-export async function getKnowledgeBase() {
+export async function getKnowledgeBase(tenantIdParam?: string) {
   const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  const tenantId = await resolveTenantId(tenantIdParam);
 
   if (!tenantId) return { success: false, error: "No context." };
 
@@ -99,7 +112,8 @@ export async function getKnowledgeBase() {
  */
 export async function uploadKnowledgeDocument(formData: FormData) {
   const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  const explicitTenantId = (formData.get("tenant_id") as string) || undefined;
+  const tenantId = await resolveTenantId(explicitTenantId);
 
   if (!tenantId) return { success: false, error: "No context." };
 
@@ -223,9 +237,10 @@ export async function createDirectTextKnowledge(payload: {
   name: string;
   description?: string;
   content: string;
+  tenant_id?: string;
 }) {
   const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  const tenantId = await resolveTenantId(payload.tenant_id);
 
   if (!tenantId) return { success: false, error: "No context." };
 
@@ -305,9 +320,9 @@ export async function createDirectTextKnowledge(payload: {
 /**
  * Deletes a knowledge base document and its embeddings.
  */
-export async function deleteKnowledgeDocument(id: string) {
+export async function deleteKnowledgeDocument(id: string, tenantIdParam?: string) {
   const supabase = await getAdminSupabaseClient();
-  const tenantId = await getActiveTenantId();
+  const tenantId = await resolveTenantId(tenantIdParam);
 
   if (!tenantId) return { success: false, error: "No context." };
 
@@ -336,10 +351,7 @@ export async function deleteKnowledgeDocument(id: string) {
 
     // 2. Delete embeddings
     try {
-      await supabase
-        .from("knowledge_base_embeddings")
-        .delete()
-        .eq("knowledge_base_id", id);
+      await supabase.from("knowledge_base_embeddings").delete().eq("knowledge_base_id", id);
     } catch {
       // Non-blocking (foreign key cascade might handle it)
     }
@@ -357,4 +369,3 @@ export async function deleteKnowledgeDocument(id: string) {
     return { success: false, error: error.message || "Error al eliminar el documento." };
   }
 }
-
