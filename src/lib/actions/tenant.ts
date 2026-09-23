@@ -311,7 +311,6 @@ export async function createTenant(tenant: Partial<Tenant> & { password?: string
       .from("tenants")
       .insert({
         ...tenantData,
-        business_type: finalBusinessType,
         config,
         auth_user_id: authUserId,
       })
@@ -450,7 +449,6 @@ export async function updateTenant(id: string, updates: Partial<Tenant> & { pass
     if (api_type !== undefined) newConfig.api_type = api_type;
     if (business_type !== undefined) {
       newConfig.business_type = business_type;
-      (cleanUpdates as Record<string, unknown>).business_type = business_type;
     }
 
     // Sprint 2B: validar overview_kpis si viene en config (max 8 KPIs hero, shape valido).

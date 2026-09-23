@@ -66,7 +66,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       // Para Super Admin que tiene un tenant activo seleccionado
       const { data: tenantData } = await supabase
         .from("tenants")
-        .select("business_type, config")
+        .select("*")
         .eq("id", tenantId)
         .maybeSingle();
 
