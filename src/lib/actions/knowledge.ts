@@ -3,7 +3,7 @@
 
 import { getAdminSupabaseClient, getActiveTenantId } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/actions/session";
-import { deleteFromMinio } from "@/lib/integrations/minio";
+
 import type { KnowledgeItem } from "@/types/database";
 import OpenAI from "openai";
 import { KnowledgeBaseService } from "@/lib/services/knowledge-base";
@@ -45,46 +45,66 @@ async function indexKnowledgeText(
 
   console.log(`[KNOWLEDGE] 🧩 Created ${chunks.length} chunks for: ${documentName}`);
 
-  let apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey === "your_api_key_here") {
+  let apiKey: string | null = process.env.OPENAI_API_KEY || null;
+  const isInvalid = (k: string | null) =>
+    !k ||
+    k === "your_api_key_here" ||
+    k.includes("REPLACE") ||
+    k.startsWith("placeholder") ||
+    k.length < 20;
+
+  if (isInvalid(apiKey)) {
     const { data: variants } = await supabase
       .from("ai_agent_variants")
       .select("api_key")
       .not("api_key", "is", null)
       .limit(1);
-    apiKey = (variants as any)?.[0]?.api_key;
+    const dbKey = (variants as any)?.[0]?.api_key;
+    if (!isInvalid(dbKey)) {
+      apiKey = dbKey;
+    } else {
+      apiKey = null;
+    }
   }
 
-  if (apiKey && apiKey !== "your_api_key_here") {
-    const openai = new OpenAI({ apiKey });
-    const batchSize = 100;
+  if (apiKey && !isInvalid(apiKey)) {
+    try {
+      const openai = new OpenAI({ apiKey, maxRetries: 0, timeout: 8000 });
+      const batchSize = 100;
 
-    for (let i = 0; i < chunks.length; i += batchSize) {
-      const batch = chunks.slice(i, i + batchSize);
-      const batchFiltered = batch.filter((c) => c.trim().length >= 10);
-      if (batchFiltered.length === 0) continue;
+      for (let i = 0; i < chunks.length; i += batchSize) {
+        const batch = chunks.slice(i, i + batchSize);
+        const batchFiltered = batch.filter((c) => c.trim().length >= 10);
+        if (batchFiltered.length === 0) continue;
 
-      const embedRes = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: batchFiltered.map((c) => c.replace(/\n/g, " ")),
-      });
+        const embedRes = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: batchFiltered.map((c) => c.replace(/\n/g, " ")),
+        });
 
-      const batchToInsert = batchFiltered.map((chunk, index) => ({
-        content: chunk,
-        embedding: embedRes.data[index].embedding,
-        metadata: {
-          knowledge_base_id: documentId,
-          source_name: documentName,
-          file_key: fileKey,
-        },
-        knowledgeBaseId: documentId,
-      }));
+        const batchToInsert = batchFiltered.map((chunk, index) => ({
+          content: chunk,
+          embedding: embedRes.data[index].embedding,
+          metadata: {
+            knowledge_base_id: documentId,
+            source_name: documentName,
+            file_key: fileKey,
+          },
+          knowledgeBaseId: documentId,
+        }));
 
-      await KnowledgeBaseService.addEmbeddingsBatch(tenantId, batchToInsert);
+        await KnowledgeBaseService.addEmbeddingsBatch(tenantId, batchToInsert);
+      }
+      console.log(`[KNOWLEDGE] ✅ Embeddings created successfully for: ${documentName}`);
+    } catch (embedError: any) {
+      console.warn(
+        `[KNOWLEDGE] ⚠️ Skipping vector embeddings for ${documentName} (${embedError?.message || embedError})`
+      );
     }
-    console.log(`[KNOWLEDGE] ✅ Embeddings created successfully for: ${documentName}`);
   } else {
-    console.warn("[KNOWLEDGE] Skipping embeddings: OpenAI API Key not configured.");
+    console.warn(
+      "[KNOWLEDGE] Skipping embeddings: OpenAI API Key is not configured or is a placeholder."
+    );
   }
 }
 
@@ -341,12 +361,7 @@ export async function deleteKnowledgeDocument(id: string, tenantIdParam?: string
       } catch {
         // Non-blocking
       }
-      // Remove from MinIO if previously used
-      try {
-        await deleteFromMinio(fileKey);
-      } catch {
-        // Non-blocking
-      }
+      // MinIO removed — Supabase Storage is the sole storage backend
     }
 
     // 2. Delete embeddings
