@@ -128,46 +128,63 @@ export async function getKnowledgeBase(tenantIdParam?: string) {
 }
 
 /**
- * Uploads a document (PDF, TXT, MD) using Supabase Storage and creates a knowledge base entry.
+ * Helper to ensure the knowledge_base storage bucket exists in Supabase.
+ */
+async function ensureKnowledgeBucket(supabase: any) {
+  try {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    if (!error && buckets) {
+      const exists = buckets.some(
+        (b: any) => b.name === "knowledge_base" || b.id === "knowledge_base"
+      );
+      if (!exists) {
+        await supabase.storage.createBucket("knowledge_base", {
+          public: true,
+          fileSizeLimit: 52428800, // 50MB
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ [KNOWLEDGE] Bucket check note:", err);
+  }
+}
+
+/**
+ * Uploads a document (PDF, TXT, MD) using Supabase Storage and creates/updates a knowledge base entry.
  */
 export async function uploadKnowledgeDocument(formData: FormData) {
   const supabase = await getAdminSupabaseClient();
   const explicitTenantId = (formData.get("tenant_id") as string) || undefined;
   const tenantId = await resolveTenantId(explicitTenantId);
 
-  if (!tenantId) return { success: false, error: "No context." };
+  if (!tenantId) return { success: false, error: "No se pudo identificar el tenant actual." };
 
   const file = formData.get("file") as File;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
 
-  if (!file) return { success: false, error: "No file provided." };
+  if (!file) return { success: false, error: "No se proporcionó ningún archivo." };
 
   try {
+    await ensureKnowledgeBucket(supabase);
+
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // 1. Generate Content Hash (SHA-256) for deduplication
     const contentHash = crypto.createHash("sha256").update(buffer).digest("hex");
 
     // 2. Check if this exact file already exists for this tenant
-    const { data: existing } = await supabase
-      .from("knowledge_base")
-      .select("id")
+    const { data: existing } = await (supabase.from("knowledge_base" as any) as any)
+      .select("id, file_key")
       .eq("tenant_id", tenantId)
       .eq("content_hash", contentHash)
       .maybeSingle();
 
-    if (existing) {
-      return {
-        success: false,
-        error:
-          "Este documento ya existe en tu base de conocimiento (detectado por duplicidad de contenido).",
-      };
-    }
+    const fileKey =
+      existing?.file_key ||
+      `kb/${tenantId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
-    const fileKey = `kb/${tenantId}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-
-    // 3. Upload to Supabase Storage (Primary)
+    // 3. Upload to Supabase Storage
     let fileUrl = "";
     try {
       const { data: storageData, error: storageErr } = await supabase.storage
@@ -190,48 +207,77 @@ export async function uploadKnowledgeDocument(formData: FormData) {
       fileUrl = `/storage/${fileKey}`;
     }
 
-    // 4. Save to DB
-    const { data, error } = await (supabase.from("knowledge_base" as any) as any)
-      .insert({
-        tenant_id: tenantId,
-        name: name || file.name,
-        description: description || "",
-        file_key: fileKey,
-        file_url: fileUrl,
-        content_hash: contentHash,
-      })
-      .select()
-      .single();
+    // 4. Save or Update in DB
+    let documentId: string;
+    let documentData: any;
 
-    if (error) throw error;
+    if (existing) {
+      // Re-index existing document and update metadata
+      documentId = existing.id;
+      const { data: updated, error: updateErr } = await (supabase.from("knowledge_base" as any) as any)
+        .update({
+          name: name || file.name,
+          description: description || "",
+          file_url: fileUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", documentId)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+      documentData = updated;
+
+      // Clean previous embeddings before re-indexing
+      try {
+        await (supabase.from("knowledge_base_embeddings" as any) as any)
+          .delete()
+          .eq("knowledge_base_id", documentId);
+      } catch {
+        // Non-blocking
+      }
+    } else {
+      const { data: inserted, error: insertErr } = await (supabase.from("knowledge_base" as any) as any)
+        .insert({
+          tenant_id: tenantId,
+          name: name || file.name,
+          description: description || "",
+          file_key: fileKey,
+          file_url: fileUrl,
+          content_hash: contentHash,
+        })
+        .select()
+        .single();
+
+      if (insertErr) throw insertErr;
+      documentData = inserted;
+      documentId = inserted.id;
+    }
 
     // 5. VECTORIZATION & TEXT EXTRACTION
     try {
-      const documentData = data as any;
-      if (!documentData) throw new Error("No data returned from insert");
-
       let text = "";
       const isPdf = file.type?.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
 
       if (isPdf) {
         try {
           const pdf = await import("pdf-parse");
-          // @ts-expect-error - pdf-parse has legacy export structure
-          const textResult = await (pdf.default || pdf)(buffer);
+          // @ts-expect-error - pdf-parse export handling
+          const parseFunc = pdf.default || pdf;
+          const textResult = await parseFunc(buffer);
           text = textResult.text || "";
         } catch (pdfErr) {
-          console.warn("[KNOWLEDGE] Error parsing PDF structure, trying raw text:", pdfErr);
+          console.warn("[KNOWLEDGE] Error parsing PDF structure, falling back to buffer text:", pdfErr);
           text = buffer.toString("utf-8");
         }
       } else {
-        // Plain text, markdown, CSV, etc.
         text = buffer.toString("utf-8");
       }
 
       await indexKnowledgeText(
         tenantId,
-        documentData.id,
-        documentData.name,
+        documentId,
+        documentData.name || file.name,
         fileKey,
         text,
         supabase
@@ -240,7 +286,7 @@ export async function uploadKnowledgeDocument(formData: FormData) {
       console.warn("⚠️ [KNOWLEDGE_INDEXING] Document saved but indexing skipped:", idxError);
     }
 
-    return { success: true, data };
+    return { success: true, data: documentData };
   } catch (error: any) {
     console.error("❌ [UPLOAD_KNOWLEDGE] Critical Error:", error);
     return {
@@ -262,33 +308,27 @@ export async function createDirectTextKnowledge(payload: {
   const supabase = await getAdminSupabaseClient();
   const tenantId = await resolveTenantId(payload.tenant_id);
 
-  if (!tenantId) return { success: false, error: "No context." };
+  if (!tenantId) return { success: false, error: "No se pudo identificar el tenant actual." };
 
   const { name, description = "", content } = payload;
   if (!name?.trim()) return { success: false, error: "El nombre es obligatorio." };
   if (!content?.trim()) return { success: false, error: "El contenido no puede estar vacío." };
 
   try {
+    await ensureKnowledgeBucket(supabase);
+
     const textBuffer = Buffer.from(content, "utf-8");
     const contentHash = crypto.createHash("sha256").update(textBuffer).digest("hex");
 
     // Check duplicate
-    const { data: existing } = await supabase
-      .from("knowledge_base")
-      .select("id")
+    const { data: existing } = await (supabase.from("knowledge_base" as any) as any)
+      .select("id, file_key")
       .eq("tenant_id", tenantId)
       .eq("content_hash", contentHash)
       .maybeSingle();
 
-    if (existing) {
-      return {
-        success: false,
-        error: "Ya existe una entrada idéntica en tu base de conocimiento.",
-      };
-    }
-
     const safeName = name.trim().replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileKey = `text/${tenantId}/${Date.now()}_${safeName}.md`;
+    const fileKey = existing?.file_key || `text/${tenantId}/${Date.now()}_${safeName}.md`;
     const fileUrl = `text://${fileKey}`;
 
     // Optional: save backup to Supabase storage as markdown
@@ -298,36 +338,64 @@ export async function createDirectTextKnowledge(payload: {
         upsert: true,
       });
     } catch {
-      // Non-blocking if bucket does not exist
+      // Non-blocking
     }
 
-    // Insert into DB
-    const { data, error } = await (supabase.from("knowledge_base" as any) as any)
-      .insert({
-        tenant_id: tenantId,
-        name: name.trim(),
-        description: description.trim(),
-        file_key: fileKey,
-        file_url: fileUrl,
-        content_hash: contentHash,
-      })
-      .select()
-      .single();
+    let documentId: string;
+    let documentData: any;
 
-    if (error) throw error;
+    if (existing) {
+      documentId = existing.id;
+      const { data: updated, error: updateErr } = await (supabase.from("knowledge_base" as any) as any)
+        .update({
+          name: name.trim(),
+          description: description.trim(),
+          file_url: fileUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", documentId)
+        .select()
+        .single();
+
+      if (updateErr) throw updateErr;
+      documentData = updated;
+
+      try {
+        await (supabase.from("knowledge_base_embeddings" as any) as any)
+          .delete()
+          .eq("knowledge_base_id", documentId);
+      } catch {
+        // Non-blocking
+      }
+    } else {
+      const { data: inserted, error: insertErr } = await (supabase.from("knowledge_base" as any) as any)
+        .insert({
+          tenant_id: tenantId,
+          name: name.trim(),
+          description: description.trim(),
+          file_key: fileKey,
+          file_url: fileUrl,
+          content_hash: contentHash,
+        })
+        .select()
+        .single();
+
+      if (insertErr) throw insertErr;
+      documentData = inserted;
+      documentId = inserted.id;
+    }
 
     // Vectorize directly
-    const documentData = data as any;
     await indexKnowledgeText(
       tenantId,
-      documentData.id,
+      documentId,
       documentData.name,
       fileKey,
       content,
       supabase
     );
 
-    return { success: true, data };
+    return { success: true, data: documentData };
   } catch (error: any) {
     console.error("❌ [CREATE_TEXT_KNOWLEDGE] Error:", error);
     return {

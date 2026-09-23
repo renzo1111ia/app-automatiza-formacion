@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getAdminSupabaseClient } from "@/lib/supabase/server";
 
 export class KnowledgeBaseService {
   /**
@@ -11,7 +11,7 @@ export class KnowledgeBaseService {
     count = 5,
     knowledgeBaseIds?: string[]
   ) {
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAdminSupabaseClient();
 
     // Using unknown cast to bypass RPC type definition issues in legacy schemas
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,10 +73,10 @@ export class KnowledgeBaseService {
     metadata: Record<string, unknown> = {},
     knowledgeBaseId?: string
   ) {
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAdminSupabaseClient();
 
     // Using unknown cast to bypass 'never' type in dynamic tables
-    const { error } = await supabase.from("knowledge_base_embeddings").insert({
+    const { error } = await (supabase.from("knowledge_base_embeddings" as any) as any).insert({
       tenant_id: tenantId,
       content,
       embedding,
@@ -106,9 +106,9 @@ export class KnowledgeBaseService {
   ) {
     if (items.length === 0) return;
 
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAdminSupabaseClient();
 
-    const { error } = await supabase.from("knowledge_base_embeddings").insert(
+    const { error } = await (supabase.from("knowledge_base_embeddings" as any) as any).insert(
       items.map((item) => ({
         tenant_id: tenantId,
         content: item.content,
@@ -131,11 +131,11 @@ export class ChatSummaryService {
    * Gets the current summary for a lead
    */
   static async getSummary(leadId: string) {
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAdminSupabaseClient();
 
     // Using unknown cast to bypass 'never' type
-    const { data, error } = await supabase
-      .from("chat_summaries")
+    const { data, error } = await (supabase
+      .from("chat_summaries" as any) as any)
       .select("summary")
       .eq("lead_id", leadId)
       .maybeSingle();
@@ -155,22 +155,22 @@ export class ChatSummaryService {
    * Appends a message to the consolidated conversation log
    */
   static async appendMessage(tenantId: string, leadId: string, role: string, content: string) {
-    const supabase = await getSupabaseServerClient();
+    const supabase = await getAdminSupabaseClient();
     const currentSummary = (await this.getSummary(leadId)) || "";
     const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     const newMessage = `[${timestamp}] ${role}: ${content}\n`;
     const updatedSummary = currentSummary + newMessage;
 
     // Manual upsert logic to avoid ON CONFLICT constraint missing in DB
-    const { data: existing } = await supabase
-      .from("chat_summaries")
+    const { data: existing } = await (supabase
+      .from("chat_summaries" as any) as any)
       .select("id")
       .eq("lead_id", leadId)
       .maybeSingle();
 
     if (existing) {
-      const { error } = await supabase
-        .from("chat_summaries")
+      const { error } = await (supabase
+        .from("chat_summaries" as any) as any)
         .update({
           summary: updatedSummary,
           last_interaction_at: new Date().toISOString(),
@@ -182,7 +182,7 @@ export class ChatSummaryService {
           (error as unknown as { message: string }).message
         );
     } else {
-      const { error } = await supabase.from("chat_summaries").insert({
+      const { error } = await (supabase.from("chat_summaries" as any) as any).insert({
         tenant_id: tenantId,
         lead_id: leadId,
         summary: updatedSummary,
