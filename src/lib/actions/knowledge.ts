@@ -57,13 +57,24 @@ async function indexKnowledgeText(
     const { data: variants } = await supabase
       .from("ai_agent_variants")
       .select("api_key")
+      .eq("tenant_id", tenantId)
       .not("api_key", "is", null)
       .limit(1);
     const dbKey = (variants as any)?.[0]?.api_key;
     if (!isInvalid(dbKey)) {
       apiKey = dbKey;
     } else {
-      apiKey = null;
+      const { data: globalVariants } = await supabase
+        .from("ai_agent_variants")
+        .select("api_key")
+        .not("api_key", "is", null)
+        .limit(1);
+      const gKey = (globalVariants as any)?.[0]?.api_key;
+      if (!isInvalid(gKey)) {
+        apiKey = gKey;
+      } else {
+        apiKey = null;
+      }
     }
   }
 
@@ -125,6 +136,73 @@ export async function getKnowledgeBase(tenantIdParam?: string) {
 
   if (error) return { success: false, error: error.message };
   return { success: true, data: data as KnowledgeItem[] };
+}
+
+/**
+ * Resilient PDF text extraction supporting pdf-parse v2 and fallbacks.
+ */
+async function extractTextFromPdf(buffer: Buffer): Promise<string> {
+  // Strategy 1: PDFParse v2 class
+  try {
+    const pdfModule = await import("pdf-parse");
+    const PDFParseClass = (pdfModule as any).PDFParse || (pdfModule as any).default?.PDFParse;
+    if (typeof PDFParseClass === "function") {
+      const parser = new PDFParseClass({ data: buffer });
+      const parsePromise = parser.getText();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("PDF extraction timeout")), 8000)
+      );
+      const res: any = await Promise.race([parsePromise, timeoutPromise]);
+      try {
+        await parser.destroy();
+      } catch {}
+      if (res?.text && res.text.trim().length > 0) {
+        return res.text;
+      }
+    }
+  } catch (e: any) {
+    console.warn("⚠️ [PDF_EXTRACT] Strategy 1 (PDFParse v2) warning:", e?.message || e);
+  }
+
+  // Strategy 2: Legacy function fallback
+  try {
+    const pdfModule = await import("pdf-parse");
+    const legacyFunc =
+      typeof (pdfModule as any).default === "function"
+        ? (pdfModule as any).default
+        : typeof pdfModule === "function"
+          ? pdfModule
+          : null;
+    if (typeof legacyFunc === "function") {
+      const res = await legacyFunc(buffer);
+      if (res?.text && res.text.trim().length > 0) {
+        return res.text;
+      }
+    }
+  } catch (e: any) {
+    console.warn("⚠️ [PDF_EXTRACT] Strategy 2 (Legacy) warning:", e?.message || e);
+  }
+
+  // Strategy 3: Text stream extraction
+  try {
+    const raw = buffer.toString("latin1");
+    const streamMatches = raw.match(/BT[\s\S]*?ET/g);
+    if (streamMatches && streamMatches.length > 0) {
+      const extracted = streamMatches
+        .map((s) => s.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ$€.,:\-\s\n]/g, " "))
+        .join("\n")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (extracted.length > 20) {
+        return extracted;
+      }
+    }
+  } catch (e: any) {
+    console.warn("⚠️ [PDF_EXTRACT] Strategy 3 warning:", e?.message || e);
+  }
+
+  // Strategy 4: Raw text cleanup
+  return buffer.toString("utf-8").replace(/[^\x20-\x7E\n\r\táéíóúÁÉÍÓÚñÑ]/g, " ");
 }
 
 /**
@@ -260,16 +338,7 @@ export async function uploadKnowledgeDocument(formData: FormData) {
       const isPdf = file.type?.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
 
       if (isPdf) {
-        try {
-          const pdf = await import("pdf-parse");
-          // @ts-expect-error - pdf-parse export handling
-          const parseFunc = pdf.default || pdf;
-          const textResult = await parseFunc(buffer);
-          text = textResult.text || "";
-        } catch (pdfErr) {
-          console.warn("[KNOWLEDGE] Error parsing PDF structure, falling back to buffer text:", pdfErr);
-          text = buffer.toString("utf-8");
-        }
+        text = await extractTextFromPdf(buffer);
       } else {
         text = buffer.toString("utf-8");
       }
