@@ -51,7 +51,8 @@ export class AiAgentsRepository {
        
       const { data: inserted, error } = await supabase
         .from("ai_agents")
-        .insert(payload)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(payload as any)
         .select()
         .single();
       if (error) return { data: null, error: handleSupabaseError(error) };
@@ -65,7 +66,8 @@ export class AiAgentsRepository {
     try {
       const supabase = await getAdminSupabaseClient();
        
-      const { data: updated, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updated, error } = await (supabase as any)
         .from("ai_agents")
         .update(data)
         .eq("id", id)
@@ -136,7 +138,8 @@ export class AiAgentVariantsRepository {
        
       const { data: result, error } = await supabase
         .from("ai_agent_variants")
-        .upsert(data, { onConflict: "agent_id,is_variant_b", ignoreDuplicates: false })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .upsert(data as any, { onConflict: "agent_id,is_variant_b", ignoreDuplicates: false })
         .select()
         .single();
       if (error) return { data: null, error: handleSupabaseError(error) };

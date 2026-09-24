@@ -139,7 +139,7 @@ export async function saveAIAgent(agent: Partial<AIAgent> & { tenant_id?: string
             version_label: "v1.0",
             weight: 0.5,
             metrics: {},
-            prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades.`,
+            prompt_text: `Eres un asistente virtual de IA diseñado para interactuar con clientes de forma profesional, responder preguntas y cualificar oportunidades. Cuando el usuario te haga una pregunta, responde de manera amable, precisa y profesional.`,
             model_provider: "OPENAI",
             model_name: "gpt-4o",
             knowledge_base_ids: [],
@@ -154,10 +154,16 @@ export async function saveAIAgent(agent: Partial<AIAgent> & { tenant_id?: string
               scheduling_config: { enabled: false, duration: 30, buffer: 15 },
             },
           };
-          // @ts-expect-error - Supabase generic table inference
-          await supabase.from("ai_agent_variants").insert([defaultVariant]);
+          const { error: variantInsertErr } = await supabase
+            .from("ai_agent_variants")
+            // @ts-expect-error - Supabase generic table inference
+            .insert([defaultVariant]);
+          if (variantInsertErr) {
+            console.warn("[saveAIAgent] Default variant insert error:", variantInsertErr.message);
+          }
         } catch (variantErr) {
           console.warn("[saveAIAgent] Could not create default variant:", variantErr);
+          // Non-blocking: agent is created, variant is optional at creation time
         }
       }
     }
