@@ -123,19 +123,30 @@ async function indexKnowledgeText(
  * Fetches all knowledge base documents for the active tenant.
  */
 export async function getKnowledgeBase(tenantIdParam?: string) {
-  const supabase = await getAdminSupabaseClient();
-  const tenantId = await resolveTenantId(tenantIdParam);
+  try {
+    const supabase = await getAdminSupabaseClient();
+    const tenantId = await resolveTenantId(tenantIdParam);
 
-  if (!tenantId) return { success: false, error: "No context." };
+    if (!tenantId) return { success: false, error: "No context." };
 
-  const { data, error } = await supabase
-    .from("knowledge_base")
-    .select("*")
-    .eq("tenant_id", tenantId)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("knowledge_base")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .order("created_at", { ascending: false });
 
-  if (error) return { success: false, error: error.message };
-  return { success: true, data: data as KnowledgeItem[] };
+    if (error) return { success: false, error: error.message };
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(data || [])) as KnowledgeItem[],
+    };
+  } catch (err) {
+    console.error("[getKnowledgeBase] Error:", err);
+    return {
+      success: false,
+      error: (err as Error).message || "Error al obtener la base de conocimientos",
+    };
+  }
 }
 
 /**
@@ -292,7 +303,9 @@ export async function uploadKnowledgeDocument(formData: FormData) {
     if (existing) {
       // Re-index existing document and update metadata
       documentId = existing.id;
-      const { data: updated, error: updateErr } = await (supabase.from("knowledge_base" as any) as any)
+      const { data: updated, error: updateErr } = await (
+        supabase.from("knowledge_base" as any) as any
+      )
         .update({
           name: name || file.name,
           description: description || "",
@@ -315,7 +328,9 @@ export async function uploadKnowledgeDocument(formData: FormData) {
         // Non-blocking
       }
     } else {
-      const { data: inserted, error: insertErr } = await (supabase.from("knowledge_base" as any) as any)
+      const { data: inserted, error: insertErr } = await (
+        supabase.from("knowledge_base" as any) as any
+      )
         .insert({
           tenant_id: tenantId,
           name: name || file.name,
@@ -415,7 +430,9 @@ export async function createDirectTextKnowledge(payload: {
 
     if (existing) {
       documentId = existing.id;
-      const { data: updated, error: updateErr } = await (supabase.from("knowledge_base" as any) as any)
+      const { data: updated, error: updateErr } = await (
+        supabase.from("knowledge_base" as any) as any
+      )
         .update({
           name: name.trim(),
           description: description.trim(),
@@ -437,7 +454,9 @@ export async function createDirectTextKnowledge(payload: {
         // Non-blocking
       }
     } else {
-      const { data: inserted, error: insertErr } = await (supabase.from("knowledge_base" as any) as any)
+      const { data: inserted, error: insertErr } = await (
+        supabase.from("knowledge_base" as any) as any
+      )
         .insert({
           tenant_id: tenantId,
           name: name.trim(),
@@ -455,14 +474,7 @@ export async function createDirectTextKnowledge(payload: {
     }
 
     // Vectorize directly
-    await indexKnowledgeText(
-      tenantId,
-      documentId,
-      documentData.name,
-      fileKey,
-      content,
-      supabase
-    );
+    await indexKnowledgeText(tenantId, documentId, documentData.name, fileKey, content, supabase);
 
     return { success: true, data: documentData };
   } catch (error: any) {

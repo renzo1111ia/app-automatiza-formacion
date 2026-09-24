@@ -156,8 +156,6 @@ export default function AgentsPage() {
         tenant_id: tenantId || undefined,
       });
       if (res?.success && res?.data) {
-        await loadData();
-        setSelectedAgent(res.data);
         setIsCreateModalOpen(false);
         setNewAgentName("");
         setNewAgentDescription("");
@@ -166,6 +164,8 @@ export default function AgentsPage() {
           title: "Maestro Creado",
           description: "El agente ha sido configurado con éxito.",
         });
+        setSelectedAgent(res.data);
+        await loadData();
       } else {
         toast({
           variant: "error",

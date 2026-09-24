@@ -7,9 +7,13 @@ import { requireEnv, requireEnvAny } from "@/lib/env";
  * Returns the currently active tenant_id from the cookie.
  */
 export async function getActiveTenantId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const cookieVal = cookieStore.get("esden-tenant-id")?.value;
-  if (cookieVal) return cookieVal;
+  try {
+    const cookieStore = await cookies();
+    const cookieVal = cookieStore.get("esden-tenant-id")?.value;
+    if (cookieVal) return cookieVal;
+  } catch (cookieErr) {
+    // cookies() unavailable or out of request scope
+  }
 
   try {
     const supabase = await getAdminSupabaseClient();
