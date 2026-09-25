@@ -1,0 +1,303 @@
+
+> af-dashboard@0.1.0 lint
+> eslint
+
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\integrations\google\auth\route.ts
+  3:10  warning  'createClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\orchestration\graph\route.ts
+  21:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\orchestration\publish\route.ts
+   77:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\orchestration\workflows\route.ts
+   26:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   26:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\webhooks\crm\route.ts
+  30:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\webhooks\retell\route.ts
+    4:10  warning  'getSupabaseServerClient' is defined but never used  @typescript-eslint/no-unused-vars
+   55:33  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   55:41  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   68:18  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   72:51  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   95:38  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+   95:46  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  110:18  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\api\webhooks\workflow\[workflowId]\[path]\[nodeId]\route.ts
+  18:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:93  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:88  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  68:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  68:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\dashboard\knowledge\page.tsx
+  107:11  warning  'handleDelete' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\dashboard\playground\page.tsx
+    6:5   warning  'Check' is defined but never used         @typescript-eslint/no-unused-vars
+    6:12  warning  'AlertCircle' is defined but never used   @typescript-eslint/no-unused-vars
+    7:43  warning  'Activity' is defined but never used      @typescript-eslint/no-unused-vars
+    8:5   warning  'ShieldCheck' is defined but never used   @typescript-eslint/no-unused-vars
+   22:93  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   62:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:38  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  450:67  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\dashboard\settings\IntegrationsManager.tsx
+  445:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  453:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  471:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\dashboard\web-chatbot\page.tsx
+   6:5   warning  'MessageCircle' is defined but never used  @typescript-eslint/no-unused-vars
+   6:20  warning  'Zap' is defined but never used            @typescript-eslint/no-unused-vars
+  12:11  warning  'ExternalLink' is defined but never used   @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\app\widget\[id]\page.tsx
+  22:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\agents\AIAgentInbox.tsx
+    14:10  warning  'useRouter' is defined but never used     @typescript-eslint/no-unused-vars
+  1237:65  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\charts\DashboardCharts.tsx
+  295:29  warning  Unused eslint-disable directive (no problems were reported)
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\dashboard\CampanasCharts.tsx
+   18:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\dashboard\MinutosCharts.tsx
+  23:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\dashboard\WhatsappCharts.tsx
+  21:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\layout\ThemeToggle.tsx
+  25:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\layout\ThemeToggle.tsx:25:9
+  23 |
+  24 |     useEffect(() => {
+> 25 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |         const handleClickOutside = (event: MouseEvent) => {
+  27 |             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+  28 |                 setIsOpen(false);  react-hooks/set-state-in-effect
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\components\onboarding\nodes\BaseNode.tsx
+  2:10  warning  'Handle' is defined but never used    @typescript-eslint/no-unused-vars
+  2:18  warning  'Position' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\actions\auth.ts
+  69:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\actions\tenant.ts
+  169:57  warning  '_password' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  170:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+  276:57  warning  '_password' is assigned a value but never used                                                        @typescript-eslint/no-unused-vars
+  277:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\actions\widget.ts
+   57:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   75:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\compliance.ts
+    1:10  warning  'addMinutes' is defined but never used             @typescript-eslint/no-unused-vars
+  104:9   error    'startH' is never reassigned. Use 'const' instead  prefer-const
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\feature-flags.ts
+  11:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\intelligence\qualifier.ts
+  31:7  warning  'EXP_RANGES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\multi-agent.ts
+  66:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\processors\AppointmentWatchdog.ts
+  21:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\processors\QualificationProcessor.ts
+   46:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   54:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:90  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\processors\ZohoPollingProcessor.ts
+   36:57   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:100  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:49   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\scheduler.ts
+   48:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   64:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   75:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\sweep-queue.ts
+  44:25  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  65:29  warning  'leadId' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  65:37  warning  'tenantId' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  65:47  warning  'actionType' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  75:25  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\core\test-ab.ts
+   2:23  warning  'getAgentVariants' is defined but never used  @typescript-eslint/no-unused-vars
+  53:11  warning  'stats' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  59:32  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\crm\factory.ts
+  15:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\crm\interface.ts
+   8:28   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:11   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:53   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:68   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:54   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:60   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:74   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:140  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:131  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\crm\providers\zoho.ts
+   72:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\retell.ts
+  20:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\telephony\factory.ts
+  9:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\telephony\providers\twilio.ts
+  52:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\telephony\types.ts
+  23:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\ultravox.ts
+  33:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\whatsapp.ts
+  183:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\integrations\zoho.ts
+   16:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:90  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\services\google-sheets-service.ts
+  10:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  98:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\lib\utils\date-filters.ts
+  2:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard\src\types\database.ts
+  550:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  550:223  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  550:332  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 190 problems (164 errors, 26 warnings)
+  1 error and 3 warnings potentially fixable with the `--fix` option.
+

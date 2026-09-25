@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getKnowledgeBase,
-  uploadKnowledgeDocument,
   createDirectTextKnowledge,
   deleteKnowledgeDocument,
 } from "@/lib/actions/knowledge";
@@ -86,23 +85,40 @@ export default function KnowledgeBasePage() {
       const file = files[i];
       setUploadProgress({ current: i + 1, total: files.length });
 
-      const formData = new FormData();
-      formData.append("file", file);
-
       const finalName =
         files.length > 1 && kbName ? `${kbName} (${file.name})` : kbName || file.name;
 
-      formData.append("name", finalName);
-      formData.append("description", description);
-      if (tenantId) {
-        formData.append("tenant_id", tenantId);
-      }
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.set("name", finalName);
+        if (description) queryParams.set("description", description);
+        if (tenantId) queryParams.set("tenant_id", tenantId);
+        queryParams.set("fileName", file.name);
+        queryParams.set("fileType", file.type || "application/octet-stream");
 
-      const res = await uploadKnowledgeDocument(formData);
-      if (res.success) {
-        successCount++;
-      } else {
-        errors.push(`${file.name}: ${res.error}`);
+        const response = await fetch(`/api/knowledge/upload?${queryParams.toString()}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+          },
+          body: file,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP error ${response.status}`);
+        }
+
+        const res = await response.json();
+        if (res.success) {
+          successCount++;
+        } else {
+          errors.push(`${file.name}: ${res.error || "Error al procesar el archivo"}`);
+        }
+      } catch (fetchErr: unknown) {
+        const err = fetchErr as Error;
+        errors.push(`${file.name}: ${err?.message || "Error al subir el archivo"}`);
+        console.error("[KnowledgePage] Upload fetch error:", fetchErr);
       }
     }
 

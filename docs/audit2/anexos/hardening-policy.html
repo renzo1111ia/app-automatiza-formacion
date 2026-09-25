@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hardening Policy — Política de seguridad · Auditoría V2 · dashboard-af</title>
+  <meta name="description" content="Medidas obligatorias de seguridad para producción">
+  <link rel="stylesheet" href="../assets/anexo.css">
+</head>
+<body>
+<header class="anexo-head">
+  <div class="anexo-head-row">
+    <div class="anexo-brand">
+      <span class="anexo-brand-logo" aria-hidden="true">📚</span>
+      <div>
+        <div class="anexo-brand-title">Auditoría V2 · dashboard-af</div>
+        <div class="anexo-brand-sub">AUTOMATIZA FORMACIÓN SL · Anexo documental</div>
+      </div>
+    </div>
+    <div class="anexo-head-actions">
+      <a class="btn btn-ghost" href="../index.html">← Volver al informe</a>
+      <a class="btn btn-source" href="../../security/hardening-policy.md" target="_blank" rel="noopener noreferrer">Ver fuente .md ↗</a>
+    </div>
+  </div>
+  <div class="anexo-title-wrap">
+    <h1>Hardening Policy — Política de seguridad</h1>
+    <p class="anexo-subtitle">Medidas obligatorias de seguridad para producción</p>
+    <p class="anexo-source-cite">
+      <b>📄 Fuente original:</b>
+      <code>../../security/hardening-policy.md</code>
+      <a href="../../security/hardening-policy.md" target="_blank" rel="noopener noreferrer" class="link-inline">[abrir .md en nueva ventana ↗]</a>
+    </p>
+  </div>
+</header>
+
+<main class="anexo-main">
+  <aside class="anexo-toc">
+    <h2>Índice del documento</h2>
+    <ol>
+      <li><a href="#1-proposito">1 · Propósito</a></li>
+      <li><a href="#2-principios-rectores">2 · Principios rectores</a></li>
+      <li><a href="#3-medidas-activas-verificar-antes-de-cada-deploy">3 · Medidas activas (verificar antes de cada deploy)</a></li>
+      <li class="toc-sub"><a href="#31-autenticacion-autorizacion">3.1 · Autenticación + Autorización</a></li>
+      <li class="toc-sub"><a href="#32-rls-multi-tenant-en-postgres">3.2 · RLS multi-tenant en Postgres</a></li>
+      <li class="toc-sub"><a href="#33-webhooks-firmados-hmac">3.3 · Webhooks firmados (HMAC)</a></li>
+      <li class="toc-sub"><a href="#34-cifrado-de-secretos">3.4 · Cifrado de secretos</a></li>
+      <li class="toc-sub"><a href="#35-security-headers-http-owasp">3.5 · Security Headers HTTP (OWASP)</a></li>
+      <li class="toc-sub"><a href="#36-validacion-de-entrada-zod">3.6 · Validación de entrada (Zod)</a></li>
+      <li class="toc-sub"><a href="#37-rate-limiting-abuse-prevention">3.7 · Rate limiting + abuse prevention</a></li>
+      <li class="toc-sub"><a href="#38-observabilidad-pii-scrubbing">3.8 · Observabilidad + PII scrubbing</a></li>
+      <li class="toc-sub"><a href="#39-dependencias-supply-chain">3.9 · Dependencias + Supply chain</a></li>
+      <li class="toc-sub"><a href="#310-acceso-a-infraestructura-vps-dokploy-postgres">3.10 · Acceso a infraestructura (VPS Dokploy + Postgres)</a></li>
+      <li><a href="#4-checklist-pre-deploy-obligatorio-antes-de-cualquier-promocion">4 · Checklist pre-deploy (obligatorio antes de cualquier promoción)</a></li>
+      <li><a href="#5-threat-model-stride-simplificado">5 · Threat model (STRIDE simplificado)</a></li>
+      <li><a href="#6-respuesta-a-incidentes-procedimiento-minimo">6 · Respuesta a incidentes (procedimiento mínimo)</a></li>
+      <li><a href="#7-revisiones-periodicas">7 · Revisiones periódicas</a></li>
+      <li><a href="#8-notas-de-cumplimiento-rgpd-lopdgdd">8 · Notas de cumplimiento (RGPD / LOPDGDD)</a></li>
+      <li><a href="#9-documentos-relacionados">9 · Documentos relacionados</a></li>
+    </ol>
+  </aside>
+  <article class="anexo-body markdown-body">
+<section class="meta-card"><div class="meta-item"><span class="meta-key">Título</span><span class="meta-val">Política de Hardening de Seguridad — dashboard-af</span></div><div class="meta-item"><span class="meta-key">Estado</span><span class="meta-val">ACTIVE</span></div><div class="meta-item"><span class="meta-key">Versión</span><span class="meta-val">1.0</span></div></section>
+<h1>Política de Hardening de Seguridad — <code>dashboard-af</code></h1>
+<blockquote>
+<p>📌 <strong>Documento autoritario</strong>. Las medidas listadas aquí son <strong>obligatorias</strong> para cualquier release que pase a <code>staging</code> o <code>main</code>. Si una medida está marcada 🟢 ACTIVA, <strong>no se permite regresión</strong>. Si está 🟡 PARCIAL, hay tarea abierta para cerrarla. Si está 🔘 PENDIENTE, está planificada.</p>
+</blockquote>
+<h2 id="1-proposito"><a class="anchor" href="#1-proposito" aria-label="enlace">#</a> 1 · Propósito</h2>
+<p>Esta política consolida las medidas de seguridad <strong>ya aplicadas en código</strong> (Sprints 0-3) y las <strong>pendientes</strong> hasta MVP GA y producción. Sirve como:</p>
+<ul>
+<li>Checklist obligatorio antes de cada deploy a VPS.</li>
+<li>Threat model derivado para <code>SP-4B</code> (validación Renzo) y para futuros auditores externos.</li>
+<li>Referencia para el sysadmin (cuando se contrate en Fase 3 de escalado, ver Bloque 4 informe V2).</li>
+<li>Punto único de verdad cuando alguien pregunte &quot;¿qué seguridad tiene el proyecto?&quot;.</li>
+</ul>
+<p>NO sustituye a la <strong>auditoría completa V1</strong> (<code>docs/audit/findings-summary.md</code> + <code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code>), que sigue siendo el inventario inicial. Esta política es la <strong>versión &quot;qué hacemos para que no vuelva a pasar&quot;</strong>.</p>
+<h2 id="2-principios-rectores"><a class="anchor" href="#2-principios-rectores" aria-label="enlace">#</a> 2 · Principios rectores</h2>
+<ol>
+<li><strong>Defensa en profundidad</strong> — toda petición debe pasar por al menos 3 capas independientes antes de tocar datos: middleware auth → handler validation → RLS Postgres.</li>
+<li><strong>Fail-closed por defecto</strong> — ante duda, denegar. Nunca usar fallbacks que abran acceso (ej. <code>if (!user) return ok;</code> está prohibido).</li>
+<li><strong>Least privilege</strong> — RLS multi-tenant en TODA tabla con datos de tenant. Service role solo en migraciones y scripts admin marcados.</li>
+<li><strong>Secret hygiene</strong> — cero secretos en código. Todo por env vars o vault. <code>.env.local</code> gitignored sin excepciones.</li>
+<li><strong>Auditoría</strong> — toda escritura sensible (CRM writes, tenant config changes, role changes) deja registro en <code>crm_write_audit</code> o <code>system_logs</code>.</li>
+<li><strong>Validación en frontera</strong> — Zod schemas para todo input externo (webhooks, API públicas, formularios).</li>
+<li><strong>Observabilidad obligatoria</strong> — Sentry + Pino structured logging con PII scrubbing en TODO handler.</li>
+<li><strong>Reproducibilidad</strong> — cualquier medida verificable con un comando <code>grep</code> o un test Playwright. Si no se puede verificar mecánicamente, no es una medida.</li>
+</ol>
+<h2 id="3-medidas-activas-verificar-antes-de-cada-deploy"><a class="anchor" href="#3-medidas-activas-verificar-antes-de-cada-deploy" aria-label="enlace">#</a> 3 · Medidas activas (verificar antes de cada deploy)</h2>
+<h3 id="31-autenticacion-autorizacion"><a class="anchor" href="#31-autenticacion-autorizacion" aria-label="enlace">#</a> 3.1 · Autenticación + Autorización</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-AUTH-01</td>
+<td>JWT service_role NUNCA en código (solo env var)</td>
+<td>🟢 ACTIVA</td>
+<td><code>grep -rE &quot;eyJhbGci&quot; src/</code> = 0 resultados</td>
+</tr>
+<tr>
+<td>H-AUTH-02</td>
+<td>JWT anon NUNCA hardcoded</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/supabase/client.ts</code> solo <code>process.env.*</code></td>
+</tr>
+<tr>
+<td>H-AUTH-03</td>
+<td><code>requireApiUser()</code> en endpoints user-only</td>
+<td>🟢 ACTIVA</td>
+<td>grep <code>requireApiUser</code> en <code>src/app/api/**/route.ts</code></td>
+</tr>
+<tr>
+<td>H-AUTH-04</td>
+<td><code>requireApiAdmin()</code> en endpoints admin</td>
+<td>🟢 ACTIVA</td>
+<td>grep <code>requireApiAdmin</code> (createTenant/deleteTenant/admin/*)</td>
+</tr>
+<tr>
+<td>H-AUTH-05</td>
+<td><code>requireCronSecret()</code> en endpoints cron</td>
+<td>🟢 ACTIVA</td>
+<td>grep <code>requireCronSecret</code> (cron/appointments/reminders)</td>
+</tr>
+<tr>
+<td>H-AUTH-06</td>
+<td>Admin SOLO desde <code>app_metadata.is_admin</code> (no <code>user_metadata</code>)</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/middleware.ts</code> + <code>src/lib/auth.ts</code> + <code>src/lib/api-auth.ts</code></td>
+</tr>
+<tr>
+<td>H-AUTH-07</td>
+<td>Ownership validation server-side de cookie tenant</td>
+<td>🟢 ACTIVA</td>
+<td><code>requireTenantAccess()</code> en server actions</td>
+</tr>
+</tbody></table></div>
+<h3 id="32-rls-multi-tenant-en-postgres"><a class="anchor" href="#32-rls-multi-tenant-en-postgres" aria-label="enlace">#</a> 3.2 · RLS multi-tenant en Postgres</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-RLS-01</td>
+<td>Patrón <code>owner_or_admin</code> en TODA tabla multi-tenant</td>
+<td>🟢 ACTIVA</td>
+<td>8 migrations RLS hardening aplicadas</td>
+</tr>
+<tr>
+<td>H-RLS-02</td>
+<td>Prohibido <code>USING (true)</code> sin <code>TO authenticated/admin</code></td>
+<td>🟢 ACTIVA</td>
+<td><code>grep -rE &quot;USING \(true\)&quot; supabase/migrations/</code> revisar</td>
+</tr>
+<tr>
+<td>H-RLS-03</td>
+<td><code>tenants</code> table: SELECT owner/admin, IUD solo admin</td>
+<td>🟢 ACTIVA</td>
+<td><code>20260521000000_rls_tenants_hardening.sql</code></td>
+</tr>
+<tr>
+<td>H-RLS-04</td>
+<td><code>knowledge_base</code>: ownership-based 4 policies SIUD</td>
+<td>🟢 ACTIVA</td>
+<td><code>20260521000001_rls_knowledge_base_hardening.sql</code></td>
+</tr>
+<tr>
+<td>H-RLS-05</td>
+<td><code>ai_agents</code> / <code>ai_agent_variants</code>: owner_or_admin</td>
+<td>🟢 ACTIVA</td>
+<td><code>20260522220000_rls_ai_agents_hardening.sql</code></td>
+</tr>
+<tr>
+<td>H-RLS-06</td>
+<td><code>web_widgets</code>, <code>programas</code>: owner_or_admin</td>
+<td>🟢 ACTIVA</td>
+<td><code>20260522220001/02_rls_*_hardening.sql</code></td>
+</tr>
+<tr>
+<td>H-RLS-07</td>
+<td>Tests RLS con BD real (no mocks)</td>
+<td>🟢 ACTIVA</td>
+<td><code>tests/integrations/rls/*.test.ts</code></td>
+</tr>
+<tr>
+<td>H-RLS-08</td>
+<td>Cross-tenant leak verificado E2E con segundo tenant</td>
+<td>🔘 PENDIENTE</td>
+<td>SP-4B phase-04 Renzo</td>
+</tr>
+</tbody></table></div>
+<h3 id="33-webhooks-firmados-hmac"><a class="anchor" href="#33-webhooks-firmados-hmac" aria-label="enlace">#</a> 3.3 · Webhooks firmados (HMAC)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-WH-01</td>
+<td>Retell webhook: <code>verifyRetellWebhook()</code> obligatorio antes de parsear JSON</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/app/api/webhooks/retell/route.ts</code></td>
+</tr>
+<tr>
+<td>H-WH-02</td>
+<td>Retell tools webhook: <code>verifyHmacSignature()</code> antes de cancelar/agendar</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/app/api/webhooks/retell/tools/route.ts</code></td>
+</tr>
+<tr>
+<td>H-WH-03</td>
+<td>WhatsApp webhook: HMAC obligatorio (NO condicional con env)</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/app/api/webhooks/whatsapp/route.ts</code></td>
+</tr>
+<tr>
+<td>H-WH-04</td>
+<td>CRM webhook: HMAC + sin spoofing <code>tenant_id</code></td>
+<td>🟢 ACTIVA</td>
+<td><code>src/app/api/webhooks/crm/route.ts</code></td>
+</tr>
+<tr>
+<td>H-WH-05</td>
+<td>Workflow webhook: token de path validado</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/app/api/webhooks/workflow/*</code></td>
+</tr>
+<tr>
+<td>H-WH-06</td>
+<td>Validación HMAC ANTES de cualquier I/O o conexión Redis/BD</td>
+<td>🟡 PARCIAL</td>
+<td>Bug E2E-260527-007: handler whatsapp inicializa antes. Fix en Sprint 3.</td>
+</tr>
+</tbody></table></div>
+<h3 id="34-cifrado-de-secretos"><a class="anchor" href="#34-cifrado-de-secretos" aria-label="enlace">#</a> 3.4 · Cifrado de secretos</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-CRY-01</td>
+<td>Tokens OAuth (HubSpot/Zoho/Google) cifrados AES-256-GCM en BD</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/crypto/token-crypto.ts</code> + ADR-017</td>
+</tr>
+<tr>
+<td>H-CRY-02</td>
+<td>API keys LLM (OpenAI/Anthropic) cifradas en <code>ai_agent_variants.api_key_cipher</code></td>
+<td>🟢 ACTIVA</td>
+<td>Migration <code>20260522220003_integrations_table.sql</code></td>
+</tr>
+<tr>
+<td>H-CRY-03</td>
+<td><code>ENCRYPTION_KEY</code> env var ≥ 32 bytes (base64)</td>
+<td>🟢 ACTIVA</td>
+<td><code>.env.example</code> documenta requisito</td>
+</tr>
+<tr>
+<td>H-CRY-04</td>
+<td>JWT secrets generados con <code>crypto.randomBytes(64).toString(&#39;base64&#39;)</code></td>
+<td>🟢 ACTIVA</td>
+<td>Documentado en CLAUDE.md &quot;Password &amp; Credential Policy&quot;</td>
+</tr>
+<tr>
+<td>H-CRY-05</td>
+<td>Test token-crypto authTag GCM</td>
+<td>🟡 PARCIAL</td>
+<td>1 test fallando — bloquea v0.3.0 GA, arreglar antes</td>
+</tr>
+</tbody></table></div>
+<h3 id="35-security-headers-http-owasp"><a class="anchor" href="#35-security-headers-http-owasp" aria-label="enlace">#</a> 3.5 · Security Headers HTTP (OWASP)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-HDR-01</td>
+<td>Content-Security-Policy completo</td>
+<td>🟡 PARCIAL</td>
+<td><code>next.config.ts</code> configurado pero CSP bloquea Supabase local (bug E2E-260527-003)</td>
+</tr>
+<tr>
+<td>H-HDR-02</td>
+<td>Strict-Transport-Security con preload</td>
+<td>🟢 ACTIVA</td>
+<td>HSTS preload activado</td>
+</tr>
+<tr>
+<td>H-HDR-03</td>
+<td>X-Frame-Options: DENY</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3 commit <code>54d9756</code></td>
+</tr>
+<tr>
+<td>H-HDR-04</td>
+<td>X-Content-Type-Options: nosniff</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3</td>
+</tr>
+<tr>
+<td>H-HDR-05</td>
+<td>Referrer-Policy: strict-origin-when-cross-origin</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3</td>
+</tr>
+<tr>
+<td>H-HDR-06</td>
+<td>Permissions-Policy restrictiva</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3</td>
+</tr>
+</tbody></table></div>
+<h3 id="36-validacion-de-entrada-zod"><a class="anchor" href="#36-validacion-de-entrada-zod" aria-label="enlace">#</a> 3.6 · Validación de entrada (Zod)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-VAL-01</td>
+<td>Zod schemas en TODOS los handlers de webhook</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/schemas/webhooks/*.ts</code></td>
+</tr>
+<tr>
+<td>H-VAL-02</td>
+<td>Zod schemas en endpoints públicos (leads/ingest, widget)</td>
+<td>🟡 PARCIAL</td>
+<td><code>leads/ingest</code> cuelga sin responder (bug E2E-260527-001). Validar primero.</td>
+</tr>
+<tr>
+<td>H-VAL-03</td>
+<td>Widget embed: UUID regex strict + JSON.stringify para evitar XSS</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 0 commit <code>2c9437c</code></td>
+</tr>
+<tr>
+<td>H-VAL-04</td>
+<td>SSRF allowlist en <code>/api/tenant/migrate</code></td>
+<td>🟢 ACTIVA</td>
+<td><code>isAllowedTenantUrl()</code></td>
+</tr>
+<tr>
+<td>H-VAL-05</td>
+<td>Argumentos LLM tool-call validados con Zod (no null/undefined al booking)</td>
+<td>🔘 PENDIENTE</td>
+<td>DA-4-003 Sprint 3 cierre</td>
+</tr>
+</tbody></table></div>
+<h3 id="37-rate-limiting-abuse-prevention"><a class="anchor" href="#37-rate-limiting-abuse-prevention" aria-label="enlace">#</a> 3.7 · Rate limiting + abuse prevention</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-RL-01</td>
+<td>Rate limit sliding-window Redis</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/rate-limiter.ts</code> Sprint 3</td>
+</tr>
+<tr>
+<td>H-RL-02</td>
+<td>HOF <code>withRateLimit</code> aplicado en endpoints LLM + simulator + embeddings</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/api/with-rate-limit.ts</code></td>
+</tr>
+<tr>
+<td>H-RL-03</td>
+<td>Widget: 5 req/min por (widgetId, IP)</td>
+<td>🟢 ACTIVA</td>
+<td>Migration <code>20260522000000</code></td>
+</tr>
+<tr>
+<td>H-RL-04</td>
+<td>Fail-open si Redis cae (no bloquea tráfico legítimo)</td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3</td>
+</tr>
+<tr>
+<td>H-RL-05</td>
+<td>Bump <code>express-rate-limit</code> (vuln high CVE)</td>
+<td>🔘 PENDIENTE</td>
+<td>Sprint 3 task 4-02</td>
+</tr>
+</tbody></table></div>
+<h3 id="38-observabilidad-pii-scrubbing"><a class="anchor" href="#38-observabilidad-pii-scrubbing" aria-label="enlace">#</a> 3.8 · Observabilidad + PII scrubbing</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-OBS-01</td>
+<td>Pino structured logging en TODO handler</td>
+<td>🟢 ACTIVA</td>
+<td><code>src/lib/utils/logger.ts</code></td>
+</tr>
+<tr>
+<td>H-OBS-02</td>
+<td>PII scrubbing: redact paths <code>email</code>, <code>token</code>, <code>password</code>, <code>phone</code>, <code>dni</code></td>
+<td>🟢 ACTIVA</td>
+<td><code>pino redact.paths</code> configurado</td>
+</tr>
+<tr>
+<td>H-OBS-03</td>
+<td>Sentry server config con <code>beforeSend</code> filter PII</td>
+<td>🟢 ACTIVA</td>
+<td><code>sentry.server.config.ts</code></td>
+</tr>
+<tr>
+<td>H-OBS-04</td>
+<td>Sentry DSN en env var, NUNCA hardcoded</td>
+<td>🟢 ACTIVA</td>
+<td><code>.env.example</code></td>
+</tr>
+<tr>
+<td>H-OBS-05</td>
+<td>Sentry validado E2E en VPS (evento real recibido)</td>
+<td>🟢 ACTIVA</td>
+<td>26-may-2026 evento <code>4967d99e</code></td>
+</tr>
+<tr>
+<td>H-OBS-06</td>
+<td>Workers BullMQ logs con <code>tenant_id</code> + <code>lead_id</code> + <code>duration_ms</code></td>
+<td>🟢 ACTIVA</td>
+<td>Sprint 3</td>
+</tr>
+<tr>
+<td>H-OBS-07</td>
+<td>Cron endpoints sin info leak (no exponer PII en error responses)</td>
+<td>🟡 PARCIAL</td>
+<td>Bug E2E-260527-002 (cron reminders 503 con info infra)</td>
+</tr>
+</tbody></table></div>
+<h3 id="39-dependencias-supply-chain"><a class="anchor" href="#39-dependencias-supply-chain" aria-label="enlace">#</a> 3.9 · Dependencias + Supply chain</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-DEP-01</td>
+<td><code>npm audit</code> 0 critical, ≤15 high</td>
+<td>🟡 PARCIAL</td>
+<td>Actual: 0 critical, 11 high (gestionables)</td>
+</tr>
+<tr>
+<td>H-DEP-02</td>
+<td>Toda nueva dep prod pasa por subagente <code>af-agents:adr</code></td>
+<td>🟢 ACTIVA</td>
+<td>Hook <code>af-deps-guard.cjs</code> bloquea bypass</td>
+</tr>
+<tr>
+<td>H-DEP-03</td>
+<td>Husky pre-push: typecheck + lint + build obligatorios</td>
+<td>🟢 ACTIVA</td>
+<td><code>.husky/pre-push</code></td>
+</tr>
+<tr>
+<td>H-DEP-04</td>
+<td>Husky pre-commit: lint-staged</td>
+<td>🟢 ACTIVA</td>
+<td><code>.husky/pre-commit</code></td>
+</tr>
+<tr>
+<td>H-DEP-05</td>
+<td>Dependabot configurado en GitHub</td>
+<td>🔘 PENDIENTE</td>
+<td>Recomendación V2 — Sprint 3 o post-MVP</td>
+</tr>
+<tr>
+<td>H-DEP-06</td>
+<td>TypeScript strict + <code>no-explicit-any</code> ERROR</td>
+<td>🟢 ACTIVA</td>
+<td><code>eslint.config.mjs</code> Sprint 3</td>
+</tr>
+<tr>
+<td>H-DEP-07</td>
+<td>0 errores <code>no-explicit-any</code> (objetivo SP-4-LINT-ZERO)</td>
+<td>🟡 PARCIAL</td>
+<td>95 errores residuales legacy</td>
+</tr>
+</tbody></table></div>
+<h3 id="310-acceso-a-infraestructura-vps-dokploy-postgres"><a class="anchor" href="#310-acceso-a-infraestructura-vps-dokploy-postgres" aria-label="enlace">#</a> 3.10 · Acceso a infraestructura (VPS Dokploy + Postgres)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Medida</th>
+<th>Estado</th>
+<th>Verificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H-INF-01</td>
+<td>SSH al VPS solo con clave ed25519 (no password)</td>
+<td>🟢 ACTIVA</td>
+<td><code>infra/supabase-vps/.vault/</code> vault gitignored</td>
+</tr>
+<tr>
+<td>H-INF-02</td>
+<td>Postgres con <code>requirepass</code> fuerte</td>
+<td>🟢 ACTIVA</td>
+<td>Setup Dokploy</td>
+</tr>
+<tr>
+<td>H-INF-03</td>
+<td>Redis con <code>requirepass</code> en VPS</td>
+<td>🟡 PENDIENTE VERIFICAR</td>
+<td>Auditor V2 marca verificación obligatoria pre-deploy</td>
+</tr>
+<tr>
+<td>H-INF-04</td>
+<td>Backup diario automatizado de Postgres VPS</td>
+<td>🔘 PENDIENTE</td>
+<td>Pre-deploy MVP</td>
+</tr>
+<tr>
+<td>H-INF-05</td>
+<td>Snapshots semanales del VPS (Hetzner / Contabo)</td>
+<td>🔘 PENDIENTE</td>
+<td>Pre-deploy MVP</td>
+</tr>
+<tr>
+<td>H-INF-06</td>
+<td>Acceso panel Dokploy con 2FA</td>
+<td>🟢 ACTIVA</td>
+<td>Cuenta admin configurada</td>
+</tr>
+<tr>
+<td>H-INF-07</td>
+<td>Firewall: solo 443 + 22 expuestos</td>
+<td>🟢 ACTIVA</td>
+<td>Dokploy default</td>
+</tr>
+</tbody></table></div>
+<h2 id="4-checklist-pre-deploy-obligatorio-antes-de-cualquier-promocion"><a class="anchor" href="#4-checklist-pre-deploy-obligatorio-antes-de-cualquier-promocion" aria-label="enlace">#</a> 4 · Checklist pre-deploy (obligatorio antes de cualquier promoción)</h2>
+<p>Ejecutar antes de cada <code>staging-main</code> o promoción a producción real:</p>
+<pre><code class="language-bash"># 1. Tests verdes
+npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm run build &amp;&amp; npm test
+# Esperado: 0 errores typecheck, 0 nuevos errores lint, build OK, tests 100% pass
+
+# 2. Test E2C exhaustivo local
+/e2ctotal
+# Esperado: 0 CRIT, 0 HIGH no planificados
+
+# 3. Test E2E VPS
+/e2etotal --env vps
+# Esperado: igual que arriba
+
+# 4. npm audit
+npm audit --production
+# Esperado: 0 critical, ≤ 15 high
+
+# 5. Grep verificable (no debe haber match):
+grep -rE &quot;eyJhbGci&quot; src/                    # JWT en código
+grep -rE &quot;USING \(true\)&quot; supabase/migrations/  # RLS taut
+grep -rE &quot;TODO.*security|FIXME.*security&quot; src/  # TODOs security
+
+# 6. Sentry tracking activo
+curl -fsSL https://dev.automatizaformacion.com/api/version
+# Esperado: campos commit, branch, deployedAt con valores reales (no &quot;unknown&quot;)
+
+# 7. RLS hardening verificado
+psql -c &quot;SELECT tablename FROM pg_policies WHERE qual = &#39;true&#39;;&quot;
+# Esperado: 0 filas (nada con USING(true))
+</code></pre>
+<p>Si CUALQUIER paso falla → NO promocionar. Abrir ticket, fix, re-correr.</p>
+<h2 id="5-threat-model-stride-simplificado"><a class="anchor" href="#5-threat-model-stride-simplificado" aria-label="enlace">#</a> 5 · Threat model (STRIDE simplificado)</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Vector</th>
+<th>Mitigación principal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>S</strong>poofing</td>
+<td>Webhook spoofing (Retell, WhatsApp, CRM, Workflow)</td>
+<td>HMAC obligatorio H-WH-01..05</td>
+</tr>
+<tr>
+<td><strong>S</strong>poofing</td>
+<td>Cookie tampering (af-tenant-id)</td>
+<td>Server-side ownership validation H-AUTH-07</td>
+</tr>
+<tr>
+<td><strong>T</strong>ampering</td>
+<td>Privilege escalation user→admin</td>
+<td>Admin solo de <code>app_metadata</code> H-AUTH-06</td>
+</tr>
+<tr>
+<td><strong>T</strong>ampering</td>
+<td>SQL injection vía exec_sql</td>
+<td>Removido. Endpoint con allowlist H-VAL-04</td>
+</tr>
+<tr>
+<td><strong>R</strong>epudiation</td>
+<td>Cambios CRM sin trazabilidad</td>
+<td><code>crm_write_audit</code> table + ADR-022</td>
+</tr>
+<tr>
+<td><strong>I</strong>nformation Disclosure</td>
+<td>Cross-tenant data leak</td>
+<td>RLS hardened H-RLS-01..07 + middleware</td>
+</tr>
+<tr>
+<td><strong>I</strong>nformation Disclosure</td>
+<td>Tokens OAuth filtrados en BD</td>
+<td>AES-256-GCM H-CRY-01..02</td>
+</tr>
+<tr>
+<td><strong>I</strong>nformation Disclosure</td>
+<td>Logs con PII</td>
+<td>Pino redact H-OBS-02 + Sentry filter H-OBS-03</td>
+</tr>
+<tr>
+<td><strong>D</strong>enial of Service</td>
+<td>Abuse widget público</td>
+<td>Rate limit 5 req/min H-RL-03</td>
+</tr>
+<tr>
+<td><strong>D</strong>enial of Service</td>
+<td>Bucle LLM no acotado</td>
+<td><code>withRateLimit</code> HOF H-RL-02 + Sentry alert</td>
+</tr>
+<tr>
+<td><strong>D</strong>enial of Service</td>
+<td>Webhook 503 sostenido (Meta desactiva)</td>
+<td>Validar HMAC ANTES de I/O H-WH-06</td>
+</tr>
+<tr>
+<td><strong>E</strong>levation of Privilege</td>
+<td>XSS widget embed</td>
+<td>UUID regex + JSON.stringify H-VAL-03</td>
+</tr>
+<tr>
+<td><strong>E</strong>levation of Privilege</td>
+<td>SSRF tenant/migrate</td>
+<td>Allowlist <code>isAllowedTenantUrl</code> H-VAL-04</td>
+</tr>
+</tbody></table></div>
+<h2 id="6-respuesta-a-incidentes-procedimiento-minimo"><a class="anchor" href="#6-respuesta-a-incidentes-procedimiento-minimo" aria-label="enlace">#</a> 6 · Respuesta a incidentes (procedimiento mínimo)</h2>
+<p>Cuando se detecte un incidente de seguridad (alerta Sentry, reporte usuario, finding de auditoría externa):</p>
+<ol>
+<li><strong>Triaje inmediato</strong> (5-15 min): clasificar severidad (Critical/High/Medium/Low) según impacto y exposición.</li>
+<li><strong>Contención</strong> (1-4h):<ul>
+<li>Si CRIT: parar deploys, rotar credenciales afectadas, evaluar rollback a versión anterior.</li>
+<li>Si HIGH: feature flag off, hotfix branch.</li>
+<li>Si MED/LOW: ticket en RoadMap.</li>
+</ul>
+</li>
+<li><strong>Comunicación</strong> (≤24h):<ul>
+<li>CRIT con datos de cliente afectados → notificar a clienta + cumplir GDPR (≤72h a autoridad).</li>
+<li>Otros → comunicar en próximo retrospective.</li>
+</ul>
+</li>
+<li><strong>Fix + verificación</strong> (variable): branch hotfix, fix, tests, /e2ctotal, /e2etotal vps, deploy, monitorización 24h.</li>
+<li><strong>Post-mortem</strong> (≤1 semana): documento en <code>docs/security/incidents/INC-YYYYMMDD-slug.md</code> con: timeline, root cause, fix aplicado, prevención futura, ADR si aplica.</li>
+</ol>
+<h2 id="7-revisiones-periodicas"><a class="anchor" href="#7-revisiones-periodicas" aria-label="enlace">#</a> 7 · Revisiones periódicas</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Frecuencia</th>
+<th>Qué revisar</th>
+<th>Quién</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Pre-cada-deploy</strong></td>
+<td>Checklist sección 4</td>
+<td>Lead + agente <code>af-agents:deployment</code></td>
+</tr>
+<tr>
+<td><strong>Pre-cada-sprint</strong></td>
+<td>Tabla sección 3, marcar regresiones, abrir tareas para 🟡 PARCIAL</td>
+<td>Lead</td>
+</tr>
+<tr>
+<td><strong>Tras cada incidente</strong></td>
+<td>Threat model sección 5 (¿el vector estaba contemplado?)</td>
+<td>Lead + Auditor</td>
+</tr>
+<tr>
+<td><strong>Semestral</strong></td>
+<td>Auditoría externa completa (similar a V1)</td>
+<td>Auditor externo + Javi HP</td>
+</tr>
+<tr>
+<td><strong>Anual</strong></td>
+<td>Penetration test profesional</td>
+<td>Pentester externo (perfil OSCP/CISSP)</td>
+</tr>
+</tbody></table></div>
+<h2 id="8-notas-de-cumplimiento-rgpd-lopdgdd"><a class="anchor" href="#8-notas-de-cumplimiento-rgpd-lopdgdd" aria-label="enlace">#</a> 8 · Notas de cumplimiento (RGPD / LOPDGDD)</h2>
+<ul>
+<li><strong>Datos personales tratados</strong>: nombre, email, teléfono, profesión, años experiencia, mensajes WhatsApp/voz, grabaciones llamadas.</li>
+<li><strong>Base legal</strong>: consentimiento + interés legítimo (lead contactado por academia).</li>
+<li><strong>Periodo de retención</strong>: TBD — pendiente decisión clienta. Auditor propone 24 meses tras última interacción.</li>
+<li><strong>Encargado de tratamiento</strong>: Automatiza Formación SL. Subencargados: Supabase (Dokploy auto-hosted), Anthropic/OpenAI (LLM), Retell/Ultravox (voz), Meta (WhatsApp), HubSpot/Zoho (CRM destino del tenant).</li>
+<li><strong>Derechos ARCO+ del lead</strong>: endpoint <code>/api/gdpr/export</code> y <code>/api/gdpr/delete</code> pendientes — abrir tarea Sprint Costes-LLM o Sprint 4.</li>
+</ul>
+<h2 id="9-documentos-relacionados"><a class="anchor" href="#9-documentos-relacionados" aria-label="enlace">#</a> 9 · Documentos relacionados</h2>
+<ul>
+<li><a href="findings-summary.html" target="_blank" rel="noopener noreferrer"><code>docs/audit/findings-summary.md</code></a> — V1 quick scan 65 findings.</li>
+<li><a href="deep-findings-summary.html" target="_blank" rel="noopener noreferrer"><code>docs/audit/deep/DEEP-FINDINGS-SUMMARY.md</code></a> — V1 deep audit +67 findings.</li>
+<li><a href="decisiones-auditor.html" target="_blank" rel="noopener noreferrer"><code>docs/audit/DECISIONES-AUDITOR-JAVIER-HP.md</code></a> — R-013..R-025.</li>
+<li><a href="audit-v2.html" target="_blank" rel="noopener noreferrer"><code>docs/audit2/audit-v2.md</code></a> — Auditoría V2 medio proyecto.</li>
+<li><a href="../index.html" target="_blank" rel="noopener noreferrer"><code>docs/audit2/index.html</code></a> — Informe HTML V2.</li>
+<li><a href="../../adr/ADR-017-cifrado-tokens-oauth-aes-256-gcm.md" target="_blank" rel="noopener noreferrer"><code>docs/adr/ADR-017-cifrado-tokens-oauth-aes-256-gcm.md</code></a> — Cifrado.</li>
+<li><a href="../../adr/ADR-022-write-policy-semantics.md" target="_blank" rel="noopener noreferrer"><code>docs/adr/ADR-022-write-policy-semantics.md</code></a> — Audit trail CRM.</li>
+</ul>
+<hr>
+<p><strong>Estado:</strong> ACTIVE<br><strong>Próxima revisión:</strong> tras cierre Sprint 3 + tras SP-4B Renzo.<br><strong>Owner:</strong> Javi HP (Auditor).</p>
+
+  </article>
+</main>
+
+<footer class="anexo-foot">
+  <div>📚 Anexo de la Auditoría V2 · dashboard-af · AUTOMATIZA FORMACIÓN SL</div>
+  <div>
+    <a href="../index.html">← Volver al informe principal</a> ·
+    <a href="../../security/hardening-policy.md" target="_blank" rel="noopener noreferrer">Fuente .md original ↗</a>
+  </div>
+</footer>
+</body>
+</html>

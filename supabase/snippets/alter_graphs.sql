@@ -1,0 +1,1 @@
+ALTER TABLE orchestration_graphs ADD COLUMN IF NOT EXISTS workflow_id UUID REFERENCES workflows(id) ON DELETE CASCADE; ALTER TABLE orchestration_graphs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(); ALTER TABLE orchestration_graphs ADD CONSTRAINT orchestration_graphs_workflow_id_key UNIQUE (workflow_id); NOTIFY pgrst, 'reload schema';

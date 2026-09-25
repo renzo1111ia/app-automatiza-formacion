@@ -33,6 +33,7 @@ import {
   SlidersHorizontal,
   RefreshCw,
   Utensils,
+  PhoneCall,
 } from "lucide-react";
 import { TenantSelector } from "./TenantSelector";
 
@@ -104,6 +105,11 @@ const NAV_ITEMS: NavItem[] = [
         label: "Conversaciones whatsapp",
         href: "/dashboard/conversaciones",
         icon: <MessageSquare className="h-4 w-4" strokeWidth={1.8} />,
+      },
+      {
+        label: "Lead Llamadas",
+        href: "/dashboard/lead-llamadas",
+        icon: <PhoneCall className="h-4 w-4" strokeWidth={1.8} />,
       },
     ],
   },

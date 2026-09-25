@@ -107,7 +107,7 @@ export default function AgentsPage() {
       setAgents(res.data);
       if (res.data.length > 0 && !selectedAgent) setSelectedAgent(res.data[0]);
     }
-    const kbRes = await getKnowledgeBase();
+    const kbRes = await getKnowledgeBase(tenantId || undefined);
     if (kbRes.success && kbRes.data) setKnowledgeBases(kbRes.data);
   }, [selectedAgent, tenantId]);
 

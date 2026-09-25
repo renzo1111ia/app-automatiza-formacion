@@ -76,6 +76,31 @@ export async function getSessionContext(): Promise<SessionContext | null> {
           ((tenantData.config as Record<string, unknown>)?.business_type as string) ||
           "general";
       }
+    } else {
+      // Para Super Admin sin cookie seleccionada aún: fallback al primer tenant cliente
+      // NOTA: is_admin no es una columna directa — está en config JSONB. Usamos
+      // getAdminSupabaseClient para evitar RLS y obtener el primer tenant disponible.
+      try {
+        const { getAdminSupabaseClient } = await import("@/lib/supabase/server");
+        const adminClient = await getAdminSupabaseClient();
+        const { data: firstTenant } = await adminClient
+          .from("tenants")
+          .select("*")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (firstTenant) {
+          tenantId = firstTenant.id;
+          tenantName = firstTenant.name;
+          businessType =
+            (firstTenant.business_type as string) ||
+            ((firstTenant.config as Record<string, unknown>)?.business_type as string) ||
+            "general";
+        }
+      } catch (fallbackErr) {
+        console.warn("[getSessionContext] Could not resolve fallback tenant:", fallbackErr);
+      }
     }
 
     return {

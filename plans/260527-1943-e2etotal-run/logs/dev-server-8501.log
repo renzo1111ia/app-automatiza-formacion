@@ -1,0 +1,15 @@
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:8501
+- Network:       http://100.79.173.57:8501
+- Environments: .env.local
+✓ Ready in 1672ms
+[@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead. (Not supported with Turbopack.)
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:8500
+- PID:          70444
+- Dir:          E:\ClaudeCode\automatiza-formacion-dashboard\automatiza-formacion-dashboard
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 70444 /F to stop it.
+[?25h

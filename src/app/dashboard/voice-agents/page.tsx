@@ -134,6 +134,16 @@ export default function VoiceAgentsPage() {
   const [availableUltravoxModels, setAvailableUltravoxModels] = useState<
     { id: string; name: string }[]
   >([]);
+  const [availableUltravoxAgents, setAvailableUltravoxAgents] = useState<
+    {
+      agentId?: string;
+      id?: string;
+      name?: string;
+      systemPrompt?: string;
+      voice?: string;
+      model?: string;
+    }[]
+  >([]);
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
@@ -198,7 +208,7 @@ export default function VoiceAgentsPage() {
 
 
     }
-  }, [selectedAgent, retellApiKey]);
+  }, [selectedAgent?.id, retellApiKey]);
 
   const handleSaveVariants = async () => {
     if (!selectedAgent) return;
@@ -231,22 +241,25 @@ export default function VoiceAgentsPage() {
       if (res.success && res.data) {
         setAvailableUltravoxVoices(res.data.voices);
         setAvailableUltravoxModels(res.data.models);
-        if (showToast)
+      }
+      if (agentsRes.success && agentsRes.data) {
+        setAvailableUltravoxAgents(agentsRes.data);
+      }
+
+      if (showToast) {
+        if (res.success) {
           toast({
             variant: "success",
             title: "Sincronización completa",
-            description: "Voces de Ultravox actualizadas.",
+            description: `Recursos y ${agentsRes.data?.length || 0} agentes de Ultravox cargados.`,
           });
-      } else {
-        if (showToast)
+        } else {
           toast({
             variant: "error",
             title: "Error",
-            description: "Error al sincronizar con Ultravox.",
+            description: res.error || "Error al sincronizar con Ultravox.",
           });
-      }
-      if (agentsRes.success && agentsRes.data) {
-        // Agent state removed as it was reported unused
+        }
       }
     } catch (e) {
       console.error("[Ultravox Sync] Error:", e);
@@ -258,6 +271,56 @@ export default function VoiceAgentsPage() {
         });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleImportUltravoxAgent = async (uAgent: {
+    agentId?: string;
+    id?: string;
+    name?: string;
+    systemPrompt?: string;
+    voice?: string;
+    model?: string;
+  }) => {
+    const agentId = uAgent.agentId || uAgent.id;
+    if (!agentId || !tenantId) return;
+    setIsImporting(true);
+    try {
+      const res = await saveVoiceAgent(
+        {
+          name: uAgent.name || "Agente Ultravox",
+          provider: "ULTRAVOX",
+          provider_agent_id: agentId,
+          voice_id: uAgent.voice || "",
+          retell_llm_id: uAgent.model || "fixie-ai/ultravox-70b",
+          status: "ACTIVE",
+        },
+        tenantId
+      );
+
+      if (res.success && res.data) {
+        if (uAgent.systemPrompt) {
+          await saveVoiceVariant({
+            agent_id: res.data.id,
+            is_variant_b: false,
+            version_label: "v1.0",
+            prompt_text: uAgent.systemPrompt,
+            weight: 0.5,
+          });
+        }
+        await loadAgents(tenantId);
+        setSelectedAgent(res.data);
+        toast({
+          variant: "success",
+          title: "Agente Importado",
+          description: `El agente "${uAgent.name || "Ultravox"}" ha sido importado con éxito.`,
+        });
+      }
+    } catch (e) {
+      console.error("[Ultravox Import] Error:", e);
+      toast({ variant: "error", title: "Error", description: "No se pudo importar el agente de Ultravox." });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -679,57 +742,105 @@ export default function VoiceAgentsPage() {
       {/* Left Sidebar: Agents */}
       <div className="border-border bg-card flex w-64 flex-shrink-0 flex-col border-r">
         <div className="border-border flex items-center justify-between border-b px-4 py-4">
-          <h2 className="text-sm font-bold tracking-tight">Agents</h2>
-          <button
-            onClick={() => {
-              setSelectedAgent(null);
-              setEditingAgentData({
-                name: "",
-                description: "",
-                provider: "RETELL",
-                provider_agent_id: "",
-                voice_id: "",
-                from_number: "",
-                prompt_text_retell: "",
-                retell_llm_id: "",
-              });
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center justify-center rounded bg-purple-500/10 p-1.5 text-purple-600 transition-colors hover:bg-purple-500/20"
-            title="Create new agent"
-          >
-            <PlusCircle className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold tracking-tight">Agentes de Voz</h2>
+            {ultravoxApiKey && (
+              <span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-black text-purple-400 uppercase">
+                Ultravox
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {ultravoxApiKey && (
+              <button
+                onClick={() => handleSyncUltravoxResources(ultravoxApiKey, true)}
+                disabled={isSyncing}
+                className="flex items-center justify-center rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Sincronizar recursos de Ultravox"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin text-purple-500")} />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setSelectedAgent(null);
+                setEditingAgentData({
+                  name: "",
+                  description: "",
+                  provider: ultravoxApiKey ? "ULTRAVOX" : "RETELL",
+                  provider_agent_id: "",
+                  voice_id: availableUltravoxVoices[0]?.id || "",
+                  from_number: "",
+                  prompt_text_retell: "",
+                  retell_llm_id: availableUltravoxModels[0]?.id || "fixie-ai/ultravox-70b",
+                });
+                setVariantA({
+                  version_label: "v1.0",
+                  prompt_text: `Eres un asistente de voz telefónico inteligente y profesional para ${tenantName}. Tu misión es brindar respuestas rápidas, amables y claras.`,
+                  weight: 0.5,
+                });
+                setIsCreateModalOpen(true);
+              }}
+              className="flex items-center justify-center rounded bg-purple-500/10 p-1.5 text-purple-600 transition-colors hover:bg-purple-500/20"
+              title="Crear nuevo agente"
+            >
+              <PlusCircle className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         <div className="flex-1 space-y-1 overflow-y-auto p-2">
           {(() => {
-            // Combine local agents and unimported Retell agents
             const localIds = new Set(agents.map((a) => a.provider_agent_id).filter(Boolean));
 
-            // Deduplicate availableAgents by id to prevent React key errors
             const uniqueAvailableAgents = Array.from(
               new Map(availableAgents.map((a) => [a.id, a])).values()
             );
             const unimportedRetell = uniqueAvailableAgents.filter((a) => !localIds.has(a.id));
 
-            const hasAnyAgents = agents.length > 0 || unimportedRetell.length > 0;
+            const uniqueUltravoxAgents = Array.from(
+              new Map(
+                availableUltravoxAgents
+                  .filter((a) => a.agentId || a.id)
+                  .map((a) => [a.agentId || a.id || "", a])
+              ).values()
+            ).filter((a) => !localIds.has(a.agentId || a.id));
+
+            const hasAnyAgents =
+              agents.length > 0 || uniqueUltravoxAgents.length > 0 || unimportedRetell.length > 0;
 
             if (!hasAnyAgents) {
               return (
                 <div className="flex flex-col items-center gap-3 px-3 py-6 text-center text-xs">
-                  <p className="text-muted-foreground">No agents found.</p>
-                  {!retellApiKey && (
+                  <p className="text-muted-foreground">No hay agentes de voz creados.</p>
+                  <button
+                    onClick={() => {
+                      setSelectedAgent(null);
+                      setEditingAgentData({
+                        name: "Agente Principal Ultravox",
+                        description: "",
+                        provider: "ULTRAVOX",
+                        provider_agent_id: "",
+                        voice_id: availableUltravoxVoices[0]?.id || "",
+                        retell_llm_id: availableUltravoxModels[0]?.id || "fixie-ai/ultravox-70b",
+                      });
+                      setVariantA({
+                        version_label: "v1.0",
+                        prompt_text: `Eres un asistente de voz telefónico inteligente y profesional para ${tenantName}. Tu objetivo es responder preguntas y cualificar leads.`,
+                        weight: 0.5,
+                      });
+                      setIsCreateModalOpen(true);
+                    }}
+                    className="rounded-xl bg-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-md transition-colors hover:bg-purple-700"
+                  >
+                    + Crear Agente Ultravox
+                  </button>
+                  {ultravoxApiKey && (
                     <button
-                      onClick={() => setIsConfigModalOpen(true)}
-                      className="rounded-md bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-500 transition-colors hover:text-purple-400"
+                      onClick={() => handleSyncUltravoxResources(ultravoxApiKey, true)}
+                      className="text-[11px] font-semibold text-purple-400 underline hover:text-purple-300"
                     >
-                      Configurar API Key
+                      Sincronizar desde Ultravox
                     </button>
-                  )}
-                  {retellApiKey && (
-                    <p className="text-[10px] opacity-50">
-                      API conectada, pero no hay agentes en Retell.
-                    </p>
                   )}
                 </div>
               );
@@ -737,21 +848,45 @@ export default function VoiceAgentsPage() {
 
             return (
               <>
-                {/* Local Agents */}
+                {/* Local Saved Agents */}
                 {agents.map((a) => (
                   <button
                     key={`local-${a.id}`}
                     onClick={() => setSelectedAgent(a)}
                     className={cn(
-                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
                       selectedAgent?.id === a.id
                         ? "bg-purple-500/10 font-medium text-purple-600 dark:text-purple-400"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    {a.name}
+                    <span className="truncate">{a.name}</span>
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] font-bold uppercase opacity-75">
+                      {a.provider || "Ultravox"}
+                    </span>
                   </button>
                 ))}
+
+                {/* Unimported Ultravox Agents */}
+                {uniqueUltravoxAgents.map((u) => {
+                  const uId = u.agentId || u.id || "";
+                  return (
+                    <button
+                      key={`ultravox-${uId}`}
+                      onClick={() => handleImportUltravoxAgent(u)}
+                      disabled={isImporting}
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center justify-between rounded-lg border border-dashed border-purple-500/30 px-3 py-2 text-left text-sm transition-colors hover:border-purple-500"
+                      title="Agente detectado en Ultravox (Haz click para importarlo)"
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="truncate">{u.name || "Agente Ultravox"}</span>
+                      </div>
+                      <span className="text-[9px] font-bold text-purple-400 bg-purple-500/10 px-1 rounded uppercase">
+                        Importar
+                      </span>
+                    </button>
+                  );
+                })}
 
                 {/* Unimported Retell Agents */}
                 {unimportedRetell.map((a) => (
@@ -773,7 +908,7 @@ export default function VoiceAgentsPage() {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Retell Style Header */}
+        {/* Header */}
         <div className="border-border bg-card/50 flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
@@ -789,13 +924,16 @@ export default function VoiceAgentsPage() {
                 )}
               </div>
               <div className="text-muted-foreground flex items-center gap-3 text-[10px] font-bold uppercase">
-                {selectedAgent?.provider === "RETELL" ? "Retell AI" : selectedAgent?.provider || ""}
+                {selectedAgent?.provider === "ULTRAVOX"
+                  ? "🎙️ Ultravox Voice AI"
+                  : selectedAgent?.provider === "RETELL"
+                    ? "📞 Retell AI"
+                    : selectedAgent?.provider || "Ultravox"}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-
             <button
               onClick={() => {
                 handleSaveVariants();
@@ -804,29 +942,52 @@ export default function VoiceAgentsPage() {
               disabled={saving || !selectedAgent}
               className="bg-foreground text-background flex h-9 items-center gap-2 rounded-lg px-4 text-xs font-bold transition-all hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Publishing..." : "Publish"}
+              {saving ? "Guardando..." : "Guardar Cambios"}
             </button>
           </div>
         </div>
 
         {/* 3 Columns Layout */}
         {!selectedAgent ? (
-          <div className="bg-background flex flex-1 flex-col items-center justify-center">
+          <div className="bg-background flex flex-1 flex-col items-center justify-center p-6 text-center">
             <EmptyState
               size="sm"
-              icon={<Mic className="h-10 w-10" />}
+              icon={<Mic className="h-10 w-10 text-purple-400" />}
               title="Sin agente seleccionado"
-              description="Selecciona un agente en el menú lateral o crea uno nuevo."
+              description="Selecciona un agente en el menú lateral o crea uno nuevo para empezar a configurarlo."
             />
+            <button
+              onClick={() => {
+                setSelectedAgent(null);
+                setEditingAgentData({
+                  name: "Agente Principal Ultravox",
+                  description: "",
+                  provider: "ULTRAVOX",
+                  provider_agent_id: "",
+                  voice_id: availableUltravoxVoices[0]?.id || "",
+                  retell_llm_id: availableUltravoxModels[0]?.id || "fixie-ai/ultravox-70b",
+                });
+                setVariantA({
+                  version_label: "v1.0",
+                  prompt_text: `Eres un asistente de voz telefónico inteligente y profesional para ${tenantName}. Tu objetivo es responder preguntas y cualificar leads.`,
+                  weight: 0.5,
+                });
+                setIsCreateModalOpen(true);
+              }}
+              className="mt-4 rounded-xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg transition-all hover:bg-purple-700"
+            >
+              + Crear Nuevo Agente Ultravox
+            </button>
           </div>
         ) : (
           <div className="bg-background flex flex-1 overflow-hidden">
             {/* Main Config Column */}
-            <div className="border-border min-w-[400px] flex-1 border-r p-6">
+            <div className="border-border min-w-[400px] flex-1 overflow-y-auto border-r p-6">
               <UltravoxConfigPanel
                 agent={selectedAgent}
                 variant={activeTab === "A" ? variantA : variantB}
-                onVariantChange={activeTab === "A" ? setVariantA : setVariantB as any}
+                onVariantChange={activeTab === "A" ? setVariantA : (setVariantB as any)}
+                onAgentChange={(updated) => setSelectedAgent(updated)}
                 voices={availableUltravoxVoices}
                 models={availableUltravoxModels}
                 onSave={() => {
@@ -843,43 +1004,108 @@ export default function VoiceAgentsPage() {
       {/* Create Modal */}
       <AnimatePresence>
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="border-border bg-card w-full max-w-md rounded-2xl border p-6 shadow-2xl">
-              <h3 className="mb-4 text-lg font-bold">Crear Nuevo Agente</h3>
-              <input
-                type="text"
-                placeholder="Nombre del Agente"
-                value={editingAgentData.name || ""}
-                onChange={(e) => setEditingAgentData({ ...editingAgentData, name: e.target.value })}
-                className="border-border bg-background mb-4 w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              />
-              <select
-                title="Seleccionar Voz"
-                value={editingAgentData.voice_id || ""}
-                onChange={(e) =>
-                  setEditingAgentData({ ...editingAgentData, voice_id: e.target.value })
-                }
-                className="border-border bg-background mb-4 w-full rounded-xl border px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
-              >
-                <option value="">Seleccionar Voz...</option>
-                {availableVoices.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-              <div className="flex gap-2">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="border-border bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl space-y-4">
+              <h3 className="text-lg font-bold text-foreground">Crear Nuevo Agente de Voz</h3>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre del Agente</label>
+                <input
+                  type="text"
+                  placeholder="Ej: Asistente de Ventas"
+                  value={editingAgentData.name || ""}
+                  onChange={(e) => setEditingAgentData({ ...editingAgentData, name: e.target.value })}
+                  className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Proveedor</label>
+                  <select
+                    title="Proveedor"
+                    value={editingAgentData.provider || "ULTRAVOX"}
+                    onChange={(e) =>
+                      setEditingAgentData({
+                        ...editingAgentData,
+                        provider: e.target.value as VoiceAgent["provider"],
+                      })
+                    }
+                    className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-foreground"
+                  >
+                    <option value="ULTRAVOX">🎙️ Ultravox</option>
+                    <option value="RETELL">📞 Retell AI</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Voz</label>
+                  <select
+                    title="Seleccionar Voz"
+                    value={editingAgentData.voice_id || ""}
+                    onChange={(e) =>
+                      setEditingAgentData({ ...editingAgentData, voice_id: e.target.value })
+                    }
+                    className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-foreground"
+                  >
+                    <option value="">Seleccionar Voz...</option>
+                    {(editingAgentData.provider === "ULTRAVOX" || !editingAgentData.provider
+                      ? availableUltravoxVoices
+                      : availableVoices
+                    ).map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {editingAgentData.provider === "ULTRAVOX" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Modelo de IA</label>
+                  <select
+                    title="Modelo de IA"
+                    value={editingAgentData.retell_llm_id || ""}
+                    onChange={(e) =>
+                      setEditingAgentData({ ...editingAgentData, retell_llm_id: e.target.value })
+                    }
+                    className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none text-foreground"
+                  >
+                    <option value="">Seleccionar Modelo...</option>
+                    {availableUltravoxModels.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Instrucciones iniciales (Prompt)</label>
+                <textarea
+                  rows={4}
+                  value={variantA.prompt_text || ""}
+                  onChange={(e) => setVariantA({ ...variantA, prompt_text: e.target.value })}
+                  placeholder="Instrucciones para el agente de voz..."
+                  className="border-border bg-background w-full rounded-xl border p-3 text-sm font-mono leading-relaxed focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="bg-muted flex-1 rounded-xl py-3 text-sm font-bold"
+                  className="bg-muted hover:bg-muted/80 flex-1 rounded-xl py-2.5 text-sm font-bold transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleCreateOrUpdateAgent}
-                  className="flex-1 rounded-xl bg-purple-600 py-3 text-sm font-bold text-white"
+                  disabled={saving || !editingAgentData.name?.trim()}
+                  className="flex-1 rounded-xl bg-purple-600 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-purple-700 disabled:opacity-50"
                 >
-                  Crear
+                  {saving ? "Creando..." : "Crear Agente"}
                 </button>
               </div>
             </div>

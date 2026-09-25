@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Tech Provider Meta — dashboard-af</title>
+<style>
+  :root {
+    --azul: #1a3a5c;
+    --azul-claro: #2c6fbb;
+    --gris: #444;
+    --gris-claro: #f4f6f9;
+    --borde: #d6dde6;
+    --verde: #1a8a4a;
+    --naranja: #d97706;
+    --rojo: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--gris);
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .portada {
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul-claro) 100%);
+    color: #fff;
+    padding: 70px 50px 60px;
+    page-break-after: always;
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .portada .etiqueta {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 11pt;
+    opacity: 0.85;
+    margin-bottom: 18px;
+  }
+  .portada h1 {
+    font-size: 30pt;
+    margin: 0 0 10px;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+  .portada .sub {
+    font-size: 14pt;
+    opacity: 0.9;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+  .portada .meta {
+    border-top: 1px solid rgba(255,255,255,0.3);
+    padding-top: 22px;
+    font-size: 10.5pt;
+    line-height: 1.9;
+  }
+  .portada .meta b { font-weight: 600; }
+  .contenido { padding: 30px 48px 50px; }
+  h2 {
+    color: var(--azul);
+    font-size: 16pt;
+    border-bottom: 2px solid var(--azul-claro);
+    padding-bottom: 6px;
+    margin-top: 34px;
+    margin-bottom: 14px;
+    page-break-after: avoid;
+  }
+  h3 {
+    color: var(--azul-claro);
+    font-size: 12pt;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+  p { margin: 8px 0; }
+  code {
+    background: var(--gris-claro);
+    border: 1px solid var(--borde);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9pt;
+    color: #b03a5b;
+  }
+  pre {
+    background: var(--gris-claro);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--azul-claro);
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+    color: var(--azul);
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9.3pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background: var(--azul);
+    color: #fff;
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+    vertical-align: top;
+  }
+  td {
+    border: 1px solid var(--borde);
+    padding: 7px 10px;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--gris-claro); }
+  .nota {
+    background: #fff8ec;
+    border: 1px solid #f0d8a8;
+    border-left: 4px solid var(--naranja);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 9.8pt;
+  }
+  .destacado {
+    background: #eef6ee;
+    border: 1px solid #bcdcc4;
+    border-left: 4px solid var(--verde);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 9.8pt;
+  }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .verde { color: var(--verde); font-weight: 600; }
+  .naranja { color: var(--naranja); font-weight: 600; }
+  .rojo { color: var(--rojo); font-weight: 600; }
+  .fuentes { font-size: 8.8pt; color: #777; }
+  .fuentes a { color: var(--azul-claro); text-decoration: none; word-break: break-all; }
+  .seccion-break { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<div class="portada">
+  <div class="etiqueta">Informe técnico · Confidencial</div>
+  <h1>Registro como <em>Tech Provider</em> en Meta</h1>
+  <div class="sub">Implicaciones para el proyecto dashboard-af (WhatsApp Business Platform)</div>
+  <div class="meta">
+    <div><b>Proyecto:</b> dashboard-af — AI CRM + Workflow Orchestrator multi-tenant</div>
+    <div><b>Preparado para:</b> Automatiza Formación</div>
+    <div><b>Fecha:</b> 3 de junio de 2026</div>
+    <div><b>Ámbito:</b> impacto técnico, arquitectónico y operativo</div>
+  </div>
+</div>
+
+<div class="contenido">
+
+<h2>1. Qué es "Tech Provider" y por qué nos afecta</h2>
+<p>El proyecto <b>ya integra la API de WhatsApp Cloud de Meta</b> (envío de mensajes y plantillas, webhook de entrada y procesadores de IA por conversación). Por tanto, darse de alta como <i>Tech Provider</i> <b>no es una integración nueva: es un cambio del modelo de relación con Meta</b> sobre la integración que ya existe.</p>
+
+<h3>Modelo actual del proyecto</h3>
+<p>Hoy, cada academia (cada "tenant") introduce <b>manualmente</b> sus tres credenciales de WhatsApp en el panel de Ajustes &rarr; Integraciones:</p>
+<pre>accessToken   ·   phoneNumberId   ·   wabaId</pre>
+<p>Operamos de facto como <b>"cliente directo replicado"</b>: el cliente final crea su propia app de Meta, genera su token y lo pega en el dashboard. Funciona, pero es frágil: los tokens caducan, hay pasos manuales propensos a error y genera carga de soporte.</p>
+
+<div class="destacado">
+  <b>El modelo Tech Provider</b> sustituye ese copia-y-pega por un flujo gestionado (<i>Embedded Signup</i>): el tenant solo pulsa "Conectar WhatsApp", inicia sesión con Meta y el acceso se delega automáticamente a nuestra plataforma. Es el modelo que usan proveedores como Twilio o Infobip.
+</div>
+
+<h2>2. Comparativa de los tres modelos de Meta</h2>
+<table>
+  <tr>
+    <th style="width:22%">Criterio</th>
+    <th style="width:26%">Cliente directo (hoy)</th>
+    <th style="width:26%">Tech Provider (propuesto)</th>
+    <th style="width:26%">Solution Partner (BSP)</th>
+  </tr>
+  <tr><td><b>Quién paga el uso a Meta</b></td><td>El cliente final, directo a Meta</td><td>El cliente final, directo a Meta</td><td>El partner (refactura)</td></tr>
+  <tr><td><b>Línea de crédito Meta</b></td><td>No</td><td>No</td><td>Sí</td></tr>
+  <tr><td><b>Onboarding del cliente</b></td><td>Manual: copia/pega 3 credenciales</td><td><b>Embedded Signup</b> (1 clic, login Meta)</td><td>Embedded Signup + crédito</td></tr>
+  <tr><td><b>Tokens</b></td><td>Token del cliente, caduca</td><td>Token de sistema largo, gestionado por nosotros</td><td>Token de sistema (comparte crédito)</td></tr>
+  <tr><td><b>App Review de Meta</b></td><td>No (modo desarrollo)</td><td><b>Obligatorio</b></td><td>Obligatorio</td></tr>
+  <tr><td><b>Verificación de empresa</b></td><td>No</td><td><b>Obligatoria</b></td><td>Obligatoria</td></tr>
+  <tr><td><b>Límite de clientes</b></td><td>n/a</td><td>10 / 7 días &rarr; 200 / 7 días tras verificar</td><td>Mayor</td></tr>
+  <tr><td><b>Soporte de facturación</b></td><td>Meta</td><td>Cliente &harr; Meta</td><td>El partner</td></tr>
+  <tr><td><b>Esfuerzo de desarrollo</b></td><td>Ya hecho</td><td>Medio-alto</td><td>Alto</td></tr>
+</table>
+
+<div class="destacado">
+  <b>Conclusión:</b> Tech Provider es el escalón adecuado para un SaaS multi-tenant como el nuestro. <b>No asumimos facturación ni riesgo de crédito</b> (cada academia paga su WhatsApp a Meta directamente); ganamos un onboarding profesional y tokens estables.
+</div>
+
+<h2 class="seccion-break">3. ¿Hay que cambiar código? Impacto por componente</h2>
+<table>
+  <tr>
+    <th style="width:26%">Componente actual</th>
+    <th style="width:24%">Estado hoy</th>
+    <th style="width:36%">¿Cambia con Tech Provider?</th>
+    <th style="width:14%">Esfuerzo</th>
+  </tr>
+  <tr><td><b>Envío de mensajes</b> (puente WhatsApp)</td><td>Envía vía token del tenant</td><td><b>Mínimo</b> — la API de Meta es la misma; solo cambia de dónde viene el token</td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td><b>Formulario de Ajustes</b> (3 campos manuales)</td><td>Inputs de token, phone y WABA a mano</td><td><b>Sí, sustancial</b> — se reemplaza por botón <i>Embedded Signup</i></td><td><span class="naranja">Medio</span></td></tr>
+  <tr><td><b>Almacenamiento de credenciales</b></td><td>Token pegado por tenant</td><td><b>Sí</b> — guardamos identificadores por tenant y usamos un token de sistema central</td><td><span class="naranja">Medio</span></td></tr>
+  <tr><td><b>Webhook de entrada</b></td><td>Token y secreto globales; rutea por número</td><td><b>Ligero</b> — el patrón multi-tenant ya existe; suscribir cada WABA nueva</td><td><span class="verde">Bajo</span></td></tr>
+  <tr><td><b>Caducidad de tokens</b></td><td>El token del tenant caduca y rompe</td><td><b>Mejora</b> — token de sistema largo, gestión central</td><td><span class="verde">Bajo (resuelve un dolor)</span></td></tr>
+  <tr><td><b>Asistente de conexión (UI)</b></td><td>No existe para WhatsApp</td><td><b>Nuevo</b> — flujo "Conectar WhatsApp" con retorno</td><td><span class="naranja">Medio</span></td></tr>
+  <tr><td><b>Variables de entorno / secretos</b></td><td>Secreto y token de verificación</td><td><b>Nuevas variables</b> para el Embedded Signup y el token de sistema</td><td><span class="verde">Bajo</span></td></tr>
+</table>
+
+<div class="nota">
+  <b>Resumen:</b> la lógica de envío (la parte más sensible) <b>casi no se toca</b> — ya está bien construida. Lo que cambia es el <b>onboarding y la gestión de tokens</b>: pasamos de "el tenant pega un token" a "el tenant pulsa un botón y Meta delega el acceso". Estimación gruesa: <b>integración Embedded Signup + refactor de credenciales ≈ 1 sprint dedicado</b>, encajable en la <b>Fase 4 post-MVP</b> (no toca el MVP actual de HubSpot + Zoho).
+</div>
+
+<h2>4. Requisitos de Meta para conceder el Tech Provider</h2>
+<table>
+  <tr>
+    <th style="width:6%">#</th>
+    <th style="width:54%">Qué exige Meta</th>
+    <th style="width:22%">Responsable</th>
+    <th style="width:18%">Bloquea código</th>
+  </tr>
+  <tr><td>1</td><td><b>Business Portfolio:</b> cuenta de empresa en Meta Business Suite</td><td>Clienta</td><td>No</td></tr>
+  <tr><td>2</td><td><b>Verificación de empresa:</b> documentación legal de la sociedad</td><td>Clienta</td><td>No (pero limita a 10 clientes hasta hacerla)</td></tr>
+  <tr><td>3</td><td><b>App de Meta + producto WhatsApp</b> dedicada</td><td>Desarrollo</td><td>Sí</td></tr>
+  <tr><td>4</td><td><b>App Review:</b> acceso avanzado a mensajería y gestión. <b>Requiere 2 vídeos</b> (uno enviando un mensaje desde la app, otro creando una plantilla)</td><td>Desarrollo</td><td>Sí</td></tr>
+  <tr><td>5</td><td><b>Access Verification:</b> declarar la condición de Tech Provider</td><td>Desarrollo + Clienta</td><td>Sí</td></tr>
+  <tr><td>6</td><td><b>Embedded Signup:</b> configurar el flujo de conexión</td><td>Desarrollo</td><td>Sí</td></tr>
+</table>
+
+<div class="nota">
+  <span class="rojo">⚠ Atención:</span> el <b>App Review con vídeo es el paso de mayor fricción</b> y puede tardar días o semanas en aprobarse. Conviene iniciarlo pronto si se desea Tech Provider para el lanzamiento comercial.
+</div>
+
+<h2 class="seccion-break">5. Pregunta clave: "¿Si se concede en la MISMA cuenta, nos afecta?"</h2>
+<p><b>Respuesta corta:</b> Meta <b>recomienda no reutilizar la app actual</b>, sino crear una app nueva dedicada. La cuenta de empresa (business portfolio) sí puede ser la misma; lo que no debe reutilizarse es la <i>app de Meta</i> que hoy sirve la integración en producción.</p>
+
+<table>
+  <tr>
+    <th style="width:24%">Aspecto</th>
+    <th style="width:38%">Reutilizar la app actual</th>
+    <th style="width:38%">App nueva dedicada (recomendado)</th>
+  </tr>
+  <tr><td><b>Visibilidad al cliente</b></td><td>El nombre de la app y del portfolio <b>se muestran al tenant</b> al registrar; un nombre interno daría mala imagen</td><td>Nombre profesional ("Automatiza Formación") visible en el onboarding</td></tr>
+  <tr><td><b>Riesgo sobre lo que ya funciona</b></td><td>App Review y paso a producción sobre la app <b>que ya usan los tenants vivos</b> &rarr; riesgo de romper WhatsApp en producción</td><td>App aislada; la actual sigue intacta hasta migrar</td></tr>
+  <tr><td><b>Beneficio de reutilizar</b></td><td>Prácticamente ninguno</td><td>—</td></tr>
+  <tr><td><b>Recomendación de Meta</b></td><td><span class="rojo">Evitar</span></td><td><span class="verde">Preferida</span></td></tr>
+</table>
+
+<div class="destacado">
+  <b>Conclusión:</b> si la clienta pide hacerlo "en la misma cuenta", el <b>business portfolio puede ser el mismo</b> sin problema. Lo recomendable es <b>crear una app de Meta nueva y dedicada</b> dentro de ese portfolio, completar toda la verificación sobre ella y migrar los tenants cuando esté aprobada y probada. Así, <b>cero interrupción</b> para las academias que ya usan WhatsApp hoy.
+</div>
+
+<h2>6. Recomendaciones</h2>
+<ol>
+  <li><b>Adoptar el modelo Tech Provider.</b> Es el adecuado para un SaaS multi-tenant y resuelve dolores reales (tokens que caducan, onboarding manual frágil). No introduce facturación ni riesgo de crédito.</li>
+  <li><b>App nueva, no reutilizar.</b> Crear una app de Meta dedicada con nombre profesional dentro del business portfolio de la clienta. La app actual sigue sirviendo a los tenants vivos hasta migrar.</li>
+  <li><b>Encajar en la Fase 4 (post-MVP).</b> No afecta al MVP actual (HubSpot + Zoho). El grueso del trabajo es el Embedded Signup y el refactor de gestión de tokens.</li>
+  <li><b>Arrancar el App Review pronto.</b> Es el cuello de botella (vídeos + revisión de Meta). El resto avanza en paralelo.</li>
+  <li><b>Acción inmediata de la clienta:</b> crear/confirmar el business portfolio y comenzar la verificación de empresa (sin ella, el límite es de 10 clientes cada 7 días).</li>
+</ol>
+
+<h2>7. Fuentes</h2>
+<p class="fuentes">
+  Documentación oficial de Meta for Developers y guías de proveedores de referencia (junio 2026):
+</p>
+<ul class="fuentes">
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/solution-providers/get-started-for-tech-providers">Become a Tech Provider — Meta for Developers</a></li>
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/permissions/">Permissions — Meta for Developers</a></li>
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/solution-providers/app-review/">App Review — WhatsApp Solution Providers</a></li>
+  <li><a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/access-tokens/">System User access token — Meta</a></li>
+  <li><a href="https://www.infobip.com/docs/whatsapp/tech-provider-program">Tech Provider Program — Infobip Docs</a></li>
+  <li><a href="https://www.twilio.com/docs/whatsapp/isv/tech-provider-program">Tech Provider program overview — Twilio</a></li>
+</ul>
+
+<p class="fuentes" style="margin-top:30px; border-top:1px solid var(--borde); padding-top:12px;">
+  Documento elaborado para Automatiza Formación — dashboard-af · 3 de junio de 2026 · Confidencial.
+</p>
+
+</div>
+</body>
+</html>

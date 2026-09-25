@@ -1,0 +1,22 @@
+{"ts":"2026-06-15T18:53:10.866Z","hook":"descriptive-name","event":"PreToolUse","tool":"Write","target":"","note":"","dur":9,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:11.270Z","hook":"dev-rules-reminder","event":"UserPromptSubmit","tool":"","target":"","note":"context-injected","dur":230,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:11.375Z","hook":"plan-format-kanban","event":"PostToolUse","tool":"Read","target":"","note":"non-plan-file","dur":0,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:11.497Z","hook":"post-edit-simplify-reminder","event":"PostToolUse","tool":"Read","target":"","note":"non-edit-tool","dur":0,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:11.739Z","hook":"privacy-block","event":"PreToolUse","tool":"Read","target":"","note":"","dur":27,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:11.840Z","hook":"scout-block","event":"PreToolUse","tool":"","target":"","note":"","dur":0,"status":"crash","exit":0,"error":"Cannot find module '../scout-block/pattern-matcher.cjs'\nRequire stack:\n- D:\\descargas programas\\Automatiza-Formacion-DashBoard-developer (1)\\Automatiza-Formacion-DashBoard-developer\\.claude\\hooks\\lib\\scout-checker.cjs\n- D:\\descargas programas\\Automatiza-Formacion-DashBoard-developer (1)\\Automatiza-Formacion-DashBoard-developer\\.claude\\hooks\\scout-block.cjs"}
+{"ts":"2026-06-15T18:53:12.186Z","hook":"session-init","event":"SessionStart","tool":"","target":"","note":"unknown","dur":257,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:12.356Z","hook":"skill-dedup","event":"SessionStart","tool":"","target":"","note":"dedup-complete","dur":7,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:12.640Z","hook":"subagent-init","event":"SubagentStart","tool":"","target":"unknown","note":"context-injected","dur":190,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:12.723Z","hook":"task-completed-handler","event":"TaskCompleted","tool":"","target":"","note":"missing-team-name","dur":0,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:53:12.962Z","hook":"usage-context-awareness","event":"PostToolUse","tool":"Read","target":"","note":"missing-credentials","dur":3,"status":"warn","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:49.931Z","hook":"descriptive-name","event":"PreToolUse","tool":"Write","target":"","note":"","dur":8,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:50.336Z","hook":"dev-rules-reminder","event":"UserPromptSubmit","tool":"","target":"","note":"context-injected","dur":253,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:50.645Z","hook":"plan-format-kanban","event":"PostToolUse","tool":"Read","target":"","note":"non-plan-file","dur":0,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:50.855Z","hook":"post-edit-simplify-reminder","event":"PostToolUse","tool":"Read","target":"","note":"non-edit-tool","dur":1,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:51.049Z","hook":"privacy-block","event":"PreToolUse","tool":"Read","target":"","note":"","dur":18,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:51.527Z","hook":"scout-block","event":"PreToolUse","tool":"","target":"","note":"","dur":0,"status":"crash","exit":0,"error":"Cannot find module '../scout-block/pattern-matcher.cjs'\nRequire stack:\n- D:\\descargas programas\\Automatiza-Formacion-DashBoard-developer (1)\\Automatiza-Formacion-DashBoard-developer\\.claude\\hooks\\lib\\scout-checker.cjs\n- D:\\descargas programas\\Automatiza-Formacion-DashBoard-developer (1)\\Automatiza-Formacion-DashBoard-developer\\.claude\\hooks\\scout-block.cjs"}
+{"ts":"2026-06-15T18:56:52.196Z","hook":"session-init","event":"SessionStart","tool":"","target":"","note":"unknown","dur":505,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:52.621Z","hook":"skill-dedup","event":"SessionStart","tool":"","target":"","note":"dedup-complete","dur":12,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:53.053Z","hook":"subagent-init","event":"SubagentStart","tool":"","target":"unknown","note":"context-injected","dur":265,"status":"ok","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:53.281Z","hook":"task-completed-handler","event":"TaskCompleted","tool":"","target":"","note":"missing-team-name","dur":0,"status":"skip","exit":0,"error":""}
+{"ts":"2026-06-15T18:56:53.596Z","hook":"usage-context-awareness","event":"PostToolUse","tool":"Read","target":"","note":"throttled","dur":1,"status":"skip","exit":0,"error":""}

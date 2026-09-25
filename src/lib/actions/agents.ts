@@ -9,11 +9,15 @@ import { ModelNameSchema } from "@/lib/schemas/ai-agents";
  * Helper to resolve tenantId from parameter, cookie, or session.
  */
 async function resolveTenantId(explicitTenantId?: string): Promise<string | null> {
-  if (explicitTenantId) return explicitTenantId;
+  if (explicitTenantId && explicitTenantId.trim() !== "") return explicitTenantId;
   const fromCookie = await getActiveTenantId();
   if (fromCookie) return fromCookie;
-  const session = await getSessionContext();
-  if (session?.tenantId) return session.tenantId;
+  try {
+    const session = await getSessionContext();
+    if (session?.tenantId) return session.tenantId;
+  } catch (sessionErr) {
+    console.warn("[resolveTenantId] Could not retrieve session tenantId:", sessionErr);
+  }
   return null;
 }
 

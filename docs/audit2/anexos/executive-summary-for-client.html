@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Executive Summary for Client — Deep Audit V1 · Auditoría V2 · dashboard-af</title>
+  <meta name="description" content="Informe ejecutivo en español para la clienta">
+  <link rel="stylesheet" href="../assets/anexo.css">
+</head>
+<body>
+<header class="anexo-head">
+  <div class="anexo-head-row">
+    <div class="anexo-brand">
+      <span class="anexo-brand-logo" aria-hidden="true">📚</span>
+      <div>
+        <div class="anexo-brand-title">Auditoría V2 · dashboard-af</div>
+        <div class="anexo-brand-sub">AUTOMATIZA FORMACIÓN SL · Anexo documental</div>
+      </div>
+    </div>
+    <div class="anexo-head-actions">
+      <a class="btn btn-ghost" href="../index.html">← Volver al informe</a>
+      <a class="btn btn-source" href="../../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank" rel="noopener noreferrer">Ver fuente .md ↗</a>
+    </div>
+  </div>
+  <div class="anexo-title-wrap">
+    <h1>Executive Summary for Client — Deep Audit V1</h1>
+    <p class="anexo-subtitle">Informe ejecutivo en español para la clienta</p>
+    <p class="anexo-source-cite">
+      <b>📄 Fuente original:</b>
+      <code>../../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md</code>
+      <a href="../../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank" rel="noopener noreferrer" class="link-inline">[abrir .md en nueva ventana ↗]</a>
+    </p>
+  </div>
+</header>
+
+<main class="anexo-main">
+  <aside class="anexo-toc">
+    <h2>Índice del documento</h2>
+    <ol>
+      <li><a href="#que-hemos-hecho">Qué hemos hecho</a></li>
+      <li><a href="#resumen-de-lo-que-hemos-encontrado">Resumen de lo que hemos encontrado</a></li>
+      <li><a href="#los-5-riesgos-criticos-explicados-sin-tecnicismos">Los 5 riesgos críticos explicados sin tecnicismos</a></li>
+      <li class="toc-sub"><a href="#riesgo-1-las-claves-de-acceso-a-la-base-de-datos-estan-escritas-en-el-codigo">Riesgo 1 — Las claves de acceso a la base de datos están escritas en el código</a></li>
+      <li class="toc-sub"><a href="#riesgo-2-cualquier-usuario-registrado-puede-ver-y-borrar-datos-de-cualquier-otro-cliente">Riesgo 2 — Cualquier usuario registrado puede ver y borrar datos de cualquier otro cliente</a></li>
+      <li class="toc-sub"><a href="#riesgo-3-varias-paginas-de-la-plataforma-estan-completamente-abiertas-a-internet-sin-contrasena">Riesgo 3 — Varias páginas de la plataforma están completamente abiertas a internet sin contraseña</a></li>
+      <li class="toc-sub"><a href="#riesgo-4-el-flujo-de-seguimiento-de-varios-dias-nunca-se-ejecuta">Riesgo 4 — El flujo de seguimiento de varios días nunca se ejecuta</a></li>
+      <li class="toc-sub"><a href="#riesgo-5-los-criterios-de-cualificacion-automatica-son-incorrectos-respecto-a-la-especificacion-acordada">Riesgo 5 — Los criterios de cualificación automática son incorrectos respecto a la especificación acordada</a></li>
+      <li><a href="#lo-que-esta-bien">Lo que está bien</a></li>
+      <li><a href="#plan-de-accion-propuesto">Plan de acción propuesto</a></li>
+      <li class="toc-sub"><a href="#esta-semana-urgente">Esta semana (urgente)</a></li>
+      <li class="toc-sub"><a href="#este-mes">Este mes</a></li>
+      <li class="toc-sub"><a href="#proximo-trimestre">Próximo trimestre</a></li>
+      <li><a href="#estimacion-de-coste-y-tiempo">Estimación de coste y tiempo</a></li>
+      <li><a href="#siguiente-paso-recomendado">Siguiente paso recomendado</a></li>
+    </ol>
+  </aside>
+  <article class="anexo-body markdown-body">
+<section class="meta-card"><div class="meta-item"><span class="meta-key">Título</span><span class="meta-val">Informe Ejecutivo — Auditoría de Seguridad y Calidad</span></div><div class="meta-item"><span class="meta-key">Fecha</span><span class="meta-val">2026-05-19</span></div></section>
+<h1>Informe Ejecutivo — Auditoría de Seguridad y Calidad</h1>
+<p><strong>Proyecto:</strong> Plataforma de automatización de formación<br><strong>Fecha del informe:</strong> Mayo 2026<br><strong>Tipo de análisis:</strong> Auditoría completa de código — seguridad, funcionamiento, accesibilidad</p>
+<hr>
+<h2 id="que-hemos-hecho"><a class="anchor" href="#que-hemos-hecho" aria-label="enlace">#</a> Qué hemos hecho</h2>
+<p>Se ha realizado una revisión exhaustiva de toda la plataforma digital: el sistema de llamadas automáticas, la inteligencia artificial de cualificación, la gestión de leads, la seguridad de los datos y la accesibilidad para personas con discapacidad. El análisis ha cubierto aproximadamente 15.000 líneas de código y 50 archivos de base de datos.</p>
+<p>El equipo de auditoría no ha realizado cambios en el sistema. Este informe describe únicamente lo encontrado.</p>
+<hr>
+<h2 id="resumen-de-lo-que-hemos-encontrado"><a class="anchor" href="#resumen-de-lo-que-hemos-encontrado" aria-label="enlace">#</a> Resumen de lo que hemos encontrado</h2>
+<p>La plataforma tiene <strong>tres tipos de problemas</strong> que conviene entender claramente:</p>
+<p><strong>1. Problemas de seguridad urgentes</strong> — Hay puertas abiertas que permitirían a un tercero malintencionado ver datos de sus clientes, borrar información o hacerse pasar por administrador. Algunos de estos problemas son explotables desde un navegador normal sin conocimientos técnicos avanzados.</p>
+<p><strong>2. Funcionalidades que no funcionan en producción</strong> — El flujo de seguimiento automático de varios días (el que llama al lead el día 1, al día 2, al día 3…) está técnicamente roto. Los leads reciben el primer contacto pero nunca los siguientes. El sistema de cualificación automatizada también tiene errores que hacen que se apliquen criterios incorrectos.</p>
+<p><strong>3. Incumplimiento de accesibilidad</strong> — La plataforma no cumple los estándares europeos WCAG 2.1 de accesibilidad (normativa obligatoria para aplicaciones de uso profesional en la UE). Los usuarios con discapacidad visual, motora o cognitiva no pueden usar partes importantes de la herramienta.</p>
+<hr>
+<h2 id="los-5-riesgos-criticos-explicados-sin-tecnicismos"><a class="anchor" href="#los-5-riesgos-criticos-explicados-sin-tecnicismos" aria-label="enlace">#</a> Los 5 riesgos críticos explicados sin tecnicismos</h2>
+<h3 id="riesgo-1-las-claves-de-acceso-a-la-base-de-datos-estan-escritas-en-el-codigo"><a class="anchor" href="#riesgo-1-las-claves-de-acceso-a-la-base-de-datos-estan-escritas-en-el-codigo" aria-label="enlace">#</a> Riesgo 1 — Las claves de acceso a la base de datos están escritas en el código</h3>
+<p>Imagine que la llave de su caja fuerte está escrita en un papel pegado en la puerta de su oficina. Así es como están guardadas actualmente las contraseñas que dan acceso a toda la base de datos de la plataforma: escritas directamente en el código del programa, visible para cualquier persona con acceso al repositorio de código.</p>
+<p><strong>¿Qué puede ocurrir?</strong> Cualquier persona que haya tenido acceso al repositorio de código (un desarrollador pasado, un contratista, etc.) tiene acceso potencial a toda la base de datos de producción: leads de todos sus clientes, configuraciones, conversaciones.</p>
+<p><strong>Solución:</strong> Cambiar estas contraseñas ahora mismo y guardarlas en un lugar seguro separado del código. Esto se puede hacer en menos de una hora.</p>
+<h3 id="riesgo-2-cualquier-usuario-registrado-puede-ver-y-borrar-datos-de-cualquier-otro-cliente"><a class="anchor" href="#riesgo-2-cualquier-usuario-registrado-puede-ver-y-borrar-datos-de-cualquier-otro-cliente" aria-label="enlace">#</a> Riesgo 2 — Cualquier usuario registrado puede ver y borrar datos de cualquier otro cliente</h3>
+<p>Si tiene varios clientes usando la plataforma (o en el futuro tiene más), el sistema actualmente no separa correctamente los datos entre ellos. Un usuario del Cliente A puede acceder a los leads del Cliente B cambiando un valor en su navegador con dos clics.</p>
+<p>Más grave aún: hay una forma de escalar permisos a administrador del sistema completo que cualquier usuario registrado puede ejecutar desde la consola del navegador. Una vez como administrador, puede borrar todos los clientes del sistema o modificar la configuración de cualquiera.</p>
+<p><strong>¿Qué puede ocurrir?</strong> En un escenario de uso malintencionado por parte de un usuario insatisfecho o un competidor con una cuenta registrada: pérdida total de los datos de leads de cualquier cliente, o toma de control del panel de administración.</p>
+<p><strong>Solución:</strong> Requiere entre 1 y 2 días de trabajo de desarrollo. Es la corrección más urgente junto a la primera.</p>
+<h3 id="riesgo-3-varias-paginas-de-la-plataforma-estan-completamente-abiertas-a-internet-sin-contrasena"><a class="anchor" href="#riesgo-3-varias-paginas-de-la-plataforma-estan-completamente-abiertas-a-internet-sin-contrasena" aria-label="enlace">#</a> Riesgo 3 — Varias páginas de la plataforma están completamente abiertas a internet sin contraseña</h3>
+<p>Hay siete funciones del sistema de automatización (que activan llamadas, modifican flujos de trabajo, envían mensajes de WhatsApp) que son accesibles desde internet sin ninguna contraseña o sesión. Adicionalmente, hay una página de prueba que en producción puede crear leads y activar llamadas reales a números de teléfono sin ningún control.</p>
+<p><strong>¿Qué puede ocurrir?</strong> Alguien puede activar el sistema de envío de recordatorios WhatsApp para todos sus leads a cualquier hora del día sin estar autenticado. También puede leer información de nombres y estados de los leads sin iniciar sesión.</p>
+<p><strong>Solución:</strong> Añadir contraseña a estas páginas. Cada corrección individual tarda entre 30 minutos y 2 horas. Son 10 puntos a corregir.</p>
+<h3 id="riesgo-4-el-flujo-de-seguimiento-de-varios-dias-nunca-se-ejecuta"><a class="anchor" href="#riesgo-4-el-flujo-de-seguimiento-de-varios-dias-nunca-se-ejecuta" aria-label="enlace">#</a> Riesgo 4 — El flujo de seguimiento de varios días nunca se ejecuta</h3>
+<p>El sistema está diseñado para hacer un seguimiento automático de varios días: llamar el día 1, enviar WhatsApp el día 2, verificar en el CRM el día 3. Actualmente, solo se ejecuta el primer paso. Todos los pasos posteriores fallan silenciosamente — el lead queda &quot;congelado&quot; después del primer contacto sin que el operador lo sepa.</p>
+<p><strong>¿Qué puede ocurrir?</strong> Los leads que no convirtieron en el primer contacto nunca reciben el seguimiento planificado. Esta funcionalidad central de la plataforma no está operativa.</p>
+<p><strong>Solución:</strong> Un día de trabajo de desarrollo. Es una corrección técnica concreta en un archivo específico.</p>
+<h3 id="riesgo-5-los-criterios-de-cualificacion-automatica-son-incorrectos-respecto-a-la-especificacion-acordada"><a class="anchor" href="#riesgo-5-los-criterios-de-cualificacion-automatica-son-incorrectos-respecto-a-la-especificacion-acordada" aria-label="enlace">#</a> Riesgo 5 — Los criterios de cualificación automática son incorrectos respecto a la especificación acordada</h3>
+<p>El motor de cualificación automática (el que decide si un lead es &quot;apto&quot; o &quot;no apto&quot;) aplica criterios diferentes a los que se pactaron. Según la especificación, un técnico con 2 años de experiencia es apto; el sistema requiere 3 años. Además, el campo &quot;cualificado&quot; tiene tres formatos distintos en diferentes partes del sistema que no coinciden entre sí, lo que hace que algunos leads no sean correctamente marcados aunque la IA los haya evaluado bien.</p>
+<p><strong>¿Qué puede ocurrir?</strong> Leads que deberían clasificarse como aptos se descartan, y viceversa. Los datos del CRM pueden estar incorrectamente clasificados.</p>
+<p><strong>Solución:</strong> Medio día de trabajo de desarrollo para corregir los umbrales. Un poco más para unificar los formatos.</p>
+<hr>
+<h2 id="lo-que-esta-bien"><a class="anchor" href="#lo-que-esta-bien" aria-label="enlace">#</a> Lo que está bien</h2>
+<p>La plataforma tiene elementos técnicos correctamente implementados que conviene reconocer:</p>
+<ul>
+<li><strong>La integración con WhatsApp funciona correctamente</strong> — El primer contacto (el paso 1) se procesa bien. Los mensajes llegan, la IA responde y el historial se guarda.</li>
+<li><strong>El dashboard de gestión es visualmente coherente</strong> — La interfaz de usuario está bien construida con tecnología moderna (Next.js, React, Tailwind).</li>
+<li><strong>La integración con Retell para llamadas de voz está conectada</strong> — El puente con el proveedor de voz está implementado y funcional para el caso básico.</li>
+<li><strong>El sistema de conocimiento base (RAG)</strong> — La búsqueda semántica para que la IA responda con documentación del cliente está correctamente integrada con la base de datos vectorial.</li>
+<li><strong>La arquitectura general es sólida</strong> — Las tecnologías elegidas son correctas y modernas. Los problemas son de implementación, no de diseño fundamental.</li>
+</ul>
+<hr>
+<h2 id="plan-de-accion-propuesto"><a class="anchor" href="#plan-de-accion-propuesto" aria-label="enlace">#</a> Plan de acción propuesto</h2>
+<h3 id="esta-semana-urgente"><a class="anchor" href="#esta-semana-urgente" aria-label="enlace">#</a> Esta semana (urgente)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Tiempo estimado</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cambiar contraseñas de base de datos comprometidas</td>
+<td>2-4 horas</td>
+<td>Elimina el riesgo más grave inmediatamente</td>
+</tr>
+<tr>
+<td>Añadir autenticación a las páginas abiertas a internet</td>
+<td>1-2 días</td>
+<td>Cierra las puertas de acceso sin control</td>
+</tr>
+<tr>
+<td>Corregir la separación de datos entre clientes</td>
+<td>1-2 días</td>
+<td>Evita que un cliente vea datos de otro</td>
+</tr>
+<tr>
+<td>Corregir la escalada de permisos de administrador</td>
+<td>4 horas</td>
+<td>Evita toma de control del sistema</td>
+</tr>
+</tbody></table></div>
+<p><strong>Total esta semana: 5-8 días de trabajo de un desarrollador.</strong></p>
+<h3 id="este-mes"><a class="anchor" href="#este-mes" aria-label="enlace">#</a> Este mes</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Tiempo estimado</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Reparar el flujo de seguimiento de varios días</td>
+<td>1 día</td>
+<td>El sistema funciona como fue diseñado</td>
+</tr>
+<tr>
+<td>Corregir los criterios de cualificación</td>
+<td>1-2 días</td>
+<td>Los leads se clasifican correctamente</td>
+</tr>
+<tr>
+<td>Añadir validación a los webhooks externos (Retell, WhatsApp)</td>
+<td>2-3 días</td>
+<td>Evita que terceros inyecten datos falsos</td>
+</tr>
+<tr>
+<td>Corregir la separación de datos en base de datos (RLS)</td>
+<td>3-4 días</td>
+<td>Aislamiento técnico completo multi-cliente</td>
+</tr>
+<tr>
+<td>Empezar la corrección de accesibilidad (fase 1)</td>
+<td>3-4 días</td>
+<td>Cumplimiento básico WCAG para modales y formularios</td>
+</tr>
+</tbody></table></div>
+<p><strong>Total este mes: 10-16 días de trabajo de desarrollo.</strong></p>
+<h3 id="proximo-trimestre"><a class="anchor" href="#proximo-trimestre" aria-label="enlace">#</a> Próximo trimestre</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Acción</th>
+<th>Tiempo estimado</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Completar mejoras de accesibilidad (WCAG 2.1 AA completo)</td>
+<td>2-3 semanas</td>
+<td>Cumplimiento normativo europeo</td>
+</tr>
+<tr>
+<td>Implementar observabilidad de costes LLM</td>
+<td>1 semana</td>
+<td>Visibilidad real de costes de IA</td>
+</tr>
+<tr>
+<td>Añadir tests automatizados</td>
+<td>2-3 semanas</td>
+<td>Prevención de regresiones futuras</td>
+</tr>
+<tr>
+<td>Mejoras de rendimiento y código</td>
+<td>2 semanas</td>
+<td>Estabilidad y mantenibilidad</td>
+</tr>
+</tbody></table></div>
+<p><strong>Total próximo trimestre: 8-10 semanas de trabajo de desarrollo.</strong></p>
+<hr>
+<h2 id="estimacion-de-coste-y-tiempo"><a class="anchor" href="#estimacion-de-coste-y-tiempo" aria-label="enlace">#</a> Estimación de coste y tiempo</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Horizonte</th>
+<th>Esfuerzo estimado</th>
+<th>Prioridad</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Esta semana (seguridad urgente)</td>
+<td>5-8 días/dev</td>
+<td>CRÍTICO — no puede esperar</td>
+</tr>
+<tr>
+<td>Este mes (funcionalidad + seguridad)</td>
+<td>10-16 días/dev</td>
+<td>ALTO — antes de escalar el sistema</td>
+</tr>
+<tr>
+<td>Próximo trimestre (calidad + accesibilidad)</td>
+<td>40-50 días/dev</td>
+<td>NORMAL — planificar en sprint</td>
+</tr>
+<tr>
+<td><strong>Total global</strong></td>
+<td><strong>55-74 días/dev</strong></td>
+<td>—</td>
+</tr>
+</tbody></table></div>
+<p>Nota: &quot;días/dev&quot; significa días de trabajo de un desarrollador dedicado. Con dos desarrolladores trabajando en paralelo, los plazos se reducen aproximadamente a la mitad.</p>
+<hr>
+<h2 id="siguiente-paso-recomendado"><a class="anchor" href="#siguiente-paso-recomendado" aria-label="enlace">#</a> Siguiente paso recomendado</h2>
+<p>Antes de continuar con cualquier desarrollo de nuevas funcionalidades, se recomienda completar al menos los puntos de &quot;Esta semana&quot;. El riesgo actual de exposición de datos de sus clientes es concreto y tratable en poco tiempo. El equipo de desarrollo puede comenzar con los tres primeros puntos de forma inmediata.</p>
+<p>Para cualquier pregunta sobre este informe, el equipo técnico puede ampliar cualquier punto con más detalle.</p>
+<hr>
+<p><em>Informe elaborado a partir de análisis estático de código. Sin modificaciones al sistema.</em></p>
+
+  </article>
+</main>
+
+<footer class="anexo-foot">
+  <div>📚 Anexo de la Auditoría V2 · dashboard-af · AUTOMATIZA FORMACIÓN SL</div>
+  <div>
+    <a href="../index.html">← Volver al informe principal</a> ·
+    <a href="../../audit/deep/EXECUTIVE-SUMMARY-FOR-CLIENT.md" target="_blank" rel="noopener noreferrer">Fuente .md original ↗</a>
+  </div>
+</footer>
+</body>
+</html>

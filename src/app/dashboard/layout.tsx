@@ -3,7 +3,14 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { getAdminStatus } from "@/lib/actions/auth";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const isAdmin = await getAdminStatus();
+  let isAdmin = false;
+  try {
+    isAdmin = await getAdminStatus();
+  } catch (e) {
+    console.error("[DashboardLayout] getAdminStatus error:", e);
+    // fail-safe: si no podemos determinar el status, asumimos no-admin
+    isAdmin = false;
+  }
 
   return (
     <Suspense

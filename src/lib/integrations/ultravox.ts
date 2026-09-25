@@ -90,6 +90,32 @@ export class UltravoxBridge {
   }
 
   /**
+   * List available voices.
+   * Endpoint: GET /api/voices
+   */
+  public async listVoices(config: UltravoxConfig) {
+    if (!config.apiKey) throw new Error("Missing Ultravox API Key");
+    const response = await fetch(`${this.baseUrl}/api/voices`, {
+      headers: { "X-API-Key": config.apiKey },
+    });
+    if (!response.ok) throw new Error("Failed to list Ultravox voices");
+    return await response.json();
+  }
+
+  /**
+   * List available models.
+   * Endpoint: GET /api/models
+   */
+  public async listModels(config: UltravoxConfig) {
+    if (!config.apiKey) throw new Error("Missing Ultravox API Key");
+    const response = await fetch(`${this.baseUrl}/api/models`, {
+      headers: { "X-API-Key": config.apiKey },
+    });
+    if (!response.ok) throw new Error("Failed to list Ultravox models");
+    return await response.json();
+  }
+
+  /**
    * Create a new persistent agent.
    * Endpoint: POST /api/agents
    */
@@ -98,13 +124,22 @@ export class UltravoxBridge {
     config: UltravoxConfig
   ) {
     if (!config.apiKey) throw new Error("Missing Ultravox API Key");
+    const bodyPayload = {
+      name: params.name,
+      callTemplate: {
+        systemPrompt: params.systemPrompt,
+        voice: params.voice || undefined,
+        model: params.model || undefined,
+      },
+    };
+
     const response = await fetch(`${this.baseUrl}/api/agents`, {
       method: "POST",
       headers: {
         "X-API-Key": config.apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(bodyPayload),
     });
     if (!response.ok) {
       const err = await response.text();
@@ -123,13 +158,22 @@ export class UltravoxBridge {
     config: UltravoxConfig
   ) {
     if (!config.apiKey) throw new Error("Missing Ultravox API Key");
+    const bodyPayload: any = {};
+    if (params.name) bodyPayload.name = params.name;
+    if (params.systemPrompt !== undefined || params.voice !== undefined || params.model !== undefined) {
+      bodyPayload.callTemplate = {};
+      if (params.systemPrompt !== undefined) bodyPayload.callTemplate.systemPrompt = params.systemPrompt;
+      if (params.voice !== undefined) bodyPayload.callTemplate.voice = params.voice;
+      if (params.model !== undefined) bodyPayload.callTemplate.model = params.model;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/agents/${agentId}`, {
       method: "PATCH",
       headers: {
         "X-API-Key": config.apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(bodyPayload),
     });
     if (!response.ok) {
       const err = await response.text();
